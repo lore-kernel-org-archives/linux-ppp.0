@@ -1,44 +1,47 @@
-From: carlsonj@workingcode.com
-Date: Wed, 15 Sep 2004 14:33:08 +0000
-Subject: Re: pppd don't create ppp-network-device
-Message-Id: <16712.21156.383528.76301@carlson.workingcode.com>
+From: p.boehm@d-trust.net
+Date: Thu, 16 Sep 2004 15:23:19 +0000
+Subject: no ppp-link
+Message-Id: <OF2DE58F2A.8E19EA8C-ONC1256F11.005437DB@bln.d-trust.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <OFA2465F60.5C52B06E-ONC1256F0B.0042177C@bln.d-trust.de>
-In-Reply-To: <OFA2465F60.5C52B06E-ONC1256F0B.0042177C@bln.d-trust.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-p.boehm@d-trust.net writes:
-> I ask me why ppp does not create a new ppp-device, although it starts correctly (automatically
-> loaded into
-> kernel after start of pppd):
+Hi, I try to set up a ppp link of course, but if I use pppd or diald or wvdial or somethings else:
+never a ppp-device is created.
 
-Use the 'debug' option and make sure that either /etc/syslog.conf has
-daemon.debug directed to a file, or that you use the 'updetach' option
-to send the debug information to your tty.
+     /* command-line to set up a ppp-link ... */
+     # pppd -d call isp
 
-strace doesn't really record the needed information to debug the
-problem.
+     /* content of /etc/ppp/peers/isp */
+     ttyS0 19200 crtscts
+     connect '/usr/sbin/chat -v -f /etc/ppp/chat-isp'
 
-> 1207  read(0, "\x54\x5a\x69\x66\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"..., 4096) = 837
+     /* content of /etc/ppp/chat-isp */
+     ABORT "NO CARRIER"
+     ABORT "NO DIALTONE"
+     ABORT "ERROR"
+     ABORT "NO ANSWER"
+     ABORT "Username/Password Incorrect"
+     "" "at"
+     OK "at&d0&c1"
+     OK "atdt0172229000"
+     "name:" "^Ua"
+     "word:" "\qa"
+     "ispts" "\q^Uppp"
+     "~-^Uppp-~"
 
-It seems like the peer said "TZif".  Not sure why, as you've not
-included debug information.
 
-> In kernel-config CONFIG_PPP Switches are set (as modules) and will supported by my kernel (out of
-> CONFIG_PPP_MULTILINK)
-> Any ideas where the problem could be? Or how I can find it?
-> 
-> Currently I study the ppp_generic sources to understand how it works, and that's my study-results so
-> far ...
+Connection is established, but data will not routed to ppp-device, because it not exists...
 
-You shouldn't need to stare at the code to configure a PPP link.  Just
-what exactly are you trying to do?
+I thought (and I still thinking that) it's a problem in configuration (kernel, pppd, network
+config-files)
+So I read documentations, man pages, messageboards in INet and all other stuff I could get. But
+nothing helps.
+And the problem is always the same. No PPP-Device!
 
-Are you trying to modify pppd's source code or are you trying to set
-up a PPP link?
+pb
 
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+(If someone needs config files or somethings else for analyzing the problem feel free to ask me!)
+
