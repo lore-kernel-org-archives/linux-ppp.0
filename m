@@ -1,91 +1,96 @@
-From: Stephen Hemminger <shemminger@osdl.org>
-Date: Mon, 28 Mar 2005 19:24:39 +0000
-Subject: Fw: [Bug 4381] New: When i try to start a pppoe conn., crash at
-Message-Id: <20050328112439.58813c70@dxpl.pdx.osdl.net>
+From: domen@coderock.org
+Date: Sun, 06 Mar 2005 22:23:42 +0000
+Subject: [patch 1/1] list_for_each_entry: drivers-net-ppp_generic.c
+Message-Id: <20050306222343.253F01EC90@trashy.coderock.org>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
 
 
-Begin forwarded message:
-
-Date: Mon, 21 Mar 2005 19:54:21 -0800
-From: bugme-daemon@osdl.org
-To: shemminger@osdl.org
-Subject: [Bug 4381] New: When i try to start a pppoe conn., crash at net/co=
-re/skbuff.c:91
 
 
-http://bugme.osdl.org/show_bug.cgi?idC81
-
-           Summary: When i try to start a pppoe conn., crash at
-                    net/core/skbuff.c:91
-    Kernel Version: 2.6.11 (gentoo-dev-sources)
-            Status: NEW
-          Severity: blocking
-             Owner: shemminger@osdl.org
-         Submitter: o.cornu@gmail.com
 
 
-Distribution: Gentoo
-Hardware Environment: Intel P4 / Asus P4C800E
-Software Environment:
-Problem Description: When i try to start a pppoe conn., crash at
-net/core/skbuff.c:91
-Might be related to Bug 4279, but with ppp_generic (not tun).
+Make code more readable with list_for_each_entry.
+Compile tested.
 
-Mar 21 21:27:59 Pai-mei adsl-connect: ADSL connection lost; attempting
-re-connection.
-Mar 21 21:28:04 Pai-mei pppd[6735]: pppd 2.4.2 started by root, uid 0
-Mar 21 21:28:04 Pai-mei pppd[6735]: Using interface ppp0
-Mar 21 21:28:04 Pai-mei pppd[6735]: Connect: ppp0 <--> /dev/pts/3
-Mar 21 21:28:05 Pai-mei <6>skput:over: f89b2335:16 put:16
-dev:<NULL>------------[ cut here ]------------
-Mar 21 21:28:05 Pai-mei kernel BUG at net/core/skbuff.c:91!
-Mar 21 21:28:05 Pai-mei invalid operand: 0000 [#5]
-Mar 21 21:28:05 Pai-mei PREEMPT SMP
-Mar 21 21:28:05 Pai-mei Modules linked in: usbcore slip ppp_synctty parport=
-_pc
-plip parport ppp_deflate zlib_deflate dummy pppoe pppox ppp_async crc_ccitt
-bsd_comp ppp_generic slhc nvidia_agp agpgart sr_mod
-Mar 21 21:28:05 Pai-mei CPU:    0
-Mar 21 21:28:05 Pai-mei EIP:    0060:[<c031ab1b>]    Not tainted VLI
-Mar 21 21:28:05 Pai-mei EFLAGS: 00210282   (2.6.11-gentoo-r4)
-Mar 21 21:28:05 Pai-mei EIP is at skb_over_panic+0x3b/0x50
-Mar 21 21:28:05 Pai-mei eax: 0000002c   ebx: f6a43e80   ecx: 000008fc   edx:
-00000001
-Mar 21 21:28:05 Pai-mei esi: f7f59680   edi: f6f36a80   ebp: 00000010   esp:
-f6a07f3c
-Mar 21 21:28:05 Pai-mei ds: 007b   es: 007b   ss: 0068
-Mar 21 21:28:05 Pai-mei Process pppd (pid: 6735, threadinfo=F6a06000 task=
-=F6ff8a80)
-Mar 21 21:28:05 Pai-mei Stack: c03ee4a0 f89b2335 00000010 00000010 c03d008c
-f89b2341 f6a43e80 00000010
-Mar 21 21:28:05 Pai-mei f89b2335 fffffff2 00000010 00000000 f6fd0e80 08087f=
-22
-c0160909 f6fd0e80
-Mar 21 21:28:05 Pai-mei 08087f22 00000010 f6a07fac f6fd0e80 fffffff7 000000=
-07
-f6a06000 c0160a91
-Mar 21 21:28:05 Pai-mei Call Trace:
-Mar 21 21:28:05 Pai-mei [<f89b2335>] ppp_write+0x115/0x140 [ppp_generic]
-Mar 21 21:28:05 Pai-mei [<f89b2341>] ppp_write+0x121/0x140 [ppp_generic]
-Mar 21 21:28:05 Pai-mei [<f89b2335>] ppp_write+0x115/0x140 [ppp_generic]
-Mar 21 21:28:05 Pai-mei [<c0160909>] vfs_write+0xe9/0x1a0
-Mar 21 21:28:05 Pai-mei [<c0160a91>] sys_write+0x51/0x80
-Mar 21 21:28:05 Pai-mei [<c01032af>] syscall_call+0x7/0xb
-Mar 21 21:28:05 Pai-mei Code: c0 0f 44 c2 89 44 24 10 8b 44 24 1c 89 44 24 =
-0c 8b
-41 60 c7 04 24 a0 e4 3e c0 89 44 24 08 8b 44 24 20 89 44 24 04 e8 55 34 e0 =
-ff
-<0f> 0b 5b 00 0b b9 3e c0 83 c4 14 c3 89 f6 8d bc 27 00 00 00 00
-Mar 21 21:28:05 Pai-mei adsl-connect: ADSL connection lost; attempting
-re-connection.
+Signed-off-by: Domen Puncer <domen@coderock.org>
+Signed-off-by: Maximilian Attems <janitor@sternwelten.at>
+Signed-off-by: Domen Puncer <domen@coderock.org>
+---
 
-Steps to reproduce:
 
-------- You are receiving this mail because: -------
-You are the assignee for the bug, or are watching the assignee.
+ kj-domen/drivers/net/ppp_generic.c |   21 ++++++---------------
+ 1 files changed, 6 insertions(+), 15 deletions(-)
+
+diff -puN drivers/net/ppp_generic.c~list-for-each-entry-drivers_net_ppp_generic drivers/net/ppp_generic.c
+--- kj/drivers/net/ppp_generic.c~list-for-each-entry-drivers_net_ppp_generic	2005-03-05 16:09:02.000000000 +0100
++++ kj-domen/drivers/net/ppp_generic.c	2005-03-05 16:09:02.000000000 +0100
+@@ -1228,8 +1228,7 @@ static int ppp_mp_explode(struct ppp *pp
+ 
+ 	nch = 0;
+ 	hdrlen = (ppp->flags & SC_MP_XSHORTSEQ)? MPHDRLEN_SSN: MPHDRLEN;
+-	list = &ppp->channels;
+-	while ((list = list->next) != &ppp->channels) {
++	list_for_each(list, &ppp->channels) {
+ 		pch = list_entry(list, struct channel, clist);
+ 		nch += pch->avail = (skb_queue_len(&pch->file.xq) = 0);
+ 		/*
+@@ -1688,7 +1687,7 @@ static void
+ ppp_receive_mp_frame(struct ppp *ppp, struct sk_buff *skb, struct channel *pch)
+ {
+ 	u32 mask, seq;
+-	struct list_head *l;
++	struct channel *ch;
+ 	int mphdrlen = (ppp->flags & SC_MP_SHORTSEQ)? MPHDRLEN_SSN: MPHDRLEN;
+ 
+ 	if (!pskb_may_pull(skb, mphdrlen + 1) || ppp->mrru = 0)
+@@ -1742,8 +1741,7 @@ ppp_receive_mp_frame(struct ppp *ppp, st
+ 	 * The list of channels can't change because we have the receive
+ 	 * side of the ppp unit locked.
+ 	 */
+-	for (l = ppp->channels.next; l != &ppp->channels; l = l->next) {
+-		struct channel *ch = list_entry(l, struct channel, clist);
++	list_for_each_entry(ch, &ppp->channels, clist) {
+ 		if (seq_before(ch->lastseq, seq))
+ 			seq = ch->lastseq;
+ 	}
+@@ -2229,10 +2227,8 @@ static struct compressor_entry *
+ find_comp_entry(int proto)
+ {
+ 	struct compressor_entry *ce;
+-	struct list_head *list = &compressor_list;
+ 
+-	while ((list = list->next) != &compressor_list) {
+-		ce = list_entry(list, struct compressor_entry, list);
++	list_for_each_entry(ce, &compressor_list, list) {
+ 		if (ce->comp->compress_proto = proto)
+ 			return ce;
+ 	}
+@@ -2502,20 +2498,15 @@ static struct channel *
+ ppp_find_channel(int unit)
+ {
+ 	struct channel *pch;
+-	struct list_head *list;
+ 
+-	list = &new_channels;
+-	while ((list = list->next) != &new_channels) {
+-		pch = list_entry(list, struct channel, list);
++	list_for_each_entry(pch, &new_channels, list) {
+ 		if (pch->file.index = unit) {
+ 			list_del(&pch->list);
+ 			list_add(&pch->list, &all_channels);
+ 			return pch;
+ 		}
+ 	}
+-	list = &all_channels;
+-	while ((list = list->next) != &all_channels) {
+-		pch = list_entry(list, struct channel, list);
++	list_for_each_entry(pch, &all_channels, list) {
+ 		if (pch->file.index = unit)
+ 			return pch;
+ 	}
+_
