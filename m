@@ -1,27 +1,26 @@
-From: ramses <ramsesvp@quicknet.nl>
-Date: Tue, 06 Apr 2004 09:24:20 +0000
-Subject: Samba patch?
-Message-Id: <40728D87.1050801@quicknet.nl>
+From: "Yang Ke" <yangke@utstar.com>
+Date: Fri, 23 Apr 2004 16:25:29 +0000
+Subject: pppd and radius client
+Message-Id: <001e01c4294f$99df25f0$cd01fea9@cn.utstarcom.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hello,
+Hello ,
 
-Question: I need to authenticate about 340 users. I dont want to type 
-everything in the chap-secrets file ofcourse, so I wanted to run the 
-Samba plugin. I need ppp for authentication for PPTP. I downloaded 
-version ppp-mppe-2.4.1-7 from the poptop website, and there the smb 
-plugin worked flawless. Now I upgraded to 2.4.2B3 but it seems to me 
-that the necessary patch is not available.
+    I just met a problem that when dialup user disconnects
+his/her line(modem for example). the remote pppd detected
+this and make a account request to Radius server, some information
+such as calling number and called number are included in 
+this request message. calling number, for example, is retrieved
+by calling ioctl() on /dev/ttyxxxx. if disconnect the line directly,
+ioctl() return nothing;  if logoff from application, ioctl() return 
+the calling number correctly. 
+    can anybody give some explanation on this and is there any
+way to solve ?
 
-Can anyone tell me where I can get that patch? I googled after it but I 
-found thus many samba patch ppp references that I gave up after the 12th 
-page with hits orso. What would even be better is, if someone had an RPM 
-that I just could install.. Then I have 2 requirements: MPPE support AND 
-Smb support :p
+Thanks,
+YK
 
-Gtz
-ramses
