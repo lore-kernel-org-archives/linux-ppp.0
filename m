@@ -1,71 +1,61 @@
-From: Andy <fs@globalnetit.com>
-Date: Sat, 24 Apr 2004 05:56:02 +0000
-Subject: Re: pppd 2.4.2 bug?
-Message-Id: <1082786162.5706.5.camel@dell.tranquilitynj.net>
+From: "Robert P. J. Day" <rpjday@mindspring.com>
+Date: Tue, 13 Apr 2004 13:02:22 +0000
+Subject: PPP connect hangs at "getlogname (AUTO_PPP), read:"
+Message-Id: <Pine.LNX.4.58.0404130851580.8284@localhost.localdomain>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <Pine.LNX.4.21.0404221627080.17764-100000@corncob.localhost.tld>
-In-Reply-To: <Pine.LNX.4.21.0404221627080.17764-100000@corncob.localhost.tld>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I reported a similar problem a few weeks ago, there were a few messages
-about it on this list.
-Last message was from Paul on March 22, he'd found a bug in ipcp.c:
 
-<quote>
-It looks like the bug is here (line 723 of ipcp.c, in ipcp_cilen):
+  as an initial attempt to configure PPP as simply as possible, i set up
+both the client and the server on my laptop, dialing out thru /dev/ttyS0
+connected to an external USR modem, thru a teltone telephone line
+emulator, and from there back into a xircom pcmcia modem which is
+associated with /dev/ttyS3.  no problem, everything worked fine, resulting
+in my laptop having, of course, both a ppp0 and ppp1 interface added to 
+it, being both the client and the server at the same time.  (yes, it's 
+incestuous, but it's a convenient way to test both sides of the 
+connection.)
 
-    if ((wo->neg_addr || wo->old_addrs) && !go->neg_addr &&
-!go->old_addrs) {
-        /* use the old style of address negotiation */
-        go->old_addrs = 1;
-    }
+  having verified that the server side worked, i then set up a small
+embedded linux system we have here as the client, installed all of the 
+essential client-side stuff on it, and dialed out as before, again thru
+the teltone box.
 
-Receiving the conf-reject for the old CI_ADDRS option sets
-go->old_addrs to 0.  Then when we send the next conf-request, this
-code sets it to 1 again.
+  i tracked the server-side log file /var/log/mgetty.log.ttyS3, and what i 
+saw was:
 
-I'll have to think about the proper fix here.
+... snip ...
+wfr: waiting for ``RING''
+04/13 08:51:13 yS3   got: [0a][0d][0a]RING[0d]
+04/13 08:51:13 yS3   wfr: rc=0, drn=0
+04/13 08:51:13 yS3  send: ATA[0d]
+04/13 08:51:13 yS3  waiting for ``CONNECT''
+04/13 08:51:13 yS3   got: ATA[0d][0d][0a]CONNECT ** found **
+04/13 08:51:27 yS3  send:
+04/13 08:51:27 yS3  waiting for ``_''
+04/13 08:51:27 yS3   got:  38400[0d][0a] ** found **
+04/13 08:51:27 yS3   waiting for line to clear (VTIME), read:
+04/13 08:51:27 yS3   utmp + wtmp entry made
+04/13 08:51:28 yS3   tio_set_flow_control( HARD )
+04/13 08:51:28 yS3   print welcome banner (/etc/issue)
+04/13 08:51:28 yS3   getlogname (AUTO_PPP), read:
 
-Paul.
-</quote>
 
-/Andy
+  and that's where it hung.  i used the equivalent files and chat scripts 
+on the embedded system as i did on my laptop, so i'm puzzled why the PPP
+negotiation that worked before is hanging now.
 
-On Thu, 2004-04-22 at 17:43, Clifford Kite wrote:
-> This is an extract from a response by the OP to a reply by me on
-> comp.protocols.ppp:
-> 
->   Clifford Kite wrote:
->   >>rcvd [IPCP ConfRej id=0x3 <addrs 192.168.1.99 0.0.0.0>]
->   >>sent [IPCP ConfReq id=0x4 <addrs 192.168.1.99 0.0.0.0>]
->   >>rcvd [IPCP ConfRej id=0x4 <addrs 192.168.1.99 0.0.0.0>]
->   >>sent [IPCP ConfReq id=0x5 <addrs 192.168.1.99 0.0.0.0>]
->   >>rcvd [IPCP ConfRej id=0x5 <addrs 192.168.1.99 0.0.0.0>]
->   >>sent [IPCP ConfReq id=0x6 <addrs 192.168.1.99 0.0.0.0>]
->   >>rcvd [IPCP ConfRej id=0x6 <addrs 192.168.1.99 0.0.0.0>]
->   >>.....
->   >>repeats forever until I kill it
->   >
->   >
->   > Forever is relative.  It should stop all negotiation after 10 such
->   > requests.  Or there may be a bug in the code that negotiates the
->   > (old) IP addresses option.
-> 
->   Well, I started pppd and it dropped into the 'loop', so I went to make
->   coffee, ran some errands, and when I came back it was still doing it. So
->   that classifies as 'forever' for me ;)
-> 
-> I wrote back, saying that in my eyes it also qualified as forever. :)
-> So it does seem to be a bug.
-> 
-> ---
-> Clifford Kite                                 http://ckite.no-ip.net
-> 
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+  my login.config file contains:
 
+/AutoPPP/ -     a_ppp   /usr/sbin/pppd -chap -pap debug
+
+and i can supply the chat scripts if necessary, but i was hoping that 
+someone would know offhand the reason for the hanging at that point in the
+process.    what does that call to "getlogname" represent?  i'm not using
+any authentication, so i'm not clear on what i'm supposed to be looking 
+for at that point.
+
+rday
