@@ -1,134 +1,78 @@
-From: Bernard Blackham <bernard@blackham.com.au>
-Date: Sat, 06 Mar 2004 17:11:57 +0000
-Subject: [PATCH] mppe & PMTUD bug. (was Re: ppp-2.4.2 released)
-Message-Id: <20040306171157.GU18440@amidala.blackham.com.au>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="OXfL5xGRrasGEqWY"
+From: Milen Dimitrov <milend@ansco.com>
+Date: Fri, 02 Apr 2004 21:24:03 +0000
+Subject: dialin server not routing/forwarding????
+Message-Id: <406DD9F3.6060901@ansco.com>
 List-Id: <linux-ppp.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi,
+I just setup a dialin server on RedHat 9.
+Dial in server is a member of LAN with common gateway 192.168.1.1.
+I can browse internet from dial-in server and I can ping any other PC in 
+the LAN.
 
---OXfL5xGRrasGEqWY
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+ From a windows PC i can dial in and connect to the server but I cannot 
+browse Internet.
+When connected to the dial-in server my windows PC has the following 
+ipsettings and I cannot ping
+any other PC in the LAN except dial in server (192.168.1.10) I'm 
+connected to:
+c:\>ipconfig /all
+PPP adapter test2PPP:
+       Connection-specific DNS Suffix  . :
+       Description . . . . . . . . . . . : WAN (PPP/SLIP) Interface
+       Physical Address. . . . . . . . . : 00-53-45-00-00-00
+       DHCP Enabled. . . . . . . . . . . : No
+       IP Address. . . . . . . . . . . . : 192.168.1.171
+       Subnet Mask . . . . . . . . . . . : 255.255.255.255
+       Default Gateway . . . . . . . . . : 192.168.1.171
+       DNS Servers . . . . . . . . . . . : 192.168.1.2
+                                                     192.168.1.3
 
-On Wed, Mar 03, 2004 at 11:09:58AM +0200, Pasi K?rkk?inen wrote:
-> > Just a metoo message - I've been experiencing the exact same
-> > problems here. We have a poptop server serving over 100 concurrent
-> > connections and many users have noted that they weren't able to
-> > access the campus website.
-> > 
-> > The campus website is behind a Cisco load balancer, so this may be a
-> > suspect in breaking PMTU. Disabling the above lines of code also
-> > solved the problem here though and we've had few complaints since.
-> > 
-> 
-> Good to hear. 
-> 
-> Even if this is not a pppd bug, I think we should create some kind of
-> workaround (option?) for this?
+As you see the IP and the gateway for my windows PC are the same - 
+192.168.1.171. Is this correct?
 
-Patch is attached. With this patch, and specifying nomppe-lower-mtu
-in pptpd-options, all is happiness and light here :)
+My guess is that the linux Dial-in server doesn't route/forward packets 
+from PPP  to the rest of the LAN?
+How I can prove if it's true or not?
+Which config files/log files to be check out?
+Which tools I can use to debug it?
 
-> Other ppp-servers don't seem to have this same problem.. so it makes you
-> feel that pppd is broken :)
+Thank you for the help in advance!
+Milen
+=================
+Please see some of config files bellow:
+1. /etc/sysctl.conf
+contains the line:
+--------------------------
+net.ipv4.ip_forward = 1
+--------------------------
+so cat /proc/sys/net/ip4fw/ip_forward
+shows "1"
 
-Indeed. :(
+/etc/ppp/options
+contains:
+-----------------------
+-detach
+asyncmap 0
+netmask 255.255.255.0
+proxyarp
+lock
+crtscts
+modem
+noauth
+ms-dns 192.168.1.1
+ms-dns 192.168.1.1
+---------------------
 
-Paul - could this be included in pppd as a workaround?
+/etc/ppp/options.ttyS0
+contains:
+-----------------------
+192.168.1.10:192.168.1.171
+-----------------------
 
-Cheers,
 
-Bernard.
 
--- 
- Bernard Blackham <bernard at blackham dot com dot au>
-
---OXfL5xGRrasGEqWY
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="mppe_lower_mtu.diff"
-
-Index: ppp/pppd/ccp.c
-===================================================================
-RCS file: /cvsroot/ppp/pppd/ccp.c,v
-retrieving revision 1.46
-diff -u -r1.46 ccp.c
---- ppp/pppd/ccp.c	1 May 2003 12:30:28 -0000	1.46
-+++ ppp/pppd/ccp.c	6 Mar 2004 16:37:01 -0000
-@@ -72,6 +72,7 @@
-  */
- #ifdef MPPE
- bool refuse_mppe_stateful = 1;		/* Allow stateful mode? */
-+bool mppe_lower_mtu = 1; /* Set to 0 to disable dropping the MTU by 4 */
- #endif
- 
- static option_t ccp_option_list[] = {
-@@ -161,6 +162,15 @@
-       "allow MPPE stateful mode", OPT_PRIO },
-     { "nomppe-stateful", o_bool, &refuse_mppe_stateful,
-       "disallow MPPE stateful mode", OPT_PRIO | 1 },
-+    
-+    /* Option to avoid lowering our MTU by 4 (as should be done) to avoid
-+     * breakage with devices that don't handle PMTUD
-+     */
-+    { "mppe-lower-mtu", o_bool, &mppe_lower_mtu,
-+      "lower the MTU by 4 bytes for MPPE connections", OPT_PRIO | 1 },
-+    { "nomppe-lower-mtu", o_bool, &mppe_lower_mtu,
-+      "don't lower the MTU by 4 bytes for MPPE connections", OPT_PRIO },
-+
- #endif /* MPPE */
- 
-     { NULL }
-@@ -1190,9 +1200,16 @@
- 		     * allocate MPPE_PAD extra bytes in xmit buffers.
- 		     */
- 		    mtu = netif_get_mtu(f->unit);
--		    if (mtu)
--			netif_set_mtu(f->unit, mtu - MPPE_PAD);
--		    else
-+		    if (mtu) {
-+			/* Dropping the MTU seems to break Path MTU discovery
-+			 * particularly where load-balancers are involved.
-+			 * Not dropping the MTU may mean the occasional packet
-+			 * goes unencrypted due to them being 4 bytes larger
-+			 * and CCP thinking it's not worth encrypting.
-+			 */
-+			if (mppe_lower_mtu)
-+			    netif_set_mtu(f->unit, mtu - MPPE_PAD);
-+		    } else
- 			newret = CONFREJ;
- 		}
- 
-Index: ppp/pppd/pppd.8
-===================================================================
-RCS file: /cvsroot/ppp/pppd/pppd.8,v
-retrieving revision 1.76
-diff -u -r1.76 pppd.8
---- ppp/pppd/pppd.8	15 Jan 2004 05:09:00 -0000	1.76
-+++ ppp/pppd/pppd.8	6 Mar 2004 16:37:01 -0000
-@@ -614,6 +614,10 @@
- Enables the use of PPP multilink; this is an alias for the `multilink'
- option.  This option is currently only available under Linux.
- .TP
-+.B mppe-lower-mtu
-+Lowers the MTU by 4 bytes for MPPE connections. This is the correct
-+behaviour but breaks accessing some sites. This is the default.
-+.TP
- .B mppe-stateful
- Allow MPPE to use stateful mode.  Stateless mode is still attempted first.
- The default is to disallow stateful mode.  
-@@ -757,6 +761,11 @@
- .TP
- .B nomppe-128
- Disable 128\-bit encryption with MPPE.
-+.TP
-+.B nomppe-lower-mtu
-+Disables lowering the MTU by 4 bytes for MPPE connections. This is sometimes
-+required to access servers behind load balancing devices that break Path
-+MTU Discovery.
- .TP
- .B nomppe-stateful
- Disable MPPE stateful mode.  This is the default.
-
---OXfL5xGRrasGEqWY--
