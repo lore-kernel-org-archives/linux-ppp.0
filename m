@@ -1,83 +1,86 @@
 From: James Chapman <jchapman@katalix.com>
-Date: Wed, 20 Oct 2004 19:34:48 +0000
-Subject: pppd mtu negotiation problems
-Message-Id: <4176BDD8.30803@katalix.com>
+Date: Thu, 21 Oct 2004 08:44:26 +0000
+Subject: Re: pppd mtu negotiation problems
+Message-Id: <417776EA.1000304@katalix.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <4176BDD8.30803@katalix.com>
+In-Reply-To: <4176BDD8.30803@katalix.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-I'm seeing some unexpected behavior when negotiating MTU using
-ppp-2.4.2. The peer is a Cisco box, running IOS 12.1.
+Chen, thanks for the clarification.
 
-My PPP session is inside an L2TP tunnel. The local pppd client is
-started as shown, requesting MTU of 1460 which allows space for
-UDP/L2TP headers.
+I assumed pppd's mtu parameter set the max value for the local ppp
+interface's mtu. I thought that was why pppd has separate mtu and mru
+parameters.
 
-pppd 10.2.1.3:10.2.1.4 debug kdebug 7 mtu 1460 mru 1460 noipdefault \
-      user cisco password cisco local \
-      noaccomp nopcomp nobsdcomp nodeflate nopredictor1 novj novjccomp
+Is it ok for ppp to set its local ppp interface mtu to the minimum of
+the peer's mru and its preferred mtu? I can do this in my pppd plugin.
 
-When the pppN interface comes up, it has MTU of 1464. Yet on the cisco
-box, its interface shows an MTU of 1460. This mismatch leads to
-problems.
+Thanks
 
-The local syslog contains the following.
+/james
 
-pppd[3442]: pppd 2.4.2 started by root, uid 0
-pppd[3442]: using channel 12
-pppd[3442]: Using interface ppp0
-pppd[3442]: Connect: ppp0 <-->
-pppd[3442]: sent [LCP ConfReq id=0x1 <mru 1460> <magic 0x1175456f>]
-pppd[3442]: rcvd [LCP ConfReq id=0x1 <mru 1464> <auth pap> <magic
-0x7bdddc5>]
-pppd[3442]: sent [LCP ConfAck id=0x1 <mru 1464> <auth pap> <magic
-0x7bdddc5>]
-                                      ^^^^^^^^^^
-pppd[3442]: rcvd [LCP ConfReq id=0x2 <mru 1464> <auth pap> <magic
-0x7bdddc5>]
-pppd[3442]: sent [LCP ConfAck id=0x2 <mru 1464> <auth pap> <magic
-0x7bdddc5>]
-pppd[3442]: sent [LCP ConfReq id=0x1 <mru 1460> <magic 0x1175456f>]
-pppd[3442]: rcvd [LCP ConfNak id=0x1 <mru 1464>]
-pppd[3442]: sent [LCP ConfReq id=0x2 <mru 1464> <magic 0x1175456f>]
-pppd[3442]: rcvd [LCP ConfAck id=0x2 <mru 1464> <magic 0x1175456f>]
-pppd[3442]: sent [PAP AuthReq id=0x1 user="cisco" password=<hidden>]
-pppd[3442]: rcvd [PAP AuthAck id=0x1 ""]
-pppd[3442]: PAP authentication succeeded
-pppd[3442]: sent [IPCP ConfReq id=0x1 <addr 10.2.1.3>]
-pppd[3442]: rcvd [IPCP ConfReq id=0x1 <addr 0.0.0.0>]
-pppd[3442]: sent [IPCP ConfNak id=0x1 <addr 10.2.1.4>]
-pppd[3442]: rcvd [IPCP ConfAck id=0x1 <addr 10.2.1.3>]
-pppd[3442]: rcvd [IPCP ConfReq id=0x2 <addr 10.2.1.4>]
-pppd[3442]: sent [IPCP ConfAck id=0x2 <addr 10.2.1.4>]
-pppd[3442]: local  IP address 10.2.1.3
-pppd[3442]: remote IP address 10.2.1.4
-pppd[3442]: Script /etc/ppp/ip-up started (pid 3444)
-pppd[3442]: Script /etc/ppp/ip-up finished (pid 3444), status = 0x0
-
-It looks like both pppd and cisco send ConfReq requesting different
-MTU. Pppd acks the cisco 1464 MTU value but then sends another ConfReq
-asking for 1460. Cisco naks the 1460 and the peers then agree to use
-1464.
-
-Questions:-
-
-- Is cisco right to request MTU of 1464 and then set its interface to
-   have MTU of 1460? Perhaps the MTU value sent during LCP negotiations
-   is supposed to include the ethernet checksum? If so, pppd should
-   always reduce the negotiated value of MTU by 4 when doing
-   netif_set_mtu() for ethernet links.
-
-- Is the above LCP negotiation correct? Should pppd ack the 1464 value
-   when an MTU of 1460 is requested? (See the '^^^^' annotation in the
-   log above).
-
-Comments?
-
--- 
-James Chapman
-PGP key : http://www.katalix.com/~jchapman/pgpkey.txt
-
-
+Chen=A3=A8=B3=C2=A3=A9 Jun=A3=A8=BE=FC=A3=A9 wrote:
+> ........
+>=20
+>> The local syslog contains the following.
+>>
+>> pppd[3442]: pppd 2.4.2 started by root, uid 0
+>> pppd[3442]: using channel 12
+>> pppd[3442]: Using interface ppp0
+>> pppd[3442]: Connect: ppp0 <-->
+>> pppd[3442]: sent [LCP ConfReq id=3D0x1 <mru 1460> <magic 0x1175456f>]
+>> pppd[3442]: rcvd [LCP ConfReq id=3D0x1 <mru 1464> <auth pap> <magic
+>> 0x7bdddc5>]
+>> pppd[3442]: sent [LCP ConfAck id=3D0x1 <mru 1464> <auth pap> <magic
+>> 0x7bdddc5>]
+>>                                      ^^^^^^^^^^
+>> pppd[3442]: rcvd [LCP ConfReq id=3D0x2 <mru 1464> <auth pap> <magic
+>> 0x7bdddc5>]
+>> pppd[3442]: sent [LCP ConfAck id=3D0x2 <mru 1464> <auth pap> <magic
+>> 0x7bdddc5>]
+>> pppd[3442]: sent [LCP ConfReq id=3D0x1 <mru 1460> <magic 0x1175456f>]
+>> pppd[3442]: rcvd [LCP ConfNak id=3D0x1 <mru 1464>]
+>> pppd[3442]: sent [LCP ConfReq id=3D0x2 <mru 1464> <magic 0x1175456f>]
+>> pppd[3442]: rcvd [LCP ConfAck id=3D0x2 <mru 1464> <magic 0x1175456f>]
+>=20
+> .........
+>=20
+>> Questions:-
+>>
+>> - Is cisco right to request MTU of 1464 and then set its interface to
+>>   have MTU of 1460? Perhaps the MTU value sent during LCP negotiations
+>>   is supposed to include the ethernet checksum? If so, pppd should
+>>   always reduce the negotiated value of MTU by 4 when doing
+>>   netif_set_mtu() for ethernet links.
+>>
+>> - Is the above LCP negotiation correct? Should pppd ack the 1464 value
+>>   when an MTU of 1460 is requested? (See the '^^^^' annotation in the
+>>   log above).
+>=20
+>=20
+>    I think you do not get the meaning of this ppp negotiation right, in=20
+> your ppp case, neither peer ConfAck MRU=1464 for a ConfReq of MRU=1460.=20
+>    You should know that the two peers of a ppp session can choose=20
+> different MRU values. If A sends a ConfReq of MRU=1460 to B, it means A=20
+> requests that B should send a packet not larger than 1460 to A, while=20
+> how large packet can A send to B is another matter.
+>    In your ppp case(taking your ppp-2.4.2 as peer A, take cisco as peer=20
+> B): B request that A's packet does not exceeds 1464, and A immediately=20
+> acknowledge it. On the other hand, A first request that B's packet does=20
+> not exceeds 1460(this initial value is chosen by A's preference), but B=20
+> is not happy with tha value and tells A he(B) will send a packet as=20
+> large as 1464. At this point, if A's implementation can only process a=20
+> incoming packet not larger than 1460, it(A) will probably stop the=20
+> negotiation and send a LCP-TermReq to B, but A's ppp stack is flexible=20
+> and can receive a packet as large as 1464(larger than his initial=20
+> prefrence 1460), therefore, A send a new ConfReq to B to request a=20
+> MRU=1464, this time B acknowledges it.    Note: the MRU value's meaning=20
+> is the length network layer packet(e.g. IP packet) encapsulated in the=20
+> PPP frame, not PPP frame itself.
+>=20
+> -- Chen Jun
+>=20
