@@ -1,7 +1,7 @@
-From: "Robert P. J. Day" <rpjday@mindspring.com>
-Date: Tue, 13 Apr 2004 18:09:02 +0000
+From: James Carlson <carlson@workingcode.com>
+Date: Tue, 13 Apr 2004 18:23:19 +0000
 Subject: Re: PPP connect hangs at "getlogname (AUTO_PPP), read:"
-Message-Id: <Pine.LNX.4.58.0404131400010.7674@localhost.localdomain>
+Message-Id: <16508.12311.21903.817684@c-24-147-210-59.ne.client2.attbi.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.LNX.4.58.0404130851580.8284@localhost.localdomain>
 In-Reply-To: <Pine.LNX.4.58.0404130851580.8284@localhost.localdomain>
@@ -10,48 +10,42 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Robert P. J. Day writes:
+> as i understand it, this message represents some sort of
+> incompatibilty/mismatch between the user space PPP code and the kernel
+> code on the embedded system.  it has nothing to do with the server side,
+> since it hasn't even got that far, is that accurate?
 
+It's this code on the client that fails (pppd/sys-linux.c):
 
-On Tue, 13 Apr 2004, James Carlson wrote:
+	/* Open an instance of /dev/ppp and connect the channel to it */
+	if (ioctl(fd, PPPIOCGCHAN, &chindex) = -1) {
+	    error("Couldn't get channel number: %m");
+	    goto err;
+	}
 
-> Unfortunately, it's not that simple.  The Linux kernel version
-> numbering is completely separate from ppp's version numbering.  Pppd
-> runs on quite a few systems other than Linux (in fact, it ran on BSD
-> systems *first*), so it's mostly confusing coincidence that the
-> numbers look similar.
-> 
-> Look at README.linux in the ppp-2.4.1 source directory.
-> 
-> ppp-2.4.1 should support a 2.4.22 kernel just fine, so it's possible
-> that this one module (ppp_generic.o) is stale or mangled, or that your
-> kernel was compiled with an odd set of include files.
+I botched my earlier hastily-concocted analysis, though.  It's not
+doing that ioctl on the /dev/ppp driver; it's doing it on 'fd' which
+is connected to the serial device.  On 2.4.x, that should be handled
+in drivers/net/ppp_async.c.
 
-i've run through checking files and recompiling just to be on the safe 
-side, and i'm pretty much out of ideas.
+So, check to see:
 
-the user space PPP utils on both systems (embedded and fedora core laptop) 
-are 2.4.1.  the kernel space PPP code is (internally) 2.4.2 on both.  
-we're using the ELDK 3.0 PPC toolchain for cross-compiling everything
-for the embedded system, kernel and utils included.
+	- Definition of PPPIOCGCHAN used for compiling ppp_async.o and
+          pppd/sys-linux.o is the same.  (Should be from a common
+          <linux/if_ppp.h> include file.  Note that there's an extra
+          one of these shipped helpfully with the pppd sources, and if
+          that's out of step with your kernel, then you're in trouble.)
 
-connecting with PPP both out of, and into, the laptop works fine.
-it's only when i switch to using the embedded system as the client that
-i get that maddening:
+	- ppp_async.o was really compiled with this kernel and isn't
+          from some other system.
 
-  Serial connection established.
-  Couldn't get channel number: Invalid argument
+	- Kernel was compiled to support ppp_async (CONFIG_PPP_ASYNC
+          set to 'm' or 'y' in the 'config' file).
 
-as i understand it, this message represents some sort of
-incompatibilty/mismatch between the user space PPP code and the kernel
-code on the embedded system.  it has nothing to do with the server side,
-since it hasn't even got that far, is that accurate?
+> i suspect it's time to just go drink heavily.  argh.
 
-like i said, i'm baffled.  the code versions suggest that they'd be 
-compatible, both the user space code and the kernel were compiled with the
-same cross-compiler, i'm pretty sure i've got the right kernel config
-parameters for basic PPP.
+It's always time for that ...
 
-i suspect it's time to just go drink heavily.  argh.
-
-
-rday
+-- 
+James Carlson                                  <carlson@workingcode.com>
