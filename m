@@ -1,7 +1,7 @@
-From: James Carlson <carlson@workingcode.com>
-Date: Tue, 13 Apr 2004 17:07:31 +0000
+From: "Robert P. J. Day" <rpjday@mindspring.com>
+Date: Tue, 13 Apr 2004 18:09:02 +0000
 Subject: Re: PPP connect hangs at "getlogname (AUTO_PPP), read:"
-Message-Id: <16508.7763.247617.592624@c-24-147-210-59.ne.client2.attbi.com>
+Message-Id: <Pine.LNX.4.58.0404131400010.7674@localhost.localdomain>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.LNX.4.58.0404130851580.8284@localhost.localdomain>
 In-Reply-To: <Pine.LNX.4.58.0404130851580.8284@localhost.localdomain>
@@ -10,26 +10,48 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Robert P. J. Day writes:
-> ok, that might make sense.  the kernel we're using for the embedded system
-> is a hacked version of 2.4.22-pre8, in which the PPP files have internal
-> version numbers of 2.4.2.
+
+
+On Tue, 13 Apr 2004, James Carlson wrote:
+
+> Unfortunately, it's not that simple.  The Linux kernel version
+> numbering is completely separate from ppp's version numbering.  Pppd
+> runs on quite a few systems other than Linux (in fact, it ran on BSD
+> systems *first*), so it's mostly confusing coincidence that the
+> numbers look similar.
 > 
-> the user space code on the system is, OTOH, ppp-2.4.1.  is that enough of
-> a mismatch to be causing all this grief?  i can fairly quickly upgrade to 
-> the user space 2.4.2 stuff if that's the obvious problem.
+> Look at README.linux in the ppp-2.4.1 source directory.
+> 
+> ppp-2.4.1 should support a 2.4.22 kernel just fine, so it's possible
+> that this one module (ppp_generic.o) is stale or mangled, or that your
+> kernel was compiled with an odd set of include files.
 
-Unfortunately, it's not that simple.  The Linux kernel version
-numbering is completely separate from ppp's version numbering.  Pppd
-runs on quite a few systems other than Linux (in fact, it ran on BSD
-systems *first*), so it's mostly confusing coincidence that the
-numbers look similar.
+i've run through checking files and recompiling just to be on the safe 
+side, and i'm pretty much out of ideas.
 
-Look at README.linux in the ppp-2.4.1 source directory.
+the user space PPP utils on both systems (embedded and fedora core laptop) 
+are 2.4.1.  the kernel space PPP code is (internally) 2.4.2 on both.  
+we're using the ELDK 3.0 PPC toolchain for cross-compiling everything
+for the embedded system, kernel and utils included.
 
-ppp-2.4.1 should support a 2.4.22 kernel just fine, so it's possible
-that this one module (ppp_generic.o) is stale or mangled, or that your
-kernel was compiled with an odd set of include files.
+connecting with PPP both out of, and into, the laptop works fine.
+it's only when i switch to using the embedded system as the client that
+i get that maddening:
 
--- 
-James Carlson                                  <carlson@workingcode.com>
+  Serial connection established.
+  Couldn't get channel number: Invalid argument
+
+as i understand it, this message represents some sort of
+incompatibilty/mismatch between the user space PPP code and the kernel
+code on the embedded system.  it has nothing to do with the server side,
+since it hasn't even got that far, is that accurate?
+
+like i said, i'm baffled.  the code versions suggest that they'd be 
+compatible, both the user space code and the kernel were compiled with the
+same cross-compiler, i'm pretty sure i've got the right kernel config
+parameters for basic PPP.
+
+i suspect it's time to just go drink heavily.  argh.
+
+
+rday
