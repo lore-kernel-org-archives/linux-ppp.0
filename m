@@ -1,7 +1,7 @@
 From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Thu, 10 Mar 2005 19:13:46 +0000
+Date: Thu, 10 Mar 2005 19:17:30 +0000
 Subject: Re: Blowfish encryption
-Message-Id: <Pine.LNX.4.61.0503101112130.8485@string.physics.ubc.ca>
+Message-Id: <Pine.LNX.4.61.0503101115320.8485@string.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1110403872.18073.330.camel@linux.linxdev.com>
 In-Reply-To: <1110403872.18073.330.camel@linux.linxdev.com>
@@ -12,61 +12,45 @@ To: linux-ppp@vger.kernel.org
 
 On Thu, 10 Mar 2005, Christopher Fowler wrote:
 
-> The only problem with ssh is that it is one protocol.  There are many
-> protocols that travel across the ppp link.  Some fo them not encryted
-> and can not be encrypted.
-I think you have to be much clearer on what you want to do, and whee you
-think your threat is coming from.
+> Some of these tin-hat people I tell them to simply buy encrypted modems
+> that do the encryption between the.  Are there anyone out there selling
+> good ones anymore?
+>
+> Th issue is that there are two boxes connected via a modem and using PPP
+> for IP traffic.  The customer wants to be sure all traffic across that
+> phone line is encrypted.  Since they use so many network product some
+> old those protocol may be plain-text.  By having ppp encrypt what it
+> sends that would cover any data that travels across.
+>
+
+What are the systems you use? If it is Linux systems and James says use
+ECP. If they are windows machines you may be more limited ( and you sure
+cannot rewrite ppp for them either).
+
+Are these two machines stand alone machines whcihyou want to connect? Are
+they connected to the net? Are they really worried about wiretapping?
+
 
 >
-> I stopped using telnet a long time ago.  Also with these devices there
-> are protocols that are routed across that link we have no control over
-> so doing encryption inside of ppp would cover all the bases.
->
-  Which ones are you worried about?
-
->
-> On Thu, 2005-03-10 at 12:53, Bill Unruh wrote:
->> On Wed, 9 Mar 2005, Christopher Fowler wrote:
+> On Thu, 2005-03-10 at 13:17, James Carlson wrote:
+>> Christopher Fowler writes:
+>>> The only problem with ssh is that it is one protocol.  There are many
+>>> protocols that travel across the ppp link.  Some fo them not encryted
+>>> and can not be encrypted.
+>>>
+>>> I stopped using telnet a long time ago.  Also with these devices there
+>>> are protocols that are routed across that link we have no control over
+>>> so doing encryption inside of ppp would cover all the bases.
 >>
->>> Hello,
->>>
->>> I've been thinking about encryption in pppd.  By reading my emails
->>> you've probably have an idea of what we do with pppd.  Since I don't use
->> Bad idea. There is already a well accepted throughly tested way of doing
->> this. It is called ssh. Use it.
->> Trying to overload ppp  is not the way to do it ( and yes I know it is
->> done).
+>> As I mentioned, if it's really a PPP issue (not clear that it is, as
+>> the threat model isn't clear), then ECP is likely to be the right
+>> answer.
 >>
->> Note that tapping a modem comjunication is hard at the best of times due to
->> cross training refections etc.
->>
->>> pppd to attach a windows desktop to a Linux server I was thinking about
->>> maybe an implementation of Blowfish type encryption between two pppd
->>> processes.  There could be a command line argument that runs on
->>> encryption and the two processes could determine in the LCP phase that
->>> they are to encrypt all data between them.    This is mainly for those
->>> individuals who think that the phone company will tap their line and see
->>> their data.  Not very useful in tunnels since programs like vtun do the
->>> encryption for pppd.
->>>
->>> Is this something that might be feasible?  I'm not looking to add
->>> certificate based encryption like SSL but encryption like SSH, Vtun and
->>> others.  Would a windows connection croak if it dialed into my box and
->>> my box wanted to use encryption?  Would the windows ppp process be smart
->>> enough to reject that request?  Has anything like this been tried yet?
->>>
->>
->> Use ssh.
->>> Thanks,
->>> Chris
->>>
->>>
->>> -
->>> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
->>> the body of a message to majordomo@vger.kernel.org
->>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>>
+>> If it's an IP issue (are you worried about non-IP protocols?), then
+>> I'd certainly recommend the use of IPsec.  It defends against things
+>> that ssh (and, for that matter, SSL/TLS) cannot, works whether or not
+>> you use PPP, works on an end-to-end basis, and doesn't require
+>> changing everyone's implementations.
 >
 
 -- 
