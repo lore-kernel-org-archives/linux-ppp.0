@@ -1,7 +1,7 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Thu, 30 Sep 2004 02:10:58 +0000
+From: carlsonj@workingcode.com
+Date: Thu, 30 Sep 2004 17:33:51 +0000
 Subject: Re: counters overflow
-Message-Id: <16731.27442.190351.358212@cargo.ozlabs.ibm.com>
+Message-Id: <16732.17279.778971.646668@carlson.workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <262655318.20040929092029@rsl.ru>
 In-Reply-To: <262655318.20040929092029@rsl.ru>
@@ -10,17 +10,21 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Bill Unruh writes:
+Paul Mackerras writes:
+> I think I will make pppd maintain the upper 32 bits of a count in
+> userspace, by having it wake up periodically and poll the 32-bit
+> counters from the kernel and see if they have wrapped.
 
-> You have the source code. Make the counters longs instead. Does not seem
-> a terribly difficult hack. 
+Yuck.  How often would you need to poll?
 
-They would need to be long long, and the problem (from my point of
-view, at least) is that that changes the user/kernel ABI, which causes
-all sorts of compatibility problems.
+We solved the problem on Solaris by having the kernel implement both a
+PPPIO_GETSTAT ioctl and a new PPPIO_GETSTAT64 ioctl.  The former still
+returns 32 bit counters to applications that want them.  The latter
+uses 64 bit counters.  In the user space, we call PPPIO_GETSTAT64
+first, and if that fails, fall back to PPPIO_GETSTAT.
 
-I think I will make pppd maintain the upper 32 bits of a count in
-userspace, by having it wake up periodically and poll the 32-bit
-counters from the kernel and see if they have wrapped.
+I'd expect that the same sort of thing would work fine on Linux as
+well.
 
-Paul.
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
