@@ -1,28 +1,29 @@
-From: "David S. Miller" <davem@davemloft.net>
-Date: Fri, 10 Sep 2004 21:55:06 +0000
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Fri, 10 Sep 2004 22:33:15 +0000
 Subject: Re: [IPCOMP] Use per-cpu buffers
-Message-Id: <20040910145506.4b3933c4.davem@davemloft.net>
+Message-Id: <20040910223315.GA1335@gondor.apana.org.au>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20040910111047.GA29330@gondor.apana.org.au>
-	<Xine.LNX.4.44.0409101140160.6664-100000@thoron.boston.redhat.com>
+References: <20040910111047.GA29330@gondor.apana.org.au> <Xine.LNX.4.44.0409101140160.6664-100000@thoron.boston.redhat.com>
 In-Reply-To: <Xine.LNX.4.44.0409101140160.6664-100000@thoron.boston.redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="hz-gb-2312"
+Content-Transfer-Encoding: base64
 To: James Morris <jmorris@redhat.com>
-Cc: herbert@gondor.apana.org.au, kuznet@ms2.inr.ac.ru, netdev@oss.sgi.com, linux-ppp@vger.kernel.org, paulus@samba.org
+Cc: "David S. Miller" <davem@davemloft.net>, kuznet@ms2.inr.ac.ru, netdev@oss.sgi.com, linux-ppp@vger.kernel.org, paulus@samba.org
 
-On Fri, 10 Sep 2004 11:42:00 -0400 (EDT)
-James Morris <jmorris@redhat.com> wrote:
-
-> On Fri, 10 Sep 2004, Herbert Xu wrote:
-> 
-> > James, can you think of a general solution to the 64K buffer in
-> > terms of the crypto decompression interface?
-> 
-> I haven't looked at the code for a while, but I think we might be able to 
-> save some memory by specifying compression parameters and making the 
-> appropriate changes to zlib.
-
-For now I'm going to put in Herbert's per-cpu patch, and we
-can try to come up with something better later.
+T24gRnJpLCBTZXAgMTAsIDIwMDQgYXQgMTE6NDI6MDBBTSAtMDQwMCwgSmFtZXMgTW9ycmlzIHdy
+b3RlOgo+IAo+IEkgaGF2ZW4ndCBsb29rZWQgYXQgdGhlIGNvZGUgZm9yIGEgd2hpbGUsIGJ1dCBJ
+IHRoaW5rIHdlIG1pZ2h0IGJlIGFibGUgdG8gCj4gc2F2ZSBzb21lIG1lbW9yeSBieSBzcGVjaWZ5
+aW5nIGNvbXByZXNzaW9uIHBhcmFtZXRlcnMgYW5kIG1ha2luZyB0aGUgCj4gYXBwcm9wcmlhdGUg
+Y2hhbmdlcyB0byB6bGliLgoKSXQnZCBhbHNvIGJlIG5pY2UgdG8gYWRkIGEgY29tcHJlc3Npb24g
+YWxnb3JpdGhtIHRoYXQgcmVxdWlyZXMgbGl0dGxlIAptZW1vcnkgdG8gcnVuLiAgVGhhdCB3YXkg
+d2UgY2FuIGdldCBhIGNsZWFyIHBpY3R1cmUgb2Ygd2hhdCBpbnRlcmZhY2UKY2hhbmdlcyBhcmUg
+T0sgYW5kIHdoYXQgYXJlbid0LgoKQ291bGQgd2UgcGVyaGFwcyB1c2UgdjQ0PyBJcyB0aGUgcGF0
+ZW50IGFuIGlzc3VlPwoKQ2hlZXJzLAotLSAKVmlzaXQgT3BlbnN3YW4gYXQgaHR0cDovL3d3dy5v
+cGVuc3dhbi5vcmcvCkVtYWlsOiBIZXJiZXJ0IFh1IH57UG1WPkhJfn0gPGhlcmJlcnRAZ29uZG9y
+LmFwYW5hLm9yZy5hdT4KSG9tZSBQYWdlOiBodHRwOi8vZ29uZG9yLmFwYW5hLm9yZy5hdS9+aGVy
+YmVydC8KUEdQIEtleTogaHR0cDovL2dvbmRvci5hcGFuYS5vcmcuYXUvfmhlcmJlcnQvcHVia2V5
+LnR4dAotClRvIHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1
+YnNjcmliZSBsaW51eC1wcHAiIGluCnRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9A
+dmdlci5rZXJuZWwub3JnCk1vcmUgbWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5l
+bC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA==
