@@ -1,112 +1,22 @@
-From: Guy Rouillier <guy-rouillier@speakeasy.net>
-Date: Tue, 15 Jun 2004 04:47:33 +0000
-Subject: sha1 pppd fix for 64-bit Linux
-Message-Id: <20040615004733.2763a95c@localhost>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="Multipart=_Tue__15_Jun_2004_00_47_33_-0400_q+2x=M74_7Ffk4EF"
+From: Andy <fs@globalnetit.com>
+Date: Tue, 22 Jun 2004 06:31:34 +0000
+Subject: pppstats and LCP
+Message-Id: <1087885893.3348.149.camel@dell.tranquilitynj.net>
 List-Id: <linux-ppp.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-This is a multi-part message in MIME format.
+Does pppstats count LCP frames, or only higher layer packets?
 
---Multipart=_Tue__15_Jun_2004_00_47_33_-0400_q+2x=M74_7Ffk4EF
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+I noticed that with LCP echo enabled but the link otherwise idle, the
+pppstats counters don't change. So I guess pppstats isn't counting the
+echo or reply frames. Question is, do the pppstats include any LCP
+counts?
 
-This is one of two messages addressing a fix to the sha1 code in PPP to
-enable it to work on 64-bit systems.  The fix addressed in the current
-message is for the pppd component; the corresponding fix in the other
-message is for the linux/mppe component.  Both sets of changes are
-required.  Without either I was encountering a segfault.  With only the
-pppd changes, I got a kernel panic.  With both sets of changes, I am
-able to use pptp with ppp to connect with a Microsoft server.
 
-The major set of changes was to convert long data types to data types
-with explicit length.  Basically, I changed longs to 32-bit data values
-and unsigned chars to 8-bit values.  I also included a wrapper sha1()
-function that I found in later versions of the code by the author, Steve
-Reid.
 
-This is my first submittal, so I apologize if I am not submitting this
-properly.  I followed the advice I was given and read the submittal
-guidelines at gnu.org.  However, after running diff -u against the ppp
-component I pulled out of cvs and against my updates, I wasn't able to
-run patch successfully against the result.  I asked on the
-help.gnu.utils newsgroup but received no reply and I'm going out of town
-for the rest of the week.  Because of this, I'm including both the diff
-and my modified sources in the attached file.  I will gladly redo this
-when I return if there is a better way to do it.
 
--- 
-Guy Rouillier
 
---Multipart=_Tue__15_Jun_2004_00_47_33_-0400_q+2x=M74_7Ffk4EF
-Content-Type: application/octet-stream;
- name="pppd.tar.gz"
-Content-Disposition: attachment;
- filename="pppd.tar.gz"
-Content-Transfer-Encoding: base64
 
-H4sIAP17zkAAA+1ae3PbuBHPv9an2CZTV7IomyD4kOyLG1mSL5nJJBk7aTvN+TK0BFlMZFKlKD8u
-5+/eBcAH+JAfZ9+1nRKmLGqx+O1yASyWwC4Wi8n2xJtOn/1+RSe6bpvmMx2LY1u5bx0rCTWecRbD
-dGxHd5CfmEgC/XfUKS2rZeSGAM/OVtfhbXx31f+Plk6nAwscAzvLmUu2xxuGrhsd3ezoBujdXcvc
-tXrbelKgo1u63mi327AzC87ZDjeKaLlTwEAAu0MIGHSXmLtU3+71TGJ2HZtjmIjx6hV0DKI50Bb/
-X71qwAvPH89XEwbPBc7seQMagL0TeWO4CLxJo3P8uk++fAxdfzkNwvPmyl96Zz6bwDzwzz5bJxqM
-A38ZQUofz9zws22etPYa7WLbL54fUeNLJCQwtTWv6WLF6Wo6ZUl7VOXFhE09n0EYzJsX7nzFNDj1
-omULmk35uwU//ABNQWvBr5BS9/ehSQ3oJHWtFsJxA5iGRtAC8oubYGcLXrvLGbiw9PyzOQOLGB1s
-BKfzYPxtGz7OvCXgFc0YahsyCKbi3p2fBaEXzc63YWvnQWYrP75qPNUGjzRhA743OoAlL95FI2Iz
-DSYaMOwmwZECF2p5JUTXC4Y9gThe4HPQjbzKYy5uTyULQfPPxEZyeyNVLmaMKUJezCTk3MDgdf/I
-Nt++f/cjsWOiSoIt0StybHhTrhO30Ov+u+Hx+8ND+bRxR+RVvAzCb8uFO2axBipjol2BR0gX8uAl
-NPNqtDLmmPGcnY8X103Br8W9oIFt8oH8gs2XTAy/nqHZ0Mb/PTH4Ei3YZ3oC7Zcw2VNppqAlAnCg
-/t1bMLhwQ889nbMlH3ftKiu0Y32WLGpupnpqoGs4xn9hwbSZElt8nr5gPi5HUoqLz3qKnzF+Jvhh
-+NFRg5t4/uA6gbq3CXHiR0C1jlY+XAerECZu5OLkCIPV2Qy/vWUyN5RJ8WmBXKwp7gcf/wFbOH4j
-dhVVT4YtDqllROwpmDM/mRl3giVdm+Bkw46DlOYHh/c0+FqaFZII0kZf+XiIJXX2x8HKjz7rJ9zn
-0BZsgk3jHvOm6JDKfNinKJ07LmRH75X+aEGBmZy023vS7LSnGQbaHR2XYSaG708msHAnE4/Pan8C
-IYtWoS/c0zlbLt0zBhPvjC2jin449Hx33sxbWzJ/NnR0KyWbJjaPGyaWjduIquM3P77rf/x0NMK7
-f46qQap9krRvvkKoNOXSpDW6J2u6JSNyhQot4j5D9wlNTwxm8NDqXfxqt1uJNoIla+id8C7OadIq
-dSXC7b8EE/4KOuwCaZ1IRaqhYu3ugwJp4atYk3aQZVMMjy3otoAPMcOyWnvCJYxw6ro+DtwJW+A0
-ZjiAeVcLbyofTZ0o6fQodDz6s+c/YQzxXEMNYoOuaZfOqHwTIfFy5uECWjXmN8HSzRb8CZ/U7Aqr
-b9xbr1SrdU1yKuUUusFG8q6yadZNGlpWGvR4FqzmKN5dLXGRF+2y9bclfO5G9ZAy9GxMbcTTomog
-IUC+NhkbDdjYEMiKBeVK4O3vGyd3DIfkidcvFsKR2F2Noh9xqIaxoogBY+/PPXybOwjgsWCz6ECX
-IcYEeQeqwX28AD7v99h1cE8wjq6wK2PCG9/DJQpJabgYdxGn4WrFZXJPvZfzPVKYBklDHOi5kHom
-Q2pCMHYGQnapvUvJA0PqWTGkprtGb9vo2pbRc0xTCamJZqI9NYsbs4N2l82Txdnnq/MXofzrL0iJ
-A9qUAsKRv5nCe5y+x8dveajp+YCDT+N+XNzhjRvBBQuXPPwKxGrfIWKex8v/+w+jd9hY6NMVEYZG
-qOhdwSKVkDLfvBu8/TQcccntnS2c6twkVgyJkgcxyYaDaziO2AWDI4aD4oclv3/FJueX7HR7HJzv
-x4wO4Ivkn+HD6nSOwdQwOHc9P67qCivgX6pExQBRI7kvwzc/jo4/xuTYVhVtiryiHxyNWPhuY/Ev
-dWA30vh1GYWrcVS9AiUBdXEVEpXSjxmlykLAHntOKIfp5ZoMMq5Zi4lhcTJ7+HLWQb/AcJUXUzWb
-RdlSi1OizFOKlNbEW/lYqxKqInK4c/nn03SNwltJ1JPnKSicchVDuy2oCu1yUL8lYilr9cReUXRl
-6g6Kc1OOXe4aClV8RnWSkF3Ux56EV/yndzbqcp9SteY8tQxcu3THstbs/4mS7P9Rw7Gf6YRSy34G
-1lMrUlX+z/f/1m/jPZ2MO/Z/qU3tpP8N0+D9b1Jbr/d//4iCUReG7tNosbuzg/+3pyufRdtTb2ex
-Ot0Zh9eLaGfmLmd8TMTjgvPzjxKk4a874zPkqQjNYqyPuDLB39g4CsIlNKdhcA6Hbz4cw4dPB0C6
-eoe0ONdz93T8nN/0e70eHVEbTEe3u8Tuw0GfjgzLIeB0LX1g2APoDYb6sNsbJg0neDG8eHR3htcM
-Lw+vr3h9w2uO1zlePl4BXgu8/iWkdc1el44wzCYDejA07BFK64/Mfp/AYc8iRm9kwcgybUc/JEI7
-OPfmcx4dh/gaHHkR3i55pPzcFXgUm/YcOoChOTCH/b4JhzYZjQ6MAxge9IeGQwnYFjV1Yh82+Era
-wJVVjT+TvTXEGgQLD9+nxF7XKZvyLWG+2cL3YC69aAae3G1ppHvr2DMh1m7P9hUadjliRzuej/QN
-lDaLAn8uXzDLu/INdXP5kdvqjafcVOd2Op1/01FxvgGFt3i3YCHXTOxDeRjqee4c2NUCGYRl+PsO
-nAWRrJ8wl3eUrOdGnKy4tURliDHyBHB+jHmHghik+JrD3Gthpvg5hHwP1Rd7r539uXyvlgZVaKiu
-0qTQYpNYvBG3SUpsem1CW7zmZ5XWFST4Sbxp52qMArNA1Uhsp+aR3j4iLQ2ODPxQ/Jjghkw8KT8O
-ZCHfvQnQeq4cv/jqx6NwMQDVBz7SmxfapXalXWu/aPgYv7RfNpuXm82rn69bLfy0Y4u09Sur3zUc
-nLpt0dma1dq7fMlvLzWq41hIEcndiA8DNMqAlz9f5aDs0bA3OuiTu6BohW7Ny1+vWpvXrV9Ry6uW
-Ato9JAcHg+HgLlDzbv0GfdsYkKG9Bkr06RMcHT3d3G58b9x5llM8yimdzVQfzVSdzFQezDSqDiTu
-edhy37OWW45a5EnLrWCSn7Ompx47wqtfQ2HX7QSiQMjm/ujCDZfJ1io/JJEseqJ6SiExZZxSjJgy
-SSk0prCUkpgANTGl2xPLl6Gr/oC549k2vA2CBXYfjsQ5kw6VN0Sf4Gqn2libaPykp7XHKUxLaHxL
-lFN4raSBISmyBacBjTcRkZog4QgyJZ+CbpXQ7RK6k2EpErqST0HvFdFJSXdCMqxMAinpj766gE5K
-upNkoxQ9niJB6E9UdEdSFPSupCjovQTLUCQYQn9DQTeIpGTohiEpGbpBM6xMgmFKPgXdKqHbJXQn
-w1IkdCWfgt4rotOS7pRkWJkEWtKf0iI6LelOrQxLkVDSnzol9JLuNLU9VSSYQn+qoJtEUjJ005CU
-DN2kGVYmwTQln4JuldDtErqTYSkSupJPQe8V0a2S7hbJsDIJVkl/ixbRrZLu6QFBXkJJf8spoZd0
-t1Lbm4oEW+hvKug2kZQM3TYkJUO3aYaVSbBNyaegWyV0u4TuZFiKhK7kU9B7RXSnpLtDMqxMglPS
-36FFdKeku2NlWIqEkv6OU0Iv6e4kto9Pf3k4kVuhTl1c9XCJDZLFbDtZy+KFIlm3+DG0u6eQiCCd
-qiRDkMYqKZenUJGmUHnwtC4muH+OgrJYr8lQuJEBGZfBt5fxLeWNfPVANPDZZWIPEXJlsVZh7zw9
-pv6ePI0Ivr0ESqzEMgRz/SgNCAqBg85fJTDAdUzLoDrZq+Ihkmd0OBj2D7q9Sh5D8vS6+I46OBxV
-8lDJQ3RqWKZjV/KYkmdAh8aIHOoFnvSQ9mU5/yBn2zvyPBSrPjIvoxjHymN+Qbxn7sUTpV5U2ElO
-E9EShRrJfBQCv0JbPADsoyL8HHgjDlU3U5A4XP+Kgbx8dHGCbJudr3yYbxTi/3w/alCA4S3EKTTw
-E+g2CsWHQgXEL44qdODq3YG7yXXhr8gIeNPY+Bon/UByniyi6g151t1QY/DKB0vQxNktTkSvlQ6h
-h2WsKCPqkVkn1SMqpVXkjYjK9VkjEJenyfR4VKKH7KKHp2s8IFvjwZkXOIjWa/Xb0i42KntESbpY
-l1Xx6KSKm/Urm5j6KE6ZMfGiVpgYYmWT2YAVPPE0RBb++lDJEttLFybLrZ6qOePqigVXPMC5+43l
-bQvBBQsvQy9i4EV/wZfOSz/NZFXeePP9cbdbitfrGzmFnzyj5Hsjn0+irOVxUsitySTrc0lu/oAz
-1PU5J08n4/bzH51Y1ErPfygl4vzHovX5zx9RSllBpaSgxiNSggoZQdmJQ/QFB5k4hFiTdBDP2ca6
-hKEGP7gqZQvdN1lofa5QliqUya7KE6pOE3pAlpDcHLytgaEnVkiMUUodgnwgkSX4FCqy/B5ZsTa9
-R83uadwjR+bpUmSeLkPm90mQadyaBVOnwNSlLnWpS13qUpe61KUudalLXepSl7rUpS51qUtd6lKX
-utTlv6L8G0BM4x4AUAAA
-
---Multipart=_Tue__15_Jun_2004_00_47_33_-0400_q+2x=M74_7Ffk4EF--
