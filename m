@@ -1,82 +1,104 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Sun, 11 Apr 2004 07:31:25 +0000
-Subject: Re: netstat -nr
-Message-Id: <Pine.LNX.4.50.0404110025080.9174-100000@string.physics.ubc.ca>
+From: nick <lupusdacicus@netscape.net>
+Date: Sat, 10 Apr 2004 18:33:06 +0000
+Subject: pppd routing
+Message-Id: <40799D08.40700@netscape.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <407A3BEA.1030607@netscape.net>
-In-Reply-To: <407A3BEA.1030607@netscape.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Sun, 11 Apr 2004, nick wrote:
 
-> 
-> Routing:
-> 
-> Destination   Gateway   Genmask          Flags MSS Window irt Iface
-> 68.28.229.7 0.0.0.0  255.255.255.255  UH    0   0      0   ppp0
-> 169.254.0.0.0   0.0.0.0  255.255.0.0       U    0   0      0   eth0
-> 68.0.0.0    0.0.0.0  255.0.0.0     U    0   0      0    eth0
-> 127.0.0.0   0.0.0.0  255.0.0.0     U     0   0      0   lo
-> 0.0.0.0     68.28.224.192 0.0.0.0      UG   0   0       0   eth0
+Hi, I am still trying to connect to the Internet from Linux and I cannot 
+seem to get the network/routing right.
 
-You have an ethernet card. That card is grabbing the default route
-0.0.0.0
-Place the line
-route del default 
-at the end of /etc/rc.d/rc.local (or whereever rc.local is)
-
-> 
-> 
-> Can anyone explain this routing table to me ?
-> Like:
-> -How is the Genmask determined ?
-
-Host or network. 
-Somewhere you told it to route 68.0.0.0 ( a /8 network) to the ethernet
-card. Do not know if that is what you want.
+When I connect from windows, the DNS server, personal IP and routing are 
+   established automatically, but not under linux ? Why ?
 
 
-> -Do you know of a good tutorial  on the web that can somehow explain 
-> some basic routing concepts ? So I can actually be able to use: route, 
-> ifconfig, iptables by myself in the future and be able to actually do 
-> stuff myself ?
-> 
-> Since I do not use eth0 (for now), would it be better if I just remove 
-> it from the configuration or the routing table ?
-
-Yes, especially as you have it routing all kinds of stuff. 
-
-> 
-> It would be a major thing if I could get linux to connect to the net. 
-> But it seems that every step is a strugle... I mean, I want to make use 
-> of perl, curl, libcurl, DBI/mysql, libwww abd tools like that, maybe 
-> even work at devlopping a website with PHP-mysql-apache, but first, I 
-> need to get connected to the net.
-
-Get the routing fixed. As above. And put 
-defaultroute
-into /etc/ppp/options.
-
-> 
-> I was asked, actually, given some ideas on how to transfer a file from 
-> linux to windows. I was trying to avoid writing down that routing table, 
-> because it was the only thing I could have done since:
-> 1)-i have no floppy
-> 2)- the cd re/writer  is mounted read only (are there any drivers for 
-> DVD-ROM/CD-RWs out there ?)
-
-sure. They are already there.
-you need cdrecord installed.
+ >Did u get the ip address? Maybe you should check is there are DNS 
+ >servers ips on your /etc/resolv.conf using the cat command if you want 
+ >cat /etc/resolv.conf. If there is none, you should add the following 
+ >line:
+ >nameserver1 IP_ADDRESS of the DNS server
+ >nameserver2 IP_ADDRESS of the second DNS server
+ >Example:
+ >nameserver1 200.176.3.10
+ >nameserver2 200.176.3.11
 
 
-> 3)- my linux (fedora) kernel cannot read/mount NTFS disks (windows xp). 
-> I tried to that in FSTAB and mounting it manually, but it says that my 
-> kernel does not support NTFS. And reconfiguring the kernel is something 
-> I would like to avoid for the time being..
+I did that, but it did not solve anything.
+Now, i cannot even get the Linux up and running. I had the bad idea to 
+run 'setup' and tell Linux to start 'sendmail' at startup. When it gets 
+to sendmail, it just blocks and Linux won't start. I tried to pass 
+"linux single", to grub, so I can run setup againg and remove , but it 
+does not work.
 
-NTFS support is still read only as far as I know. It might be a good
-idea to have one FAT partition that can be shared between win and linux.
+Someone else says:
+
+"One of (at least) three possible things:
+   - your local name service is misconfigured (what's in
+           /etc/resolv.conf?)
+
+     - your local routing configuration is wrong (what does
+           'netstat -nr' or 'route -n' report?)"
+
+I looked at "netstat -nr" and "route -n", but since I run windows/linux 
+on the same laptop (and cannot connect to the net from Linux), I could 
+not capture the output into a file and send it along with the email.
+
+Again, I use 'usedefaultroute' (or 'defaultroute)in pppd script/conf, 
+wasn't it suppose to add the routing automatically to the routing table 
+? In /var/log/messages I have 4 IPs:
+-IP_assigned to me
+-peers_IP
+-DNS_primary
+-DNS_secondary
+
+What is the form of route command that I am supposed to run in order to 
+be able to go outside peers_ip ?
+
+ >- the peer's routing is broken (is this your ISP or some other
+ >          machine?)
+
+Actually, I have a sprint cell phone with Vision on it, but from what I 
+read on the net, this should work, plus, I am positive it does connect, 
+because I see traffic on my cell (sending+receiving) when I do ping the 
+machine I am connected to.
+
+
+ >On the assumption that this peer is your ISP and that (therefore) the
+ >peer isn't just plain broken, you'll need to check the other two
+ >things.  At a guess, one or more of these is wrong:
+
+ >    - you have a misconfigured default route and/or local Ethernet
+           interface that is causing packets not to go through the PPP
+           link when they should.
+
+This is may be the problem.
+
+ >    - you're missing the "defaultroute" option.
+
+I've got this.
+
+ >- you need to get DNS server addresses from your ISP -- either
+ >use the "usepeerdns" option and link /etc/resolv.conf to
+ >/etc/ppp/resolv.conf
+
+How do I link /etc/resolv.conf to /etc/ppp/resolv.conf ?
+
+ >*OR* create /etc/resolv.conf and add appropriate static addresses >there.
+
+I did this.
+
+ >When posting, please include complete debug logs and configuration
+ >files.  Saying that you're able to connect is nice, but it's nicer
+ >still to be able to look over the actual information.
+
+Well, I would be happy to do that, but I have no floppy disk on the 
+laptop and I don't know if the CDwrite function would work under linux, 
+so I can get them under windows and send you this message.
+
+Thank you for your effort,
+Nick
 
