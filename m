@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 18 Nov 2004 19:29:20 +0000
+From: K-sPecial <spam@blazemail.com>
+Date: Thu, 18 Nov 2004 21:07:05 +0000
 Subject: Re: Socket doesn't get EOF
-Message-Id: <16796.63504.718948.307282@carlson.workingcode.com>
+Message-Id: <419D0EF9.7080903@blazemail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <41998875.2020305@blazemail.com>
 In-Reply-To: <41998875.2020305@blazemail.com>
@@ -10,40 +10,41 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-K-sPecial writes:
-> > If the system is isolated from the world, then periodically noticing
-> > that the 'port' still isn't reachable, and switching to a different IP
-> > address should make no difference at all.
+> Sure ... but why does it hurt to change the IP address when "the link"
+> is down?
 > 
-> No, I think we are confusing each other, the port is open to begin with, 
-> the script changes it's ip so when the service goes unavailable it can 
-> be redirected to another computer running the same service. Basicly for 
-> when you don't have enough control of the computer the service is 
-> initialy running on to implment this from there.
 
-Sure ... but why does it hurt to change the IP address when "the link"
-is down?
+Because I don't want the script to go into the loop of checking if it's 
+back up again if it wasn't down in the first place. I guess it wouldn't 
+hurt because all that would happen is it would update the hostname with 
+the ip it's already at (the "old" ip) and things would be gravy. But 
+remember at the time I said it waits 10 minutes or whatever is specified 
+before updating if it thinks it's down (connect() doesn't succeed on the 
+port), what if in these 10 minutes your Internet came available, then 
+unless it checks if it's online, the ip would be changed to the ip to 
+change to when the service on the port can't be reached because of that 
+services computer.
 
-> > If you care about particular interfaces for some reason, then use
-> > SIOCGIFCONF to read the kernel's interface table or open a routing
-> > socket (PF_ROUTE) and listen for interface add/delete messages.
-> > 
-> 
-> Well, I don't care about the interface, since as I earlier stated, an 
-> interface can be up yet the internet still not accessable such as when 
-> your router is connected to you via ethernet.
+> That's precisely the point.
+> The thing that makes a host unreachable might be zero, one, or many
+> hops away.  Worrying about the local interface(s) or about one
+> particular local router is just useless.
 
-That's precisely the point.
+Yay! We *do* agree.
 
-The thing that makes a host unreachable might be zero, one, or many
-hops away.  Worrying about the local interface(s) or about one
-particular local router is just useless.
+> Anway, as I've said multiple times now, you can determine precisely
+> whether PPP is up or down (and get notifications when it goes up and
+> down) by using any of SIOCGIFCONF, PF_ROUTE, or /etc/ppp/ip-{up,down}.
+> You do not need to have the socket connection aborted with an error in
+> order to find out this information.
 
-Anway, as I've said multiple times now, you can determine precisely
-whether PPP is up or down (and get notifications when it goes up and
-down) by using any of SIOCGIFCONF, PF_ROUTE, or /etc/ppp/ip-{up,down}.
-You do not need to have the socket connection aborted with an error in
-order to find out this information.
+Yes, for ppp that is great, thanks, thanks alot.
 
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+--K-sPecial
+
+[ http://xzziroz.freeshell.org
+   irc://xzziroz.dtdns.net       ]
+
+
+
+
