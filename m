@@ -1,7 +1,7 @@
 From: James Cameron <james.cameron@hp.com>
-Date: Tue, 03 Feb 2004 22:01:21 +0000
+Date: Tue, 03 Feb 2004 22:11:05 +0000
 Subject: Re: ppp-2.4.2 released
-Message-Id: <20040203220121.GA8838@hp.com>
+Message-Id: <20040203221105.GB8838@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
 In-Reply-To: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
@@ -10,26 +10,41 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Tue, Feb 03, 2004 at 08:25:55AM -0800, Frank Cusack wrote:
-> MS pptp-server is broken for ppp though.  It sends frames that are too
-> large (>MTU).  This will break some pppd's.  Maybe I can work up a patch
-> in the next few days.  Don't hold your breath, though.
+On Tue, Feb 03, 2004 at 01:24:27PM +0200, Pasi K?rkk?inen wrote:
+> The reason why www.yle.fi is not reducing the size, is that the size already
+> is what the client told (mss+headers). I think so..
 
-If you need motivation, section 3.3.4 of RFC1812 says that a router (in
-this case pppd) SHOULD be willing to receive a packet as large as the
-maximum frame size even if that is larger than the MTU.
+No, I disagree.  I'll repeat a critical aspect; the client CANNOT know
+the right MTU for the path as a whole.  Sure, it knows the MTU of the
+link next to it, and it will start a connection with an MSS that is
+compatible with that ... but the client has no knowledge of the network
+between the router (the pptp-server) and www.yle.fi.
 
-http://www.faqs.org/rfcs/rfc1812.html
+e.g.
 
-It then goes on to say ...
+    www.yle.fi = router = router .. router = pptp-server -- client
 
-      If a network is using an MTU smaller than the maximum frame size
-      for the Link Layer, a router may receive packets larger than the
-      MTU from misconfigured and incompletely initialized hosts.  The
-      Robustness Principle indicates that the router should successfully
-      receive these packets if possible.
+    = is a link with MTU of 1500
+    -- is a link with MTU of 1400
+    .. is a link with MTU of  600
 
-I've no idea what supercedes RFC1812.
+(I know this is not the case, I'm using it as an illustration of
+principle).
+
+Path MTU discovery overrides MSS in a TCP connection.  It must do, or
+else a link somewhere else along the way with a small MTU would never be
+handled properly.
+
+Have you proved ICMP fragmentation needed packets have arrived at
+www.yle.fi?  A packet trace at that host would be the proof.
+
+> I think so too. but www.yle.fi web server doesn't want to go below
+> mss (told by the client) + headers.
+
+Just repeating myself; www.yle.fi MUST go below the client's MSS if
+PMTUD results in a lower value.  As Frank said, the MTU might be
+assymetric.  As I say, it might be that there's another restricted link.
+The evidence you present leads me to suspect ICMP filtering.
 
 -- 
 James Cameron                         http://quozl.netrek.org/
