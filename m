@@ -1,32 +1,27 @@
-From: "Michael St. Laurent" <mikes@hartwellcorp.com>
-Date: Mon, 15 Mar 2004 20:05:56 +0000
-Subject: Moving logwtmp
-Message-Id: <91A5926EFF44D3118B1200104B7276EB02C56E0B@hart-exchange.hartwellcorp.com>
+From: James Cameron <james.cameron@hp.com>
+Date: Tue, 16 Mar 2004 00:12:30 +0000
+Subject: Re: Moving logwtmp
+Message-Id: <20040316001230.GB21112@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <91A5926EFF44D3118B1200104B7276EB02C56E0B@hart-exchange.hartwellcorp.com>
+In-Reply-To: <91A5926EFF44D3118B1200104B7276EB02C56E0B@hart-exchange.hartwellcorp.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi folks, 
+I agree.
 
-I'm new to the ppp list but I've been a member of the poptop-server list for
-some time.  Something recently came up on that list that should properly be
-addressed over here.
+plogin() in auth.c calls logwtmp().  plogin() is only called if PAP
+authentication is being done, and the secret is "@login", meaning that
+the system's authentication is being used.  Or PAM.
 
-The discussion was "How do I know who is connected."  A command has been
-cobbled together that will parse the output of ps and then do a lookup on
-the log files but it was also pointed out that a few lines of code would
-make a wtmp entry and thus solve the problem.
+plogin() is only called by upap_rauthreq() in upap.c.  It is PAP
+specific, I don't think it could be called by CHAP; as CHAP uses a
+different model.
 
-After looking at the pppd code I found the lines in auth.c where this is
-done but, aparently, only if one is using PAP authentication.  Since almost
-everyone using PPTP also uses Chap, this code is never called and we see
-nothing in the who list.
-
-I'm thinking that this code should be moved out of the plogin routine and
-put somewhere else instead.  Am I making sense?
+But even so, I can see that a logwtmp() in the other authentication
+paths would help with accounting, and "who".
 
 -- 
-Michael St. Laurent
-Hartwell Corporation
+James Cameron
