@@ -1,12 +1,18 @@
 From: "Jason S. Friedman" <jason@powerpull.net>
-Date: Mon, 19 Jul 2004 02:45:04 +0000
-Subject: Can reach remote server, but not beyond
-Message-Id: <37173.192.168.0.150.1090205104.squirrel@www.powerpull.net>
+Date: Mon, 19 Jul 2004 12:18:58 +0000
+Subject: Re: Can reach remote server, but not beyond
+Message-Id: <38162.192.168.0.150.1090239538.squirrel@www.powerpull.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <37173.192.168.0.150.1090205104.squirrel@www.powerpull.net>
+In-Reply-To: <37173.192.168.0.150.1090205104.squirrel@www.powerpull.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+I forgot to include the output of the route command in my
+earlier post.  Here's the whole thing, repeated, but with
+the output.
 
 I'm having two problems, or perhaps they are two
 manifestations of the same problem.  I'm connecting to my
@@ -24,8 +30,10 @@ logfd 2         # (from command line)
 linkname xemkt          # (from /etc/ppp/peers/xemkt)
 dump            # (from command line)
 noauth          # (from /etc/ppp/options.pptp)
-name eprime\\jfriedman          # (from /etc/ppp/peers/xemkt)
-remotename xemkt                # (from /etc/ppp/peers/xemkt)
+name eprime\\jfriedman          # (from
+/etc/ppp/peers/xemkt)
+remotename xemkt                # (from
+/etc/ppp/peers/xemkt)
                 # (from /etc/ppp/options.pptp)
 pty pptp 63.85.19.5 --nolaunchpppd              # (from
 /etc/ppp/peers/xemkt)
@@ -51,10 +59,12 @@ sent [CHAP Response id=0x2
 name = "eprime\\jfriedman"]
 rcvd [CHAP Success id=0x2 ""]
 CHAP authentication succeeded
-sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 0.0.0.0>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr
+0.0.0.0>]
 rcvd [IPCP ConfReq id=0x0 <addr 63.85.19.5>]
 sent [IPCP ConfAck id=0x0 <addr 63.85.19.5>]
-sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 0.0.0.0>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr
+0.0.0.0>]
 rcvd [IPCP ConfReq id=0x1 <addr 63.85.19.5>]
 sent [IPCP ConfAck id=0x1 <addr 63.85.19.5>]
 rcvd [IPCP ConfRej id=0x1 <compress VJ 0f 01>]
@@ -80,15 +90,39 @@ in very little time.
 While the ppp connection is established, I get:
 $ ifconfig ppp0
 ppp0      Link encap:Point-to-Point Protocol
-          inet addr:10.105.30.1  P-t-P:63.85.19.5 
+          inet addr:10.105.30.1  P-t-P:63.85.19.5
 Mask:255.255.255.255
           UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1500
  Metric:1
-          RX packets:5 errors:0 dropped:0 overruns:0 frame:0
+          RX packets:5 errors:0 dropped:0 overruns:0
+frame:0
           TX packets:77875 errors:0 dropped:0 overruns:0
 carrier:0
           collisions:0 txqueuelen:3
-          RX bytes:50 (50.0 b)  TX bytes:27335900 (26.0 Mb)
+          RX bytes:50 (50.0 b)  TX bytes:27335900 (26.0
+Mb)
+
+and
+
+$ route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags
+Metric Ref    Use Iface
+63.85.19.5      0.0.0.0         255.255.255.255 UH    0   
+  0        0 ppp0
+63.231.91.152   0.0.0.0         255.255.255.248 U     0   
+  0        0 eth2
+192.168.0.0     0.0.0.0         255.255.255.0   U     0   
+  0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     0   
+  0        0 eth2
+127.0.0.0       0.0.0.0         255.0.0.0       U     0   
+  0        0 lo
+0.0.0.0         63.231.91.158   0.0.0.0         UG    0   
+  0        0 eth2
 
 I can ping 10.105.30.1, but I cannot ping 63.85.19.5.  I
 also cannot ping any machines on the LAN of the PPP host.
+
+
+
