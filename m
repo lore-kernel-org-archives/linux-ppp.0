@@ -1,40 +1,53 @@
-From: Clifford Kite <kite_linux-ppp@ev1.net>
-Date: Tue, 15 Feb 2005 18:43:56 +0000
-Subject: Re: 2 questions about dialup pppd use
-Message-Id: <Pine.LNX.4.21.0502151234040.30477-100000@corncob.inetport.tld>
+From: Abdul J <postabdul@yahoo.com>
+Date: Tue, 01 Feb 2005 23:06:26 +0000
+Subject: Multilink in ppp-2.4.3
+Message-Id: <20050201230627.51274.qmail@web30502.mail.mud.yahoo.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20050212173525.GA27282@iceland.spb.ru>
-In-Reply-To: <20050212173525.GA27282@iceland.spb.ru>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Tue, 15 Feb 2005, Bill Unruh wrote:
-|On Tue, 15 Feb 2005, Clifford Kite wrote:
-|> On Sat, 12 Feb 2005, Serge Koksharov wrote:
-|>
-|> |Question2:
-|> |If in the same script /etc/ppp/ip-up.local I use following command to
-|> |synchronize time:
-|> |ntpdate ntp.someserver.org
-|> |And in the /etc/ppp/ip-down.local I use command to log sent/received byte count
-|> |and connection time by this command:
-|> |echo " TX: $BYTES_SENT RX: $BYTES_RCVD for $((CONNECT_TIME/60)) minutes"\
-|> |>> /etc/ppp/history                        ^^^^^^^^^^^^^^^^^^^^
-|>
-|> That should be $(($CONNECT_TIME/60)) .
-|
-|That is what I thought at first too. But try it
-|A0
-|echo $((A/10))
-|
-|At least in bash.
+Hi,
 
-Sorry, you're right.  I thought this was something that failed for
-me some time in the past.  I probably mis-remembered something else
-(or the upgrade to bash 2.05b needed for the 2.6 kernel made it work).
+I have a question regarding the new Multilink
+implementation in the PPP-2.4.3. I am running this on
+Fedora Core 2, kernel-2.6.10.
 
----
-Clifford Kite                                 http://ckite.no-ip.net
+Starting 2.4.3 a call drop on primary link does not
+destroy the bundle, instead the first pppd keeps
+running until there is atleast one active link in the
+bundle. Nice!
 
+For example, if I have two dial-up connection
+multilinked together. Even if the first link is
+dropped, since the second link is active the interface
+ppp0 is active and the connection still exists. But
+the problem is I am unable to redial the dropped link
+because the pppd process is still running on that link
+and the serial port is locked. If I try to redial the
+first link, I get an error:
+Feb 1 17:48:33 dhcp034 pppd[3417]: tcgetattr: No such
+device or address (line 907)
+
+The only way I can redial is terminate (kill -9) the
+first pppd process (and hence terminate all the links
+of the bundle) and redial all of them. 
+
+My question is: Is there anyway in which I can redial
+the dropped primary (first) link once a call
+drop/hangup occurs without destroying the whole
+bundle.
+
+Note: This is a test setup and I control both ends of
+the ppp connection.
+
+Please give your comments/suggestions
+
+Thanks,
+Abdul
+
+__________________________________________________
+Do You Yahoo!?
+Tired of spam?  Yahoo! Mail has the best spam protection around 
+http://mail.yahoo.com 
