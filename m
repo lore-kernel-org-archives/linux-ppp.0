@@ -1,50 +1,60 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Fri, 02 Apr 2004 17:11:52 +0000
-Subject: Re: Problem with PPP0 interface
-Message-Id: <Pine.LNX.4.50.0404020908310.30544-100000@string.physics.ubc.ca>
+From: Bhaskar <vbhaskar@roc.co.in>
+Date: Fri, 09 Apr 2004 08:38:05 +0000
+Subject: PPP is not establishing
+Message-Id: <1081499169.3142.12.camel@Bhaskar>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <33B641675B6BBC419F539832368D73C803F38E8D@excbrsp002.americas.unity>
-In-Reply-To: <33B641675B6BBC419F539832368D73C803F38E8D@excbrsp002.americas.unity>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Fri, 2 Apr 2004, Ferreira, Fernando Borges wrote:
+Hi all,
+I am trying to connect to an ISP using my linux machine.  I am using
+RedHat Linux 8.0 .  And the ppp version is 2.4.1.  I am not able to
+understand why ISP is terminating the connection.  I have traced the PPP
+packets and sequence is :
+Serial connection established.
+using channel 9
+Using interface ppp0
+Connect: ppp0 <--> /dev/ttyS0
+sent [LCP ConfReq id=0x1 <mru 1500> <asyncmap 0x0> <magic 0x6f879d4a>
+<pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <mru 1500> <asyncmap 0x0> <magic 0x6f879d4a>
+<pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <mru 1500> <asyncmap 0x0> <magic 0x6f879d4a>
+<pcomp> <accomp>]
+rcvd [LCP ConfReq id=0x1 <mru 1514> <asyncmap 0x0> <auth pap> <magic
+0x67f90746> <pcomp> <accomp>]
+sent [LCP ConfAck id=0x1 <mru 1514> <asyncmap 0x0> <auth pap> <magic
+0x67f90746> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <mru 1500> <asyncmap 0x0> <magic 0x6f879d4a>
+<pcomp> <accomp>]
+sent [PAP AuthReq id=0x1 user="ELAN123" password=<Hidden>]
+rcvd [LCP ConfAck id=0x1 <mru 1500> <asyncmap 0x0> <magic 0x6f879d4a>
+<pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <mru 1500> <asyncmap 0x0> <magic 0x6f879d4a>
+<pcomp> <accomp>]
+rcvd [LCP ConfReq id=0x1 <mru 1500> <auth chap MD5> <magic 0xa2057c03>]
+sent [LCP ConfReq id=0x2 <mru 1500> <asyncmap 0x0> <magic 0x5bd54857>
+<pcomp> <accomp>]
+sent [LCP ConfAck id=0x1 <mru 1500> <auth chap MD5> <magic 0xa2057c03>]
+rcvd [LCP ConfRej id=0x2 <asyncmap 0x0> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x3 <mru 1500> <magic 0x5bd54857>]
+rcvd [LCP ConfAck id=0x3 <mru 1500> <magic 0x5bd54857>]
+rcvd [LCP EchoReq id=0x0 magic=0xa2057c03]
+sent [LCP EchoRep id=0x0 magic=0x5bd54857]
+rcvd [LCP TermReq id=0x2]
+LCP terminated by peer
+sent [LCP TermAck id=0x2]
 
-> Hello everybody,
-> I have an US Robotics 33.6 Sportster external modem and I can't get connected. I got connected using minicom and sending commands to the modem, but I couldn't get connected after configuring the pppsetup correctly. The modem dials and, after the auth. process, I tried to check the ppp interface and got the following message: "couldn't find interface ppp0: no such device". I run a Slackware box with the kernel 2.6.3 compiled with PPP support. Everything works fine, but I can't get connected. Any clues?
 
-That message is not the problem. Post the debug output from ppp here.
+ISP is expecting both PAP and CHAP authentication.  If PAP is
+successful, then only CHAP authentication is requested.
+What could be the reason for the termination.
+Please give your comments.
 
-put 
-debug
-into /etc/ppp/options and put the line 
-daemon.*;local2.*		/var/log/ppplog
-into /etc/syslog.conf
-and then do 
-killall -1 syslogd
 
-Then try to connect and put the output from that connection into the
-message here. You do not understand what is happening and so your
-selection of the messages to tell us about cannot be trusted. Just post
-them all. Keeping the time stamps and everything. Do not edit anything,
-except remove your password if it occurs in the file.
+With best regards,
+bhaskar
 
-(PS, does /dev/ppp exist?)
 
-> 
-> Thanks in advance,
-> 
-> Fernando
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-
--- 
-William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
-Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
-UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
-Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
