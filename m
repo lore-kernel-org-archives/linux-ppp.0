@@ -1,7 +1,7 @@
-From: "Milan P. Stanic" <mps@rns-nis.co.yu>
-Date: Tue, 15 Feb 2005 08:36:24 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Tue, 15 Feb 2005 12:49:02 +0000
 Subject: Re: 2 questions about dialup pppd use
-Message-Id: <20050215083624.GA3248@rns-nis.co.yu>
+Message-Id: <16913.61374.994899.526275@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20050212173525.GA27282@iceland.spb.ru>
 In-Reply-To: <20050212173525.GA27282@iceland.spb.ru>
@@ -10,52 +10,47 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Mon, Feb 14, 2005 at 03:32:36PM -0800, Bill Unruh wrote:
-> On Sat, 12 Feb 2005, Serge Koksharov wrote:
-> 
-> > Dear all,
-> >
-> >I'm using pppd v2.4.2 on my Gentoo Linux box with modem connection to my
-> >provider. I have following questions:
-> >
-> >Question1:
-> >In /etc/ppp/ip-up.local I have following command to log my dialup sessions:
-> >echo `date` ppp-on: Speed: $3\; Local IP: $4\; Remote IP: $5 >> 
-> >/etc/ppp/history
-> >The problem with this setup: No matter on which speed I'm connected (33600,
-> >42666, etc) I'm always getting logged speed 115200. That's not I want! I 
-> >think
-> >script logs serial port speed, but I want connection speed logged instead.
-> 
-> That is because the speed in question, which is the only speed that pppd
-> knows about, is the speed of the connection from the computer to the modem.
-> The speed you are interested in is the speed with which your modem talks to
-> the other modem, but that ppp does not and cannot have any information
-> about. It is often reported in the CONNECT string from the modem once it
-> makes its connection to the remote machine, which may be logged in the
-> local2.* syslogd information if you run chat with the -v option. But chat
-> is not pppd. It is a different program which is simply reporting what it
-> gets from the modem. It has no idea what the content of that report is
-> (unless you rewrite chat to parse the return message)
- 
-man chat
+Serge Koksharov writes:
+> In /etc/ppp/ip-up.local I have following command to log my dialup sessions:
+> echo `date` ppp-on: Speed: $3\; Local IP: $4\; Remote IP: $5 >> /etc/ppp/history
+> The problem with this setup: No matter on which speed I'm connected (33600,
+> 42666, etc) I'm always getting logged speed 115200. That's not I want! I think
+> script logs serial port speed, but I want connection speed logged instead.
 
-       -r <report file>
-              Set  the  file for output of the report strings. If
-              you use the keyword REPORT, the  resulting  strings
-              are  written  to  this  file. If this option is not
-              used and you still use REPORT keywords, the  stderr
-              file is used for the report strings.
+As others have mentioned, pppd doesn't really know that the modem
+exists.  Only the external program invoked by the pppd "connect"
+option (typically /usr/bin/chat, but doesn't have to be) knows
+anything about the strings emitted by the modem.  See the chat man
+page -- specifically the "REPORT" feature.
 
+As far as pppd knows, it's just using a serial port.  The "speed"
+mentioned in the pppd man page as an argument to the ip-up script is
+the speed of that serial interface.
 
-Example:
+> Question2:
+> If in the same script /etc/ppp/ip-up.local I use following command to 
+> synchronize time:
+> ntpdate ntp.someserver.org
+> And in the /etc/ppp/ip-down.local I use command to log sent/received byte count
+> and connection time by this command:
+> echo " TX: $BYTES_SENT RX: $BYTES_RCVD for $((CONNECT_TIME/60)) minutes"\
+> >> /etc/ppp/history
+> I often get wrong connection time in /etc/ppp/history, for example:
+>  TX: 41180 RX: 291021 for 71582784 minutes.
 
-chat -r /var/log/connect.report REPORT CONNECT \
-        TIMEOUT 85 \
-        ABORT "NO CARRIER" \
-        ABORT BUSY \
-        ABORT "NO DIALTONE" \
-        ABORT ERROR \
-        "" ATDT$PHONE_NUMBER \
-        CONNECT ""
+At a guess, your NTP time sync is causing a large jump because your
+clock is off by a large amount.  pppd uses the gettimeofday() function
+to compute CONNECT_TIME, and the value returned by that function is
+UTC -- meaning that NTP will _change_ the value out from under pppd,
+leading to incorrect calculation.
 
+You could possibly get the current value of time() before running
+ntpdate, and the value after, and subtrace that delta from
+CONNECT_TIME.
+
+Perhaps pppd ought to be using something different to compute elapsed
+time (rather than wall clock time -- such as seconds since boot), but
+it turns out to be absurdly hard to do this in a portable way.
+
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
