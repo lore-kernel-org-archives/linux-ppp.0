@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 24 Feb 2005 21:36:45 +0000
+From: ben_gal@libero.it
+Date: Thu, 24 Feb 2005 22:04:37 +0000
 Subject: Re: Client requesting its authentication
-Message-Id: <16926.18669.159553.517079@gargle.gargle.HOWL>
+Message-Id: <20050224220437.GA2445@ytsejam>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20050224162619.GB5787@ytsejam>
 In-Reply-To: <20050224162619.GB5787@ytsejam>
@@ -10,28 +10,37 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Bill Unruh writes:
-> > Ok.
-> > The server must request it.
+On Thu, Feb 24, 2005 at 01:27:54PM -0800, Bill Unruh wrote:
+> Then demand that they authenticate themselves to you via eap. If that is
+> what you want then demand it. Why  are you trying to force them into
+> demanding it from you? " I want you to do something. But I do not want to
+> ask you to do it, I want to force you to ask me to do it". That is not how
+> the world works. If you want something, ask for it.
+
+I don't want to *force* the peer to authenticate me.
+I want to *hint* him.
+If he doesn't want that, I close because that doesn't satisfy me.
+This seems not so strange to me.
+
+
+> >
+> >This is the behaviour I were looking for:
 > 
-> There IS NO SERVER. ppp is a point to point protocol in which both sides
-> have entirely equal status. If you want eap, then ask for it. do not try to
-> force the other side to ask for it. Both are entirely equal peers.
+> Sorry, the behaviour you want is that the two sides never agree on anything
+> and refuse to talk to each other?
 
-More or less.  What he means is that the system that is designated as
-the authenticator must ask for it, and he's concerned about what the
-authenticatee should do if the authenticator doesn't behave as
-expected.  EAP and TLS aren't symmetric that way.
+Is more desiderable that they don't connect than a client connecting
+to an untrusted server without authentication
 
-> > But if the server doesn't request authentication?
-> > The client will connect to an untrusted server.
-> > We don't want this to happen.
+> Well demand that it authenticate itself to you via eap.
+
+In tls there's a client and a server. Roles cannot be swapped
+
 > 
-> Then ask the other side  to authenticate itself. What is difficult about
-> that?
+> That is the other sides perfect right. If someone walked up to you and
+> demanded that you demand to see his driver's license, don;t you think a
+> valid reaction on your part is to walk away?
 
-In that case, his side will be the authenticator, and he doesn't want
-that to happen.
-
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+Yes. This isn't a problem.
+The problem is when I trust him, but we haven't shown driver licenses each
+other.
