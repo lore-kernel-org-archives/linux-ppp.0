@@ -1,34 +1,30 @@
-From: Clifford Kite <kite_linux-ppp@ev1.net>
-Date: Sun, 25 Jan 2004 02:05:23 +0000
-Subject: Re: pppd 2.4.2, Control-C bug?
-Message-Id: <Pine.LNX.4.21.0401241959060.5506-100000@corncob.localhost.tld>
+From: "Mondal Atanu (IFIN DC COM)" <Atanu.Mondal@infineon.com>
+Date: Wed, 14 Jan 2004 15:54:40 +0000
+Subject: running pppd-2.4.2b3 with pppoatm plugin
+Message-Id: <0C674B14EAEBD61196D900B0D03DB49FD21E28@blrw502w.blr.infineon.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <Pine.LNX.4.21.0401231150020.2019-100000@corncob.localhost.tld>
-In-Reply-To: <Pine.LNX.4.21.0401231150020.2019-100000@corncob.localhost.tld>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Sun, 25 Jan 2004, Paul Mackerras wrote:
+Hi,
+I am trying to run pppd with pppoatm plugin. The setdevname* function in the
+pppoatm.c(user space) is called twice
+while parsing the option file.. once with doit value as 0 and next time with
+doit value as 1. Can somebody
+tell me any reason why it is so.. There is no check on the doit variable as
+such in the function. So in the
+first call itself the dev gets set, and in the next call of the function it
+returns an error. So now I have put a check and
+returning a 1 without doing anything if doit value is zero... and entering
+the function if doit value is 1.
 
-|Clifford Kite writes:
-|
-|> Control-C at the keyboard before the connection completes results in
-|> 
-|> Terminating on signal 2.
-|> 
-|> repeated, seemingly without end.  "kill -TERM $(pidof pppd)" doesn't
-|> terminate pppd or the messages.  "kill -KILL $(pidof pppd)" does both.
-|
-|Yes.  We got a "bug" report from a user (who didn't understand what
-|the code was actually doing) and one of the ppp team checked in his
-|proposed fix.
+I have other problems facing in terms of setting the mtu value etc. Can
+somebody give any patch or a link which says
+how to run this correctly.
 
-Well, I don't pretend to understand the explanation much - I'm not a C
-programmer.  But I did understood enough to correct main.c and it works
-a treat.  Thanks!
+Thanking in advance..
 
----
-Clifford Kite                                 http://ckite.no-ip.net
-
+Regards
+Atanu Mondal
