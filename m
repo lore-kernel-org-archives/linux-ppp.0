@@ -1,7 +1,7 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Wed, 16 Jun 2004 13:00:32 +0000
-Subject: Re: PPP state machine
-Message-Id: <16592.17520.148321.16573@cargo.ozlabs.ibm.com>
+From: "Matthew N. Dodd" <mdodd@patton.com>
+Date: Wed, 16 Jun 2004 17:51:47 +0000
+Subject: RE: PPP state machine
+Message-Id: <008401c453ca$9e9ac9a0$67160a0a@ATLANTIC>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1087365446.1118.10.camel@Bhaskar>
 In-Reply-To: <1087365446.1118.10.camel@Bhaskar>
@@ -10,13 +10,21 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-James Carlson writes:
+linux-ppp-owner@vger.kernel.org wrote:
+> Unfortunately the authors of the syncppp code in Linux have
+> never converted it to use the ppp_generic module.  That would be the
+> correct approach IMO. 
 
-> Since you're talking about sync PPP, I don't understand the reference
-> to PPPoE.  PPPoE is a bit of an ugly hack that involves (on Linux)
-> multiple trips in and out of the kernel for the data path.
+Dan Eble wrote some code that allows the HDLC layer to interface with
+the normal PPP code.
 
-The ugly hack part is correct, but with the in-kernel pppoe module the
-data path is at least entirely in the kernel. :)
+It works great.
 
-Paul.
+Check list archives for patches.
+
+--
+Matthew N. Dodd <mdodd@patton.com>
+Software Engineer, Patton Electronics
+7622 Rickenbacker Dr., Gaithersburg,  MD 20879
+(301) 975-1000x184
+
