@@ -1,29 +1,40 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Date: Fri, 10 Sep 2004 22:33:15 +0000
-Subject: Re: [IPCOMP] Use per-cpu buffers
-Message-Id: <20040910223315.GA1335@gondor.apana.org.au>
+From: "Neil Wilson" <neil@dcdata.co.za>
+Date: Fri, 10 Sep 2004 09:10:01 +0000
+Subject: pppd Filtering
+Message-Id: <0bb901c49715$f4272510$0300a8c0@neilw>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20040910111047.GA29330@gondor.apana.org.au> <Xine.LNX.4.44.0409101140160.6664-100000@thoron.boston.redhat.com>
-In-Reply-To: <Xine.LNX.4.44.0409101140160.6664-100000@thoron.boston.redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="hz-gb-2312"
-Content-Transfer-Encoding: base64
-To: James Morris <jmorris@redhat.com>
-Cc: "David S. Miller" <davem@davemloft.net>, kuznet@ms2.inr.ac.ru, netdev@oss.sgi.com, linux-ppp@vger.kernel.org, paulus@samba.org
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
+To: linux-ppp@vger.kernel.org
 
-T24gRnJpLCBTZXAgMTAsIDIwMDQgYXQgMTE6NDI6MDBBTSAtMDQwMCwgSmFtZXMgTW9ycmlzIHdy
-b3RlOgo+IAo+IEkgaGF2ZW4ndCBsb29rZWQgYXQgdGhlIGNvZGUgZm9yIGEgd2hpbGUsIGJ1dCBJ
-IHRoaW5rIHdlIG1pZ2h0IGJlIGFibGUgdG8gCj4gc2F2ZSBzb21lIG1lbW9yeSBieSBzcGVjaWZ5
-aW5nIGNvbXByZXNzaW9uIHBhcmFtZXRlcnMgYW5kIG1ha2luZyB0aGUgCj4gYXBwcm9wcmlhdGUg
-Y2hhbmdlcyB0byB6bGliLgoKSXQnZCBhbHNvIGJlIG5pY2UgdG8gYWRkIGEgY29tcHJlc3Npb24g
-YWxnb3JpdGhtIHRoYXQgcmVxdWlyZXMgbGl0dGxlIAptZW1vcnkgdG8gcnVuLiAgVGhhdCB3YXkg
-d2UgY2FuIGdldCBhIGNsZWFyIHBpY3R1cmUgb2Ygd2hhdCBpbnRlcmZhY2UKY2hhbmdlcyBhcmUg
-T0sgYW5kIHdoYXQgYXJlbid0LgoKQ291bGQgd2UgcGVyaGFwcyB1c2UgdjQ0PyBJcyB0aGUgcGF0
-ZW50IGFuIGlzc3VlPwoKQ2hlZXJzLAotLSAKVmlzaXQgT3BlbnN3YW4gYXQgaHR0cDovL3d3dy5v
-cGVuc3dhbi5vcmcvCkVtYWlsOiBIZXJiZXJ0IFh1IH57UG1WPkhJfn0gPGhlcmJlcnRAZ29uZG9y
-LmFwYW5hLm9yZy5hdT4KSG9tZSBQYWdlOiBodHRwOi8vZ29uZG9yLmFwYW5hLm9yZy5hdS9+aGVy
-YmVydC8KUEdQIEtleTogaHR0cDovL2dvbmRvci5hcGFuYS5vcmcuYXUvfmhlcmJlcnQvcHVia2V5
-LnR4dAotClRvIHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1
-YnNjcmliZSBsaW51eC1wcHAiIGluCnRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9A
-dmdlci5rZXJuZWwub3JnCk1vcmUgbWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5l
-bC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA==
+Hi Guys,
+
+I have been trying to solve a problem with a server staying online and not
+disconnecting, because activity is keeping the link up.
+
+The activity from the /var/log/messages is "IN=3Dppp0 OUT=3D MACSRC=155.239=
+.185.193 DST=155.239.198.170 LENH TOS=3D0x00 PREC=3D0x00 TTL=123
+IDI468 DF PROTO=3DTCP SPT=1919 DPTD5 WINDOW=8760 RES=3D0x00 SYN URGP=3D0"
+
+As far as I am aware this is activity cause by the Sasser worm trying to get
+into my network, and it is getting blocked by the firewall.
+
+I have tried using ppp filtering to stop these,with the line 'active-filter
+"not port 445"' in the options.demand file, but this has made no difference.
+
+I have also tried using different syntax's, including adding "inbound" or
+"outbound", and I get the following error. "pppd: error in active-filter
+expression: inbound/outbound not supported on linktype 0"
+
+Please could someone help me in filtering this activity, so that my server
+disconnects when it is supposed to.
+
+I am running slackware 10, with ppp filtering compiled in the kernel by
+default, and pppd has the filter option enable also by default.
+My idle time is set to 120 in my options.demand file.
+
+Many thanks in advance!
+
+Neil Wilson
+
