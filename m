@@ -1,7 +1,7 @@
 From: "Milan P. Stanic" <mps@rns-nis.co.yu>
-Date: Tue, 16 Mar 2004 22:53:53 +0000
+Date: Fri, 19 Mar 2004 19:51:19 +0000
 Subject: Re: Moving logwtmp
-Message-Id: <20040316225353.GA4899@rns-nis.co.yu>
+Message-Id: <20040319195119.GA12632@rns-nis.co.yu>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <91A5926EFF44D3118B1200104B7276EB02C56E0B@hart-exchange.hartwellcorp.com>
 In-Reply-To: <91A5926EFF44D3118B1200104B7276EB02C56E0B@hart-exchange.hartwellcorp.com>
@@ -10,24 +10,31 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Tue, Mar 16, 2004 at 03:26:08PM -0500, James Carlson wrote:
+On Tue, Mar 16, 2004 at 09:00:01PM -0500, James Carlson wrote:
 > Milan P. Stanic writes:
-> > On Tue, Mar 16, 2004 at 07:54:04AM -0500, James Carlson wrote:
-> > > I'd support that as a configuration option, though, with appropriate
-> > > warnings.  ("If you do this, then your wtmp file will contain
-> > > PPP-authenticated names that might not match real UIDs on your system,
-> > > and may confuse the heck out of management software.")
+> > > Mere changes in behavior should not require the application to be
+> > > recompiled from source, should they?
 > > 
-> > Maybe is beter to make that compile time option.
+> > Rarely used features are compile time options. For example pam. ipv6,
+> > srp, cbcp are commented in the Makefile.
 > 
-> Why?  In my opinion, compile time options should be reserved for
-> extreme cases where it just can't be compiled at all on certain
-> systems without the flag.
+> Not all systems support PAM or IPv6, or have the installed libraries
+> required for SRP.  Those have to be omitted on the systems that don't
+> have the underlying support.
+> 
+> As for CBCP, I'm not sure I understand what the rationale would be.
+> Sure, CBCP is nasty, brutish stuff, but ifdef doesn't seem like the
+> right answer.
 
-It depends how much overhead, stability and size they bring to code.
- 
-> Mere changes in behavior should not require the application to be
-> recompiled from source, should they?
+IMO, all extensions should be compile time options. PPP is used in
+different systems from servers to embedded devices (pda's, appliances ...)
+and should be small as possible. Byte saved here, byte saved there
+and the sistem can fit to flash memories and such devices.
+So, the rarely used features shouldn't be in the binary by default,
+but this is only my opinion.
 
-Rarely used features are compile time options. For example pam. ipv6,
-srp, cbcp are commented in the Makefile.
+Distributors of big OS distributions will build it with all options
+enabled, I'm, sure ;)
+
+People who installs from source will know how to enable features
+which they want to have.
