@@ -1,39 +1,37 @@
-From: a b <theorieduchaos@yahoo.fr>
-Date: Thu, 28 Oct 2004 17:01:59 +0000
-Subject: Re: ppp 2.4.3 cvs authentication issue
-Message-Id: <20041028170159.71894.qmail@web25210.mail.ukl.yahoo.com>
+From: "Robert P. J. Day" <rpjday@mindspring.com>
+Date: Thu, 14 Oct 2004 15:14:48 +0000
+Subject: even after PPP connection established, pings don't work
+Message-Id: <Pine.LNX.4.60.0410141106110.21794@localhost.localdomain>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20041028124517.7204.qmail@web25210.mail.ukl.yahoo.com>
-In-Reply-To: <20041028124517.7204.qmail@web25210.mail.ukl.yahoo.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-> Who is Jason?
 
-ouups, I meant James, sorry
+  at the moment, i don't have access to the test box (dang, not enough
+of them to go around), but i'm currently baffled by the fact that
+connecting from my embedded board running linux with PPP 2.4.1 to
+another linux system running PPP 2.4.2 seems to work just fine, until
+i try to ping.  then ... nothing.
 
->=20
-> > have a nice day,=20
->=20
-> You, too.  Glad to hear things are working.
+  we have the embedded system with on-board modem, connected to
+teltone box, connected to external modem, connected to host.  starting
+pppd on the embedded system, everything works fine, dialing,
+connection, *both* systems claim to have established a PPP
+connection, *both* systems show the PPP connnection in their
+"ifconfig" output, there are no error messages in the log files ...
+all in all, you'd think everything was fine.
 
-They are, for now ... :o)
+  but running ping on either side just hangs.
 
-thanks again,
+  now, the one complication is that the host is already on the network
+and has a configured eth0 and a default gateway.  and we don't want to
+mess with that so, on the host, we deliberately leave off the
+"defaultroute" option.  from what i read, this shouldn't cause any
+problems.  as long as there's a PPP interface, i should be able to
+directly ping the IP address at the *other* end of that interface,
+even if my default route in the routing table refers entirely to
+another interface and gateway, no?
 
-- Adrian
-
-
-=09
-
-=09
-	=09
-Vous manquez d=92espace pour stocker vos mails ?=20
-Yahoo! Mail vous offre GRATUITEMENT 100 Mo !
-Cr=E9ez votre Yahoo! Mail sur http://fr.benefits.yahoo.com/
-
-Le nouveau Yahoo! Messenger est arriv=E9 ! D=E9couvrez toutes les nouveaut=
-=E9s pour dialoguer instantan=E9ment avec vos amis. A t=E9l=E9charger gratu=
-itement sur http://fr.messenger.yahoo.com
+rday
