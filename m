@@ -1,35 +1,40 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Tue, 09 Nov 2004 23:01:23 +0000
-Subject: Re: Multilink and ppp_input_error().
-Message-Id: <16785.19523.973723.510551@cargo.ozlabs.ibm.com>
+From: Guy Rouillier <guy-rouillier@speakeasy.net>
+Date: Sat, 06 Nov 2004 05:03:51 +0000
+Subject: ppp_mppe osize issue
+Message-Id: <20041106000351.3d60f2ba@emach>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <00b701c4c67f$554c8180$67160a0a@ATLANTIC>
-In-Reply-To: <00b701c4c67f$554c8180$67160a0a@ATLANTIC>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Matthew N. Dodd writes:
+(I sent this earlier this week under the subject "osize too small" and
+now realize that most spam filters probably kicked it out.  Resending...
 
-> Has anyone else noticed that drivers/net/ppp_generic.c:ppp_input_error()
-> is effectively a NOP?  pppd/main.c:get_input() treats a zero length
+I'm using ppp with pptp to connect to a MS server at work.  Kernel is
+2.6.3 AMD64 on Mandrake 10.0, ppp 2.4.2.  I built this kernel myself to
+fix the 64-bit issues with ppp (fix previously reported.)   When I have
+VPN up and run a browser, it will retrieve a particular page fine the
+first time.  However, if I click the submit button on that page again
+(which transmits a bunch of data - I authored this page so know all
+about it) the browser just goes into continuous wait and never actually
+transmits anything.  I see the following in dmesg:
 
-No it isn't a NOP, ppp_receive_frame calls ppp_receive_error when it
-gets the 0-length skb, which resets the VJ decompression code (which
-is what really needs to know about receive errors).
+PPP generic driver version 2.4.2
+ppp_mppe: module license 'BSD without advertisement clause' taints
+kernel.
+PPP MPPE Compression module registered
+Module ppp_mppe cannot be unloaded due to unsafe usage in
+include/linux/module.h:503
+mppe_compress[0]: osize too small! (have: 1400 need: 1404)
+ppp: compressor dropped pkt
+mppe_compress[0]: osize too small! (have: 1400 need: 1404)
+ppp: compressor dropped pkt
 
-> packet as a hangup indication but if you trace out the call to
-> ppp_do_recv() in ppp_input_error() the zero length frame is never sent
-> to the file descriptor.  Further, calling an input function for the PPP
-> device isn't useful as the intent is to deliver the error to a specific
-> PPP channel.
-> 
-> I'm using the attached patch.
-> 
-> Comments?
+What is the appropriate fix for this? ifconfig shows an MTU of 1396 for
+ppp0.  I tried specifying mtu 1500 when starting pppd, but it still ends
+up 1396.  I suppose the server end is constraining it.  Appreciate all
+suggestions - I can rebuild the kernel if necessary.
 
-You really want your link to terminate every time you get an FCS error
-on a received packet?
-
-Paul.
+-- 
+Guy Rouillier
