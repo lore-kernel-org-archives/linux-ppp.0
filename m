@@ -1,7 +1,7 @@
-From: "Robert P. J. Day" <rpjday@mindspring.com>
-Date: Fri, 15 Oct 2004 18:45:03 +0000
+From: carlsonj@workingcode.com
+Date: Fri, 15 Oct 2004 18:55:15 +0000
 Subject: Re: absolutely baffled as to why PPP link doesn't allow pings
-Message-Id: <Pine.LNX.4.60.0410151442370.12564@localhost.localdomain>
+Message-Id: <16752.7443.381436.601249@carlson.workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.LNX.4.60.0410151211340.11955@localhost.localdomain>
 In-Reply-To: <Pine.LNX.4.60.0410151211340.11955@localhost.localdomain>
@@ -10,32 +10,26 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Fri, 15 Oct 2004 carlsonj@workingcode.com wrote:
+Robert P. J. Day writes:
+> well, we're making progress, although not the way i would have liked.
+> as a simple test, we just hooked up the serial ports of the systems
+> direct connect with a serial cable, and PPP worked just dandy.
+> 
+> putting the modems back in the circuit re-introduced the problem.  so
+> it could be the modems or the initialization strings we're using.
+> back to the drawing board ...
 
-> Robert P. J. Day writes:
-> >       host (10.1.1.96) <-> modem <-> teltone <-> embedded (10.1.1.97)
->
-> So, if I understand this right (it's still hard to figure what you've
-> done from the description provided):
->
-> 	- Connecting the embedded system (running an unknown version
->           of PPP) to a Windows box works fine.
->
-> 	- Connecting the embedded system (again, unknown PPP) to a
->           Linux box running pppd fails.
->
-> Assuming that's right, try "noccp" on the Linux box.  I see that
-> you've negotiated CCP with the Deflate algorithm.  That never would
-> have happened when talking to a Windows system, and it's possible that
-> one side or the other has bugs with data compression.  The symptoms of
-> bugs there would be _exactly_ what you're now seeing.
+That certainly points in a different direction.  One possibility is
+that you're running into flow control problems or transparency issues
+with the modems.
 
-well, we're making progress, although not the way i would have liked.
-as a simple test, we just hooked up the serial ports of the systems
-direct connect with a serial cable, and PPP worked just dandy.
+If they're like USR modems, then "AT&F1" usually does the trick.  If
+they're not, then see the manual.  :-/
 
-putting the modems back in the circuit re-introduced the problem.  so
-it could be the modems or the initialization strings we're using.
-back to the drawing board ...
+Two things to try: "asyncmap 0xa0000" and "noasyncmap".  The former
+will escape XON/XOFF characters, on the theory that the modems are
+eating those characters by default.  The latter will escape all
+control characters.
 
-rday
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
