@@ -1,46 +1,26 @@
-From: Christopher Fowler <cfowler@outpostsentinel.com>
-Date: Tue, 08 Mar 2005 18:06:57 +0000
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Wed, 09 Mar 2005 02:58:09 +0000
 Subject: Re: IPCP ConfRej's forever
-Message-Id: <1110305217.18073.151.camel@linux.linxdev.com>
+Message-Id: <E1D8rOj-0007RH-00@gondolin.me.apana.org.au>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1110253772.18073.91.camel@linux.linxdev.com>
 In-Reply-To: <1110253772.18073.91.camel@linux.linxdev.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="hz-gb-2312"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-Ahh.  The FC@ and the Remote operate in demand mode.  pppd is running at
-all times on each but there is no physical connection between them until
-packets are sent.  Then the connection's idle limit is 30 seconds.  So
-the two devices speak via IP with our software but aer only connected on
-demand with modems.
-
-On Tue, 2005-03-08 at 12:58, Bill Unruh wrote:
-> On Tue, 8 Mar 2005, Christopher Fowler wrote:
-> 
-> > Te remote is a locked down device.  It is an embedded device running
-> > Linux.  each ppp profile is tied to a port.  The profile determines what
-> > command line options pppd is executed with.
-> >
-> > In one case our FC2 server will dial in with ipaddresses that the remote
-> > needs to accept.  In the other case a Windows laptop will dial-in
-> > requesting remote ip addresses.
-> 
-> I guess my question would be, why the FC2 needs to supply the addresses. 
-> Potentially the only possible reason would be if the remote site MUST
-> access the web and you want to do proxyarp. But somehow I doubt this for a
-> locked down device. If not, then just have all the system accept that
-> machine's addresses.
-> 
-> >
-> > When testnig command line arguments I found this problem of when a
-> > server dials in and tries wants to use addresses that are not configured
-> > for that profile then this forever loop occurs.  since all this happens
-> > over dial-up a misconfiguration on the users part in the profile will
-> > cause a very high phone bill since the remote nor the server terminate
-> > since they can not agree on the correct addresses to use.
-> 
-> I agree that it should teminate and that this is a bug.
-> 
-
+Q2hyaXN0b3BoZXIgRm93bGVyIDxjZm93bGVyQG91dHBvc3RzZW50aW5lbC5jb20+IHdyb3RlOgo+
+IEknbSBkZWJhdGluZyBhYm91dCB1cGdyYWRpbmcgdG8gMi40LjMgb24gdGhlIHJlbW90ZSBlbmQg
+YnV0IEkgbG9va2VkIGluCj4gdGhlIENoYW5nZUxvZyB0aGF0IGNvbWVzIHdpdGggdGhlIHNvdXJj
+ZSBhbmQgc2VlIG5vdGhpbmcgYWJvdXQgdGhpcy4gIEkKPiBhc3N1bWVkIHRoYXQgaWYgaXQgd2Fz
+IGEgYnVnIGl0IHdhcyBub3QgZml4ZWQgZHVlIHRvIGl0IG5vdCBiZWluZyBsaXN0ZWQKPiBpbiB0
+aGUgY2hhbmdlTG9nLgoKSGF2aW5nIGV4cGVyaWVuY2VkIHRoZSBzYW1lIHByb2JsZW0gbXlzZWxm
+IEkgY2FuIHRlbGwgeW91IHRoYXQgMi40LjMgZG9lcwpmaXggdGhpcyBidWcuCgpDaGVlcnMsCi0t
+IApWaXNpdCBPcGVuc3dhbiBhdCBodHRwOi8vd3d3Lm9wZW5zd2FuLm9yZy8KRW1haWw6IEhlcmJl
+cnQgWHUgfntQbVY+SEl+fSA8aGVyYmVydEBnb25kb3IuYXBhbmEub3JnLmF1PgpIb21lIFBhZ2U6
+IGh0dHA6Ly9nb25kb3IuYXBhbmEub3JnLmF1L35oZXJiZXJ0LwpQR1AgS2V5OiBodHRwOi8vZ29u
+ZG9yLmFwYW5hLm9yZy5hdS9+aGVyYmVydC9wdWJrZXkudHh0Ci0KVG8gdW5zdWJzY3JpYmUgZnJv
+bSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXBwcCIgaW4KdGhl
+IGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5vcmcKTW9yZSBtYWpv
+cmRvbW8gaW5mbyBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1s
