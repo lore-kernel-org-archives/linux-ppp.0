@@ -1,7 +1,7 @@
 From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Thu, 24 Feb 2005 21:27:54 +0000
+Date: Thu, 24 Feb 2005 21:33:26 +0000
 Subject: Re: Client requesting its authentication
-Message-Id: <Pine.LNX.4.61.0502241323320.8903@string.physics.ubc.ca>
+Message-Id: <Pine.LNX.4.61.0502241329140.8903@string.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20050224162619.GB5787@ytsejam>
 In-Reply-To: <20050224162619.GB5787@ytsejam>
@@ -12,84 +12,59 @@ To: linux-ppp@vger.kernel.org
 
 On Thu, 24 Feb 2005 ben_gal@libero.it wrote:
 
-> On Thu, Feb 24, 2005 at 09:43:11AM -0800, Bill Unruh wrote:
->> He understood you perfectly. That is precicely what the refuse-... do,
->> except that
->> you cannot force the other side to authenticate you .
+> On Thu, Feb 24, 2005 at 01:15:54PM -0500, James Carlson wrote:
+>>> Because I've written a patch to pppd that permits eap-tls authentication.
+>>> eap-tls provide mutual authentication, so if you (client) connect to a server,
+>>> you want to be sure of its identity, so the authentication can't be
+>>> skipped.
+>>
+>> My understanding of EAP-TLS is that you really don't want EAP to be
+>> requested by both sides.
 >
-> This is what I wanted to know.
+> Mine is the same :)
 >
->> If you
->> want them to authenticate themselves to you then you must say do.
->> Ie, authentication is under the control of whoever wants the other side to
->> be authenticated. Nothing else makes any sense. Of course since eap in some
->> sense is a bilateral authentication one might argue that y our request is
->> sensible, but the way to do it is for you to demand eap authentication from
->> the other side, and to refuse all other types of authentication from the
->> other side, as Carlson suggested.
->> Why by the way do you want to force the other side to authenticate you?
+>> Instead, one side should request it, and the
+>> EAP method *itself* provides mutual authentication.
 >
-> Because I've written a patch to pppd that permits eap-tls authentication.
-> eap-tls provide mutual authentication, so if you (client) connect to a server,
-> you want to be sure of its identity, so the authentication can't be
-> skipped.
+> Ok.
+> The server must request it.
 
-Then demand that they authenticate themselves to you via eap. If that is
-what you want then demand it. Why  are you trying to force them into
-demanding it from you? " I want you to do something. But I do not want to
-ask you to do it, I want to force you to ask me to do it". That is not how
-the world works. If you want something, ask for it.
+There IS NO SERVER. ppp is a point to point protocol in which both sides
+have entirely equal status. If you want eap, then ask for it. do not try to
+force the other side to ask for it. Both are entirely equal peers.
 
 
->
-> This is the behaviour I were looking for:
+> But if the server doesn't request authentication?
+> The client will connect to an untrusted server.
+> We don't want this to happen.
 
-Sorry, the behaviour you want is that the two sides never agree on anything
-and refuse to talk to each other?
+Then ask the other side  to authenticate itself. What is difficult about
+that?
+
 
 >
-> using channel 4
-> Using interface ppp0
-> Connect: ppp0 <--> /dev/ttyS1
-> sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfReq id=0x0 <asyncmap 0x0> <magic 0x290d2a43> <pcomp> <accomp>]
-> sent [LCP ConfAck id=0x0 <asyncmap 0x0> <magic 0x290d2a43> <pcomp> <accomp>]
-> sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x1 <auth 0xc227>]
-> sent [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x2 <auth 0xc227>]
-> sent [LCP ConfReq id=0x3 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x3 <auth 0xc227>]
-> sent [LCP ConfReq id=0x4 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x4 <auth 0xc227>]
-> sent [LCP ConfReq id=0x5 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x5 <auth 0xc227>]
-> sent [LCP ConfReq id=0x6 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x6 <auth 0xc227>]
-> sent [LCP ConfReq id=0x7 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x7 <auth 0xc227>]
-> sent [LCP ConfReq id=0x8 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x8 <auth 0xc227>]
-> sent [LCP ConfReq id=0x9 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0x9 <auth 0xc227>]
-> sent [LCP ConfReq id=0xa <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP ConfNak id=0xa <auth 0xc227>]
-> sent [LCP ConfReq id=0xb <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
-> rcvd [LCP TermReq id=0x1 ")\r*C\000<\37777777715t\000\000\002\37777777734"]
-> sent [LCP TermAck id=0x1]
-> Modem hangup
-> Connection terminated.
+>> Having both sides request EAP (or any authentication protocol) within
+>> LCP means that both sides are intending to independently authenticate
+>> the other.  In other words, you'd end up with each side independently
+>> and simultaneously sending EAP Request messages and expecting EAP
+>> Response messages in return.
+>>
+>> That doesn't sound like what you want.
 >
-> Is logged between a windows box (client) set to do eap-tls and the
-> pppd server.
+> No, this isn't. I want the server asking the client EAP.
+> And the client refuse connection if there's no authentication.
 
-Well demand that it authenticate itself to you via eap.
+Why? YOu have this totally weird social model, and are trying to fit the
+world into that social model, a world for which it does not fit. 
+If you want something, ask. do not sit there waiting and dropping hints for
+the other side to ask. This sounds like a bad marriage situation to me.
 
-> The server don't want to authenticate the client, but the client want
-> eap authentication for itself and finally close the negotiation.
 
-That is the other sides perfect right. If someone walked up to you and
-demanded that you demand to see his driver's license, don;t you think a
-valid reaction on your part is to walk away?
+>
+> Because the server must ask.
+
+Why? where does this constraint come from? The wife cannot ask for sex,
+only the husband can, and all the wife can do is drop hints? Bad model for
+ppp negotiations.
 
 
