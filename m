@@ -1,111 +1,84 @@
 From: Charles Price <cpwp@w3z.co.uk>
-Date: Mon, 18 Oct 2004 21:29:51 +0000
+Date: Tue, 19 Oct 2004 09:09:49 +0000
 Subject: Re: Kernel-mode PPPoE server.
-Message-Id: <200410182229.56840.cpwp@w3z.co.uk>
+Message-Id: <200410191009.53428.cpwp@w3z.co.uk>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="nextPart6928906.mazlSfipBf"
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200410181453.16399.cpwp@w3z.co.uk>
 In-Reply-To: <200410181453.16399.cpwp@w3z.co.uk>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+--nextPart6928906.mazlSfipBf
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-> Try running with the "debug"  option given to pppd.
+On Monday 18 October 2004 23:39, Michal Ostrowski wrote:
+> I think one can attribute this to a pppd behavior change.  There are
+> some options to pppd that control this behavior (silent?).  I'd check to
+> see if one of those options is sneaking in somewhere.  (Try using the
+> dryrun option to check?)
+>
+The configuration options that pppd printed to syslog are listed below.  No=
+te=20
+that I am using PAP this time, because I will be using RADIUS but the=20
+concentrator does not send the first packet if I replace require-pap with=20
+require-chap.
 
-'debug' is already set. We are able to see the LCP ConfReq packets being sent
-from the client.
+debug   # (from /etc/ppp/pppoe-server-options)
+nodetach   # (from command line)
+idle 43200   # (from /etc/ppp/options)
+dryrun   # (from /etc/ppp/pppoe-server-options)
+plugin /etc/ppp/plugins/rp-pppoe.so   # (from /etc/ppp/pppoe-server-options)
+plugin /etc/ppp/plugins/radius.so   # (from /etc/ppp/pppoe-server-options)
+plugin /etc/ppp/plugins/radattr.so   # (from /etc/ppp/pppoe-server-options)
+require-pap   # (from /etc/ppp/pppoe-server-options)
+login   # (from /etc/ppp/pppoe-server-options)
+eth1   # (from command line)
+rp_pppoe_service   # (from command line)
+rp_pppoe_sess 234:00:03:47:92:cf:e1   # (from command line)
+eth1   # (from command line)
+rp_pppoe_service   # (from command line)
+rp_pppoe_sess 234:00:03:47:92:cf:e1   # (from command line)
+noaccomp   # (from command line)
+default-asyncmap   # (from command line)
+mru 1492   # (from /etc/ppp/options)
+mtu 1492   # (from /etc/ppp/options)
+nopcomp   # (from command line)
+lcp-echo-failure 5   # (from /etc/ppp/pppoe-server-options)
+lcp-echo-interval 60   # (from /etc/ppp/pppoe-server-options)
+novj   # (from command line)
+novjccomp   # (from command line)
+ms-dns xxx # [don't know how to print value]   # (from /etc/ppp/options)
+proxyarp   # (from /etc/ppp/options)
+80.168.87.200:10.67.15.234   # (from command line)
+nobsdcomp   # (from command line)
+nodeflate   # (from command line)
+noipx   # (from /etc/ppp/options)
 
-> Also, you mentioned you had this working on another system, can you get
-> syslogs, tcpdump and configuration for the working system?
 
-Syslog configuration is listed below. The configuration is the same (apart
-from not using RADIUS - which makes no difference, I checked) but running on
-SuSE Linux 8.1 (Kernel 2.4.20-SuSE, lipcap 0.6.2) Tcpdump output is more
-difficult to obtain as I have about 280 concurrent PPPoE users on there!
+Any ideas on my next call of action? Would 'lsof' of pppoe-server and pppd=
+=20
+processes on working and non-working configurations be of any use?
 
-Here is the syslog output from my working PPPoE concentrator:
-
-Oct 18 22:21:11 pppoe1 pppoe-server[19844]: Session 339 created for client
-00:09:5b:6f:a0:a5 (10.67.16.83) on eth1 using Service-Name 'W3Z'
-Oct 18 22:21:11 pppoe1 pppd[19844]: Plugin /etc/ppp/plugins/rp-pppoe.so
-loaded.
-Oct 18 22:21:11 pppoe1 pppd[19844]: RP-PPPoE plugin version 3.3 compiled
-against pppd 2.4.2b3
-Oct 18 22:21:11 pppoe1 pppd[19844]: pppd 2.4.2b3 started by root, uid 0
-Oct 18 22:21:11 pppoe1 pppd[19844]: using channel 146212
-Oct 18 22:21:11 pppoe1 pppd[19844]: Using interface ppp37
-Oct 18 22:21:11 pppoe1 pppd[19844]: Connect: ppp37 <--> eth1
-Oct 18 22:21:11 pppoe1 pppd[19844]: Couldn't increase MTU to 1500
-Oct 18 22:21:11 pppoe1 pppd[19844]: Couldn't increase MRU to 1500
-Oct 18 22:21:11 pppoe1 pppd[19844]: sent [LCP ConfReq id=0x1 <mru 1492> <auth
-chap MD5> <magic 0x8bb7a693>]
-Oct 18 22:21:11 pppoe1 pppd[19844]: rcvd [LCP ConfAck id=0x1 <mru 1492> <auth
-chap MD5> <magic 0x8bb7a693>] 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-ce05 a9 59
-Oct 18 22:21:13 pppoe1 pppd[19844]: sent [LCP ConfReq id=0x1 <mru 1492> <auth
-chap MD5> <magic 0x8bb7a693>]
-Oct 18 22:21:13 pppoe1 pppd[19844]: rcvd [LCP ConfAck id=0x1 <mru 1492> <auth
-chap MD5> <magic 0x8bb7a693>] 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-ce05 a9 59
-Oct 18 22:21:14 pppoe1 pppd[19844]: rcvd [LCP ConfReq id=0x15 <mru 1492>
-<magic 0x7871e6ef>] 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-00 408b 1f dc
-Oct 18 22:21:14 pppoe1 pppd[19844]: sent [LCP ConfAck id=0x15 <mru 1492>
-<magic 0x7871e6ef>]
-Oct 18 22:21:14 pppoe1 pppd[19844]: sent [LCP EchoReq id=0x0
- magic=0x8bb7a693] Oct 18 22:21:14 pppoe1 pppd[19844]: sent [CHAP Challenge
- id=0x1
-<aa307e10d629fec35e56cc6b6b5d2ebb8b1058c2623e>, name = "pppoe1"]
-Oct 18 22:21:14 pppoe1 pppd[19844]: rcvd [LCP EchoRep id=0x0 magic=0x7871e6ef
-00 00 00 00] 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 db 83 1d
-cf
-Oct 18 22:21:14 pppoe1 pppd[19844]: rcvd [CHAP Response id=0x1
-<c5f3e39360b514535529cb525a469c01>, name = "username@w3z.co.uk"]
-Oct 18 22:21:14 pppoe1 pppd[19844]: sent [CHAP Success id=0x1 "Welcome to
-pppoe1."]
-Oct 18 22:21:14 pppoe1 pppd[19844]: peer from calling number
- 00:09:5B:6F:A0:A5 authorized
-Oct 18 22:21:14 pppoe1 pppd[19844]: Script /etc/ppp/auth-up started (pid
-19880)
-Oct 18 22:21:14 pppoe1 pppd[19844]: sent [IPCP ConfReq id=0x1 <addr
-10.0.0.20>]
-Oct 18 22:21:14 pppoe1 pppd[19844]: CHAP peer authentication succeeded for
-sue.napier@w3z.co.uk
-Oct 18 22:21:14 pppoe1 pppd[19844]: rcvd [IPCP ConfReq id=0x16 <addr 0.0.0.0>
-<ms-dns1 0.0.0.0> <ms-dns3 0.0.0.0>] 00 00 00 00 00 00 00 00 00 00 00 00 be
-43 d9 a5
-Oct 18 22:21:14 pppoe1 pppd[19844]: sent [IPCP ConfNak id=0x16 <addr
-10.4.0.203> <ms-dns1 xx.xx.xx.xx> <ms-dns3 xx.xx.xx.xx>]
-Oct 18 22:21:14 pppoe1 pppd[19844]: Script /etc/ppp/auth-up finished (pid
-19880), status = 0x0
-Oct 18 22:21:14 pppoe1 pppd[19844]: rcvd [IPCP ConfAck id=0x1 <addr
-10.0.0.20>] 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-00 00 ca 32 19 50
-Oct 18 22:21:14 pppoe1 pppd[19844]: rcvd [IPCP ConfReq id=0x17 <addr
-10.4.0.203> <ms-dns1 xx.xx.xx.xx> <ms-dns3 xx.xx.xx.xx>] 00 00 00 00 00 00 00
-00 00 00 00 00 14 5b 48 f5
-Oct 18 22:21:14 pppoe1 pppd[19844]: sent [IPCP ConfAck id=0x17 <addr
-10.4.0.203> <ms-dns1 xx.xx.xx.xx> <ms-dns3 xx.xx.xx.xx>]
-Oct 18 22:21:14 pppoe1 pppd[19844]: found interface eth2 for proxy arp
-Oct 18 22:21:14 pppoe1 pppd[19844]: local  IP address 10.0.0.20
-Oct 18 22:21:14 pppoe1 pppd[19844]: remote IP address 10.4.0.203
-Oct 18 22:21:14 pppoe1 pppd[19844]: Script /etc/ppp/ip-up started (pid 19883)
-Oct 18 22:21:14 pppoe1 pppd[19844]: Script /etc/ppp/ip-up finished (pid
-19883), status = 0x0
-
-While I remember, to make pppd (from CVS) compile correctly I had to alter a
-couple of include lines in the code. It was looking for bpf.h so I changed it
-to pcap-bpf.h to make it compile cleanly. Will this affect my situation?
+I have tried replacing my kernel with the 2.4.20 from the working SuSE=20
+configuration, to no avail - should I start downgrading pppd or rp-pppoe ?
 
 Regards,
 
 Charlie Price
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.6 (GNU/Linux)
 
-iD8DBQFBdDXU3k8SswDN/tkRAidAAKClretKIArQz4XG/2mJn18TyW9vTwCgiBKr
-NLobBj4JEARDBBP8q60tAds=RGBN
+--nextPart6928906.mazlSfipBf
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.4 (GNU/Linux)
+
+iD8DBQBBdNnh3k8SswDN/tkRAtfGAKCeqy0RZwRQuSWt45i2yQBthx52GwCfVGDY
+pgfmFCrlrxjQwMsiQzQ/9hM=
+=X9iu
 -----END PGP SIGNATURE-----
+
+--nextPart6928906.mazlSfipBf--
