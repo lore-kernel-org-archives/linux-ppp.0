@@ -1,464 +1,78 @@
-From: "James R. Leu" <jleu@mindspring.com>
-Date: Tue, 25 Jan 2005 04:28:05 +0000
-Subject: [PATCH] MPLSCP
-Message-Id: <20050125042805.GC13927@mindspring.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="liOOAslEiF7prFVr"
+From: Anton Voronin <anton@chelcom.ru>
+Date: Thu, 06 Jan 2005 11:46:46 +0000
+Subject: 2.4.2 and 2.4.3 fail to test that kernel has MPPE support
+Message-Id: <200501061646.46789.anton@chelcom.ru>
 List-Id: <linux-ppp.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi everyone,
 
---liOOAslEiF7prFVr
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+I've got a problem with pppd-2.4.2 and 2.4.3 using MPPE with 2.4.x kernel.
+The ccp_test() function from sys-linux.c returns -1, however kernel has MPPE 
+support (ppp_mppe module gets loaded). With pppd-2.4.1, however, it works 
+fine. While ccp_test() seems to be identical between versions 2.4.1 and 
+2.4.2/2.4.3 of pppd, I noticed difference in the opt_buf argument supplied to 
+ccp_test():
 
-Hello,
+pppd-2.4.1:
+===================
+        if(p[5] & MPPE_40BIT) {
+            keysize = 8;
+            BCOPY(mppe_master_send_key_40, opt_buf+3, keysize);
+            BCOPY(mppe_master_recv_key_40, opt_buf+11, keysize);
+        } else if(p[5] & MPPE_128BIT) {
+            keysize = 16;
+            BCOPY(mppe_master_send_key_128, opt_buf+3, keysize);
+            BCOPY(mppe_master_recv_key_128, opt_buf+19, keysize);
+        }
+        if(p[5] != 0) {
+            opt_buf[0]=CI_MPPE;
+            opt_buf[1]=CILEN_MPPE;
+            opt_buf[2] = (go->mppe_stateless) ? 1 : 0;
+            res = ccp_test(f->unit, opt_buf, (2*keysize)+3, 0);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        } else {
+            res = -1;
+        }
+===================
 
-I have been maintaining a patch to pppd since 2001.  The patch was originally
-written by <Serge.Krier@advalvas.be> for use with my mpls-linux project.
-(http://mpls-linux.sf.net/) The patch adds MPLSCP to the pppd daemon.
+pppd-2.4.2/2.4.3:
+===================
+    if (go->mppe) {
+        opt_buf[0] = CI_MPPE;
+        opt_buf[1] = CILEN_MPPE;
+        MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
+        /* Key material unimportant here. */
+        if (ccp_test(f->unit, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN, 0) <= 0) 
+{
+            error("MPPE required, but kernel has no support.");
+            lcp_close(f->unit, "MPPE required but not available");
+        }
+    }
+===================
 
-Please consider accepting this patch.
+In both cases opt_buf[0] and opt_buf[1] are filled identically.
 
-(patch attached)
+However, in 2.4.1 only opt_buf[2] if filled, and then two keys are copied, 
+while in 2.4.2/2.4.3 MPPE_OPTS_TO_CI() macro fills 4 more bytes of opt_buf (6 
+bytes total), and none of the keys are copied behind them. But, the 3rd 
+argument (option length) is set to CILEN_MPPE + MPPE_MAX_KEY_LEN (whilch is 
+equal to 6 + 16 = 22). Seems like the rest 16 bytes are left uninitialized 
+(even not zeroes, just contain garbage).
+
+Is it a bug or I am using the wrong kernel patches, that behave differently? 
+The file of patches I am using was called:
+
+linux-2.4.20-openssl-0.9.6b-mppe.patch
+
+Should this be something else?
+
+Best regards,
 -- 
-James R. Leu
-jleu@mindspring.com
-
---liOOAslEiF7prFVr
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="ppp-2.4.2-mpls.patch"
-
-diff -uNr ppp/pppd/main.c ppp-mpls/pppd/main.c
---- ppp/pppd/main.c	2005-01-24 21:02:51.659741400 -0600
-+++ ppp-mpls/pppd/main.c	2005-01-24 21:09:10.904087496 -0600
-@@ -70,6 +70,9 @@
- #include "fsm.h"
- #include "lcp.h"
- #include "ipcp.h"
-+
-+#include "mplscp.h"
-+
- #ifdef INET6
- #include "ipv6cp.h"
- #endif
-@@ -246,6 +249,7 @@
-     &cbcp_protent,
- #endif
-     &ipcp_protent,
-+    &mplscp_protent,
- #ifdef INET6
-     &ipv6cp_protent,
- #endif
-diff -uNr ppp/pppd/Makefile.linux ppp-mpls/pppd/Makefile.linux
---- ppp/pppd/Makefile.linux	2005-01-24 21:02:51.661741096 -0600
-+++ ppp-mpls/pppd/Makefile.linux	2005-01-24 21:09:10.185196784 -0600
-@@ -13,16 +13,16 @@
- 
- PPPDSRCS = main.c magic.c fsm.c lcp.c ipcp.c upap.c chap-new.c md5.c ccp.c \
- 	   ecp.c ipxcp.c auth.c options.c sys-linux.c md4.c chap_ms.c \
--	   demand.c utils.c tty.c eap.c chap-md5.c
-+	   demand.c utils.c tty.c eap.c chap-md5.c mplscp.c
- 
- HEADERS = ccp.h chap-new.h ecp.h fsm.h ipcp.h \
- 	ipxcp.h lcp.h magic.h md5.h patchlevel.h pathnames.h pppd.h \
--	upap.h eap.h
-+	upap.h eap.h mplscp.h
- 
- MANPAGES = pppd.8
- PPPDOBJS = main.o magic.o fsm.o lcp.o ipcp.o upap.o chap-new.o md5.o ccp.o \
- 	   ecp.o auth.o options.o demand.o utils.o sys-linux.o ipxcp.o tty.o \
--	   eap.o chap-md5.o
-+	   eap.o chap-md5.o mplscp.o
- 
- #
- # include dependencies if present
-diff -uNr ppp/pppd/mplscp.c ppp-mpls/pppd/mplscp.c
---- ppp/pppd/mplscp.c	1969-12-31 18:00:00.000000000 -0600
-+++ ppp-mpls/pppd/mplscp.c	2004-07-13 22:46:26.000000000 -0500
-@@ -0,0 +1,371 @@
-+
-+/* MPLSCP - Serge.Krier@advalvas.be (C) 2001 */
-+
-+#include <stdio.h>
-+#include <string.h>
-+#include <netdb.h>
-+#include <sys/param.h>
-+#include <sys/types.h>
-+#include <sys/socket.h>
-+#include <netinet/in.h>
-+#include <arpa/inet.h>
-+
-+#include "pppd.h"
-+#include "fsm.h"
-+#include "mplscp.h"
-+
-+
-+/* local vars */
-+/* static int mplscp_is_up; */                  /* have called np_up() */
-+
-+/*
-+ * Callbacks for fsm code.  (CI = Configuration Information)
-+ */
-+static void mplscp_resetci __P((fsm *));	/* Reset our CI */
-+static int  mplscp_cilen __P((fsm *));	        /* Return length of our CI */
-+static void mplscp_addci __P((fsm *, u_char *, int *)); /* Add our CI */
-+static int  mplscp_ackci __P((fsm *, u_char *, int));	/* Peer ack'd our CI */
-+static int  mplscp_nakci __P((fsm *, u_char *, int));	/* Peer nak'd our CI */
-+static int  mplscp_rejci __P((fsm *, u_char *, int));	/* Peer rej'd our CI */
-+static int  mplscp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv CI */
-+static void mplscp_up __P((fsm *));		/* We're UP */
-+static void mplscp_down __P((fsm *));		/* We're DOWN */
-+static void mplscp_finished __P((fsm *));	/* Don't need lower layer */
-+
-+fsm mplscp_fsm[NUM_PPP];		/* MPLSCP fsm structure */
-+
-+static fsm_callbacks mplscp_callbacks = { /* MPLSCP callback routines */
-+  mplscp_resetci,		/* Reset our Configuration Information */
-+  mplscp_cilen,			/* Length of our Configuration Information */
-+  mplscp_addci,			/* Add our Configuration Information */
-+  mplscp_ackci,			/* ACK our Configuration Information */
-+  mplscp_nakci,			/* NAK our Configuration Information */
-+  mplscp_rejci,			/* Reject our Configuration Information */
-+  mplscp_reqci,			/* Request peer's Configuration Information */
-+  mplscp_up,			/* Called when fsm reaches OPENED state */
-+  mplscp_down,			/* Called when fsm leaves OPENED state */
-+  NULL,			        /* Called when we want the lower layer up */
-+  mplscp_finished,		/* Called when we want the lower layer down */
-+  NULL,			        /* Called when Protocol-Reject received */
-+  NULL,			        /* Retransmission is necessary */
-+  NULL,			        /* Called to handle protocol-specific codes */
-+  "MPLSCP"			/* String name of protocol */
-+};
-+
-+static option_t mplscp_option_list[] = {
-+    { "mpls", o_bool, &mplscp_protent.enabled_flag,
-+      "Enable MPLSCP (and MPLS)", 1 },
-+    { NULL } };
-+
-+/*
-+ * Protocol entry points from main code.
-+ */
-+
-+static void mplscp_init __P((int));
-+static void mplscp_open __P((int));
-+static void mplscp_close __P((int, char *));
-+static void mplscp_lowerup __P((int));
-+static void mplscp_lowerdown __P((int));
-+static void mplscp_input __P((int, u_char *, int));
-+static void mplscp_protrej __P((int));
-+static int  mplscp_printpkt __P((u_char *, int,
-+				 void (*) __P((void *, char *, ...)), void *));
-+
-+struct protent mplscp_protent = {
-+    PPP_MPLSCP,
-+    mplscp_init,
-+    mplscp_input,
-+    mplscp_protrej,
-+    mplscp_lowerup,
-+    mplscp_lowerdown,
-+    mplscp_open,
-+    mplscp_close,
-+    mplscp_printpkt,
-+    NULL,
-+    0,                            /* MPLS not enabled by default */
-+    "MPLSCP",
-+    "MPLS",
-+    mplscp_option_list,
-+    NULL,
-+    NULL,
-+    NULL
-+};
-+
-+/*
-+ * mplscp_init - Initialize MPLSCP.
-+ */
-+static void
-+mplscp_init(int unit) {
-+
-+  fsm *f = &mplscp_fsm[unit];
-+  
-+  f->unit = unit;
-+  f->protocol = PPP_MPLSCP;
-+  f->callbacks = &mplscp_callbacks;  
-+  fsm_init(&mplscp_fsm[unit]); 
-+  
-+}
-+
-+/*
-+ * mplscp_open - MPLSCP is allowed to come up.
-+ */
-+static void
-+mplscp_open(int unit) {
-+  
-+  fsm_open(&mplscp_fsm[unit]);
-+
-+}
-+
-+/*
-+ * mplscp_close - Take MPLSCP down.
-+ */
-+static void
-+mplscp_close(int unit, char *reason) {
-+
-+  fsm_close(&mplscp_fsm[unit], reason);
-+
-+}
-+
-+/*
-+ * mplscp_lowerup - The lower layer is up.
-+ */
-+static void
-+mplscp_lowerup(int unit) {
-+
-+  fsm_lowerup(&mplscp_fsm[unit]);
-+}
-+
-+/*
-+ * mplscp_lowerdown - The lower layer is down.
-+ */
-+static void
-+mplscp_lowerdown(int unit) {
-+  
-+  fsm_lowerdown(&mplscp_fsm[unit]);
-+}
-+
-+/*
-+ * mplscp_input - Input MPLSCP packet.
-+ */
-+static void
-+mplscp_input(int unit, u_char *p, int len) {
-+
-+  fsm_input(&mplscp_fsm[unit], p, len);
-+}
-+
-+/*
-+ * mplscp_protrej - A Protocol-Reject was received for MPLSCP.
-+ * Pretend the lower layer went down, so we shut up.
-+ */
-+static void
-+mplscp_protrej(int unit) {
-+
-+    fsm_lowerdown(&mplscp_fsm[unit]);
-+}
-+
-+/*
-+ * mplscp_resetci - Reset our CI.
-+ * Called by fsm_sconfreq, Send Configure Request.
-+ */
-+static void
-+mplscp_resetci(fsm *f) {
-+
-+  return;
-+}
-+
-+/*
-+ * mplscp_cilen - Return length of our CI.
-+ * Called by fsm_sconfreq, Send Configure Request.
-+ */
-+static int
-+mplscp_cilen(fsm *f) {
-+
-+  return 0;
-+}
-+
-+/*
-+ * mplscp_addci - Add our desired CIs to a packet.
-+ * Called by fsm_sconfreq, Send Configure Request.
-+ */
-+static void
-+mplscp_addci(fsm *f, u_char *ucp, int *lenp) {
-+
-+}
-+
-+/*
-+ * ipcp_ackci - Ack our CIs.
-+ * Called by fsm_rconfack, Receive Configure ACK.
-+ *
-+ * Returns:
-+ *	0 - Ack was bad.
-+ *	1 - Ack was good.
-+ */
-+static int
-+mplscp_ackci(fsm *f, u_char *p, int  len) {
-+  
-+  return 1;
-+
-+}
-+
-+/*
-+ * mplscp_nakci - Peer has sent a NAK for some of our CIs.
-+ * This should not modify any state if the Nak is bad
-+ * or if MPLSCP is in the OPENED state.
-+ * Calback from fsm_rconfnakrej - Receive Configure-Nak or Configure-Reject.
-+ *
-+ * Returns:
-+ *	0 - Nak was bad.
-+ *	1 - Nak was good.
-+ */
-+static int
-+mplscp_nakci(fsm *f, u_char *p, int len) {
-+
-+  return 1;
-+}
-+
-+/*
-+ * MPLSVP_rejci - Reject some of our CIs.
-+ * Callback from fsm_rconfnakrej.
-+ */
-+static int
-+mplscp_rejci(fsm *f, u_char *p, int len) {
-+
-+  return 1;
-+
-+}
-+
-+/*
-+ * mplscp_reqci - Check the peer's requested CIs and send appropriate response.
-+ * Callback from fsm_rconfreq, Receive Configure Request
-+ *
-+ * Returns: CONFACK, CONFNAK or CONFREJ and input packet modified
-+ * appropriately.  If reject_if_disagree is non-zero, doesn't return
-+ * CONFNAK; returns CONFREJ if it can't return CONFACK.
-+ */
-+static int
-+mplscp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
-+  
-+  
-+  int rc = CONFACK;		/* Final packet return code */
-+   
-+  PUTCHAR(CONFACK,inp);
-+
-+  return rc;
-+
-+}
-+
-+static void
-+mplscp_up(fsm *f) {
-+
-+  sifnpmode(f->unit, PPP_MPLS_UC, NPMODE_PASS);
-+  /*  sifnpmode(f->unit, PPP_MPLS_MC, NPMODE_PASS);*/
-+  
-+  np_up(f->unit, PPP_MPLS_UC);
-+  /*  np_up(f->unit, PPP_MPLS_MC);*/
-+  /*  ipcp_is_up = 1;*/
-+
-+  
-+#if 1
-+  printf("MPLSCP is OPENED\n");
-+#endif
-+
-+}
-+
-+static void
-+mplscp_down(fsm *f) {
-+  
-+  sifnpmode(f->unit, PPP_MPLS_UC, NPMODE_DROP);
-+  /*  sifnpmode(f->unit, PPP_MPLS_MC, NPMODE_DROP);*/
-+
-+  sifdown(f->unit); 
-+  
-+#if 1
-+  printf("MPLSCP is CLOSED\n");
-+#endif
-+  
-+
-+}
-+
-+static void 
-+mplscp_finished(fsm *f) {
-+  
-+  np_finished(f->unit, PPP_MPLS_UC);
-+  /*  np_finished(f->unit, PPP_MPLS_MC);*/
-+
-+}
-+
-+/*
-+ * mpls_printpkt - print the contents of an MPLSCP packet.
-+ */
-+static char *mplscp_codenames[] = {
-+    "ConfReq", "ConfAck", "ConfNak", "ConfRej",
-+    "TermReq", "TermAck", "CodeRej"
-+};
-+
-+static int
-+mplscp_printpkt(u_char *p, int plen, 
-+		void (*printer) __P((void *, char *, ...)),
-+		void *arg) {
-+ 
-+    int code, id, len, olen;
-+    u_char *pstart, *optend;
-+
-+    if (plen < HEADERLEN)
-+	return 0;
-+    pstart = p;
-+    GETCHAR(code, p);
-+    GETCHAR(id, p);
-+    GETSHORT(len, p);
-+    if (len < HEADERLEN || len > plen)
-+	return 0;
-+
-+    if (code >= 1 && code <= sizeof(mplscp_codenames) / sizeof(char *))
-+	printer(arg, " %s", mplscp_codenames[code-1]);
-+    else
-+	printer(arg, " code=0x%x", code);
-+    printer(arg, " id=0x%x", id);
-+    len -= HEADERLEN;
-+    switch (code) {
-+    case CONFREQ:
-+    case CONFACK:
-+    case CONFNAK:
-+    case CONFREJ:
-+	/* print option list */
-+	while (len >= 2) {
-+	    GETCHAR(code, p);
-+	    GETCHAR(olen, p);
-+	    p -= 2;
-+	    if (olen < 2 || olen > len) {
-+		break;
-+	    }
-+	    printer(arg, " <");
-+	    len -= olen;
-+	    optend = p + olen;
-+	    while (p < optend) {
-+		GETCHAR(code, p);
-+		printer(arg, " %.2x", code);
-+	    }
-+	    printer(arg, ">");
-+	}
-+	break;
-+
-+    case TERMACK:
-+    case TERMREQ:
-+	if (len > 0 && *p >= ' ' && *p < 0x7f) {
-+	    printer(arg, " ");
-+	    print_string((char *)p, len, printer, arg);
-+	    p += len;
-+	    len = 0;
-+	}
-+	break;
-+    }
-+
-+    /* print the rest of the bytes in the packet */
-+    for (; len > 0; --len) {
-+	GETCHAR(code, p);
-+	printer(arg, " %.2x", code);
-+    }
-+
-+    return p - pstart;
-+
-+}
-diff -uNr ppp/pppd/mplscp.h ppp-mpls/pppd/mplscp.h
---- ppp/pppd/mplscp.h	1969-12-31 18:00:00.000000000 -0600
-+++ ppp-mpls/pppd/mplscp.h	2004-07-13 22:46:26.000000000 -0500
-@@ -0,0 +1,8 @@
-+
-+/* MPLSCP - Serge.Krier@advalvas.be (C) 2001 */
-+
-+#define PPP_MPLSCP  0x8281
-+#define PPP_MPLS_UC 0x0281
-+#define PPP_MPLS_MC 0x0283
-+
-+extern struct protent mplscp_protent;
-
---liOOAslEiF7prFVr--
+Anton Voronin
+Intersvyaz JSC
+http://www.chelcom.ru
++7 (3512) 655199
