@@ -1,33 +1,75 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Thu, 14 Oct 2004 04:39:23 +0000
-Subject: Re: ppp_mppe status for 2.6.x kernels
-Message-Id: <16750.763.270119.39926@cargo.ozlabs.ibm.com>
+From: Charles Price <cpwp@w3z.co.uk>
+Date: Mon, 18 Oct 2004 13:53:16 +0000
+Subject: Kernel-mode PPPoE server.
+Message-Id: <200410181453.16399.cpwp@w3z.co.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20041012220528.GA7876@lists.us.dell.com>
-In-Reply-To: <20041012220528.GA7876@lists.us.dell.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Matt Domsch writes:
+Hi All,
 
-> Paul, I belive this addresses your concern about something being able
-> to send an unencrypted (uncompressed) packet after encryption has been
-> enabled.  This was done by adding a new field to struct compressor
-> called must_compress, and testing for it here:
-> 
->         /* try to do packet compression */
->         if ((ppp->xstate & SC_COMP_RUN) && ppp->xc_state != 0
->             && proto != PPP_LCP && proto != PPP_CCP) {
-> +               if (!(ppp->flags & SC_CCP_UP) && ppp->xcomp->must_compress) {
-> +                       printk(KERN_ERR "ppp: compression required but down - pkt dropped.\n");
->                         goto drop;
->                 }
+I'm having trouble configuring a kernel-mode PPPoE server using:
+Gentoo Linux (Kernel 2.6.8-gentoo-r10)
+PPP from CVS
+rp-pppoe-3.5
 
-That still only does anything while SC_COMP_RUN is set in
-ppp->xstate.  If CCP goes down, SC_COMP_RUN gets cleared and we are no
-better off than before.  The flag needs to be in ppp->flags and needs
-to be set by pppd before we start negotiating.
+Whenever a client initiates a connection to my server, the following is 
+appended to syslog:
+<SNIP> 
+Sep 30 09:51:13 pppoe2 pppoe-server[5686]: Session 2 created for client 
+00:03:47:92:cf:e1 (10.67.15.2) on eth0 using Service-Name ''
+Sep 30 09:51:13 pppoe2 pppd[5686]: Plugin /etc/ppp/plugins/rp-pppoe.so loaded.
+Sep 30 09:51:13 pppoe2 pppd[5686]: RP-PPPoE plugin version 3.5 compiled 
+against pppd 2.4.2
+Sep 30 09:51:13 pppoe2 pppd[5686]: pppd 2.4.2 started by root, uid 0
+Sep 30 09:51:13 pppoe2 pppd[5686]: using channel 2
+Sep 30 09:51:13 pppoe2 pppd[5686]: Using interface ppp1
+Sep 30 09:51:13 pppoe2 pppd[5686]: Connect: ppp1 <--> eth0
+Sep 30 09:51:13 pppoe2 pppd[5686]: Couldn't increase MTU to 1500
+Sep 30 09:51:13 pppoe2 pppd[5686]: Couldn't increase MRU to 1500
+Sep 30 09:51:14 pppoe2 pppd[5686]: rcvd [LCP ConfReq id=0x1 <mru 1492> <magic 
+0x34254d72>]
+<trimmed>
+Sep 30 09:51:41 pppoe2 pppd[5686]: rcvd [LCP ConfReq id=0x1 <mru 1492> <magic 
+0x34254d72>]
+Sep 30 09:51:44 pppoe2 pppoe-server[5474]: PADT: Generic-Error: RP-PPPoE: 
+System call error: Input/output error
+Sep 30 09:51:44 pppoe2 pppoe-server[5474]: Sent PADT
+Sep 30 09:51:44 pppoe2 pppoe-server[5474]: Stopping session 2 reason: Received 
+PADT
+Sep 30 09:51:44 pppoe2 pppd[5686]: Terminating on signal 15.
+</SNIP>
 
-Paul.
+The client repeatedly sends LCP ConfReq packets to the server  but receives no 
+reply. I have the PPP and PPPoE modules compiled and running and am using the 
+following options to pppd:
+
+lock
+asyncmap 0
+mru 1492
+mtu 1492
+nodetach
+lcp-max-configure 60
+lcp-restart 2
+idle 43200
+noipx
+proxyarp
+login
+require-chap
+login
+lcp-echo-interval 60
+lcp-echo-failure 5
+debug
+
+I have a working PPPoE server running on SuSE Linux 8.1 (using the kernel that 
+is shipped with this configuration) but would like to build another one using 
+Gentoo Linux.
+
+Does anyone have an ideas as to why the server will not send LCP ConfAck 
+packets?
+
+Regards,
+
+Charlie Price
