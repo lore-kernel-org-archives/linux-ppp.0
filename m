@@ -1,66 +1,61 @@
-From: "Javier Govea" <jgovea@magma.ca>
-Date: Wed, 03 Mar 2004 17:14:55 +0000
-Subject: Writing a dialer
-Message-Id: <200403031714.i23HEtJN021770@webmail2.magma.ca>
+From: James Carlson <carlson@workingcode.com>
+Date: Wed, 03 Mar 2004 17:27:05 +0000
+Subject: Re: Writing a dialer
+Message-Id: <16454.5481.146038.907479@c-24-147-210-59.ne.client2.attbi.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <200403031714.i23HEtJN021770@webmail2.magma.ca>
+In-Reply-To: <200403031714.i23HEtJN021770@webmail2.magma.ca>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hello to all,
+Javier Govea writes:
+> A requirement for my program is that I must have control over the pppd's so that i can
+> kill them or restart them. One form of getting that control, within my C++ program, is by
+> getting the pid's, but i'm open to other suggestions.
 
-I'm writing my own dialer in C++, similar to KPPP but with support for several
-simultaneous ppp links. My dialer will use pppd to setup the ppp links. And I would like
-to use the chat program, the one that comes with the ppp-2.4.1 distribution, to send to
-the modem all the AT commands needed. I don't want to write my own 'chat' program if it is
-not necessary. 
+Assuming your program keeps running while pppd runs, that sounds like
+the best way to do it.
 
-A requirement for my program is that I must have control over the pppd's so that i can
-kill them or restart them. One form of getting that control, within my C++ program, is by
-getting the pid's, but i'm open to other suggestions.
+If your program just runs to start up pppd, exits, and then runs again
+to shut it down, then consider using the "linkname" option to have the
+pppd pid stored somewhere convenient.
 
-How can I call pppd and chat from C++ to setup my ppp links?? and at the same time to have
-control over the pppd processes?? Is this possible??? or I defenitely have to write my own
-'chat' program??? 
+> How can I call pppd and chat from C++ to setup my ppp links?? and at the same time to have
+> control over the pppd processes?? Is this possible??? or I defenitely have to write my own
+> 'chat' program??? 
 
-I already tried two things from my C++ code, the first one:
+It has nothing to do with chat.  These are separate issues.
 
-system ("/usr/sbin/pppd /dev/input/ttyACM0 call my-script user user1")
+> I already tried two things from my C++ code, the first one:
+> 
+> system ("/usr/sbin/pppd /dev/input/ttyACM0 call my-script user user1")
 
-With this system call, pppd is using my-script, which in turn is calling the chat program
-with the command 'connect' (my-script is pasted below). This system call does work
-properly. But I do not have control in my C++ program over the pppd, ie. I can't kill it
-or know its status.
+Take a look at the "nodetach" and "updetach" options for pppd.  The
+former is useful if you're going to hang around for the whole session,
+the latter is useful if you just want to know that pppd got off to a
+good start.
 
-The second thing I tried is this: 
+> The second thing I tried is this: 
+> 
+> char *args[] = {"/dev/input/ttyACM0\0", "call\0", "my-script\0", "user\0", "user1", NULL};
 
-char *args[] = {"/dev/input/ttyACM0\0", "call\0", "my-script\0", "user\0", "user1", NULL};
-pid = execv("/usr/sbin/pppd", args);
+What's with all the "\0" escapes?  Those should not be needed.
 
-execv returns the pid and gives me more control over the pppd. execv starts the pppd but
-the chat program does not run properly. It seems that the chat program is started as an
-independent process and not as child of the pppd (which is the way i think it should run). 
+And why doesn't args[0] contain "pppd"?  That doesn't look at all
+healthy to me.
 
-Is it possible to call pppd and chat and to get the pppd's pid from a C or C++ program? if
-so, how can i do that???? 
+> execv returns the pid and gives me more control over the pppd. execv starts the pppd but
+> the chat program does not run properly. It seems that the chat program is started as an
+> independent process and not as child of the pppd (which is the way i think it should run). 
 
-Any help is very much appreaciated,
-Thank you in advance
-X
+No, chat is a child of pppd, and it runs synchronously (pppd waits for
+it to exit).  It sounds like the environment or something else was
+mangled when your program started pppd.  The invocation of exec that
+you posted doesn't look right.
 
-my-script 
-====230400
-mtu 576
-mru 576
-modem
-lock
-crtscts
-defaultroute
-lcp-echo-failure 0
-lcp-echo-interval 0
-novj
-persist
-connect '/usr/sbin/chat -v -f /etc/ppp/chat-script'
-========end of my-script
+It's impossible to tell, though, without debug logs.
 
+-- 
+James Carlson                                  <carlson@workingcode.com>
