@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Mon, 02 Feb 2004 21:55:37 +0000
+From: Ross Vandegrift <ross@willow.seitz.com>
+Date: Mon, 02 Feb 2004 22:29:36 +0000
 Subject: Re: pppd not setting netmask
-Message-Id: <Pine.LNX.4.50.0402021351260.8258-100000@string.physics.ubc.ca>
+Message-Id: <20040202222936.GA6794@willow.seitz.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20040130190514.GB16326@willow.seitz.com>
 In-Reply-To: <20040130190514.GB16326@willow.seitz.com>
@@ -10,48 +10,57 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Mon, 2 Feb 2004, Ross Vandegrift wrote:
+On Mon, Feb 02, 2004 at 01:55:37PM -0800, Bill Unruh wrote:
+> Why in the world would you want to insert routing code into ppp-- liable
+> to be buggy, inconsistant, etc-- when your ordinary routing code in the
+> system is perfectly capable of handling it.
 
-> > Ross Vandegrift writes:
-> > 
-> > > 	This is bad because the connected route that gets installed is
-> > > for the opposite end of the tunnel (ie, 10.100.100.1/32) and not the
-> > > route for the 10.100.100.0/30.  This confuses OSPF quite a bit (see my
-> > > quagga-users thread with all the gorey OSPF details and routes:
-> > > http://lists.quagga.net/pipermail/quagga-users/2004-January/001382.html)
-> > 
-> > The netmask has no meaning on a point-to-point interface.  If other
-> > software isn't looking at the IFF_POINTOPOINT bit in the interface
-> > flags, then I suggest you fix that other software.
+Well, it's not that I want anything inserted into ppp - I'm just trying
+to understand why things are different on Linux.  I'm confused because this
+is how it's often done on Cisco and I can't see why it's wrong:
+
+           1.1.1.1/24   2.2.2.1/30   2.2.2.2/30    3.3.3.1/24
+{NETA} <--ethernet--> RTR1 <---via PTP T1---> RTR2 <--ethernet--> {NETB}
+
+The interfaces on RTR1 and RTR2 that are directly connected are
+configured to be the only IPs on a /30 network.
+
+The situation on GNU/Linux with pppd is aparantly different.  I'm not
+trying to say we should change it if it's right - it's very possible
+that I need to be thinking about networks differently.
+
+> > If it's a technical issue, are there things I can do to help?  My
+> > employer probably wouldn't mind me spending some time on this to have
+> > our tunnels work the way we assumed they would.
 > 
-> Is this a technical issue, or a policy decision?  According to a recent
-> HOWTO (http://sweb.cz/Frantisek.Rysanek/sync/dscc4+HDLC-Mini-HOWTO.html),
-> the generic HDLC layer allows a netmask to be set on pointopoint
-> interfaces (see the very first instance of 'ifconfig').  I don't have
-> any HDLC hardware to actually test this with, though.
+> Just set up explicit routing of the other stuff you want to go through
+> the link.
 
-netmask makes no sense on a point to point device. It is point to
-point-- one machine to one machine. This does not mean that you cannot
-route other connections via that point to point link. You can route
-anything you want, using the standard routing procedures in your OS.
-Ie, even if the netmask were set it would not make any sense-- there is
-only one machine at the other end of the link and everything has to go
-through it. 
+I'm trying to avoid setting up explicit routes in a dynamic network.
+Fail-over routing is much easier if all routes are dynamically handled
+via ospf.  Perhaps if I give a quick explanation of the problem I'll
+make more sense:
 
-Why in the world would you want to insert routing code into ppp-- liable
-to be buggy, inconsistant, etc-- when your ordinary routing code in the
-system is perfectly capable of handling it. 
+The way things are done now, is that the connected route for ppp0 is set
+to the *other* end of the tunnel.  If RTR1 and RTR2 above are instead
+configured using pppd, RTR1 won't know how to route to its own ppp0 interface
+until it receives an OSPF route from the other end.  Then, on RTR1, you end
+up with this really weird routing table:
 
+C>* 2.2.2.2/32 is directly connected, ppp0
+O>* 2.2.2.1/32 [110/20] via 10.100.100.2, ppp0, 6d20h09m
 
-> 
-> If it's a technical issue, are there things I can do to help?  My
-> employer probably wouldn't mind me spending some time on this to have
-> our tunnels work the way we assumed they would.
+So now RTR1 thinks it needs to route through RTR to get to it's own PPP
+interface.
 
-Just set up explicit routing of the other stuff you want to go through
-the link.
+The reason I thought this was a problem in pppd is because the manpage
+documents a "netmask" statement that sounds like it does exactly what I
+want!
 
-> 
-> If it's a policy decision, am I opening an ugly can of worms by trying
-> to setup a network topology like this?
-> 
+(In reality, something, somewhere steps in and overrides the routing
+table with some sanity - packets to 2.2.2.1 don't actually traverse the
+ppp connection.  I have no idea how this happens without a route.)
+
+Thanks,
+
+Ross Vandegrift
