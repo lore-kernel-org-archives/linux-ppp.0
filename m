@@ -1,72 +1,46 @@
-From: "Sadiq Shaikh" <sadiq.shaikh@analog.com>
-Date: Mon, 27 Dec 2004 10:25:33 +0000
-Subject: pppoatm: tring to insert module pppoatm.o, although plugin pppoatm.so is loaded.
-Message-Id: <ALEGKCGFAAHCNBMHOENDKEAICJAA.sadiq.shaikh@analog.com>
+From: "Gilles Espinasse" <g.esp@free.fr>
+Date: Mon, 27 Dec 2004 19:47:03 +0000
+Subject: Re: pppoatm: tring to insert module pppoatm.o, although plugin pppoatm.so is loaded.
+Message-Id: <003d01c4ec4c$d7ac4f00$f9b5a8c0@PII350>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <ALEGKCGFAAHCNBMHOENDKEAICJAA.sadiq.shaikh@analog.com>
+In-Reply-To: <ALEGKCGFAAHCNBMHOENDKEAICJAA.sadiq.shaikh@analog.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi,
 
-I'm working on pppoatm. Recently i have downloaded
-ppp-2.4.3. I'm running into problem, its will be great
-if someone answer my questions.Thank you in advance.
+----- Original Message ----- 
+From: "Sadiq Shaikh" <sadiq.shaikh@analog.com>
+To: <linux-ppp@vger.kernel.org>
+Sent: Tuesday, December 28, 2004 12:54 AM
+Subject: pppoatm: tring to insert module pppoatm.o, although plugin
+pppoatm.so is loaded.
 
-1) Why ppp0 interface is not created ?
-2) why its trying to insert module, when i added it as plugin.
-3) I'm using ppp-2.4.3, linux kernel 2.4.18, any issues with this
-combination ?
 
-kernel conf:
+> Hi,
+>
+> I'm working on pppoatm. Recently i have downloaded
+> ppp-2.4.3. I'm running into problem, its will be great
+> if someone answer my questions.Thank you in advance.
+>
+> 1) Why ppp0 interface is not created ?
+because of 2)
 
-Networking Options:
-[*]Asynchronous Transfer Mode (ATM) (EXPERIMENTAL)
-[*]Classical IP over ATM
-[*]RFC 2684 Bridging
+> 2) why its trying to insert module, when i added it as plugin.
 
-Network Device Support:
-<*> PPP (point-to-point protocol) support
-<*>PPP support for async serial ports
-<*>PPP over ATM (EXPERIMENTAL)
+You need both a module for the kernel and a plugin for pppd
 
-file: /etc/ppp/options
-----------8<---------------8<------------------
-user pppoa_user46lc
-name user
-defaultroute
--detach
-nobsdcomp
-nodeflate
-nopcomp
-novj
-novjccomp
-noipdefault
-noaccomp -am
-#refuse-chap
-+chap
-plugin pppoatm.so 46.62
-persist
-maxfail 0
+> 3) I'm using ppp-2.4.3, linux kernel 2.4.18, any issues with this
+> combination ?
+>
+CONFIG_PPPOATM=m is available on my rh7.3 2.4.18-3 .config, I don't know for
+a standard kernel.
 
-console output:
-----------8<---------------8<------------------
-# pppd
+I don't know what is the driver you try to support but if it compile on
+2.4.18 and is old, you may need small changes with 2.4.20, 2.4.21 and
+2.4.22. Later no more changes than in 2.4.22 should be necessary if I
+remember well.
 
-do_cpu() called w/ EPC = 00436030
-Algorithmics/MIPS FPU Emulator v1.4
-do_cpu() called w/ EPC = 00436040
-do_cpu() called w/ EPC = 0043605c
-do_cpu() called w/ EPC = 00436070
-Plugin pppoatm.so loaded.
-PPPoATM plugin_init
-PPPoATM setdevname_pppoatm - SUCCESS:46.62
-insmod: pppoatm.o: no module by that name found
-setsockopt(SO_ATMQOS): Invalid argument
-
-----------8<---------------8<------------------
-
-Regards & Thanks,
-Sadiq Shaikh
 
