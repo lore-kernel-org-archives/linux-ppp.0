@@ -1,154 +1,164 @@
-From: Oleg Makarenko <mole@quadra.ru>
-Date: Tue, 15 Jun 2004 20:00:42 +0000
-Subject: Re: Fw: sha1 linux/mppe fix for 64-bit Linux
-Message-Id: <40CF556A.6050403@quadra.ru>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="------------020207060907010103000502"
+From: Guy Rouillier <guy-rouillier@speakeasy.net>
+Date: Sun, 20 Jun 2004 03:29:11 +0000
+Subject: Re: sha1 linux/mppe fix for 64-bit Linux
+Message-Id: <20040619232911.2d4fa6d1@localhost>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20040615124206.00006526@ma1033>
 In-Reply-To: <20040615124206.00006526@ma1033>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------020207060907010103000502
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Oleg, thanks for the reply.  I've been out of town all week and just
+received your messages.  Responses inline.
 
-Hi Guy,
+On Wed, 16 Jun 2004 00:00:42 +0400
+Oleg Makarenko <mole@quadra.ru> wrote:
 
-Guy Rouillier wrote:
+> Hi Guy,
+> 
+> Guy Rouillier wrote:
+> 
+> >The major set of changes was to convert long data types to data types
+> >with explicit length.  Basically, I changed longs to 32-bit data
+> >values and unsigned chars to 8-bit values.  
+> >
+> 
+> Do you really need to change unsigned char to u8? Does algorithm break
 
->The major set of changes was to convert long data types to data types
->with explicit length.  Basically, I changed longs to 32-bit data values
->and unsigned chars to 8-bit values.  
->
+My reason for doing this was three-fold.  (1) In the later version of
+this code I located from the original author, he had changed it like
+that.  As long as I was going through all the code anyway, I figured I
+would follow his example and make every data type explicit.  As you say,
+it doesn't hurt anything.  (2) I wanted to make the kernel part and the
+pppd part of the code parallel.  Because I made them all explicit in
+one, I made them all explicit in the other.   Ease of maintenance.  (3)
+I wanted to do everything in one pass.  Because it required a kernel
+rebuild, I didn't want to do just some minimal part I thought would
+work, only to find out it still generated a segfault or kernel panic. 
+Then I'd have to make additional changes and rebuild the kernel again.
 
-Do you really need to change unsigned char to u8? Does algorithm break 
-without that change? Or are to trying to preform some optimization?
+> 
+> without that change? Or are to trying to preform some optimization?
+> 
+> While it doesn't hirt to change unsigned char to u8 and unsigned 
+> int/long to u32 it only makes sense when the int/long size does
+> matter.
+> 
+> int32_t i;
+> 
+> is not a good replacement for plain
+> 
+> int i;
+> 
+> it only makes reader wonder why in hell it does matter if i is only
+> used in for (i = 0; i < 8; i++)
+> 
+> Agree?
 
-While it doesn't hirt to change unsigned char to u8 and unsigned 
-int/long to u32 it only makes sense when the int/long size does matter.
+For counters I agree.  But int is again an ambiguous data type.   Who
+knows what subsequent changes may occur that cause incompatibilities
+with a 32-bit integer?  I probably did go overboard, but it makes the
+code more bulletproof.
 
-int32_t i;
+> 
+> For the  sha1.c code the only 4-bit unclean place is a macro
+> definition for rol, blk0 and hence R0, R1 etc . These macros all
+> expect 32-bits arguments (as you have found in your previous mails)
+> 
+> That is why the only needed change to make it work on AMD64 (and 
+> hopefully not to break it on other platforms) is
+> 
+>  SHA1_Transform(unsigned long state[5], const unsigned char
+>  buffer[64]){
+> -    unsigned long a, b, c, d, e;
+> +    u_int32_t a, b, c, d, e;
+>      typedef union {
+>         unsigned char c[64];
+> -       unsigned long l[16];
+> +       u_int32_t l[16];
+>      } CHAR64LONG16;
+>      CHAR64LONG16 *block;
+> 
+> (replace u_int32_t with u8 for linux code part).
 
-is not a good replacement for plain
+I don't think this is sufficient. a,b,c,d,e are assigned values from
+state[5], so those two data types should agree.  To use your example, a
+subsequent programmer may wonder why you are using type-safe variables
+but ambiguous parameters in the same function.
 
-int i;
+> 
+> That is the change (see attachment for the patch) I use for several
+> days without any problems.
 
-it only makes reader wonder why in hell it does matter if i is only used 
-in for (i = 0; i < 8; i++)
+That may be, but it is still ambiguous.
 
-Agree?
+> 
+> Why to change other (not broken) parts of code? Do you gain some 
+> speed/size/other benefits with your unsigned char->u8 changes?
 
-For the  sha1.c code the only 4-bit unclean place is a macro definition 
-for rol, blk0 and hence R0, R1 etc . These macros all expect 32-bits 
-arguments (as you have found in your previous mails)
+Again, consistency, ease of maintenance, eliminate ambiguity, respect
+the original author.
 
-That is why the only needed change to make it work on AMD64 (and 
-hopefully not to break it on other platforms) is
+> 
+> >I also included a wrapper sha1()
+> >function that I found in later versions of the code by the author,
+> >Steve Reid.
+> >  
+> >
+> 
+> What is the point to define a new function sha1() that is never used
+> in the code? Probably something else is missed from your patch?
 
- SHA1_Transform(unsigned long state[5], const unsigned char buffer[64])
- {
--    unsigned long a, b, c, d, e;
-+    u_int32_t a, b, c, d, e;
-     typedef union {
-        unsigned char c[64];
--       unsigned long l[16];
-+       u_int32_t l[16];
-     } CHAR64LONG16;
-     CHAR64LONG16 *block;
+Because the original author has introduced it, and the ppp authors may
+choose to replace separate invocations of SHA1_Init(), SHA1_Update(),
+SHA1_Final() with a single sha1() call.  Simple code/time saver where it
+can be used.
 
-(replace u_int32_t with u8 for linux code part).
+> 
+> It is better to read man etc for diff/patch usage but still here is a 
+> quick guide.
 
-That is the change (see attachment for the patch) I use for several days 
-without any problems.
+Tried that, didn't help.  Tried asking for help, got none.
 
-Why to change other (not broken) parts of code? Do you gain some 
-speed/size/other benefits with your unsigned char->u8 changes?
+> 
+> Try to get clean ppp code and save it to (say) ppp-cvs20040615/ 
+> directory, make the directory copy to something like ppp.orig/, make
+> all your changes in the ppp-cvs20040615/ directory (for both
+> linux/sha1.* and pppd/sha1.*  files) and then run
+> 
+> diff -urN ppp.orig ppp-cvs20040615 > guy-x86_64.patch
 
->I also included a wrapper sha1()
->function that I found in later versions of the code by the author, Steve
->Reid.
->  
->
+Thanks, that's essentially what I did.
 
-What is the point to define a new function sha1() that is never used in 
-the code? Probably something else is missed from your patch?
+> 
+> Hope that helps
+> 
+> And in case you've missed it there is a patch on pptp-devel list to
+> get rid of sha1.c in kernel code. This patch doesn't work for me so I
+> still use a trivial fix to sha1.c but it seems the way to go. Did you
+> try it?
 
-It is better to read man etc for diff/patch usage but still here is a 
-quick guide.
+No, because I knew changes were required in two places, and others had
+already said the patch didn't work for them, I didn't try it.  I was
+under time pressure to get it working.
 
-Try to get clean ppp code and save it to (say) ppp-cvs20040615/ 
-directory, make the directory copy to something like ppp.orig/, make all 
-your changes in the ppp-cvs20040615/ directory (for both linux/sha1.* 
-and pppd/sha1.*  files) and then run
+One question for you if I may.  Do you know why multiple data type
+systems have been introduced?  For example, the kernel code uses u32
+while the pppd code uses u_int32_t.  Why not pick one and use it
+everywhere?
 
-diff -urN ppp.orig ppp-cvs20040615 > guy-x86_64.patch
-
-Hope that helps
-
-And in case you've missed it there is a patch on pptp-devel list to get 
-rid of sha1.c in kernel code. This patch doesn't work for me so I still 
-use a trivial fix to sha1.c but it seems the way to go. Did you try it?
-
-regards,
-Oleg
+> 
+> regards,
+> Oleg
+> 
+> 
 
 
---------------020207060907010103000502
-Content-Type: text/plain;
- name="pppd-x86_64.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="pppd-x86_64.patch"
+-- 
+Guy Rouillier
 
-diff -urN ppp-2.4.2_cvs_20030610.orig/linux/mppe/sha1.c ppp-2.4.2_cvs_20030610/linux/mppe/sha1.c
---- ppp-2.4.2_cvs_20030610.orig/linux/mppe/sha1.c	2002-04-02 18:01:37.000000000 +0400
-+++ ppp-2.4.2_cvs_20030610/linux/mppe/sha1.c	2004-06-08 14:55:46.000000000 +0400
-@@ -19,6 +19,7 @@
- #if defined(__linux__)
- #include <asm/byteorder.h>
- #include <linux/string.h>
-+#include <linux/types.h>
- #else if defined(__solaris__)
- #include <sys/isa_defs.h>
- #include <sys/ddi.h>
-@@ -59,10 +60,10 @@
- static void
- SHA1_Transform(unsigned long state[5], const unsigned char buffer[64])
- {
--    unsigned long a, b, c, d, e;
-+    u32 a, b, c, d, e;
-     typedef union {
- 	unsigned char c[64];
--	unsigned long l[16];
-+	u32 l[16];
-     } CHAR64LONG16;
-     CHAR64LONG16 *block;
- 
-diff -urN ppp-2.4.2_cvs_20030610.orig/pppd/sha1.c ppp-2.4.2_cvs_20030610/pppd/sha1.c
---- ppp-2.4.2_cvs_20030610.orig/pppd/sha1.c	2002-04-02 17:54:59.000000000 +0400
-+++ ppp-2.4.2_cvs_20030610/pppd/sha1.c	2004-06-08 14:54:44.000000000 +0400
-@@ -18,6 +18,7 @@
- 
- #include <string.h>
- #include <netinet/in.h>	/* htonl() */
-+#include <sys/types.h>	/* u_int32_t */
- #include "sha1.h"
- 
- static void
-@@ -44,10 +45,10 @@
- static void
- SHA1_Transform(unsigned long state[5], const unsigned char buffer[64])
- {
--    unsigned long a, b, c, d, e;
-+    u_int32_t a, b, c, d, e;
-     typedef union {
- 	unsigned char c[64];
--	unsigned long l[16];
-+	u_int32_t l[16];
-     } CHAR64LONG16;
-     CHAR64LONG16 *block;
- 
 
---------------020207060907010103000502--
+-- 
+Guy Rouillier
