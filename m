@@ -1,53 +1,37 @@
-From: Abdul J <postabdul@yahoo.com>
-Date: Tue, 01 Feb 2005 23:06:26 +0000
-Subject: Multilink in ppp-2.4.3
-Message-Id: <20050201230627.51274.qmail@web30502.mail.mud.yahoo.com>
+From: Paul Mackerras <paulus@samba.org>
+Date: Mon, 07 Feb 2005 06:02:21 +0000
+Subject: Re: Multilink in ppp-2.4.3
+Message-Id: <16903.1133.599476.890879@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20050201230627.51274.qmail@web30502.mail.mud.yahoo.com>
+In-Reply-To: <20050201230627.51274.qmail@web30502.mail.mud.yahoo.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi,
+Abdul J writes:
 
-I have a question regarding the new Multilink
-implementation in the PPP-2.4.3. I am running this on
-Fedora Core 2, kernel-2.6.10.
+> For example, if I have two dial-up connection
+> multilinked together. Even if the first link is
+> dropped, since the second link is active the interface
+> ppp0 is active and the connection still exists. But
+> the problem is I am unable to redial the dropped link
+> because the pppd process is still running on that link
+> and the serial port is locked. If I try to redial the
+> first link, I get an error:
+> Feb 1 17:48:33 dhcp034 pppd[3417]: tcgetattr: No such
+> device or address (line 907)
 
-Starting 2.4.3 a call drop on primary link does not
-destroy the bundle, instead the first pppd keeps
-running until there is atleast one active link in the
-bundle. Nice!
+Do you get that error on the end that is dialling out, or the end that
+you are dialling in to?
 
-For example, if I have two dial-up connection
-multilinked together. Even if the first link is
-dropped, since the second link is active the interface
-ppp0 is active and the connection still exists. But
-the problem is I am unable to redial the dropped link
-because the pppd process is still running on that link
-and the serial port is locked. If I try to redial the
-first link, I get an error:
-Feb 1 17:48:33 dhcp034 pppd[3417]: tcgetattr: No such
-device or address (line 907)
+> My question is: Is there anyway in which I can redial
+> the dropped primary (first) link once a call
+> drop/hangup occurs without destroying the whole
+> bundle.
 
-The only way I can redial is terminate (kill -9) the
-first pppd process (and hence terminate all the links
-of the bundle) and redial all of them. 
+You should be able to just bring it up with the same pppd command as
+you used before.  If you can't that's a bug that we need to fix.
 
-My question is: Is there anyway in which I can redial
-the dropped primary (first) link once a call
-drop/hangup occurs without destroying the whole
-bundle.
-
-Note: This is a test setup and I control both ends of
-the ppp connection.
-
-Please give your comments/suggestions
-
-Thanks,
-Abdul
-
-__________________________________________________
-Do You Yahoo!?
-Tired of spam?  Yahoo! Mail has the best spam protection around 
-http://mail.yahoo.com 
+Paul.
