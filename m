@@ -1,7 +1,7 @@
-From: Christopher Fowler <cfowler@outpostsentinel.com>
-Date: Thu, 10 Mar 2005 18:24:23 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Thu, 10 Mar 2005 19:00:16 +0000
 Subject: Re: Blowfish encryption
-Message-Id: <1110479063.18073.445.camel@linux.linxdev.com>
+Message-Id: <16944.39232.246839.988608@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1110403872.18073.330.camel@linux.linxdev.com>
 In-Reply-To: <1110403872.18073.330.camel@linux.linxdev.com>
@@ -10,34 +10,48 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Some of these tin-hat people I tell them to simply buy encrypted modems
-that do the encryption between the.  Are there anyone out there selling
-good ones anymore?
+Christopher Fowler writes:
+> Some of these tin-hat people I tell them to simply buy encrypted modems
+> that do the encryption between the.  Are there anyone out there selling
+> good ones anymore?
 
-Th issue is that there are two boxes connected via a modem and using PPP
-for IP traffic.  The customer wants to be sure all traffic across that
-phone line is encrypted.  Since they use so many network product some
-old those protocol may be plain-text.  By having ppp encrypt what it
-sends that would cover any data that travels across.
+Dunno.  Google seems to think so:
 
+http://www.securtelecom.com/Products/Corporate/EncryptionSolutions/encryptionsolutions.htm
 
-On Thu, 2005-03-10 at 13:17, James Carlson wrote:
-> Christopher Fowler writes:
-> > The only problem with ssh is that it is one protocol.  There are many
-> > protocols that travel across the ppp link.  Some fo them not encryted
-> > and can not be encrypted.
-> > 
-> > I stopped using telnet a long time ago.  Also with these devices there
-> > are protocols that are routed across that link we have no control over
-> > so doing encryption inside of ppp would cover all the bases.
-> 
-> As I mentioned, if it's really a PPP issue (not clear that it is, as
-> the threat model isn't clear), then ECP is likely to be the right
-> answer.
-> 
-> If it's an IP issue (are you worried about non-IP protocols?), then
-> I'd certainly recommend the use of IPsec.  It defends against things
-> that ssh (and, for that matter, SSL/TLS) cannot, works whether or not
-> you use PPP, works on an end-to-end basis, and doesn't require
-> changing everyone's implementations.
+> Th issue is that there are two boxes connected via a modem and using PPP
+> for IP traffic.  The customer wants to be sure all traffic across that
+> phone line is encrypted.
 
+That's just baffling.  So, they are concerned that someone will tap
+the telephone line and manage to decode a V.90 data stream, but
+they're unconcerned whether the next hop itself (the modem at the
+other end) is itself "secure," or that hazards may exist between that
+modem and the ultimate packet destination, which may be many hops
+away.
+
+How does that work?
+
+That's why I was asking about the threat model.  It doesn't sound
+rational.  In the particular case of irrational requests, it tends to
+be difficult to design sufficient technical solutions.  :-/
+
+>  Since they use so many network product some
+> old those protocol may be plain-text.  By having ppp encrypt what it
+> sends that would cover any data that travels across.
+
+Again, ECP and IPsec are likely the best ways to deal with this,
+though they solve very different problems.
+
+ECP solves the PPP link encryption problem.  It does *not* help with
+any traffic once it's forwarded past that single link.  It's therefore
+of very limited utility in providing real security.
+
+IPsec solves the end-to-end problem.  It does *not* help if the peer
+you're talking to is compromised, but, then, likely nothing other than
+scissors will.
+
+	http://www.physics.usyd.edu.au/~matthewa/scissors.pdf
+
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
