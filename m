@@ -1,12 +1,30 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Sat, 03 Apr 2004 01:49:10 +0000
-Subject: Re: RES: Problem with PPP0 interface
-Message-Id: <Pine.LNX.4.50.0404021743370.1892-100000@string.physics.ubc.ca>
+From: "Ferreira, Fernando Borges" <FernandoBorges.Ferreira@getronics.com>
+Date: Tue, 06 Apr 2004 09:42:03 +0000
+Subject: RE: RES: Problem with PPP0 interface
+Message-Id: <33B641675B6BBC419F539832368D73C80501116F@excbrsp002.americas.unity>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <Pine.LNX.4.50.0404021743370.1892-100000@string.physics.ubc.ca>
+In-Reply-To: <Pine.LNX.4.50.0404021743370.1892-100000@string.physics.ubc.ca>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+Hallo everybody!
+
+I found out the cause of the problems... do you see those ^M at the end of some lines? That garbage was produced when the numpad enter was pressed and, because of that, some garbage was sent to the modem. I have done the script once again using pppsetup and using the left enter instead of the one near the numpad and everything worked fine. 
+Thanks for the help and have a nice day!
+
+Fernando
+
+
+-----Original Message-----
+From: Bill Unruh [mailto:unruh@physics.ubc.ca]
+Sent: Friday, April 02, 2004 22:49
+To: Ferreira, Fernando Borges
+Cc: Linux-ppp
+Subject: Re: RES: Problem with PPP0 interface
+
 
 On Fri, 2 Apr 2004, Ferreira, Fernando Borges wrote:
 
