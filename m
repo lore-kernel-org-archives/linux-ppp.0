@@ -1,23 +1,35 @@
-From: K-sPecial <spam@blazemail.com>
-Date: Tue, 16 Nov 2004 04:56:21 +0000
-Subject: Socket doesn't get EOF
-Message-Id: <41998875.2020305@blazemail.com>
+From: carlsonj@workingcode.com
+Date: Tue, 16 Nov 2004 20:49:15 +0000
+Subject: Re: Socket doesn't get EOF
+Message-Id: <16794.26571.241400.772818@carlson.workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <41998875.2020305@blazemail.com>
+In-Reply-To: <41998875.2020305@blazemail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hey, i've got an irc bot of over 3000 lines of perl. I test for EOF on 
-occasion and do a reconnect if eof is detected. This works greatly for 
-instances as when the socket times out or is disconnected in most 
-manors. It doesn't although register an eof when pppd dies. I realy 
-don't know if this might be specific to perl or if even in C this is an 
-issue.
+K-sPecial writes:
+> Hey, i've got an irc bot of over 3000 lines of perl. I test for EOF on 
+> occasion and do a reconnect if eof is detected. This works greatly for 
+> instances as when the socket times out or is disconnected in most 
+> manors. It doesn't although register an eof when pppd dies. I realy 
+> don't know if this might be specific to perl or if even in C this is an 
+> issue.
 
---K-sPecial
+This is a frequently-asked question about TCP/IP.
 
-[ http://xzziroz.freeshell.org
-   irc://xzziroz.dtdns.net       ]
+No, you won't get EOF.  No, it's not a bug.  It's a feature, and it's
+by design.  The TCP layer sees IP as a connectionless datagram
+service, and tries its best to deliver the data the application
+provides.  IP sees the datalink layers as unrelated to any particular
+transport, so when a datalink layer goes down, the transport (such as
+TCP) isn't involved.  If IP can route around the problem, it does so.
+If it can't, it drops the packets and hopes that either (A) the link
+comes back 'soon' or (B) the transport gives up eventually.
 
+If you want a shorter timeout, set a timer in your application.
 
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
