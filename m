@@ -1,53 +1,32 @@
-From: Florent Capdeville <Florent.capdeville+from@free.fr.invalid>
-Date: Sun, 07 Mar 2004 14:51:08 +0000
-Subject: Re: active-filter
-Message-Id: <871xo4d82r.fsf@athena.flo.fr.invalid>
+From: "Michael St. Laurent" <mikes@hartwellcorp.com>
+Date: Mon, 15 Mar 2004 20:05:56 +0000
+Subject: Moving logwtmp
+Message-Id: <91A5926EFF44D3118B1200104B7276EB02C56E0B@hart-exchange.hartwellcorp.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <3d9ff3e0e9.3e0e93d9ff@euskalnet.net>
-In-Reply-To: <3d9ff3e0e9.3e0e93d9ff@euskalnet.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-tatel@euskalnet.net writes:
+Hi folks, 
 
-> Hi, 
+I'm new to the ppp list but I've been a member of the poptop-server list for
+some time.  Something recently came up on that list that should properly be
+addressed over here.
 
-Hello
+The discussion was "How do I know who is connected."  A command has been
+cobbled together that will parse the output of ps and then do a lookup on
+the log files but it was also pointed out that a few lines of code would
+make a wtmp entry and thus solve the problem.
 
-> I'm trying to set an active-filter expression for on-demand, but I'm
-> really stuck with. I can't get effective help from neither from
-> documentation neither from user mailing lists.
-Same for me, so I used to add:
+After looking at the pppd code I found the lines in auth.c where this is
+done but, aparently, only if one is using PAP authentication.  Since almost
+everyone using PPTP also uses Chap, this code is never called and we see
+nothing in the who list.
 
-"active-filter 'not ((port 135) or (port 137))'" 
+I'm thinking that this code should be moved out of the plogin routine and
+put somewhere else instead.  Am I making sense?
 
-I think the key for you is "*not*" 
-
-> Problem is people scanning (mostly) netBIOS ports. These packets (I
-> think) are holding the link up by resetting idle-timeout to zero.
->
-> I'm using woody with ppp 2.4.1 from debs and compiled kernel with
-> filtering option enabled
->
-> If I set something like "active-filter 'inbound port 135'" I get a parse
-> error message. This stucks me since man tcpdump says inbound is for ppp
-> connections.
-
-In fact , I think "inbound" is sufficient by itself...
-
-> If I set something like "active-filter 'dst port 135'" there is no parse
-> error message, but modem dials nothing
->
-> Does anybody know an appropiate active-filter expression?
-
-In order to prevent any unwanted incoming packet to keep the link up
-(netbios scan, and as I have a Dial-up I sometimes get a former
-P2P-user  IP), I now use:
-
-active-filter 'not (inbound)'
-
-> Thanks a lot
-
-Regards
+-- 
+Michael St. Laurent
+Hartwell Corporation
