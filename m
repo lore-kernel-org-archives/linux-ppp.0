@@ -1,34 +1,72 @@
-From: Petr Slansky <slansky@usa.net>
-Date: Wed, 15 Dec 2004 00:19:00 +0000
-Subject: Re: No xon/xoff support in Linux ppp driver?
-Message-Id: <170iLoaTa2336S02.1103069940@uwdvg002.cms.usa.net>
+From: "Sadiq Shaikh" <sadiq.shaikh@analog.com>
+Date: Mon, 27 Dec 2004 10:25:33 +0000
+Subject: pppoatm: tring to insert module pppoatm.o, although plugin pppoatm.so is loaded.
+Message-Id: <ALEGKCGFAAHCNBMHOENDKEAICJAA.sadiq.shaikh@analog.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <978iLNoM29696S07.1103035133@cmsweb07.cms.usa.net>
-In-Reply-To: <978iLNoM29696S07.1103035133@cmsweb07.cms.usa.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-> > do you know why no xon/xoff support is in Linux ppp kernel driver?
-> 
-> The support is in the 2.6 kernel (though not in 2.4 yet) and it should
-> work.  On the kernel side, look for I_IXON in drivers/net/ppp_async.c.
-> In pppd, the `crtscts' variable is set to -2 for xonxoff, and
-> set_up_tty() in sys-linux.c then sets the IXON and IXOFF flags.
+Hi,
 
-Thank you Paul, this is perfect answer. I tested it only with 2.4.21 kernel
-until now. So I have to upgrade my system to 2.6.x to have this basic fature.
-I missed that update in ppp_async.c. Looks good! Is there any reason why it
-was not backported to 2.4, 2.2, 2.0 yet? This modification is in 2.6 kernel
-for several months now (from 2.6.1?).
- 
-Thanks for yor help,
-Petr
+I'm working on pppoatm. Recently i have downloaded
+ppp-2.4.3. I'm running into problem, its will be great
+if someone answer my questions.Thank you in advance.
 
+1) Why ppp0 interface is not created ?
+2) why its trying to insert module, when i added it as plugin.
+3) I'm using ppp-2.4.3, linux kernel 2.4.18, any issues with this
+combination ?
 
----------------------------------
-  Petr Slansky, slansky@usa.net
----------------------------------
+kernel conf:
 
+Networking Options:
+[*]Asynchronous Transfer Mode (ATM) (EXPERIMENTAL)
+[*]Classical IP over ATM
+[*]RFC 2684 Bridging
+
+Network Device Support:
+<*> PPP (point-to-point protocol) support
+<*>PPP support for async serial ports
+<*>PPP over ATM (EXPERIMENTAL)
+
+file: /etc/ppp/options
+----------8<---------------8<------------------
+user pppoa_user46lc
+name user
+defaultroute
+-detach
+nobsdcomp
+nodeflate
+nopcomp
+novj
+novjccomp
+noipdefault
+noaccomp -am
+#refuse-chap
++chap
+plugin pppoatm.so 46.62
+persist
+maxfail 0
+
+console output:
+----------8<---------------8<------------------
+# pppd
+
+do_cpu() called w/ EPC = 00436030
+Algorithmics/MIPS FPU Emulator v1.4
+do_cpu() called w/ EPC = 00436040
+do_cpu() called w/ EPC = 0043605c
+do_cpu() called w/ EPC = 00436070
+Plugin pppoatm.so loaded.
+PPPoATM plugin_init
+PPPoATM setdevname_pppoatm - SUCCESS:46.62
+insmod: pppoatm.o: no module by that name found
+setsockopt(SO_ATMQOS): Invalid argument
+
+----------8<---------------8<------------------
+
+Regards & Thanks,
+Sadiq Shaikh
 
