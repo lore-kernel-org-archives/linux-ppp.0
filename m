@@ -1,190 +1,177 @@
-From: "Ferreira, Fernando Borges" <FernandoBorges.Ferreira@getronics.com>
-Date: Tue, 06 Apr 2004 09:42:03 +0000
-Subject: RE: RES: Problem with PPP0 interface
-Message-Id: <33B641675B6BBC419F539832368D73C80501116F@excbrsp002.americas.unity>
+From: Dmitry Koval <koval@donapex.net>
+Date: Fri, 09 Apr 2004 08:01:44 +0000
+Subject: pppd 2.4.2 doesn't quits.
+Message-Id: <1081497703.3268.17.camel@skyscraper>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <Pine.LNX.4.50.0404021743370.1892-100000@string.physics.ubc.ca>
-In-Reply-To: <Pine.LNX.4.50.0404021743370.1892-100000@string.physics.ubc.ca>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hallo everybody!
 
-I found out the cause of the problems... do you see those ^M at the end of some lines? That garbage was produced when the numpad enter was pressed and, because of that, some garbage was sent to the modem. I have done the script once again using pppsetup and using the left enter instead of the one near the numpad and everything worked fine. 
-Thanks for the help and have a nice day!
+I've faced the problem with pppd 2.4.2 on my VPN server.
+The problem is that pppd just after having session done doesn't quits
+and hangs in memory. And what is also interesting is that sometimes it's
+quits fine but sometimes not.
+I'm using radius for client authorization and pppd saves all info before
+exit as it should do.
 
-Fernando
+I've tried everything I can and I have no any clue on the subject.
+Any pointers would be highly appreciated.
+
+The software I'm using:
+
+Fedora Core1 with latest updates
+pppd version 2.4.2
+2.4.22-1.2174.nptl
+
+My options file:
+## CHANGE TO SUIT YOUR SYSTEM
+lock
+ 
+lcp-echo-interval 10
+lcp-echo-failure 6
+ 
+## turn pppd syslog debugging on
+debug
+ 
+## change 'pptpd' to whatever you specify as your server name in
+chap-secrets
+name pptpd
+ 
+proxyarp
+bsdcomp 0
+ 
+# This option applies if you use ppp with chapms-strip-domain patch
+#chapms-strip-domain
+ 
+# These options apply if you use ppp with mppe patch
+# NB! You should also apply the ChapMS-V2 patch
+-chap
+-mschap
++mschap-v2
+#mppe-128
+#mppe-stateless
+ 
+# These options will tell ppp to pass on these to your clients
+# To use ms-wins or ms-dns in options.pptpd it must exist in
+/etc/resolv.conf
+#ms-wins your.server.here
+ms-dns x.x.x.x
+ 
+plugin radius.so
+
+Here's the ps output:
+root     28379  0.0  0.0  3676 1028 ?        S    10:18   0:00
+/usr/sbin/pppd local file /etc/ppp/options.pptpd 115200
+172.16.1.1:10.0.100.1
+
+And here's the log of the session:
+Apr  9 10:18:14 sputnik pppd[28379]: Plugin radius.so loaded.
+Apr  9 10:18:14 sputnik pppd[28379]: RADIUS plugin initialized.
+Apr  9 10:18:14 sputnik pppd[28379]: pppd 2.4.2 started by root, uid 0
+Apr  9 10:18:14 sputnik pppd[28379]: using channel 450
+Apr  9 10:18:14 sputnik pppd[28379]: Using interface ppp4
+Apr  9 10:18:14 sputnik pppd[28379]: Connect: ppp4 <--> /dev/pts/7
+Apr  9 10:18:14 sputnik pppd[28379]: sent [LCP ConfReq id=0x1 <asyncmap
+0x0> <auth chap MS-v2> <magic 0x2ba38ec5> <pcomp> <accomp>]
+Apr  9 10:18:16 sputnik pppd[28379]: rcvd [LCP ConfReq id=0x1 <mru 1400>
+<magic 0x53bc3070> <pcomp> <accomp> <callback CBCP>]
+Apr  9 10:18:16 sputnik pppd[28379]: sent [LCP ConfRej id=0x1 <callback
+CBCP>]
+Apr  9 10:18:16 sputnik pppd[28379]: rcvd [LCP ConfReq id=0x2 <mru 1400>
+<magic 0x53bc3070> <pcomp> <accomp>]
+Apr  9 10:18:16 sputnik pppd[28379]: sent [LCP ConfAck id=0x2 <mru 1400>
+<magic 0x53bc3070> <pcomp> <accomp>]
+Apr  9 10:18:17 sputnik pppd[28379]: sent [LCP ConfReq id=0x1 <asyncmap
+0x0> <auth chap MS-v2> <magic 0x2ba38ec5> <pcomp> <accomp>]
+Apr  9 10:18:17 sputnik pppd[28379]: rcvd [LCP ConfAck id=0x1 <asyncmap
+0x0> <auth chap MS-v2> <magic 0x2ba38ec5> <pcomp> <accomp>]
+Apr  9 10:18:17 sputnik pppd[28379]: sent [LCP EchoReq id=0x0
+magic=0x2ba38ec5]
+Apr  9 10:18:17 sputnik pppd[28379]: sent [CHAP Challenge id=0x43
+<b4dccf2a3cbcbfe166e8d163b48b987d>, name = "pptpd"]
+Apr  9 10:18:17 sputnik pppd[28379]: rcvd [LCP code=0xc id=0x3 53 bc 30
+70 4d 53 52 41 53 56 35 2e 31 30]
+Apr  9 10:18:17 sputnik pppd[28379]: sent [LCP CodeRej id=0x2 0c 03 00
+12 53 bc 30 70 4d 53 52 41 53 56 35 2e 31 30]
+Apr  9 10:18:17 sputnik pppd[28379]: rcvd [LCP code=0xc id=0x4 53 bc 30
+70 4d 53 52 41 53 2d 31 2d 53 44 41 2d 4f 48 31 44 37 34 37 4c 58 4d 53]
+Apr  9 10:18:17 sputnik pppd[28379]: sent [LCP CodeRej id=0x3 0c 04 00
+1f 53 bc 30 70 4d 53 52 41 53 2d 31 2d 53 44 41 2d 4f 48 31 44 37 34 37
+4c 58 4d 53]
+Apr  9 10:18:17 sputnik pppd[28379]: rcvd [CHAP Response id=0x43
+<bb3ed793918f55e27b07cb9a05b1a49500000000000000007d26c8c876befc39126b77d9552a8c616b34f1d43ca2207e00>, name = "sdah"]
+Apr  9 10:18:18 sputnik pppd[28379]: sent [CHAP Success id=0x43
+"S&F9169CFC55EAF392B97D76BFE6FFC2FBB93E9B"]
+Apr  9 10:18:18 sputnik pppd[28379]: sent [CCP ConfReq id=0x1 <deflate
+15> <deflate(old#) 15>]
+Apr  9 10:18:18 sputnik pppd[28379]: sent [IPCP ConfReq id=0x1 <compress
+VJ 0f 01> <addr 172.16.1.1>]
+Apr  9 10:18:18 sputnik pppd[28379]: rcvd [CCP ConfReq id=0x5 <mppe +H
+-M -S -L -D +C>]
+Apr  9 10:18:18 sputnik pppd[28379]: sent [CCP ConfRej id=0x5 <mppe +H
+-M -S -L -D +C>]
+Apr  9 10:18:18 sputnik pppd[28379]: rcvd [CCP ConfRej id=0x1 <deflate
+15> <deflate(old#) 15>]
+Apr  9 10:18:18 sputnik pppd[28379]: sent [CCP ConfReq id=0x2]
+Apr  9 10:18:18 sputnik pppd[28379]: rcvd [IPCP ConfRej id=0x1 <compress
+VJ 0f 01>]
+Apr  9 10:18:18 sputnik pppd[28379]: sent [IPCP ConfReq id=0x2 <addr
+172.16.1.1>]
+Apr  9 10:18:18 sputnik pppd[28379]: rcvd [CCP TermReq
+id=0x7"S\377777776740p\000<\37777777715t\000\000\002\37777777734"]
+Apr  9 10:18:18 sputnik pppd[28379]: sent [CCP TermAck id=0x7]
+Apr  9 10:18:18 sputnik pppd[28379]: rcvd [IPCP ConfAck id=0x2 <addr
+172.16.1.1>]
+Apr  9 10:18:20 sputnik pppd[28379]: rcvd [IPCP ConfReq id=0x8 <addr
+0.0.0.0> <ms-dns1 0.0.0.0> <ms-wins 0.0.0.0> <ms-dns3 0.0.0.0> <ms-wins
+0.0.0.0>]
+Apr  9 10:18:20 sputnik pppd[28379]: sent [IPCP ConfRej id=0x8 <ms-wins
+0.0.0.0> <ms-wins 0.0.0.0>]
+Apr  9 10:18:20 sputnik pppd[28379]: rcvd [IPCP ConfReq id=0x9 <addr
+0.0.0.0> <ms-dns1 0.0.0.0> <ms-dns3 0.0.0.0>]
+Apr  9 10:18:20 sputnik pppd[28379]: sent [IPCP ConfNak id=0x9 <addr
+192.168.250.40> <ms-dns1 194.44.21.57> <ms-dns3 194.44.21.57>]
+Apr  9 10:18:20 sputnik pppd[28379]: rcvd [IPCP ConfReq id=0xa <addr
+192.168.250.40> <ms-dns1 194.44.21.57> <ms-dns3 194.44.21.57>]
+Apr  9 10:18:20 sputnik pppd[28379]: sent [IPCP ConfAck id=0xa <addr
+192.168.250.40> <ms-dns1 194.44.21.57> <ms-dns3 194.44.21.57>]
+Apr  9 10:18:20 sputnik pppd[28379]: Cannot determine ethernet address
+for proxy ARP
+Apr  9 10:18:20 sputnik pppd[28379]: local  IP address 172.16.1.1
+Apr  9 10:18:20 sputnik pppd[28379]: remote IP address 192.168.250.40
+Apr  9 10:18:20 sputnik pppd[28379]: Script /etc/ppp/ip-up started (pid
+28392)
+Apr  9 10:18:20 sputnik pppd[28379]: Script /etc/ppp/ip-up finished (pid
+28392), status = 0x0
+Apr  9 10:18:21 sputnik pppd[28379]: sent [CCP ConfReq id=0x2]
+Apr  9 10:18:21 sputnik pppd[28379]: rcvd [CCP TermAck id=0x2]
+Apr  9 10:18:21 sputnik pppd[28379]: sent [CCP TermReq id=0x3"No
+compression negotiated"]
+Apr  9 10:18:21 sputnik pppd[28379]: rcvd [CCP TermAck id=0x3"No
+compression negotiated"]
+Apr  9 10:20:51 sputnik pppd[28379]: rcvd [LCP TermReq id=0xb
+"S\377777776740p\000<\37777777715t\000\000\000\000"]
+Apr  9 10:20:51 sputnik pppd[28379]: LCP terminated by peer
+(SM-<0p^@<M-Mt^@^@^@^@)
+Apr  9 10:20:51 sputnik pppd[28379]: Script /etc/ppp/ip-down started
+(pid 28410)
+Apr  9 10:20:51 sputnik pppd[28379]: sent [LCP TermAck id=0xb]
+Apr  9 10:20:51 sputnik pppd[28379]: Modem hangup
+Apr  9 10:20:51 sputnik pppd[28379]: Connection terminated.
+Apr  9 10:20:51 sputnik pppd[28379]: Connect time 2.7 minutes.
+Apr  9 10:20:51 sputnik pppd[28379]: Sent 358714 bytes, received 15504
+bytes.
+Apr  9 10:20:51 sputnik pppd[28379]: Waiting for 1 child processes...
+Apr  9 10:20:51 sputnik pppd[28379]:   script /etc/ppp/ip-down, pid
+28410
+Apr  9 10:20:51 sputnik pppd[28379]: Script /etc/ppp/ip-down finished
+(pid 28410), status = 0x0
 
 
------Original Message-----
-From: Bill Unruh [mailto:unruh@physics.ubc.ca]
-Sent: Friday, April 02, 2004 22:49
-To: Ferreira, Fernando Borges
-Cc: Linux-ppp
-Subject: Re: RES: Problem with PPP0 interface
-
-
-On Fri, 2 Apr 2004, Ferreira, Fernando Borges wrote:
-
-> I'm sorry, Bill. I know I should have provided you with more information but that was not possible since I wasn't at home, so, I sent the only message I remembered. Now I'll provide you with the logs.
-
-The log says that you never do connect with the far end. YOur chat
-script times out while waiting for login. 
-Now, it could be that you are not waiting long enough ( you wait for 
-60 sec) and need to increase the timeout time. Or it could be that you
-are wrong about the far end wanting you to login first. 
-
-I would advise you to try ending your script with 
-CONNECT '\d\c'
-
-and see if that starts up ppp. The second thing I would try is to
-increase timeout to 2 min on the login script. After that I would phone
-the ISP and find out what they want.
-
-
->  
-> First of all, my provider doesn't use PAP or CHAP, so I created a script. Here is what I got from my provider connecting with minicom or hyperterminal.
-
-How do you know that they do not use pap or chap. Most phone in help has
-no idea what they do. As above I would advise you to try it.
-
-
-> at
-> OK
-> atdt30095515
-> CONNECT 19200/ARQ
->  
-> UQKT2 78.1
-> 
-> Login: user@itelefonica.com.br
-> Password:
->     Entering PPP Session.
->     IP address is 200.171.153.125
->     MTU is 1100.
->  
-> Based on it, I created the script using the pppsetup assistent: 
-> Expect ogin:
-> user@provider.foo
-> Expect word:
-> password
->  
-> Now follow the error messages from the log:
->  
-> Apr 2 19:20:56 templum pppd[1906]: pppd 2.4.1 started by root, uid 0
-> 
-> Apr 2 19:20:57 templum chat[1909]: timeout set to 60 seconds
-> 
-> Apr 2 19:20:57 templum chat[1909]: abort on (ERROR)
-> 
-> Apr 2 19:20:57 templum chat[1909]: abort on (BUSY)
-> 
-> Apr 2 19:20:57 templum chat[1909]: abort on (NO CARRIER)
-> 
-> Apr 2 19:20:57 templum chat[1909]: abort on (NO DIALTONE)
-> 
-> Apr 2 19:20:57 templum chat[1909]: send (AT&FH0^M)
-> 
-> Apr 2 19:20:57 templum chat[1909]: expect (OK)
-> 
-> Apr 2 19:20:57 templum chat[1909]: AT&FH0^M^M
-> 
-> Apr 2 19:20:57 templum chat[1909]: OK
-> 
-> Apr 2 19:20:57 templum chat[1909]: -- got it 
-> 
-> Apr 2 19:20:57 templum chat[1909]: send (atdt30095515^M)
-> 
-> Apr 2 19:20:57 templum chat[1909]: timeout set to 75 seconds
-> 
-> Apr 2 19:20:57 templum chat[1909]: expect (CONNECT)
-> 
-> Apr 2 19:20:57 templum chat[1909]: ^M
-> 
-> Apr 2 19:21:23 templum chat[1909]: atdt30095515^M^M
-> 
-> Apr 2 19:21:23 templum chat[1909]: CONNECT
-> 
-> Apr 2 19:21:23 templum chat[1909]: -- got it 
-> 
-> Apr 2 19:21:23 templum chat[1909]: send (^M)
-> 
-> Apr 2 19:21:23 templum chat[1909]: expect (ogin:)
-> 
-> Apr 2 19:21:23 templum chat[1909]: 19200/ARQ^M
-> 
-> Apr 2 19:22:38 templum chat[1909]: alarm
-> 
-> Apr 2 19:22:38 templum chat[1909]: Failed
-> 
-> Apr 2 19:22:38 templum pppd[1906]: Connect script failed
-> 
-> Apr 2 19:22:39 templum pppd[1906]: Exit.
-> 
->  
-> 
-> PPS: Yes, there's /dev/ppp
-> 
->  
-> 
-> Thank you for your help,
-> 
-> Fernando
-> 
-> 	-----Mensagem original----- 
-> 	De: Bill Unruh [mailto:unruh@physics.ubc.ca] 
-> 	Enviada: sex 2/4/2004 14:11 
-> 	Para: Ferreira, Fernando Borges 
-> 	Cc: Linux-ppp 
-> 	Assunto: Re: Problem with PPP0 interface
-> 	
-> 	
-> 
-> 	On Fri, 2 Apr 2004, Ferreira, Fernando Borges wrote:
-> 	
-> 	> Hello everybody,
-> 	> I have an US Robotics 33.6 Sportster external modem and I can't get connected. I got connected using minicom and sending commands to the modem, but I couldn't get connected after configuring the pppsetup correctly. The modem dials and, after the auth. process, I tried to check the ppp interface and got the following message: "couldn't find interface ppp0: no such device". I run a Slackware box with the kernel 2.6.3 compiled with PPP support. Everything works fine, but I can't get connected. Any clues?
-> 	
-> 	That message is not the problem. Post the debug output from ppp here.
-> 	
-> 	put
-> 	debug
-> 	into /etc/ppp/options and put the line
-> 	daemon.*;local2.*               /var/log/ppplog
-> 	into /etc/syslog.conf
-> 	and then do
-> 	killall -1 syslogd
-> 	
-> 	Then try to connect and put the output from that connection into the
-> 	message here. You do not understand what is happening and so your
-> 	selection of the messages to tell us about cannot be trusted. Just post
-> 	them all. Keeping the time stamps and everything. Do not edit anything,
-> 	except remove your password if it occurs in the file.
-> 	
-> 	(PS, does /dev/ppp exist?)
-> 	
-> 	>
-> 	> Thanks in advance,
-> 	>
-> 	> Fernando
-> 	> -
-> 	> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> 	> the body of a message to majordomo@vger.kernel.org
-> 	> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 	>
-> 	
-> 	--
-> 	William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
-> 	Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
-> 	UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
-> 	Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
-> 	
-> 
-> 
+And at this moment in this state it just stays eternal.
+What should I look at?
 
 -- 
-William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
-Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
-UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
-Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
+
