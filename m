@@ -1,78 +1,96 @@
-From: Anton Voronin <anton@chelcom.ru>
-Date: Thu, 06 Jan 2005 11:46:46 +0000
-Subject: 2.4.2 and 2.4.3 fail to test that kernel has MPPE support
-Message-Id: <200501061646.46789.anton@chelcom.ru>
+From: domen@coderock.org
+Date: Tue, 11 Jan 2005 22:57:49 +0000
+Subject: [patch 1/1] list_for_each_entry: drivers-net-ppp_generic.c
+Message-Id: <20050111225749.B7AFD1F225@trashy.coderock.org>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi everyone,
 
-I've got a problem with pppd-2.4.2 and 2.4.3 using MPPE with 2.4.x kernel.
-The ccp_test() function from sys-linux.c returns -1, however kernel has MPPE 
-support (ppp_mppe module gets loaded). With pppd-2.4.1, however, it works 
-fine. While ccp_test() seems to be identical between versions 2.4.1 and 
-2.4.2/2.4.3 of pppd, I noticed difference in the opt_buf argument supplied to 
-ccp_test():
 
-pppd-2.4.1:
-===================
-        if(p[5] & MPPE_40BIT) {
-            keysize = 8;
-            BCOPY(mppe_master_send_key_40, opt_buf+3, keysize);
-            BCOPY(mppe_master_recv_key_40, opt_buf+11, keysize);
-        } else if(p[5] & MPPE_128BIT) {
-            keysize = 16;
-            BCOPY(mppe_master_send_key_128, opt_buf+3, keysize);
-            BCOPY(mppe_master_recv_key_128, opt_buf+19, keysize);
-        }
-        if(p[5] != 0) {
-            opt_buf[0]=CI_MPPE;
-            opt_buf[1]=CILEN_MPPE;
-            opt_buf[2] = (go->mppe_stateless) ? 1 : 0;
-            res = ccp_test(f->unit, opt_buf, (2*keysize)+3, 0);
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        } else {
-            res = -1;
-        }
-===================
 
-pppd-2.4.2/2.4.3:
-===================
-    if (go->mppe) {
-        opt_buf[0] = CI_MPPE;
-        opt_buf[1] = CILEN_MPPE;
-        MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
-        /* Key material unimportant here. */
-        if (ccp_test(f->unit, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN, 0) <= 0) 
-{
-            error("MPPE required, but kernel has no support.");
-            lcp_close(f->unit, "MPPE required but not available");
-        }
-    }
-===================
 
-In both cases opt_buf[0] and opt_buf[1] are filled identically.
 
-However, in 2.4.1 only opt_buf[2] if filled, and then two keys are copied, 
-while in 2.4.2/2.4.3 MPPE_OPTS_TO_CI() macro fills 4 more bytes of opt_buf (6 
-bytes total), and none of the keys are copied behind them. But, the 3rd 
-argument (option length) is set to CILEN_MPPE + MPPE_MAX_KEY_LEN (whilch is 
-equal to 6 + 16 = 22). Seems like the rest 16 bytes are left uninitialized 
-(even not zeroes, just contain garbage).
 
-Is it a bug or I am using the wrong kernel patches, that behave differently? 
-The file of patches I am using was called:
+Make code more readable with list_for_each_entry.
+Compile tested.
 
-linux-2.4.20-openssl-0.9.6b-mppe.patch
+Signed-off-by: Domen Puncer <domen@coderock.org>
+Signed-off-by: Maximilian Attems <janitor@sternwelten.at>
+Signed-off-by: Domen Puncer <domen@coderock.org>
+---
 
-Should this be something else?
 
-Best regards,
--- 
-Anton Voronin
-Intersvyaz JSC
-http://www.chelcom.ru
-+7 (3512) 655199
+ kj-domen/drivers/net/ppp_generic.c |   21 ++++++---------------
+ 1 files changed, 6 insertions(+), 15 deletions(-)
+
+diff -puN drivers/net/ppp_generic.c~list-for-each-entry-drivers_net_ppp_generic drivers/net/ppp_generic.c
+--- kj/drivers/net/ppp_generic.c~list-for-each-entry-drivers_net_ppp_generic	2005-01-10 17:59:43.000000000 +0100
++++ kj-domen/drivers/net/ppp_generic.c	2005-01-10 17:59:43.000000000 +0100
+@@ -1228,8 +1228,7 @@ static int ppp_mp_explode(struct ppp *pp
+ 
+ 	nch = 0;
+ 	hdrlen = (ppp->flags & SC_MP_XSHORTSEQ)? MPHDRLEN_SSN: MPHDRLEN;
+-	list = &ppp->channels;
+-	while ((list = list->next) != &ppp->channels) {
++	list_for_each(list, &ppp->channels) {
+ 		pch = list_entry(list, struct channel, clist);
+ 		nch += pch->avail = (skb_queue_len(&pch->file.xq) = 0);
+ 		/*
+@@ -1688,7 +1687,7 @@ static void
+ ppp_receive_mp_frame(struct ppp *ppp, struct sk_buff *skb, struct channel *pch)
+ {
+ 	u32 mask, seq;
+-	struct list_head *l;
++	struct channel *ch;
+ 	int mphdrlen = (ppp->flags & SC_MP_SHORTSEQ)? MPHDRLEN_SSN: MPHDRLEN;
+ 
+ 	if (!pskb_may_pull(skb, mphdrlen + 1) || ppp->mrru = 0)
+@@ -1742,8 +1741,7 @@ ppp_receive_mp_frame(struct ppp *ppp, st
+ 	 * The list of channels can't change because we have the receive
+ 	 * side of the ppp unit locked.
+ 	 */
+-	for (l = ppp->channels.next; l != &ppp->channels; l = l->next) {
+-		struct channel *ch = list_entry(l, struct channel, clist);
++	list_for_each_entry(ch, &ppp->channels, clist) {
+ 		if (seq_before(ch->lastseq, seq))
+ 			seq = ch->lastseq;
+ 	}
+@@ -2229,10 +2227,8 @@ static struct compressor_entry *
+ find_comp_entry(int proto)
+ {
+ 	struct compressor_entry *ce;
+-	struct list_head *list = &compressor_list;
+ 
+-	while ((list = list->next) != &compressor_list) {
+-		ce = list_entry(list, struct compressor_entry, list);
++	list_for_each_entry(ce, &compressor_list, list) {
+ 		if (ce->comp->compress_proto = proto)
+ 			return ce;
+ 	}
+@@ -2502,20 +2498,15 @@ static struct channel *
+ ppp_find_channel(int unit)
+ {
+ 	struct channel *pch;
+-	struct list_head *list;
+ 
+-	list = &new_channels;
+-	while ((list = list->next) != &new_channels) {
+-		pch = list_entry(list, struct channel, list);
++	list_for_each_entry(pch, &new_channels, list) {
+ 		if (pch->file.index = unit) {
+ 			list_del(&pch->list);
+ 			list_add(&pch->list, &all_channels);
+ 			return pch;
+ 		}
+ 	}
+-	list = &all_channels;
+-	while ((list = list->next) != &all_channels) {
+-		pch = list_entry(list, struct channel, list);
++	list_for_each_entry(pch, &all_channels, list) {
+ 		if (pch->file.index = unit)
+ 			return pch;
+ 	}
+_
