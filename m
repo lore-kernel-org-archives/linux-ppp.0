@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Fri, 15 Oct 2004 16:55:11 +0000
+From: carlsonj@workingcode.com
+Date: Fri, 15 Oct 2004 17:07:38 +0000
 Subject: Re: absolutely baffled as to why PPP link doesn't allow pings
-Message-Id: <Pine.LNX.4.58.0410150946580.25132@string.physics.ubc.ca>
+Message-Id: <16752.986.841043.41460@carlson.workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.LNX.4.60.0410151211340.11955@localhost.localdomain>
 In-Reply-To: <Pine.LNX.4.60.0410151211340.11955@localhost.localdomain>
@@ -10,140 +10,55 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Fri, 15 Oct 2004, Robert P. J. Day wrote:
->   the layout:
+Robert P. J. Day writes:
+> > Assuming that's right, try "noccp" on the Linux box.  I see that
+> > you've negotiated CCP with the Deflate algorithm.  That never would
+> > have happened when talking to a Windows system, and it's possible that
+> > one side or the other has bugs with data compression.  The symptoms of
+> > bugs there would be _exactly_ what you're now seeing.
 > 
->       host (10.1.1.96) <-> modem <-> teltone <-> embedded (10.1.1.97)
-> 
->   on the embedded side, after PPP comes up, the routing table has a
-> single entry:
-> 
->   10.1.1.97  0.0.0.0  255.255.255.255  UH 0 0 0 ppp0
+> ok, i'll give it a shot.  one of the things we did was loaded the
+> "options" file on the host with every no-compression option we could
+> find, since we initially suspected a problem with compression.  but
+> we'll try it with just that additional option, thanks.
 
-Either your layout is wrong or this is wrong. 10.1.1.97 is the embedded
-system itself. There is no entry in the routing table for the remote
-host (.96) This may be a misprint on one of these lines.
+There are really only a couple of master options that control
+compression:
 
-The other possibility is that the firewall is running on the Fedora
-system and is allowing nothing through. 
+	noaccomp	Disables HDLC address/control compression.
+			When that compression mode is enabled, it
+			saves 2 bytes per packet.
 
-It might help to publish the exact (not hand copied) logs from the pppd
-negotiation of the Fedora box. --- all of them. YOu do not understand
-what is wrong--> you do not know what is important and what is not.
-Please do not edit the log. of the pppd negotiation.
+	nopcomp		Disables PPP Protocol Field compression.  When
+			enabled, it saves 1 byte per data packet.
 
+	novj		Disables VJ TCP/IP header compression.  When
+			enabled, it can save around 38 bytes per
+			packet.
 
+	noccp		Disables CCP data compression.  These are the
+			complex user data compression algorithms.
+			Most are around a 50% compression ratio.
 
-> 
-> exactly what i would expect.  no defaultroute, we don't need one.
-> 
->   on the host side, the results of running various commands:
-> 
-> ifconfig:
-> ---------
-> 
-> eth0      Link encap:Ethernet  HWaddr 00:03:47:0A:BB:8E
->           inet addr:10.1.1.91  Bcast:10.1.1.255  Mask:255.255.255.0
->           inet6 addr: fe80::203:47ff:fe0a:bb8e/64 Scope:Link
->           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
->           RX packets:2107928 errors:0 dropped:0 overruns:0 frame:0
->           TX packets:11670 errors:1 dropped:0 overruns:0 carrier:1
->           collisions:484 txqueuelen:1000
->           RX bytes:291672739 (278.1 Mb)  TX bytes:1330567 (1.2 Mb)
-> 
-> lo        Link encap:Local Loopback
->           inet addr:127.0.0.1  Mask:255.0.0.0
->           inet6 addr: ::1/128 Scope:Host
->           UP LOOPBACK RUNNING  MTU:16436  Metric:1
->           RX packets:4957 errors:0 dropped:0 overruns:0 frame:0
->           TX packets:4957 errors:0 dropped:0 overruns:0 carrier:0
->           collisions:0 txqueuelen:0
->           RX bytes:3350770 (3.1 Mb)  TX bytes:3350770 (3.1 Mb)
-> 
-> ppp0      Link encap:Point-to-Point Protocol
->           inet addr:10.1.1.96  P-t-P:10.1.1.97  Mask:255.255.255.255
->           UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:552  Metric:1
->           RX packets:9 errors:1 dropped:0 overruns:0 frame:0
->           TX packets:22 errors:0 dropped:0 overruns:0 carrier:0
->           collisions:0 txqueuelen:3
->           RX bytes:411 (411.0 b)  TX bytes:1497 (1.4 Kb)
-> 
+The first three are just header compression schemes and (except
+perhaps with VJ compression) rarely run into trouble.  The last one is
+the complex one, which uses a wide range of compression algorithms on
+the user data.  Think of it as being like "gzip" or "compress," but
+applied a packet at a time.  Bugs in various implementations are not
+exactly unknown.  :-/
 
-Note that its address is .96 not.97. YOur embedded system has no way of
-contacting this. There is no route to this host if I believe your route
-command output.
+So, boiling that all down, "novj noccp" is the standard recipe to use
+when one suspects that compression is running awry.
 
+The rest of the options control the details of how compression
+operates.  They normally shouldn't be touched, and turning them off
+probably doesn't do what you want.
 
-> route -n:
-> ---------
-> 
-> Kernel IP routing table
-> Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-> 10.1.1.97       0.0.0.0         255.255.255.255 UH    0      0        0 ppp0
-> 10.1.1.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
-> 169.254.0.0     0.0.0.0         255.255.0.0     U     0      0        0 eth0
-> 127.0.0.0       0.0.0.0         255.0.0.0       U     0      0        0 lo
-> 0.0.0.0         10.1.1.1        0.0.0.0         UG    0      0        0 eth0
-> 
-> here's the excerpt from /var/log/messages:
-> ------------------------------------------
-> 
-> Oct 15 11:53:22 lgl mgetty[20364]: data dev=ttyS0, pid 364, caller='none', conn='33600/ARQ/V34/LAPM/V42BIS', name='', cmd='/usr/sbin/pppd', user='/AutoPPP/'
-> Oct 15 11:53:22 lgl pppd[20364]: pppd 2.4.1 started by a_ppp, uid 0
-> Oct 15 11:53:22 lgl pppd[20364]: Using interface ppp0
-> Oct 15 11:53:22 lgl pppd[20364]: Connect: ppp0 <--> /dev/ttyS0
-> Oct 15 11:53:25 lgl pppd[20364]: Deflate (15) compression enabled
-> Oct 15 11:53:25 lgl pppd[20364]: local  IP address 10.1.1.96
-> Oct 15 11:53:25 lgl pppd[20364]: remote IP address 10.1.1.97
-> 
-> here's the syslog output for just pppd:
-> ---------------------------------------
-> 
-> Oct 15 12:03:56 lgl pppd[20364]: Terminating on signal 15.
-> Oct 15 12:03:56 lgl pppd[20364]: Script /etc/ppp/ip-down started (pid 20527)
-> Oct 15 12:03:56 lgl pppd[20364]: sent [LCP TermReq id=0x2 "User request"]
-> Oct 15 12:03:56 lgl pppd[20364]: Script /etc/ppp/ip-down finished (pid 20527), status = 0x0
-> Oct 15 12:03:59 lgl pppd[20364]: sent [LCP TermReq id=0x3 "User request"]
-> Oct 15 12:04:02 lgl pppd[20364]: Connection terminated.
-> Oct 15 12:04:02 lgl pppd[20364]: Connect time 10.6 minutes.
-> Oct 15 12:04:02 lgl pppd[20364]: Sent 1497 bytes, received 411 bytes.
-> Oct 15 12:04:03 lgl pppd[20364]: Exit.
-> Oct 15 12:04:48 lgl pppd[20556]: pppd 2.4.1 started by a_ppp, uid 0
-> Oct 15 12:04:48 lgl pppd[20556]: using channel 55
-> Oct 15 12:04:48 lgl pppd[20556]: Using interface ppp0
-> Oct 15 12:04:48 lgl pppd[20556]: Connect: ppp0 <--> /dev/ttyS0
-> Oct 15 12:04:48 lgl pppd[20556]: sent [LCP ConfReq id=0x1 <mru 552> <asyncmap 0x0> <magic 0xe9238fde> <pcomp> <accomp>]
-> Oct 15 12:04:48 lgl pppd[20556]: rcvd [LCP ConfAck id=0x1 <mru 552> <asyncmap 0x0> <magic 0xe9238fde> <pcomp> <accomp>]
-> Oct 15 12:04:51 lgl pppd[20556]: rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xf687cd39> <pcomp> <accomp>]
-> Oct 15 12:04:51 lgl pppd[20556]: sent [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xf687cd39> <pcomp> <accomp>]
-> Oct 15 12:04:51 lgl pppd[20556]: sent [IPCP ConfReq id=0x1 <addr 10.1.1.96> <compress VJ 0f 01>]
-> Oct 15 12:04:51 lgl pppd[20556]: sent [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15>]
+> since we have no /etc/ppp/options file on the embedded system (it's
+> all crammed onto the call to pppd), i'll stick that into the options
+> file on the host.  i'll let you know.  thanks.
 
-Put noccp into /etc/ppp/options.
+It just needs to be configured on one side.
 
-
-> Oct 15 12:04:51 lgl pppd[20556]: rcvd [IPCP ConfReq id=0x1 <addr 0.0.0.0> <compress VJ 0f 01>]
-> Oct 15 12:04:51 lgl pppd[20556]: sent [IPCP ConfNak id=0x1 <addr 10.1.1.97>]
-> Oct 15 12:04:51 lgl pppd[20556]: rcvd [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
-> Oct 15 12:04:51 lgl pppd[20556]: sent [CCP ConfAck id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
-> Oct 15 12:04:51 lgl pppd[20556]: rcvd [IPCP ConfAck id=0x1 <addr 10.1.1.96> <compress VJ 0f 01>]
-> Oct 15 12:04:51 lgl pppd[20556]: rcvd [CCP ConfAck id=0x1 <deflate 15> <deflate(old#) 15>]
-> Oct 15 12:04:51 lgl pppd[20556]: Deflate (15) compression enabled
-> Oct 15 12:04:51 lgl pppd[20556]: rcvd [IPCP ConfReq id=0x2 <addr 10.1.1.97> <compress VJ 0f 01>]
-> Oct 15 12:04:51 lgl pppd[20556]: sent [IPCP ConfAck id=0x2 <addr 10.1.1.97> <compress VJ 0f 01>]
-> Oct 15 12:04:51 lgl pppd[20556]: local  IP address 10.1.1.96
-> Oct 15 12:04:51 lgl pppd[20556]: remote IP address 10.1.1.97
-> Oct 15 12:04:51 lgl pppd[20556]: Script /etc/ppp/ip-up started (pid 20585)
-> Oct 15 12:04:51 lgl pppd[20556]: Script /etc/ppp/ip-up finished (pid 20585), status = 0x0
-> 
-> 
->   anything here look suspicious?  we're baffled by the fact that the
-> actual PPP activation seems fine, but once the link is up, we get
-> nothing.  i can provide more info, of course, if it's necessary, but
-> to start, does any of the host-side configuration look out of sorts?
-> we've had three different people looking at this, and no one can see
-> anything odd.
-
-As I said, your routing may be wrong, or your firewall may be blocking
-everything. 
-
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
