@@ -1,22 +1,29 @@
-From: "Robert P. J. Day" <rpjday@mindspring.com>
-Date: Thu, 27 Jan 2005 13:52:33 +0000
-Subject: suggestion for enhancement to current PPP makefile
-Message-Id: <Pine.LNX.4.61.0501270850330.4788@localhost.localdomain>
+From: Ray Van Dolson <rayvd@digitalpath.net>
+Date: Tue, 25 Jan 2005 19:21:59 +0000
+Subject: Link Quality Monitoring support?
+Message-Id: <20050125192159.GA4603@digitalpath.net>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+I'm trying to figure out a way to monitor the quality of our ppp links.  It
+would seem that RFC1989 would provide a perfect way to do it, but it does not
+appear that pppd 2.4.3 supports it.
 
-  not sure if this is the right place for this, but would it be
-possible to enhance the overall makefile for PPP to include a
-${DESTDIR} optional variable for all installation commands as a prefix
-to the absolute directory names?
+I see in the TODO file that link quality monitoring is listed and I do see a
+_bit_ of code regarding it in the source.
 
-  that way, it would be a snap to "install" PPP in a root filesystem
-structure that would be the basis for an embedded system.
+So a couple questions--
 
-  just my $0.02.
+Any timeframe on this being implemented in pppd?  Next release?  Two years
+from now?
 
-rday
+How are the rest of you currently accomplishing similar monitoring?  I have
+considered writing a small daemon that pings each connection in some sort of
+efficient way and keeps track of average packet loss.  Perhaps there's a more
+elegant solution already out there.
+
+Thanks for any feedback on this...
+Ray
