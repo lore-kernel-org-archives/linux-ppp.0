@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 15 Feb 2005 12:49:02 +0000
+From: Bill Unruh <unruh@physics.ubc.ca>
+Date: Tue, 15 Feb 2005 15:38:10 +0000
 Subject: Re: 2 questions about dialup pppd use
-Message-Id: <16913.61374.994899.526275@gargle.gargle.HOWL>
+Message-Id: <Pine.LNX.4.61.0502150725210.25014@string.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20050212173525.GA27282@iceland.spb.ru>
 In-Reply-To: <20050212173525.GA27282@iceland.spb.ru>
@@ -10,47 +10,70 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Serge Koksharov writes:
-> In /etc/ppp/ip-up.local I have following command to log my dialup sessions:
-> echo `date` ppp-on: Speed: $3\; Local IP: $4\; Remote IP: $5 >> /etc/ppp/history
-> The problem with this setup: No matter on which speed I'm connected (33600,
-> 42666, etc) I'm always getting logged speed 115200. That's not I want! I think
-> script logs serial port speed, but I want connection speed logged instead.
+>> Question2:
+>> If in the same script /etc/ppp/ip-up.local I use following command to
+>> synchronize time:
+>> ntpdate ntp.someserver.org
+>> And in the /etc/ppp/ip-down.local I use command to log sent/received byte count
+>> and connection time by this command:
+>> echo " TX: $BYTES_SENT RX: $BYTES_RCVD for $((CONNECT_TIME/60)) minutes"\
+>>>> /etc/ppp/history
+>> I often get wrong connection time in /etc/ppp/history, for example:
+>>  TX: 41180 RX: 291021 for 71582784 minutes.
+>
+> At a guess, your NTP time sync is causing a large jump because your
+> clock is off by a large amount.  pppd uses the gettimeofday() function
+> to compute CONNECT_TIME, and the value returned by that function is
+> UTC -- meaning that NTP will _change_ the value out from under pppd,
+> leading to incorrect calculation.
 
-As others have mentioned, pppd doesn't really know that the modem
-exists.  Only the external program invoked by the pppd "connect"
-option (typically /usr/bin/chat, but doesn't have to be) knows
-anything about the strings emitted by the modem.  See the chat man
-page -- specifically the "REPORT" feature.
+IF that is the case, you would expect the time to be negative, although
+71582784 min is 254 seconds short of 2^32, so yours is probably the correct
+explanation.
 
-As far as pppd knows, it's just using a serial port.  The "speed"
-mentioned in the pppd man page as an argument to the ip-up script is
-the speed of that serial interface.
+Note that ntpdate is a really really terrible way of setting the time.
+Instead use say chrony, which was designed for the up and down of a modem
+connection. Run chronyd which will gradually slew the clock to the correct
+time without introducing discontinuities into the time ( which is bad for
+file creation times and modification times as well, and cause havoc
+withsome programs).
 
-> Question2:
-> If in the same script /etc/ppp/ip-up.local I use following command to 
-> synchronize time:
-> ntpdate ntp.someserver.org
-> And in the /etc/ppp/ip-down.local I use command to log sent/received byte count
-> and connection time by this command:
-> echo " TX: $BYTES_SENT RX: $BYTES_RCVD for $((CONNECT_TIME/60)) minutes"\
-> >> /etc/ppp/history
-> I often get wrong connection time in /etc/ppp/history, for example:
->  TX: 41180 RX: 291021 for 71582784 minutes.
+Run chronyd, and in ipup and ipdown put
 
-At a guess, your NTP time sync is causing a large jump because your
-clock is off by a large amount.  pppd uses the gettimeofday() function
-to compute CONNECT_TIME, and the value returned by that function is
-UTC -- meaning that NTP will _change_ the value out from under pppd,
-leading to incorrect calculation.
+chronyc <<EOF
+password <your chrony password in chrony.keys>
+online
+burst 3/5
+EOF
 
-You could possibly get the current value of time() before running
-ntpdate, and the value after, and subtrace that delta from
-CONNECT_TIME.
+and in ipdown
+chronyc <<EOF
+password <your chrony password in chrony.keys>
+offline
+EOF
 
-Perhaps pppd ought to be using something different to compute elapsed
-time (rather than wall clock time -- such as seconds since boot), but
-it turns out to be absurdly hard to do this in a portable way.
+chrony will also, if started with 
+chronyd -r -s
+correct for errors in your rtc clock so that even when you boot up, your
+system time will be correct. (However if y ou are running the newest
+kernels-- 2.6.7 or later, the /dev/rtc might be broken on your distro--
+Mandrake's is, and I believe others are as well-- it all has to do with the
+HPET which is displacing the old timer chip on motherboards)
+
+
+>
+> You could possibly get the current value of time() before running
+> ntpdate, and the value after, and subtrace that delta from
+> CONNECT_TIME.
+>
+> Perhaps pppd ought to be using something different to compute elapsed
+> time (rather than wall clock time -- such as seconds since boot), but
+> it turns out to be absurdly hard to do this in a portable way.
+>
+>
 
 -- 
-James Carlson                                 <carlsonj@workingcode.com>
+William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
+Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
+UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
+Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
