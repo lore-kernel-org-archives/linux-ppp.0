@@ -1,7 +1,7 @@
-From: Arvin Schnell <arvin@suse.de>
-Date: Fri, 16 Jan 2004 16:21:37 +0000
+From: Paul Mackerras <paulus@samba.org>
+Date: Fri, 16 Jan 2004 22:57:09 +0000
 Subject: Re: ppp-2.4.2 released
-Message-Id: <20040116162137.GA24654@suse.de>
+Message-Id: <16392.27717.712012.77909@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
 In-Reply-To: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
@@ -10,21 +10,19 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Sat, Jan 17, 2004 at 01:16:21AM +1300, Clive Nicolson wrote:
+Clive Nicolson writes:
+
 > http://ftp.samba.org/ftp/ppp/ppp-2.4.2.tar.gz does not appear to be a valid URL.
-> 
+
+Sorry, use www.samba.org instead.
+
 > and
 > 
 > ftp://ftp.samba.org/pub/ppp/ppp-2.4.2.tar.gz will not build "out of the box"
 > under linux as <pcap.h> is not found by pcap-int.h .
 
-You need to install libpcap or disable filter support (see
-Makefile.linux).
+It builds out of the box on my Debian sid box - you need the
+libpcap-dev package installed though.  If you really don't have
+pcap.h, set FILTER=n in pppd/Makefile.linux.
 
-ciao Arvin
-
--- 
-Dipl.-Phys. Arvin Schnell
-SuSE Linux AG
-Research & Development
-email: arvin@suse.de
+Paul.
