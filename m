@@ -1,29 +1,51 @@
-From: James Chapman <jchapman@katalix.com>
-Date: Thu, 16 Sep 2004 07:45:23 +0000
-Subject: Re: Multiple I/O on a serial device
-Message-Id: <1095320723.414944932a353@www.katalix.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Fri, 10 Sep 2004 11:10:47 +0000
+Subject: Re: [IPCOMP] Use per-cpu buffers
+Message-Id: <20040910111047.GA29330@gondor.apana.org.au>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <41483B26.7040708@alphalink.fr>
-In-Reply-To: <41483B26.7040708@alphalink.fr>
+References: <20040909122202.GA3170@gondor.apana.org.au> <20040909091652.490c7833.davem@davemloft.net>
+In-Reply-To: <20040909091652.490c7833.davem@davemloft.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="hz-gb-2312"
+Content-Transfer-Encoding: base64
+To: "David S. Miller" <davem@davemloft.net>
+Cc: kuznet@ms2.inr.ac.ru, jmorris@redhat.com, netdev@oss.sgi.com, linux-ppp@vger.kernel.org, paulus@samba.org
 
-Have you looked at OpenL2TP?
-
-http://openl2tp.sourceforge.net/
-
-/james
-
-> I'm trying to setup multiple instances of locals ppp in order to
-> test a L2TP daemon.
->
-> The problem, is that once ppp sets up the line discipline nothing
-> can be read from or written to the associated serial device. So I
-> was wondering if there was an easy way to do multiple I/O on a
-> serial, or maybe "link" I/O of two serials.
->
-> If anyone has suggestions, it would be greatly appreciated.
-
-
+T24gVGh1LCBTZXAgMDksIDIwMDQgYXQgMDk6MTY6NTJBTSAtMDcwMCwgRGF2aWQgUy4gTWlsbGVy
+IHdyb3RlOgo+IAo+ID4gV2l0aCBwZXItY3B1IGJ1ZmZlcnMgdGhpcyBnb2VzIGRvd24gdG8gMzAw
+SyBwZXIgQ1BVLgo+IAo+IFRoYXQgYW1vdW50IG9mIHNwYWNlIGp1c3QgZm9yIGRlY29tcHJlc3Np
+b24gc3RhdGUgaXMKPiByZWRpY3VsaW91cy4KCkFjdHVhbGx5IG1vc3Qgb2YgdGhhdCBzcGFjZSBp
+cyBmb3IgY29tcHJlc3Npb24uICBUaGUgc3BhY2UgZm9yCmRlY29tcHJlc3Npb24gaXMgb25seSAz
+MksgaWYgSSByZWFkIHRoZSB6bGliIGNvbW1lbnQgY29ycmVjdGx5LgpIb3dldmVyLCBkdWUgdG8g
+dGhlIGN1cnJlbnQgY3J5cHRvIGludGVyZmFjZSwgeW91IGFsd2F5cyBoYXZlCnRvIGFsbG9jYXRl
+IGJvdGggYW5kIHlvdSBoYXZlIHRvIHJlc2VydmUgYSA2NEsgYnVmZmVyIGp1c3QgaW4KY2FzZSB0
+aGUgcGFja2V0IGlzIGxhcmdlLgoKVGhlcmUncyBnb3R0YSBiZSBhIGJldHRlciB3YXkgdGhvdWdo
+LiAgV2hhdCBpZiB0aGUgcGFja2V0IGxlbmd0aApmaWVsZCB3YXMgMzIgYml0cz8gU3VyZWx5IHdl
+IGFyZW4ndCBnb2luZyB0byBhbGxvY2F0ZSBhIDRHIGJ1ZmZlciA6KQoKSmFtZXMsIGNhbiB5b3Ug
+dGhpbmsgb2YgYSBnZW5lcmFsIHNvbHV0aW9uIHRvIHRoZSA2NEsgYnVmZmVyIGluCnRlcm1zIG9m
+IHRoZSBjcnlwdG8gZGVjb21wcmVzc2lvbiBpbnRlcmZhY2U/Cgo+IEEgc2Vjb25kIHRob3VnaHQg
+aXMgdGhhdCB3ZSBtYXkgbm90IGJlIHRoZSBvbmx5IHBhcnQKPiBvZiB0aGUga2VybmVsIGludGVy
+ZXN0ZWQgaW4gYSBwZXItY3B1IHpsaWIgc2NyYXRjaAo+IGJ1ZmZlciwgbm8/CgpUaGVyZSBhcmUg
+dHdvIG90aGVyIHVzZXJzLiAgSkZGUzIgaXMgYWxyZWFkeSB1c2luZyBvbmUgZ2xvYmFsIGNvcHkK
+YWNjZXNzZWQgdGhyb3VnaCBhIHNlbWFwaG9yZS4gIE1heWJlIHdlIHNob3VsZCBtb3ZlIHRoZSBJ
+UENPTVAKcHJvY2Vzc2luZyBpbnRvIHByb2Nlc3MgY29udGV4dCBhcyB3ZWxsIHNpbmNlIGl0J3Mg
+c28gc2xvdy4KClBQUCBpcyB0aGUgb3RoZXIgdXNlciBhbmQgYWxsb2NhdGVzIG9uZSBmb3IgZWFj
+aCBkZXZpY2UgdGhhdCByZXF1ZXN0cwpmb3IgZGVmbGF0ZSBjb21wcmVzc2lvbi4KClRoZSBwcm9i
+bGVtIGlzbid0IGFzIGJhZCBmb3IgUFBQIGFzIGl0IGlzIGZvciBJUHNlYyBiZWNhdXNlIGZpcnN0
+bHkKUFBQIGlzIGxlc3Mgc2NhbGFibGUgYW55d2F5IGR1ZSB0byB0aGUgZGV2aWNlL3Byb2Nlc3Mg
+b3ZlcmhlYWQuICBNb3JlCmltcG9ydGFudGx5IGlmIGNvbXByZXNzaW9uIGFsbG9jYXRpb24gZmFp
+bHMgUFBQIGNhbiBzdGlsbCBjYXJyeSBvbi4KClVuZm9ydHVuYXRlbHkgZm9yIElQc2VjLCB0aGUg
+Y29tcHJlc3Npb24gYWxsb2NhdGlvbiBpcyBkb25lIGFmdGVyIHRoZQpuZWdvdGlhdGlvbiBzbyB0
+aGVyZSBpcyBubyByb29tIGZvciByZWNvdmVyeSAoeW91J2xsIGhhdmUgdG8gcmVkbyB0aGUKbmVn
+b3RpYXRpb24pLgoKT24gYSB0b3RhbGx5IG9ydGhvZ29uYWwgdG9waWMsIGhhcyBhbnkgYm9keSB0
+aG91Z2h0IG9mIGRvaW5nIGEgUFBQCmRhZW1vbiBsaWtlIHRoZSBJUHNlYyBkYWVtb25zPyBUaGF0
+IGlzLCBoYXZlIG9uZSBwcm9jZXNzIHRoYXQgbWFuYWdlcwphbGwgUFBQIHNlc3Npb25zLiAgVGhp
+cyBjb3VsZCBiZSB1c2VmdWwgZm9yIGxhcmdlIEwyVFAgc2VydmVycyBhbmQKYWxpa2UuCgpDaGVl
+cnMsCi0tIApWaXNpdCBPcGVuc3dhbiBhdCBodHRwOi8vd3d3Lm9wZW5zd2FuLm9yZy8KRW1haWw6
+IEhlcmJlcnQgWHUgfntQbVY+SEl+fSA8aGVyYmVydEBnb25kb3IuYXBhbmEub3JnLmF1PgpIb21l
+IFBhZ2U6IGh0dHA6Ly9nb25kb3IuYXBhbmEub3JnLmF1L35oZXJiZXJ0LwpQR1AgS2V5OiBodHRw
+Oi8vZ29uZG9yLmFwYW5hLm9yZy5hdS9+aGVyYmVydC9wdWJrZXkudHh0Ci0KVG8gdW5zdWJzY3Jp
+YmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXBwcCIg
+aW4KdGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5vcmcKTW9y
+ZSBtYWpvcmRvbW8gaW5mbyBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5m
+by5odG1s
