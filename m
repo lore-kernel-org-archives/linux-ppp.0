@@ -1,54 +1,50 @@
-From: "Simon Chow" <simonchow@keytechsys.com.hk>
-Date: Fri, 23 Jul 2004 08:47:28 +0000
-Subject: Re: pppd and AT+WMUX(Multiplex mode)
-Message-Id: <cdqjku$68j$1@sea.gmane.org>
+From: Guy Rouillier <guy-rouillier@speakeasy.net>
+Date: Wed, 21 Jul 2004 05:29:35 +0000
+Subject: compressor dropped pkt - scp upload stalls
+Message-Id: <20040721012935.262926c4@emach>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <loom.20040721T163210-958@post.gmane.org>
-In-Reply-To: <loom.20040721T163210-958@post.gmane.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-<carlsonj@workingcode.com> wrote in message
-news:16638.36676.350168.813237@carlson.workingcode.com...
-> Simon Chow writes:
-> > I am researching how to handle the AT packets and Data packets offered
-by
-> > the Wavecom GSM modem in AT+WMUX=1 mode. I want to modify the pppd
-programme
-> > and I think that the tty.c in pppd may be the key to change. The
-charshunt
-> > function manipulates both the raw bytes sent from and received by the
-serial
-> > port. However, I am still in an initial stage.
->
-> I don't think that analysis is right.  The charshunt task is invoked
-> only in a few cases (e.g., where the 'record', 'notty', or 'socket'
-> options are used), and isn't the normal data path.  The normal data
-> path is in the kernel, not user space.
->
-> > I wonder if the pppd tool can handle the multiplex mode offered by
-Wavecom
-> > GSM modem. Thanks.
->
-> Not today.  I think you'd have to modify the PPP modules in the Linux
-> kernel to detect the switching mechanism and feed the data up to pppd
-> first.  Otherwise, it'll probably be handled as bad PPP frames and
-> discarded.
->
-> -- 
-> James Carlson                                 <carlsonj@workingcode.com>
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+I attempted to search for this issue on the archives and on the net, and
+while I did get some hits, I have to humbly admit that I'm beyond my
+level of competency.  I'm running Mandrake AMD64, and I've recompiled
+the supplied kernel 2.6.3-9 with some small config changes needed to get
+this working on my eMachines AMD64 laptop, plus some sha1 changes I
+discussed on this list previously to make it 64-bit safe.  I'm running
+ppp-2.4.2 and pptp 1.4.0 I obtained from the pptpclient site as source.
 
+Briefly, the problem I'm experiencing is this.  I'm connecting to a
+Microsoft VPN server at work using PPTP on PPP, which requires MPPE. 
+When I try to use scp to upload a file to a work system, I see this in
+/var/log/messages:
 
-How about I modify the ppp_async_input function in ppp_async.c to detect the
-0xAA and 0xDD, and the ppp_async_push function to encapsulate the PPP frame
-with 0xDD?
+Jul 21 00:38:37 emach kernel: ppp: compressor dropped pkt
+Jul 21 00:39:07 emach last message repeated 8 times
 
+Then my upload stalls.  On the target system, I see  a directory entry
+for the attempted upload, but the filesize is zero.
 
+If I try to download a file from the same work system, I see hundreds of
+the following messages:
 
+Jul 21 00:42:24 emach pptp[2343]: anon log[decaps_gre:pptp_gre.c:388]:
+buffering packet 289 (expecting 287, lost or reordered)
+Jul 21 00:42:24 emach pptp[2343]: anon log[decaps_gre:pptp_gre.c:388]:
+buffering packet 290 (expecting 287, lost or reordered)
+Jul 21 00:42:24 emach pptp[2343]: anon log[decaps_gre:pptp_gre.c:388]:
+buffering packet 291 (expecting 287, lost or reordered)
+
+Amazingly, the resulting file is intact and good.  I can remote desktop
+into a work system, but I see many of the above messages getting logged;
+I guess the remote desktop protocol is more forgiving of these errors
+than is scp.
+
+What are my best hopes for getting a working connection?  I know how to
+recompile the kernel, apply patches, etc, but debugging this code is
+beyond me at this time.   Thanks for all advice.
+
+-- 
+Guy Rouillier
