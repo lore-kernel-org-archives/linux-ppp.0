@@ -1,7 +1,7 @@
-From: Christopher Fowler <cfowler@outpostsentinel.com>
-Date: Thu, 10 Mar 2005 18:01:45 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Thu, 10 Mar 2005 18:17:02 +0000
 Subject: Re: Blowfish encryption
-Message-Id: <1110477705.18073.436.camel@linux.linxdev.com>
+Message-Id: <16944.36638.767255.464284@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1110403872.18073.330.camel@linux.linxdev.com>
 In-Reply-To: <1110403872.18073.330.camel@linux.linxdev.com>
@@ -10,54 +10,24 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-The only problem with ssh is that it is one protocol.  There are many
-protocols that travel across the ppp link.  Some fo them not encryted
-and can not be encrypted.
-
-I stopped using telnet a long time ago.  Also with these devices there
-are protocols that are routed across that link we have no control over
-so doing encryption inside of ppp would cover all the bases.
-
-
-On Thu, 2005-03-10 at 12:53, Bill Unruh wrote:
-> On Wed, 9 Mar 2005, Christopher Fowler wrote:
+Christopher Fowler writes:
+> The only problem with ssh is that it is one protocol.  There are many
+> protocols that travel across the ppp link.  Some fo them not encryted
+> and can not be encrypted.
 > 
-> > Hello,
-> >
-> > I've been thinking about encryption in pppd.  By reading my emails
-> > you've probably have an idea of what we do with pppd.  Since I don't use
-> Bad idea. There is already a well accepted throughly tested way of doing
-> this. It is called ssh. Use it. 
-> Trying to overload ppp  is not the way to do it ( and yes I know it is
-> done).
-> 
-> Note that tapping a modem comjunication is hard at the best of times due to
-> cross training refections etc.
-> 
-> > pppd to attach a windows desktop to a Linux server I was thinking about
-> > maybe an implementation of Blowfish type encryption between two pppd
-> > processes.  There could be a command line argument that runs on
-> > encryption and the two processes could determine in the LCP phase that
-> > they are to encrypt all data between them.    This is mainly for those
-> > individuals who think that the phone company will tap their line and see
-> > their data.  Not very useful in tunnels since programs like vtun do the
-> > encryption for pppd.
-> >
-> > Is this something that might be feasible?  I'm not looking to add
-> > certificate based encryption like SSL but encryption like SSH, Vtun and
-> > others.  Would a windows connection croak if it dialed into my box and
-> > my box wanted to use encryption?  Would the windows ppp process be smart
-> > enough to reject that request?  Has anything like this been tried yet?
-> >
-> 
-> Use ssh. 
-> > Thanks,
-> > Chris
-> >
-> >
-> > -
-> > To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> >
+> I stopped using telnet a long time ago.  Also with these devices there
+> are protocols that are routed across that link we have no control over
+> so doing encryption inside of ppp would cover all the bases.
 
+As I mentioned, if it's really a PPP issue (not clear that it is, as
+the threat model isn't clear), then ECP is likely to be the right
+answer.
+
+If it's an IP issue (are you worried about non-IP protocols?), then
+I'd certainly recommend the use of IPsec.  It defends against things
+that ssh (and, for that matter, SSL/TLS) cannot, works whether or not
+you use PPP, works on an end-to-end basis, and doesn't require
+changing everyone's implementations.
+
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
