@@ -1,8 +1,10 @@
 From: Chris Jensen <cjensen@gmail.com>
-Date: Fri, 16 Jul 2004 03:07:01 +0000
+Date: Fri, 16 Jul 2004 03:14:51 +0000
 Subject: No more auth succeeded log messages
-Message-Id: <fa61edfd04071520071163c16b@mail.gmail.com>
+Message-Id: <fa61edfd04071520142d9d46c0@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <fa61edfd04071520071163c16b@mail.gmail.com>
+In-Reply-To: <fa61edfd04071520071163c16b@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
