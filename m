@@ -1,51 +1,40 @@
-From: Frank Krauss <fmfkrauss@mindspring.com>
-Date: Tue, 08 Jun 2004 23:14:35 +0000
-Subject: Specifing Hays Extended Command Set in PPP 2.4.1
-Message-Id: <200406081914.35819.fmfkrauss@mindspring.com>
+From: Bill Unruh <unruh@physics.ubc.ca>
+Date: Tue, 08 Jun 2004 23:41:09 +0000
+Subject: Re: Specifing Hays Extended Command Set in PPP 2.4.1
+Message-Id: <Pine.LNX.4.50.0406081638330.6334-100000@string.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <200406081914.35819.fmfkrauss@mindspring.com>
+In-Reply-To: <200406081914.35819.fmfkrauss@mindspring.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hello everyone,
+On Tue, 8 Jun 2004, Frank Krauss wrote:
 
-I'm attempting to specify a value in a CHAT Script for an AT command
-that has a & in it.
+> Hello everyone,
+> 
+> I'm attempting to specify a value in a CHAT Script for an AT command
+> that has a & in it.
+> 
+> This is because it is a Hays Extended Command Set value.  For example:
+> "" ATX1&S1E1Q0
+> 
+> Whenever I specify this type of command in a String, I get the 
+> following message:
+> 
+> Can't get terminal parameters: inappropriate IOCTL for device
+> 
+> If I remove the command with the & in it, the rest of the command runs fine.
+> I know that the command itself is good since when I run it under MINCOM,
+> the entire stmt runs fine.
 
-This is because it is a Hays Extended Command Set value.  For example:
-"" ATX1&S1E1Q0
+"" 'ATX1&S1E1Q0'
 
-Whenever I specify this type of command in a String, I get the 
-following message:
+Try putting it in quotes. The shell is probably interpreting the &
+rather than its being sent to the chat script ( give the chat script the
+-v option, make sure that you have 
+local2.*;daemon.*		/var/log/ppplog
+in /etc/syslog.conf and see what is actually sent to the modem)
 
-Can't get terminal parameters: inappropriate IOCTL for device
-
-If I remove the command with the & in it, the rest of the command runs fine.
-I know that the command itself is good since when I run it under MINCOM,
-the entire stmt runs fine.
-
-The reason that I have to enter this type of command is because I'm attempting
-to get a US Robotics Sportster External 56K Fax Modem to work under Linux
-and I need to specify this type of Command in my Chat Script.
-
-My DIP Switch setting are as follows:
-   1. Up          5. Up 
-   2. Up          6. Up
-   3. Up          7. Up
-   4. Down      8. Down
-
-My Environment is the following:
-   1.  Computer is a Pentium II.
-   2.  Distribution is Caldera 2.3
-   3.  Kernel is 2.4.22
-   4.  PPP is 2.4.1
-
-Would someone be able to tell me what my mistake is or how I can get around
-this problem?
-
-Yours truly,
-
-Frank Krauss
- 
 
