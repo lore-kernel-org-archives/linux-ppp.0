@@ -1,7 +1,7 @@
-From: Soragan Guo <soragan@guox.net>
-Date: Wed, 28 Apr 2004 12:57:40 +0000
+From: Bill Unruh <unruh@physics.ubc.ca>
+Date: Wed, 28 Apr 2004 15:56:06 +0000
 Subject: Re: Interface Name
-Message-Id: <408FAA44.7070408@guox.net>
+Message-Id: <Pine.LNX.4.50.0404280855410.21226-100000@string.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <408E24E6.6090900@guox.net>
 In-Reply-To: <408E24E6.6090900@guox.net>
@@ -10,16 +10,15 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-James Cameron wrote:
+On Wed, 28 Apr 2004, James Carlson wrote:
 
->At least with that option, you could ensure that the interface has a
->consistent name to begin with, rather than be allocated in order of
->creation.
->
->e.g. unit 40 for the adsl, unit 50 for the pppoe.
->
->This may simplify the ifrename.
->
->  
->
-it make sense, good solution
+> Bill Unruh writes:
+> > There is also the linkname option. 
+> [...]
+> > Do not know if that would do what you want. 
+> 
+> It doesn't.  It just sets a vanity name for the pid file, so that
+> writing a kill script is easier.
+
+That may be all he wants.
+
