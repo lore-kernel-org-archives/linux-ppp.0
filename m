@@ -1,40 +1,61 @@
-From: James Carlson <carlsonj@carlson.workingcode.com>
-Date: Wed, 16 Jun 2004 14:07:42 +0000
-Subject: PPP on a remote host
-Message-Id: <16592.21550.519288.475021@carlson.workingcode.com>
+From: "Richard Plourde" <richard-plourde@sympatico.ca>
+Date: Wed, 02 Jun 2004 16:25:37 +0000
+Subject: pppd 2.4.2 IPX problems
+Message-Id: <005201c448be$3cfbd660$6401a8c0@Zazzmachine>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <58134.200.47.10.229.1087393775.squirrel@correo2.fceia.unr.edu.ar>
-In-Reply-To: <58134.200.47.10.229.1087393775.squirrel@correo2.fceia.unr.edu.ar>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Sergio writes:
- >     I'm trying to dial out from a RAS (we say,
- > using it in the less common way) to a terminal
- > using PPP.
+Here's a tricky one for you ppp gurus!
 
-What brand of RAS device is this?  Most RAS implementations have a
-built-in PPP dial-out capability.  If at all possible, I recommend
-using that rather than putting something together with telnet.
+I've compiled my Redhat Linux kernel (2.4.20-20.7) with IPX support:
 
- >     The tool I have in the RAS to see the modem
- > is a reverse telnet to it. If I do
- > 
- > telnet some-ip some-line-number
- > 
- > I can write commands to the modem directly (if
- > I type AT, I see OK in the screen). I can dial
- > out manually (using ATDT), but I don't know how to
- > run ppp for a remote port (so, obviously, connection
- > fails).
+CONFIG_IPX=m
+CONFIG_IPX_INTERN=y.
 
-If you can't use the local PPP dial-out on that RAS box for some
-reason, then the next best thing would be to use a raw TCP connection
-to the serial port, not telnet.  Most RAS implementations have two
-ranges of of TCP ports -- one range speaks telnet protocol, and the
-other gives raw (binary) access to the serial port.  If you use the
-latter, you can use the "socket host:port" option in pppd to connect
-to the serial port.  Otherwise, you'll need to use the 'pty' option
-and run telnet under pppd.
+I've also configured it to support Novell Control Protocol
+
+CONFIG_NCP_FS=m
+CONFIG_NCPFS_PACKET_SIGNING=y
+CONFIG_NCPFS_IOCTL_LOCKING=y
+CONFIG_NCPFS_STRONG=y
+CONFIG_NCPFS_NFS_NS=y
+CONFIG_NCPFS_OS2_NS=y
+CONFIG_NCPFS_SMALLDOS=y
+CONFIG_NCPFS_NLS=y
+CONFIG_NCPFS_EXTRAS=y
+
+I've installed ipxripd-0.8 and ncpfs-2.1.1.
+
+I can successfully do slist and see my Novell server. So the IPX support
+seems functional.
+
+When it comes to pppd-2.4.2, I've edited the makefile to include:
+
+IPX_CHANGE = 1
+USE_MS_DNS = 1
+
+I did the make and the make install.
+
+When I come to connect with ppp from my Windows workstation, I get this
+error in the pppd logfile:
+
+Jun  2 11:48:31 <custserver> pppd[27805]: rcvd [IPXCP ConfReq id=0x5
+<network 0> <node 02ee0016331b>]
+Jun  2 11:48:31 <custserver> pppd[27805]: Unsupported protocol 'Novell IPX
+Control Protocol' (0x802b) received
+
+Since I'm pretty sure the kernel is properly compiled, I'm begining to
+suspect the pppd distribution.
+
+
+Has anybody encountered such a situation? Any help at this point would be
+greatly appreciated!
+
+Thanks!
+Rikk
+
+
+
