@@ -1,61 +1,77 @@
-From: Jan Dubiec <jdx@slackware.pl>
-Date: Sun, 18 Jan 2004 04:10:21 +0000
-Subject: Re: ppp-2.4.2 released
-Message-Id: <87r7xxaocy.fsf@hs001.slackware.pl>
+From: "Desai, Jason" <jase@sensis.com>
+Date: Thu, 29 Jan 2004 01:27:46 +0000
+Subject: MPPE required but peer negotiation failed
+Message-Id: <ADF6087CA978A4418AF7F76DDCF2F72102757859@europa.ats.sensis.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
-In-Reply-To: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On  Fri, 16 Jan 2004 10:48:47 +0200, Pasi K=E4rkk=E4inen <pasik@iki.fi> wro=
-te:
-[.....]
-> There's still the MTU bug (with MPPE) left..
->=20
-> pppd/ccp.c near line 1192:
->=20
-> /*
->  * We need to decrease the interface MTU by MPPE_PAD
->  * because MPPE frames **grow**.  The kernel [must]
->  * allocate MPPE_PAD extra bytes in xmit buffers.
->  */
-> mtu =3D netif_get_mtu(f->unit);
-> if (mtu)
->     netif_set_mtu(f->unit, mtu - MPPE_PAD);
-> else
->     newret =3D CONFREJ;
-[.....]
-> This does not happen with all web sites.. anyway, this should be fixed si=
-nce
-> it's really annoying. When I remove the "- MPPE_PAD" code, everything see=
-ms
-> to be fine.
->=20
-> Also if I change the MTU of the ppp interface (in the server) during
-> ppp session (with ifconfig/ip), connections start to work well.
-Quite interesting problem. IMO the code you quoted should be just
-removed because according to RFC1547 MTU is only information for
-higher level protocols about "the maximum allowable length for a
-packet (q.v.) transmitted over a point-to-point link without incurring
-network layer fragmentation." Of course a PPP implementation should be
-able to handle overhead added by MPPE - in our case apropriate code is
-located in drivers/net/ppp_generic.c in the kernel sources.
+Hello.
 
-According to RFC1661:
- - when negotiated MRU is less than 1500 octets, a PPP implementation
-   must still be able to receive at least 1500 octets,
- - when PFC is negotiated, a PPP implementation is still required to
-   receive frames with uncompressed protocol field.
+I am running a pptp server (using poptop) on linux and for various reasons,
+I have had to upgrade from ppp 2.4.1 on linux 2.2.17 to ppp 2.4.2 on linux
+2.4.24 (both patched with mppe support).  The ppp 2.4.2 is actually Debian's
+ppp 2.4.2+20031127-2.  I found http://pptpclient.sourceforge.net/ and it has
+helped me get things set up with this upgrade.  
 
-So why not to handle MPPE overhead without changing MTU value? I am
-sure that RFC3078, unfortunately silently, assumes that.
+I have a PocketPC client that is trying to connect.  It used to be able to
+connect to ppp 2.4.1.  Here are the relevant logs - I know these are two
+different hosts - but it is the same client trying to connect to each.
 
-Regards,
-/J.D.
---=20
-Jan Dubiec, jdx@slackware.pl, mobile: +48 602 101787
+ppp 2.4.2:
+Jan 28 10:26:16 bob pppd[19285]: sent [CCP ConfReq id=0x1 <mppe +H -M +S -L
+-D -C>]
+Jan 28 10:26:16 bob pppd[19285]: rcvd [CCP ConfReq id=0x0 <mppe -H -M -S -L
+-D +C>]
+Jan 28 10:26:16 bob pppd[19285]: MPPE required but peer negotiation failed
+Jan 28 10:26:16 bob pppd[19285]: sent [LCP TermReq id=0x2 "MPPE required but
+peer negotiation failed"]
+Jan 28 10:26:16 bob pppd[19285]: sent [CCP ConfRej id=0x0 <mppe -H -M -S -L
+-D +C>]
+Jan 28 10:26:16 bob pppd[19285]: rcvd [CCP ConfNak id=0x1 <mppe -H -M +S -L
+-D -C>]
+Jan 28 10:26:16 bob pppd[19285]: rcvd [LCP TermAck id=0x2]
+Jan 28 10:26:16 bob pppd[19285]: Connection terminated.
 
-G=B3=EAboka wiara wymaga p=B3ytkiego rozumu i nik=B3ej wiedzy.
+ppp 2.4.1:
+Jan 19 11:09:51 vortex pppd[19256]: sent [CCP ConfReq id=0x1 <deflate 15>
+<deflate(old#) 15> <mppe 1 0 0 40> <bsd v1 15>]
+Jan 19 11:09:51 vortex pppd[19256]: rcvd [CCP ConfReq id=0x0 <mppe 0 0 0 1>]
+Jan 19 11:09:51 vortex pppd[19256]: sent [CCP ConfNak id=0x0 <mppe 0 0 0
+40>]
+Jan 19 11:09:51 vortex pppd[19256]: rcvd [CCP ConfRej id=0x1 <deflate 15>
+<deflate(old#) 15> <bsd v1 15>]
+Jan 19 11:09:51 vortex pppd[19256]: sent [CCP ConfReq id=0x2 <mppe 1 0 0
+40>]
+Jan 19 11:09:51 vortex pppd[19256]: rcvd [CCP ConfReq id=0x1 <mppe 0 0 0
+40>]
+Jan 19 11:09:51 vortex pppd[19256]: sent [CCP ConfAck id=0x1 <mppe 0 0 0
+40>]
+Jan 19 11:09:51 vortex pppd[19256]: rcvd [CCP ConfNak id=0x2 <mppe 0 0 0
+40>]
+Jan 19 11:09:51 vortex pppd[19256]: sent [CCP ConfReq id=0x3 <mppe 0 0 0
+40>]
+Jan 19 11:09:51 vortex pppd[19256]: rcvd [CCP ConfAck id=0x3 <mppe 0 0 0
+40>]
+
+Thanks to this page -
+http://pptpclient.sourceforge.net/howto-diagnosis.phtml#mppe_bits -
+explaining the bitmasks, it looks like in both cases, the client initially
+sends a CCP packet requesting to only do compression.  But with ppp 2.4.2,
+the server responds with a ConfRej, and with ppp 2.4.1, it responds with
+ConfNak.  With ppp 2.4.1, the peers were able to successfully negotiate to
+use MPPE 128-bit compression.  In both instances, ppp was configured to
+require MPPE 128-bit compression.  
+
+I'm not sure if it the client or the server which is "broken".  Is there
+some configuration option or patch that will make ppp behave as it did in
+2.4.1?  Any help would be appreciated.  TIA!
+
+Jason Desai
+Network Administrator
+Sensis Corporation
+jase@sensis.com
+http://www.sensis.com
+(315) 445-5811
