@@ -1,12 +1,30 @@
-From: Frank Krauss <fmfkrauss@mindspring.com>
-Date: Wed, 19 Jan 2005 18:29:40 +0000
-Subject: Problem with "persist" on PPP 2.4.3 under Linux Kernel 2.6.9
-Message-Id: <05011913351800.04070@sevencardstud.cable.nu>
+From: "Desai, Ankit (Export)" <ankit.desai@pw.utc.com>
+Date: Wed, 19 Jan 2005 18:48:47 +0000
+Subject: RE: Problem with "persist" on PPP 2.4.3 under Linux Kernel 2.6.9
+Message-Id: <BAD05164DBF6BF44AD171A36DBC6E775230BC6@pusehe0w.eh.pweh.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <05011913351800.04070@sevencardstud.cable.nu>
+In-Reply-To: <05011913351800.04070@sevencardstud.cable.nu>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+You can try and use diald option, which will try to reconnect to the
+internet on demand/use. So, even if you are offline, and there is a demand
+for internet connection, it will try to reconnect on its own.
+
+Just make sure, you configure diald correctly, it is a little bit tricky.
+
+Regards,
+Ankit
+
+-----Original Message-----
+From: Frank Krauss [mailto:fmfkrauss@mindspring.com]
+Sent: Wednesday, January 19, 2005 1:30 PM
+To: linux-ppp@vger.kernel.org
+Subject: Problem with "persist" on PPP 2.4.3 under Linux Kernel 2.6.9
+
 
 Good day,
 
@@ -14,7 +32,8 @@ I'm having a problem that I can't seem to find any indication of a fix on
 GOOGLE for and so I'm hoping that someone on this list can point me in
 the correct direction.
 
-I'm running Linux Kernel 2.6.9 on a Pentium 4 using the Caldera Distribution.
+I'm running Linux Kernel 2.6.9 on a Pentium 4 using the Caldera
+Distribution.
 I installed PPP 2.4.3 and have been using it successfully for a couple of
 days.  My problem with it is the following:
 
@@ -57,3 +76,7 @@ Yours truly,
 
 Frank Krauss
   
+-
+To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
