@@ -1,7 +1,7 @@
-From: "Matthew N. Dodd" <mdodd@patton.com>
-Date: Wed, 16 Jun 2004 17:51:47 +0000
-Subject: RE: PPP state machine
-Message-Id: <008401c453ca$9e9ac9a0$67160a0a@ATLANTIC>
+From: James Cameron <james.cameron@hp.com>
+Date: Thu, 17 Jun 2004 04:23:53 +0000
+Subject: Re: PPP state machine
+Message-Id: <20040617042353.GR13105@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1087365446.1118.10.camel@Bhaskar>
 In-Reply-To: <1087365446.1118.10.camel@Bhaskar>
@@ -10,21 +10,23 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-linux-ppp-owner@vger.kernel.org wrote:
-> Unfortunately the authors of the syncppp code in Linux have
-> never converted it to use the ppp_generic module.  That would be the
-> correct approach IMO. 
+Matthew Dodd wrote:
+> Dan Eble wrote some code that allows the HDLC layer to interface with
+> the normal PPP code.  It works great.  Check list archives for
+> patches.
 
-Dan Eble wrote some code that allows the HDLC layer to interface with
-the normal PPP code.
+Bhaskar wrote:
+> Oh thats great.  Can I get the code ?
 
-It works great.
+Process error.  Use the list archives.  Search.
 
-Check list archives for patches.
+http://marc.theaimsgroup.com/?l=linux-ppp&w=2&r=1&s=HDLC+Dan+Eble&q=b
 
---
-Matthew N. Dodd <mdodd@patton.com>
-Software Engineer, Patton Electronics
-7622 Rickenbacker Dr., Gaithersburg,  MD 20879
-(301) 975-1000x184
+Or use google.
 
+http://www.google.com/search?q=hdlc%20%22dan%20eble%22
+
+-- 
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
