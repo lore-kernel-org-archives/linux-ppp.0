@@ -1,51 +1,50 @@
-From: Philipp Kolmann <philipp@kolmann.at>
-Date: Tue, 22 Jun 2004 15:46:45 +0000
-Subject: pppd with radius-plugin seems to have troubles with traffic counter
-Message-Id: <20040622154645.GA12959@kolmann.at>
+From: Guy Rouillier <guy-rouillier@speakeasy.net>
+Date: Sun, 06 Jun 2004 06:19:36 +0000
+Subject: 2.4.2 on AMD64 Linux: assumes 4-byte long
+Message-Id: <20040606021936.14c69b54@localhost>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi!
+I'm new here.  I hope this is the right place to post this question;
+please point me to the correct place if I've gotten it wrong.  I've been
+trying to get 2.4.2 working on Mandrake 10.0 for AMD64, using kernel
+2.6.3.  I've downloaded this version, along with a corresponding 1.4.0
+version of pptp, from the pptp-client site.  I'm getting a "Fatal signal
+11", which I've traced to the SHA1_Final function on sha1.c during CHAP
+Challenge phase of connection setup.
 
-I seems to have found a bug in pppd 2.4.2. I am running a pptp-pppd VPN
-server to authenticate Users coming in with laptops (at my university).
+Looking in sha1.h and sha1.c source code, I see data structures and
+functions with longs in them, which sets off alarms.  I think there was
+an assumption when this code was written that a long is 4 bytes long. 
+On an AMD64 64-bit OS, a long is 8 bytes.  What leads me to think this
+is #define in sha1.c:
 
-We authenticate the Users using the radius plugin and do also traffic
-accounting with radius. Everything seems to be fine, but when a user
-reaches over 4GB the traffic goes down to 0 again. I believe that this
-could be a problem with an integer value running over.
+#define rol(value, bits) (((value) << (bits)) | ((value) >> (32 -
+(bits))))
 
-Here is the relevant part of my mysql log file (I use a radiusd that
-logs the acct-requests into a mysql db, interim accounting is done every
-10 minutes):
+Clearly, on a 64-bit long, this won't produce a correct rotate-left.  
+I've googled on sha1.c, and I've found several instances where the code
+has switched to using u_int32 instead of long, including one by the same
+author (Steve Reid) here:
 
-040622 14:30:14   17953 Query       UPDATE calls SET
-		acct_session_time=16203,acct_input_octets=92129211,
-		acct_output_octetsB58766205,
-		framed_ip_address=3D'193.170.XX.XX',timestamp=3DNOW()=20
-		WHERE user_name=3D'eXXXXXXX@student.tuwien.ac.at' AND=20
-		status=3D 1 AND acct_session_id=3D'40D7E70949C7'
-040622 14:40:14   17953 Query       UPDATE calls SET
-		acct_session_time=16803,acct_input_octets=95118037,
-		acct_output_octets=110195513,
-		framed_ip_address=3D'193.170.XX.XX',timestamp=3DNOW()=20
-		WHERE user_name=3D'eXXXXXXX@student.tuwien.ac.at' AND
-		status=3D 1 AND acct_session_id=3D'40D7E70949C7'
+http://cvsweb.stop1984.com/index.cgi/entropy/src/sha1.c?rev=1.12&content-type=text/x-cvsweb-markup
 
-As you can see in theis session the acct_output_octets drops from over
-4GB to around 100MB within 10 minutes (possible in our local lan).
+As a test, I tried simply changing all the longs to ints in sha1.h and
+sha1.c.  Unfortunately, I went from getting segfaults to getting kernel
+panics.  I'm suspecting this is not a valid thing to do, since the
+corresponding files that the kernel was built from still have long
+declarations.  I'm guessing these need to match, correct?  Or is pppd
+standalone, and can I change sha1.c/h without worrying about the kernel
+(which I compiled myself from Mandrake sources)?
 
-I hope you can fix this,
-thanks in advance
-Philipp Kolmann
-IT Dept.
-Technical University of Vienna
+I also tried simply changing the definition of rol above to use 64
+instead of 32.  Predictably, that didn't work.
 
+I'm not an expert in networking.  I'd appreciate any and all suggestions
+anyone can provide to get this working.  Thanks.
 
-
---=20
-Life is not fair,
-but the root password helps!
+-- 
+Guy Rouillier
