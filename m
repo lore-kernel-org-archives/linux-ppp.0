@@ -1,22 +1,171 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Mon, 19 Jul 2004 00:10:43 +0000
+From: Arvin Schnell <arvin@suse.de>
+Date: Mon, 19 Jul 2004 15:35:53 +0000
 Subject: Re: rename ppp interface
-Message-Id: <20040719001043.GT2433@hp.com>
+Message-Id: <20040719153553.GA8621@suse.de>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="n8g4imXOkfNTN/H1"
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20040716095908.GA32556@suse.de>
 In-Reply-To: <20040716095908.GA32556@suse.de>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I'm certainly interested in the patch; in the PPTP projects we regularly
-get "change the interface name" as a wishlist request.  Can you tell me
-which kernel version range supports the ioctl?
 
-I'm not qualified to judge any other impacts of the change.
+--n8g4imXOkfNTN/H1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+On Mon, Jul 19, 2004 at 10:10:43AM +1000, James Cameron wrote:
+> I'm certainly interested in the patch; in the PPTP projects we regularly
+> get "change the interface name" as a wishlist request.  Can you tell me
+> which kernel version range supports the ioctl?
+
+I think the ioctl was added for kernel 2.6, but I might be wrong.
+Likely the code should be placed in ifdef's.
+
+> I'm not qualified to judge any other impacts of the change.
+
+The only problem I found is when you try to rename several
+interfaces to pppN.  Also I didn't test multilink.
+
+Attached is an enhanced patch.
+
+ciao Arvin
 
 -- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+Dipl.-Phys. Arvin Schnell
+SuSE Linux AG
+Research & Development
+email: arvin@suse.de
+
+--n8g4imXOkfNTN/H1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="ppp-2.4.2-ifname.diff"
+
+--- ./pppd/main.c.orig	2004-07-19 12:35:22.000000000 +0000
++++ ./pppd/main.c	2004-07-19 14:34:38.542120946 +0000
+@@ -98,7 +98,7 @@
+ static const char rcsid[] = RCSID;
+ 
+ /* interface vars */
+-char ifname[32];		/* Interface name */
++char ifname[MAXIFNAMELEN];	/* Interface name */
+ int ifunit;			/* Interface unit number */
+ 
+ struct channel *the_channel;
+@@ -261,13 +261,6 @@
+     NULL
+ };
+ 
+-/*
+- * If PPP_DRV_NAME is not defined, use the default "ppp" as the device name.
+- */
+-#if !defined(PPP_DRV_NAME)
+-#define PPP_DRV_NAME	"ppp"
+-#endif /* !defined(PPP_DRV_NAME) */
+-
+ int
+ main(argc, argv)
+     int argc;
+@@ -777,8 +770,11 @@
+ set_ifunit(iskey)
+     int iskey;
+ {
+-    info("Using interface %s%d", PPP_DRV_NAME, ifunit);
++    if (req_ifname[0] != '\0')
++	slprintf(ifname, sizeof(ifname), req_ifname);
++    else
+     slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
++    info("Using interface %s", ifname);
+     script_setenv("IFNAME", ifname, iskey);
+     if (iskey) {
+ 	create_pidfile(getpid());	/* write pid to file */
+--- ./pppd/options.c.orig	2004-07-19 12:59:21.000000000 +0000
++++ ./pppd/options.c	2004-07-19 14:35:04.253865964 +0000
+@@ -102,6 +102,7 @@
+ bool	tune_kernel;		/* may alter kernel settings */
+ int	connect_delay = 1000;	/* wait this many ms after connect script */
+ int	req_unit = -1;		/* requested interface unit */
++char	req_ifname[MAXIFNAMELEN];	/* requested interface name */
+ bool	multilink = 0;		/* Enable multilink operation */
+ char	*bundle_name = NULL;	/* bundle name for multilink */
+ bool	dump_options;		/* print out option values */
+@@ -259,6 +260,10 @@
+       "PPP interface unit number to use if possible",
+       OPT_PRIO | OPT_LLIMIT, 0, 0 },
+ 
++    { "ifname", o_string, req_ifname,
++      "Set PPP interface name",
++      OPT_PRIO | OPT_PRIV | OPT_STATIC, NULL, MAXIFNAMELEN },
++
+     { "dump", o_bool, &dump_options,
+       "Print out option values after parsing all options", 1 },
+     { "dryrun", o_bool, &dryrun,
+--- ./pppd/pppd.8.orig	2004-07-19 14:39:06.639320497 +0000
++++ ./pppd/pppd.8	2004-07-19 15:00:37.339448432 +0000
+@@ -1020,7 +1020,12 @@
+ .TP
+ .B unit \fInum
+ Sets the ppp unit number (for a ppp0 or ppp1 etc interface name) for outbound
+-connections.
++connections.  If the unit is already in use a dynamically allocated will be
++used.
++.TP
++.B ifname \fIstring
++Set the ppp interface name for outbound connections.  A failure to set the
++name will terminate the pppd.
+ .TP
+ .B updetach
+ With this option, pppd will detach from its controlling terminal once
+--- ./pppd/pppd.h.orig	2004-07-19 12:59:16.000000000 +0000
++++ ./pppd/pppd.h	2004-07-19 15:02:08.792752747 +0000
+@@ -80,6 +80,16 @@
+ #define MAXARGS		1	/* max # args to a command */
+ #define MAXNAMELEN	256	/* max length of hostname or name for auth */
+ #define MAXSECRETLEN	256	/* max length of password or secret */
++#define MAXIFNAMELEN	32	/* max length of interface name; or use IFNAMSIZ, can we
++				   always include net/if.h? */
++
++/*
++ * If PPP_DRV_NAME is not defined, use the default "ppp" as the device name.
++ * Where should PPP_DRV_NAME come from? Do we include it here?
++ */
++#if !defined(PPP_DRV_NAME)
++#define PPP_DRV_NAME	"ppp"
++#endif /* !defined(PPP_DRV_NAME) */
+ 
+ /*
+  * Option descriptor structure.
+@@ -304,6 +314,7 @@
+ extern int	connect_delay;	/* Time to delay after connect script */
+ extern int	max_data_rate;	/* max bytes/sec through charshunt */
+ extern int	req_unit;	/* interface unit number to use */
++extern char	req_ifname[MAXIFNAMELEN];	/* interface name to use */
+ extern bool	multilink;	/* enable multilink operation */
+ extern bool	noendpoint;	/* don't send or accept endpt. discrim. */
+ extern char	*bundle_name;	/* bundle name for multilink */
+--- ./pppd/sys-linux.c.orig	2004-07-19 12:33:29.000000000 +0000
++++ ./pppd/sys-linux.c	2004-07-19 14:37:36.463754450 +0000
+@@ -649,6 +649,21 @@
+ 	}
+ 	if (x < 0)
+ 		error("Couldn't create new ppp unit: %m");
++
++	if (x == 0 && req_ifname[0] != '\0') {
++		struct ifreq ifr;
++		char t[MAXIFNAMELEN];
++		memset(&ifr, 0, sizeof(struct ifreq));
++		slprintf(t, sizeof(t), "%s%d", PPP_DRV_NAME, ifunit);
++		strncpy(ifr.ifr_name, t, IF_NAMESIZE);
++		strncpy(ifr.ifr_newname, req_ifname, IF_NAMESIZE);
++		x = ioctl(sock_fd, SIOCSIFNAME, &ifr);
++		if (x < 0)
++		    error("Couldn't rename interface %s to %s: %m", t, req_ifname);
++		else
++		    info("Renamed interface %s to %s", t, req_ifname);
++	}
++
+ 	return x;
+ }
+ 
+
+--n8g4imXOkfNTN/H1--
