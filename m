@@ -1,33 +1,26 @@
-From: Carlos Renato Tasinafo <renato@internetzone.com.br>
-Date: Tue, 24 Aug 2004 11:57:12 +0000
-Subject: ppp and microcontroller
-Message-Id: <412B2D18.3030502@internetzone.com.br>
+From: Marek Pawinski <linux@telkomsa.net>
+Date: Sun, 22 Aug 2004 07:41:06 +0000
+Subject: ppp stalls
+Message-Id: <41284E12.5080909@telkomsa.net>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi, all
+Hi
 
-I am working in a project of ppp for microcontrollers ( intel 8051 )and
-I would like to know if somebody have  some experience in this.
+I had ppp running on a modem conection which ran fine with numerous 
+flavours of Linux.
 
-Somebody have a documentation about this?
+I got a ISDN line and set up ppp to handle the connection. Now i get 
+stalled downloads (anything over 100K) including http and ftp with wget. 
+The downloads resume after a while but my connection disconnects after 
+10 or 20 megs of downloading. Anyone have a solution for this ?
 
+I have tried playing with TCP MSS in the kernel and iptables but that 
+does not help.
 
-Thanks
-
-Regards
-
-
-
---=20
-+-------+
-|   _   |
-|  =B0v=B0  |    Carlos Renato Tasinafo
-| /(_)\ |    renato@internetzone.com.br
-|  ^ ^  |
-+-------+
-
+-- 
+Marek
 
