@@ -1,46 +1,36 @@
 From: Arvin Schnell <arvin@suse.de>
-Date: Wed, 18 Feb 2004 15:30:17 +0000
-Subject: fixed usage of libpcap
-Message-Id: <20040218153017.GA9644@suse.de>
+Date: Wed, 18 Feb 2004 15:50:50 +0000
+Subject: Re: fixed usage of libpcap
+Message-Id: <20040218155050.GA31053@suse.de>
 MIME-Version: 1
-Content-Type: multipart/mixed; boundary="AhhlLboLdkugWU4S"
+Content-Type: multipart/mixed; boundary="+QahgC5+KEYLbs62"
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20040218153017.GA9644@suse.de>
+In-Reply-To: <20040218153017.GA9644@suse.de>
 To: linux-ppp@vger.kernel.org
 
 
---AhhlLboLdkugWU4S
+--+QahgC5+KEYLbs62
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
+On Wed, Feb 18, 2004 at 04:30:17PM +0100, Arvin Schnell wrote:
+> 
+> Hi,
+> 
+> while updating to libpcap 0.8.1 I realized that pppd uses it's
+> own version of pcap-int.h that does not match the original
+> version anymore.
+> 
+> Attached is a patch against ppp 2.4.2 to solve that problem.  The
+> rename from net/bpf.h to pcap-bpf.h happend somewhere between
+> libpcap 0.7.2 and 0.8.1.
 
-Hi,
-
-while updating to libpcap 0.8.1 I realized that pppd uses it's
-own version of pcap-int.h that does not match the original
-version anymore.
-
-Attached is a patch against ppp 2.4.2 to solve that problem.  The
-rename from net/bpf.h to pcap-bpf.h happend somewhere between
-libpcap 0.7.2 and 0.8.1.
-
-But I still have the problem that libpcap reports an error when
-using inbound or outbound:
-
-error in active-filter expression: inbound/outbound not supported
-on linktype 9
-
-Seems as if that's not supported anymore and was so far silently
-ignored.  Does anyone know more about that?
+Better also check the return value of pcap_open_dead.
 
 ciao Arvin
 
--- 
-Dipl.-Phys. Arvin Schnell
-SuSE Linux AG
-Research & Development
-email: arvin@suse.de
-
---AhhlLboLdkugWU4S
+--+QahgC5+KEYLbs62
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: attachment; filename="ppp-2.4.2-libpcap.diff"
 
@@ -66,8 +56,8 @@ Content-Disposition: attachment; filename="ppp-2.4.2-libpcap.diff"
  #include <linux/filter.h>
  #endif /* PPP_FILTER */
  
---- ./pppd/options.c.orig	2004-01-13 04:02:07.000000000 +0000
-+++ ./pppd/options.c	2004-02-18 14:54:44.032555730 +0000
+--- ./pppd/options.c.orig	2004-02-18 15:42:37.366603970 +0000
++++ ./pppd/options.c	2004-02-18 15:44:01.243247770 +0000
 @@ -56,7 +56,6 @@
  #endif
  #ifdef PPP_FILTER
@@ -84,7 +74,7 @@ Content-Disposition: attachment; filename="ppp-2.4.2-libpcap.diff"
  #endif
  
  char *current_option;		/* the name of the option being parsed */
-@@ -1439,12 +1437,15 @@
+@@ -1439,12 +1437,20 @@
  setpassfilter(argv)
      char **argv;
  {
@@ -93,6 +83,11 @@ Content-Disposition: attachment; filename="ppp-2.4.2-libpcap.diff"
 +    pcap_t* pc = pcap_open_dead (DLT_PPP, PPP_HDRLEN);
   
 -    if (pcap_compile(&pc, &pass_filter, *argv, 1, netmask) == 0)
++    if (!pc) {
++	option_error("error in pass-filter expression: pcap_open_dead failed\n");
++	return 0;
++    }
++
 +    if (pcap_compile(pc, &pass_filter, *argv, 1, netmask) == 0) {
 +	pcap_close (pc);
  	return 1;
@@ -104,7 +99,7 @@ Content-Disposition: attachment; filename="ppp-2.4.2-libpcap.diff"
      return 0;
  }
  
-@@ -1455,12 +1456,15 @@
+@@ -1455,12 +1461,20 @@
  setactivefilter(argv)
      char **argv;
  {
@@ -113,6 +108,11 @@ Content-Disposition: attachment; filename="ppp-2.4.2-libpcap.diff"
 +    pcap_t* pc = pcap_open_dead (DLT_PPP, PPP_HDRLEN);
   
 -    if (pcap_compile(&pc, &active_filter, *argv, 1, netmask) == 0)
++    if (!pc) {
++	option_error("error in active-filter expression: pcap_open_dead failed\n");
++	return 0;
++    }
++
 +    if (pcap_compile(pc, &active_filter, *argv, 1, netmask) == 0) {
 +	pcap_close (pc);
  	return 1;
@@ -125,4 +125,4 @@ Content-Disposition: attachment; filename="ppp-2.4.2-libpcap.diff"
  }
  #endif
 
---AhhlLboLdkugWU4S--
+--+QahgC5+KEYLbs62--
