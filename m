@@ -1,29 +1,37 @@
-From: James Carlson <carlson@workingcode.com>
-Date: Wed, 02 Jun 2004 16:47:47 +0000
-Subject: Re: pppd 2.4.2 IPX problems
-Message-Id: <16574.1203.14786.593967@h006008986325.ne.client2.attbi.com>
+From: Bhaskar-ROCSYS <vbhaskar@rocsys.com>
+Date: Wed, 16 Jun 2004 05:52:49 +0000
+Subject: PPP state machine
+Message-Id: <1087365446.1118.10.camel@Bhaskar>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <005201c448be$3cfbd660$6401a8c0@Zazzmachine>
-In-Reply-To: <005201c448be$3cfbd660$6401a8c0@Zazzmachine>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Richard Plourde writes:
-> When I come to connect with ppp from my Windows workstation, I get this
-> error in the pppd logfile:
-> 
-> Jun  2 11:48:31 <custserver> pppd[27805]: rcvd [IPXCP ConfReq id=0x5
-> <network 0> <node 02ee0016331b>]
-> Jun  2 11:48:31 <custserver> pppd[27805]: Unsupported protocol 'Novell IPX
-> Control Protocol' (0x802b) received
-> 
-> Since I'm pretty sure the kernel is properly compiled, I'm begining to
-> suspect the pppd distribution.
+Hi all,
+I am trying to put the complete PPP state machine into the kernel space.
 
-Did you turn on the "ipx" option in your pppd configuration?  IPX
-isn't enabled by default.
+PPP implementation in linux is divided into kernel space code and user
+space code.  The state machine is implemented in user space.  
 
--- 
-James Carlson                                  <carlson@workingcode.com>
+I am trying to put the complete state machine into the kernel space and
+make it work with Farsync card(V.35 interface).
+
+Farsync depends on syncppp code which contains the implementation of the
+PPP protocol.  But the code is not complete.  There is not
+authentication phase and IPCP protocol implementation is not complete.
+
+Is it possible to port the user space code to kernel space.  If so how
+do I proceed.  
+Did anyone tried this?
+
+
+TIA
+
+Regards
+bhaskar
+
+
+
+
+
