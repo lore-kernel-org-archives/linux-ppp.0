@@ -1,42 +1,83 @@
-From: Clifford Kite <kite_linux-ppp@ev1.net>
-Date: Thu, 11 Nov 2004 15:05:50 +0000
-Subject: Re: ppp problem red hat linux 6.0
-Message-Id: <Pine.LNX.4.21.0411110844370.10690-100000@corncob.localhost.tld>
+From: Paul Mackerras <paulus@samba.org>
+Date: Mon, 15 Nov 2004 03:50:52 +0000
+Subject: [PATCH] Multilink fix for ppp_generic.c
+Message-Id: <16792.10140.445933.617107@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <Pine.LNX.4.33.0411111534020.30509-100000@parijat.info.com.np>
-In-Reply-To: <Pine.LNX.4.33.0411111534020.30509-100000@parijat.info.com.np>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: akpm@osdl.org, linux-kernel@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org
 
-On Thu, 11 Nov 2004, Ajay Dangol wrote:
+I released ppp-2.4.3 yesterday, with much improved support for
+multilink operation - when the first link is terminated, its pppd no
+longer exits immediately, but keeps running in order to keep the ppp
+interface up while there are other links still in the bundle.
 
-|I have an old machine of red hat linux 6.0. It was working fine till this
-|morning but now i got ppp error.
-|
-|The error message is 
-|
-|ioctl(TIOCSETD(PPP)): Invalid argument(22)
-|
-| This system lacks kernel support for PPP.  This could be because the PPP 
-|kernel module could not be loaded, or because PPP was not included in the 
-|kernel configuration.  If PPP was included as a module, try 
-|`/sbin/modprobe -v ppp'.  If that fails, check t
-|
-|I tried the options /sbin/modprobe -v ppp but it doesnt work.
+However, this shows up a bug in the kernel ppp driver, which is that
+there is no way for the pppd controlling the bundle to know when the
+last link in the bundle is terminated.  This patch provides such a
+way: with this patch, pppd will get an EOF when reading from the
+/dev/ppp instance for the bundle when there are no channels connected.
 
-Doesn't work?  Just what does that mean - exactly?
+Andrew, could this be considered for inclusion in 2.6.10 please?  The
+change does not affect older versions of pppd or normal non-multilink
+operation (I have tested to make sure of that).
 
-Try " ls /lib/modules/`uname -r`/net " to see if there is a ppp.o module.
+Signed-off-by: Paul Mackerras <paulus@samba.org>
 
-The system and pppd are very old.  The suggestion above comes from
-reading the entire failure message (which is chopped off in the message
-above because of a bug) in a stock pppd 2.3.11 source, not a RH source.
-
-If ppp.o is missing then perhaps the hard drive is failing.
-
----
-Clifford Kite                                 http://ckite.no-ip.net
-
-
+diff -urN linux-2.5/drivers/net/ppp_generic.c pmac-2.5/drivers/net/ppp_generic.c
+--- linux-2.5/drivers/net/ppp_generic.c	2004-10-29 07:03:21.000000000 +1000
++++ pmac-2.5/drivers/net/ppp_generic.c	2004-11-15 08:53:54.000000000 +1100
+@@ -19,7 +19,7 @@
+  * PPP driver, written by Michael Callahan and Al Longyear, and
+  * subsequently hacked by Paul Mackerras.
+  *
+- * =FILEVERSION 20020217=
++ * =FILEVERSION 20041108=
+  */
+ 
+ #include <linux/config.h>
+@@ -412,6 +412,17 @@
+ 		ret = 0;
+ 		if (pf->dead)
+ 			break;
++		if (pf->kind = INTERFACE) {
++			/*
++			 * Return 0 (EOF) on an interface that has no
++			 * channels connected, unless it is looping
++			 * network traffic (demand mode).
++			 */
++			struct ppp *ppp = PF_TO_PPP(pf);
++			if (ppp->n_channels = 0
++			    && (ppp->flags & SC_LOOP_TRAFFIC) = 0)
++				break;
++		}
+ 		ret = -EAGAIN;
+ 		if (file->f_flags & O_NONBLOCK)
+ 			break;
+@@ -491,6 +502,14 @@
+ 		mask |= POLLIN | POLLRDNORM;
+ 	if (pf->dead)
+ 		mask |= POLLHUP;
++	else if (pf->kind = INTERFACE) {
++		/* see comment in ppp_read */
++		struct ppp *ppp = PF_TO_PPP(pf);
++		if (ppp->n_channels = 0
++		    && (ppp->flags & SC_LOOP_TRAFFIC) = 0)
++			mask |= POLLIN | POLLRDNORM;
++	}
++				
+ 	return mask;
+ }
+ 
+@@ -2559,7 +2578,8 @@
+ 		/* remove it from the ppp unit's list */
+ 		ppp_lock(ppp);
+ 		list_del(&pch->clist);
+-		--ppp->n_channels;
++		if (--ppp->n_channels = 0)
++			wake_up_interruptible(&ppp->file.rwait);
+ 		ppp_unlock(ppp);
+ 		if (atomic_dec_and_test(&ppp->file.refcnt))
+ 			ppp_destroy_interface(ppp);
