@@ -1,7 +1,7 @@
-From: Jean Lee <jean.lee@free.fr>
-Date: Tue, 11 Jan 2005 07:49:19 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Tue, 11 Jan 2005 13:38:36 +0000
 Subject: Re: PPP features ?
-Message-Id: <41E384FF.30707@free.fr>
+Message-Id: <16867.55004.510693.730573@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <41E262D3.8020303@free.fr>
 In-Reply-To: <41E262D3.8020303@free.fr>
@@ -10,95 +10,69 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hello James,
+Jean Lee writes:
+> For the NCP protocol, I am not sure but I think that it is IPCP + IP 
+> header compression + software compression (LZS) + CCP because it is 
+> wrotten like this :
 
-Thank you very much for your answer.
-For the patents in France, I think it is like what you said so I will 
-forgot LZS
-For the NCP protocol, I am not sure but I think that it is IPCP + IP 
-header compression + software compression (LZS) + CCP because it is 
-wrotten like this :
+That looks like a misunderstanding.  "Network Control Protocol" in the
+context of PPP is just a generic term.  It's like saying "a feature"
+or "a program."  It doesn't define any particular protocol.  Requiring
+support for it is just nonsense.
 
-/Network Control Protocol (NCP), for the PPP protocol integration 
-control in the IPv4 layer :/
-    /- protocol IPC management (Internet Protocol Control)/ I think that 
-there is a mistake and that he want to speek about IPCP because I don't 
-know IPC.
-    /- IP header compression support/
-    /- software compression support (LZS) optional./
-   / - Compression Control Protocol (CCP)/
+So, yeah, sure, pppd supports NCP.  ;-}
 
-Does it have a meaning ?
-Is there another software compression protocol than LZS which is available ?
-Where did you find all this information ?
+> /Network Control Protocol (NCP), for the PPP protocol integration 
+> control in the IPv4 layer :/
+>     /- protocol IPC management (Internet Protocol Control)/ I think that 
+> there is a mistake and that he want to speek about IPCP because I don't 
+> know IPC.
 
-Regards,
+That does indeed look quite garbled.
 
-Jean Lee
+There is no such thing as "protocol IPC management."  I don't know
+what that would mean in this context.
 
-James Carlson wrote:
+IPCP (RFC 1332) is indeed one of the PPP NCPs, and is the one you want
+if you want to run IPv4.  (If you want IPv6, you need IPV6CP, a
+separate NCP, which is also supported by pppd.)
 
->Jean Lee writes:
->  
->
->>In order to write my own application, I would like to know where I can 
->>find information on the ppp stack features for linux 2.4.27. Does 
->>anybody know it ?
->>
->>In particular, does the linux ppp stack implements the following 
->>protocols ? :
->>PAP, IPCP
->>    
->>
->
->Yes to both.
->
->  
->
->>IP header compression
->>    
->>
->
->It has VJ (RFC 1144) header compression, but nobody has worked on the
->newer patent-laden ROHC things.
->
->  
->
->>, CCP
->>    
->>
->
->Yes.
->
->  
->
->>, LZS
->>    
->>
->
->No, not by default.  It's patent-encumbered.  There are patches
->floating around the 'net that reportedly add this.  Use at your own
->risk.
->
->(Patents aren't like copyrights, at least in much of the world.  You
->can get sued successfully even if you write the darned thing from
->scratch.  You can even get sued if you happened to invent it on your
->own purely by accident.  Not sure about the situation in France ...)
->
->  
->
->>and NCP
->>    
->>
->
->That's not really a protocol.  The "NCPs" in PPP are the network
->control protocols.  One of these is IPCP, the Internet Protocol
->Control Protocol, which is used to negotiate IP parameters.
->
->Or are you asking about IPX support?  (One of the IPX-related
->protocols is also called "NCP.")
->
->  
->
+>     /- IP header compression support/
+>     /- software compression support (LZS) optional./
+>    / - Compression Control Protocol (CCP)/
+> 
+> Does it have a meaning ?
+> Is there another software compression protocol than LZS which is available ?
 
+There are *many* of them.
 
+> Where did you find all this information ?
+
+Which information?
+
+If you want to know what pppd supports, looking at the code itself is
+probably the best answer.  Looking at the documentation that comes
+with it would likely also be productive.  You can get the source here:
+
+	ftp://ftp.samba.org/pub/ppp/
+
+As for the list of protocols, you can look here to find the list of
+data compression (CCP) algorithms:
+
+	http://www.iana.org/assignments/ppp-numbers
+
+(Scroll down to "PPP CCP CONFIGURATION OPTION TYPES.")  And you can
+look here to find references to the documents describing those
+algorithms:
+
+	http://www.ietf.org/rfc/rfc-index.txt
+
+For example, LZS (commonly called "Stac") is defined here:
+
+	http://www.ietf.org/rfc/rfc1974.txt
+
+There's also a reasonably-available book on PPP design,
+implementation, and debugging that I could recommend.
+
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
