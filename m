@@ -1,57 +1,47 @@
-From: "Juan Pablo Romero" <jpablo_romero@hotmail.com>
-Date: Tue, 24 Feb 2004 20:18:13 +0000
-Subject: Re: Problems with ppp
-Message-Id: <BAY15-F36YiMCIqtQvA000084d3@hotmail.com>
+From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
+Date: Mon, 02 Feb 2004 10:43:29 +0000
+Subject: Re: RFC: PPP MPPE merge into kernel 2.6
+Message-Id: <20040202104328.GH1254@edu.joroinen.fi>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <BAY15-F30oYAPNXRPmc0000689e@hotmail.com>
-In-Reply-To: <BAY15-F30oYAPNXRPmc0000689e@hotmail.com>
+References: <20040130040026.GI2306@hp.com>
+In-Reply-To: <20040130040026.GI2306@hp.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
+On Fri, Jan 30, 2004 at 10:32:59AM +0000, Chris Wilson wrote:
+> Hi James,
+>=20
+> > I'd like to open a discussion on the merge of the PPP MPPE support with
+> > kernel 2.6.  What can be done to achieve it?  What is hindering it?
+> > What can we do to remove the roadblocks?
+>=20
+> Sounds like an excellent idea, but it may be too late to have anything=20
+> other than bug fixes merged into 2.6. 2.7/2.8 should be possible, though.
+>=20
+> I think there is a strong argument for the support being in the kernel,
+> given the number of other devices that have to support it, the obvious
+> end-user demand (witness pptpclient and poptop :-) and the hassle for
+> users of finding the right patch and patching their kernels (given the
+> patch confusion which exists). Some users are having problems with
+> patching due to failed hunks, and Joe Bloggs shouldn't have to worry abou=
+t=20
+> that.
+>=20
+> Let's go for it :-) What do we have to lose?
+>=20
 
-Yes, I have all packages related to ppp installed.
+Should the MPPC support (by Jan Dubiec) be included as well?
+http://www.polbox.com/h/hs001/
 
-Previously I had mdk 9.1 with the default kernel, I think mdk 9.2 updated=20
-the kernel to 2.4.22. I'm looking forward to use 2.6 soon, so I'll wait til=
-=20
-then. For the time being, I'll use XP to access de internet  :(.
+It also contains some additions to the MPPE support.
 
-Regards
-
-
-   Juan Pablo
-
->From: Chris Wilson <chris@netservers.co.uk>
->To: Juan Pablo Romero <jpablo_romero@hotmail.com>
->CC: linux-ppp@vger.kernel.org
->Subject: Re: Problems with ppp
->Date: Mon, 23 Feb 2004 10:54:26 +0000 (GMT)
->
->Hi Pablo,
->
-> > My setup:
-> > mandrake 9.2
-> > Modem: Intel 536EP
->
->This is a winmodem, with binary-only drivers for Linux. Did you load all
->the necessary user-space software to drive it? Are you using the same
->kernel as before, or a new one? If a new one, did you apply the patch, and
->did it apply cleanly?  Could you try again with your old kernel?
->
->Cheers, Chris.
->--
->_  __ __     _
->  / __/ / ,__(_)_  | Chris Wilson -- UNIX Firewall Lead Developer |
->/ (_  ,\/ _/ /_ \ | NetServers.co.uk http://www.netservers.co.uk |
->\__/_/_/_//_/___/ | 21 Signet Court, Cambridge, UK. 01223 576516 |
->
->-
->To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
->the body of a message to majordomo@vger.kernel.org
->More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-_________________________________________________________________
-MSN. M=E1s =DAtil Cada D=EDa  http://www.msn.es/intmap/
-
+-- Pasi K=E4rkk=E4inen
+      =20
+                                   ^
+                                .     .
+                                 Linux
+                              /    -    \
+                             Choice.of.the
+                           .Next.Generation.
