@@ -1,63 +1,55 @@
-From: carlsonj@workingcode.com
-Date: Wed, 20 Oct 2004 10:48:06 +0000
-Subject: Re: PPP fails due to IPCP NAK
-Message-Id: <16758.16998.970361.151394@carlson.workingcode.com>
+From: "Robert P. J. Day" <rpjday@mindspring.com>
+Date: Wed, 06 Oct 2004 20:47:02 +0000
+Subject: PPP getting timeout on IPCP config requests on new FC3t2 box
+Message-Id: <Pine.LNX.4.60.0410061642580.14152@dell.enoriver.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <41760C35.2010804@ncoretech.com>
-In-Reply-To: <41760C35.2010804@ncoretech.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Kanagesh writes:
-> Oct 20 21:48:06  daemon.debug pppd[183]: sent [LCP ConfReq id=0x1 
-> <asyncmap 0x0> <magic 0x4af3c007> <pcomp> <accomp>]
-[...]
-> Oct 20 21:48:09  daemon.debug pppd[183]: rcvd [LCP ConfReq id=0x2 
-> <asyncmap 0xa0000> <magic 0x8bc924f>]
 
-This is the first sign of danger.  You ask the peer to turn off all
-control character escaping (asyncmap 0), but the peer asks to have
-XON/XOFF escaped (asyncmap 0xa0000).  While this is perfectly legal --
-PPP supports asymmetric negotiation of parameters -- it's also the
-case that many implementations that ask for 0xa0000 happen to have
-bugs that prevent them from working correctly in asymmetric
-environments.
+   for quite some time, we've been able to connect to a fedora code 2 
+box running an mgetty on /dev/ttyS0.  just today, i set up a fedora 
+core 3 test 2 (FC3t2) box, and reproduced, as closely as possible, the 
+dial-in PPP environment.
 
-I recommend that you add "asyncmap 0xa0000" to your pppd
-configuration.
+   that is, i edited
 
-> Oct 20 21:48:09   daemon.debug pppd[183]: sent [IPCP ConfReq id=0x1 
-> <addr 192.168.2.10> <compress VJ 0f 01> <ms-dns1 0.0.0.0> <ms-dns3
->  0.0.0.0>]
+ 	/etc/inittab
+ 	/etc/mgetty+sendfax/
+ 		login.config
+ 		mgetty.config
 
-You ask for a particular IP address.  That's not illegal, but is
-certainly uncommon among dial-up users.
+and made the same changes to the new FC3t2 box that were on the older 
+FC2t3 box.  (the older box has ppp-2.4.1, and the newer has 
+ppp.2.4.2).
 
-> Oct 20 21:48:09   daemon.debug pppd[183]: rcvd [IPCP ConfReq id=0x1 
-> <addr 203.200.15.171>]
+   now, trying to connect to the new box gives me, in the 
+/var/log/messages file:
 
-The peer tells you his address.
+Oct  6 16:40:55 localhost pppd[2609]: pppd 2.4.2 started by a_ppp, uid 
+0
+Oct  6 16:40:55 localhost kernel: PPP generic driver version 2.4.2
+Oct  6 16:40:55 localhost pppd[2609]: Using interface ppp0
+Oct  6 16:40:55 localhost pppd[2609]: Connect: ppp0 <--> /dev/ttyS0
+Oct  6 16:40:56 localhost udev[2821]: creating device node '/dev/ppp'
+Oct  6 16:40:58 localhost kernel: PPP Deflate Compression module 
+registered
+Oct  6 16:40:58 localhost pppd[2609]: Deflate (15) compression enabled
+Oct  6 16:41:05 localhost sshd(pam_unix)[2860]: session opened for 
+user root by root(uid=0)
+Oct  6 16:41:32 localhost pppd[2609]: IPCP: timeout sending 
+Config-Requests
+Oct  6 16:41:32 localhost pppd[2609]: Connection terminated.
+Oct  6 16:41:32 localhost pppd[2609]: Exit.
 
-> Oct 20 21:48:09   daemon.debug pppd[183]: sent [IPCP ConfNak id=0x1 
-> <addr 192.168.2.11>]
 
-You tell the peer to use a different address.  If you're dialing into
-your ISP here, this is wrong.
+    i'm not sure if there's something i've missed in the configuration. 
+i didn't install *everything* on the newer box, due to cramped disk 
+space.  so is there a software RPM i might have forgotten?  some file 
+i overlooked?
 
-> Oct 20 21:48:12   daemon.debug pppd[183]: rcvd [IPCP ConfNak id=0x2 
-> <addr 219.65.151.169> <ms-dns1 202.54.12.163> <ms-dns3 202.54.12.3
->  >]
+   thoughts on what to check?  thanks.
 
-You finally get an address from your peer ...
-
-> Oct 20 21:48:12   daemon.debug pppd[183]: sent [IPCP ConfReq id=0x3 
-> <addr 192.168.2.10> <ms-dns1 202.54.12.163> <ms-dns3 202.54.12.3>]
-
-... and you ignore it.
-
-You likely need to have "noipdefault" in your pppd configuration.
-
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+rday
