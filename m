@@ -1,28 +1,27 @@
-From: James Carlson <carlson@workingcode.com>
-Date: Sat, 10 Apr 2004 19:55:43 +0000
-Subject: Re: pppd 2.4.2 doesn't quits.
-Message-Id: <16504.20799.123016.980591@c-24-147-210-59.ne.client2.attbi.com>
+From: ramses <ramsesvp@quicknet.nl>
+Date: Tue, 06 Apr 2004 09:24:20 +0000
+Subject: Samba patch?
+Message-Id: <40728D87.1050801@quicknet.nl>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1081497703.3268.17.camel@skyscraper>
-In-Reply-To: <1081497703.3268.17.camel@skyscraper>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Dmitry Koval writes:
-> On Fri, 2004-04-09 at 11:01, Dmitry Koval wrote:
-> 
-> > I've faced the problem with pppd 2.4.2 on my VPN server.
-> 
-> In addition I've attached to a hanging process and got the following
-> stack trace:
-> (gdb) bt
+Hello,
 
-That looks quite garbled.  None of the symbols there reflect anything
-out of pppd.  I would guess that this could be due to some sort of
-library version conflict on the system, but the output is so senseless
-that it's hard to guess.
+Question: I need to authenticate about 340 users. I dont want to type 
+everything in the chap-secrets file ofcourse, so I wanted to run the 
+Samba plugin. I need ppp for authentication for PPTP. I downloaded 
+version ppp-mppe-2.4.1-7 from the poptop website, and there the smb 
+plugin worked flawless. Now I upgraded to 2.4.2B3 but it seems to me 
+that the necessary patch is not available.
 
--- 
-James Carlson                                  <carlson@workingcode.com>
+Can anyone tell me where I can get that patch? I googled after it but I 
+found thus many samba patch ppp references that I gave up after the 12th 
+page with hits orso. What would even be better is, if someone had an RPM 
+that I just could install.. Then I have 2 requirements: MPPE support AND 
+Smb support :p
+
+Gtz
+ramses
