@@ -1,7 +1,7 @@
-From: James Carlson <carlson@workingcode.com>
-Date: Wed, 03 Mar 2004 02:54:53 +0000
+From: James Cameron <james.cameron@hp.com>
+Date: Wed, 03 Mar 2004 03:11:10 +0000
 Subject: Re: pppd gotcha with ATT GPRS service using SE GC82
-Message-Id: <16453.18685.730066.448274@c-24-147-210-59.ne.client2.attbi.com>
+Message-Id: <20040303031110.GH21009@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <03F1A9D14E1F3D4A984B3EDDFA9823DEF897@bldc02.research.intel-research.net>
 In-Reply-To: <03F1A9D14E1F3D4A984B3EDDFA9823DEF897@bldc02.research.intel-research.net>
@@ -10,34 +10,18 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Philip Buonadonna writes:
-> However, ATT wireless w/ the Sony Ericsson GC82 tries to negotiate
-> 127.0.0.2 as the remote peer IP address.
+On Tue, Mar 02, 2004 at 09:54:53PM -0500, James Carlson wrote:
+> I think a better answer would be to have an option that allows pppd to
+> ignore the negotiated remote address and use a configured value
+> instead.  [...]
 
-Yes, I've seen other reports of that sort of bogus behavior.
+I'd be curious to know if it worked after changing the address on the
+PPP interface using ifconfig pointtopoint after the link came up.
+That's how we're able to work around an odd remote IP on some PPTP
+systems.
 
-> A quick review of RFC 1331/1332 doesn't seem to indicate that 127.0.0.x
-> are excluded from PPP links.
-
-RFC 1812 says:
-
-    (e) { 127, <any> }
-
-         Internal host loopback address.  Addresses of this form MUST
-         NOT appear outside a host.
-
-> The question(s) are: Is the reason I'm getting 127.0.0.2 as the remote
-> IP a configuration error on my part?  Is it unique to this GPRS
-> hardware?  Is it unique to ATT?  
-
-I think it's peculiar to GPRS deployments, which tend to be very odd
-in other ways as well.
-
-I think a better answer would be to have an option that allows pppd to
-ignore the negotiated remote address and use a configured value
-instead.  Putting ugly things like 127.0.0.2 into the kernel is likely
-to break multicast and other protocols, since a point-to-point link is
-often referred to by the remote address.
+Or if a remote IP address was specified on the command line for pppd,
+with or without ipcp-accept-remote.
 
 -- 
-James Carlson                                  <carlson@workingcode.com>
+James Cameron
