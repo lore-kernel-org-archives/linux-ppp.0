@@ -1,101 +1,221 @@
-From: Michal Ostrowski <mostrows@earthlink.net>
-Date: Tue, 19 Oct 2004 10:30:29 +0000
-Subject: Re: Kernel-mode PPPoE server.
-Message-Id: <1098181830.25095.199.camel@brick.watson.ibm.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="=-WFJ0PnN1MIy6k8E8xEDl"
+From: a b <theorieduchaos@yahoo.fr>
+Date: Thu, 28 Oct 2004 12:45:17 +0000
+Subject: ppp 2.4.3 cvs authentication issue
+Message-Id: <20041028124517.7204.qmail@web25210.mail.ukl.yahoo.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200410181453.16399.cpwp@w3z.co.uk>
-In-Reply-To: <200410181453.16399.cpwp@w3z.co.uk>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
+Hello,
 
---=-WFJ0PnN1MIy6k8E8xEDl
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+First sorry for my poor English.
 
-Try using the binary from the system that works on the new system.  I'm
-not seeing there being any sort of pppoe specific problem.  It appears
-to be an issue of pppd not sending the first LCP packet.
+I'm trying to set up a pptpd server under Mandrake
+10.0 and I think my problem is related to pppd and the
+authentication.
 
-Perhaps somebody else can comment on this...
+server: 10.0.0.178, client 10.0.0.124
+ppp-2.4.3-0.cvs_20040527.5mdk
+pptpd-server-1.2.1-1mdk
+kernel 2.6.3-19mdksecure
+
+server:=20
+cat /etc/pptpd.conf
+option /etc/ppp/options.poptop
+stimeout 10
+speed 115200
+localip 10.0.0.178
+remoteip 10.0.1.234-238
+
+cat /etc/ppp/options.poptop=20
+logfile /tmp/vpn.log
+dump
+debug
+refuse-pap
+refuse-eap
+refuse-chap
+refuse-mschap
+require-mschap-v2
+lock
+
+cat /etc/ppp/chap-secrets
+# Secrets for authentication using CHAP
+# client        server  secret                  IP
+addresses
+adrian  *       adrian  *
 
 
-On Tue, 2004-10-19 at 10:09 +0100, Charles Price wrote:
-> On Monday 18 October 2004 23:39, Michal Ostrowski wrote:
-> > I think one can attribute this to a pppd behavior change.  There are
-> > some options to pppd that control this behavior (silent?).  I'd check t=
-o
-> > see if one of those options is sneaking in somewhere.  (Try using the
-> > dryrun option to check?)
-> >
-> The configuration options that pppd printed to syslog are listed below.  =
-Note=20
-> that I am using PAP this time, because I will be using RADIUS but the=20
-> concentrator does not send the first packet if I replace require-pap with=
-=20
-> require-chap.
->=20
-> debug   # (from /etc/ppp/pppoe-server-options)
-> nodetach   # (from command line)
-> idle 43200   # (from /etc/ppp/options)
-> dryrun   # (from /etc/ppp/pppoe-server-options)
-> plugin /etc/ppp/plugins/rp-pppoe.so   # (from /etc/ppp/pppoe-server-optio=
-ns)
-> plugin /etc/ppp/plugins/radius.so   # (from /etc/ppp/pppoe-server-options=
-)
-> plugin /etc/ppp/plugins/radattr.so   # (from /etc/ppp/pppoe-server-option=
-s)
-> require-pap   # (from /etc/ppp/pppoe-server-options)
-> login   # (from /etc/ppp/pppoe-server-options)
-> eth1   # (from command line)
-> rp_pppoe_service   # (from command line)
-> rp_pppoe_sess 234:00:03:47:92:cf:e1   # (from command line)
-> eth1   # (from command line)
-> rp_pppoe_service   # (from command line)
-> rp_pppoe_sess 234:00:03:47:92:cf:e1   # (from command line)
-> noaccomp   # (from command line)
-> default-asyncmap   # (from command line)
-> mru 1492   # (from /etc/ppp/options)
-> mtu 1492   # (from /etc/ppp/options)
-> nopcomp   # (from command line)
-> lcp-echo-failure 5   # (from /etc/ppp/pppoe-server-options)
-> lcp-echo-interval 60   # (from /etc/ppp/pppoe-server-options)
-> novj   # (from command line)
-> novjccomp   # (from command line)
-> ms-dns xxx # [don't know how to print value]   # (from /etc/ppp/options)
-> proxyarp   # (from /etc/ppp/options)
-> 80.168.87.200:10.67.15.234   # (from command line)
-> nobsdcomp   # (from command line)
-> nodeflate   # (from command line)
-> noipx   # (from /etc/ppp/options)
->=20
->=20
-> Any ideas on my next call of action? Would 'lsof' of pppoe-server and ppp=
-d=20
-> processes on working and non-working configurations be of any use?
->=20
-> I have tried replacing my kernel with the 2.4.20 from the working SuSE=20
-> configuration, to no avail - should I start downgrading pppd or rp-pppoe =
-?
->=20
-> Regards,
->=20
-> Charlie Price
---=20
-Michal Ostrowski <mostrows@earthlink.net>
+client:
 
---=-WFJ0PnN1MIy6k8E8xEDl
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
+cat /etc/ppp/peers/pptp0=20
+logfile /tmp/vpn.log
+dump
+debug
+refuse-pap
+refuse-eap
+refuse-chap
+refuse-mschap
+require-mschap-v2
+lock
+pty "/usr/sbin/pptp 10.0.0.178 --nolaunchpppd"
+nodetach
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.4 (GNU/Linux)
+cat /etc/ppp/chap-secrets
+# Secrets for authentication using CHAP
+# client        server  secret                  IP
+addresses
+adrian  *       adrian  *
 
-iD8DBQBBdOzFkWf6oW3k3O0RAvJ1AJ0R2XxDNlov1AB8j159zzvKejRo7wCggvCb
-HuqGw059VxvEde3Y0Yu7ogI=
-=r0qz
------END PGP SIGNATURE-----
+cat -A /etc/ppp/chap-secrets
+# Secrets for authentication using CHAP$
+# client^Iserver^Isecret^I^I^IIP addresses$
+adrian^I*^Iadrian^I*$
 
---=-WFJ0PnN1MIy6k8E8xEDl--
+logs on the server side:
+tail -f /tmp/vpn.log -n 100
 
+pppd options in effect:
+debug           # (from /etc/ppp/options.poptop)
+logfile /tmp/vpn.log            # (from
+/etc/ppp/options.poptop)
+dump            # (from /etc/ppp/options.poptop)
+require-mschap-v2               # (from
+/etc/ppp/options.poptop)
+refuse-pap              # (from=20
+etc/ppp/options.poptop)
+refuse-chap             # (from
+/etc/ppp/options.poptop)
+refuse-mschap           # (from
+/etc/ppp/options.poptop)
+refuse-eap              # (from
+/etc/ppp/options.poptop)
+115200          # (from command line)
+lock            # (from /etc/ppp/options.poptop)
+local           # (from command line)
+ipparam 10.0.0.124         # (from command line)
+10.10.0.178:10.10.1.234           # (from command
+line)
+using channel 6
+Using interface ppp0
+Connect: ppp0 <--> /dev/pts/1
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <auth chap
+MS-v2> <magic 0x140228e> <pcomp> <accomp>]
+rcvd [LCP ConfReq id=3D0x1 <asyncmap 0x0> <auth chap
+MS-v2> <magic 0xc3c66f9d> <pcomp> <accomp>]
+No auth is possible
+sent [LCP ConfRej id=3D0x1 <auth chap MS-v2>]
+rcvd [LCP ConfRej id=3D0x1 <auth chap MS-v2>]
+sent [LCP ConfReq id=3D0x2 <asyncmap 0x0> <magic
+0x140228e> <pcomp> <accomp>]
+rcvd [LCP ConfReq id=3D0x2 <asyncmap 0x0> <magic
+0xc3c66f9d> <pcomp> <accomp>]
+sent [LCP ConfAck id=3D0x2 <asyncmap 0x0> <magic
+0xc3c66f9d> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=3D0x2 <asyncmap 0x0> <magic
+0x140228e> <pcomp> <accomp>]
+peer refused to authenticate: terminating link
+sent [LCP TermReq id=3D0x3 "peer refused to
+authenticate"]
+rcvd [LCP TermReq id=3D0x3 "peer refused to
+authenticate"]
+sent [LCP TermAck id=3D0x3]
+rcvd [LCP TermAck id=3D0x3]
+Connection terminated.
+
+Please note that if I simply change two lines on both
+sides:
+
+add noauth and comment out require-mschap-v2 I get
+
+logs on the server side:
+pppd options in effect:
+debug           # (from /etc/ppp/options.poptop)
+logfile /tmp/vpn.log            # (from
+/etc/ppp/options.poptop)
+dump            # (from /etc/ppp/options.poptop)
+noauth          # (from /etc/ppp/options.poptop)
+refuse-pap              # (from
+/etc/ppp/options.poptop)
+refuse-chap             # (from
+/etc/ppp/options.poptop)
+refuse-mschap           # (from
+/etc/ppp/options.poptop)
+refuse-eap              # (from
+/etc/ppp/options.poptop)
+115200          # (from command line)
+lock            # (from /etc/ppp/options.poptop)
+local           # (from command line)
+ipparam 10.0.0.124         # (from command line)
+10.0.0.178:10.0.1.234           # (from command line)
+using channel 8
+Using interface ppp0
+Connect: ppp0 <--> /dev/pts/1
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic
+0x33c51398> <pcomp> <accomp>]
+rcvd [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic
+0xab1a948b> <pcomp> <accomp>]
+sent [LCP ConfAck id=3D0x1 <asyncmap 0x0> <magic
+0xab1a948b> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=3D0x1 <asyncmap 0x0> <magic
+0x33c51398> <pcomp> <accomp>]
+Couldn't set pass-filter in kernel: Invalid argument
+sent [CCP ConfReq id=3D0x1 <deflate 15> <deflate(old#)
+15> <bsd v1 15>]
+sent [IPCP ConfReq id=3D0x1 <compress VJ 0f 01> <addr
+10.0.1.178>]
+rcvd [CCP ConfReq id=3D0x1 <deflate 15> <deflate(old#)
+15> <bsd v1 15>]
+sent [CCP ConfAck id=3D0x1 <deflate 15> <deflate(old#)
+15> <bsd v1 15>]
+rcvd [IPCP ConfReq id=3D0x1 <compress VJ 0f 01> <addr
+10.0.0.124>]
+sent [IPCP ConfNak id=3D0x1 <addr 10.0.1.234>]
+rcvd [CCP ConfAck id=3D0x1 <deflate 15> <deflate(old#)
+15> <bsd v1 15>]
+Deflate (15) compression enabled
+rcvd [IPCP ConfAck id=3D0x1 <compress VJ 0f 01> <addr
+10.0.1.178>]
+rcvd [IPCP ConfReq id=3D0x2 <compress VJ 0f 01> <addr
+10.0.1.234>]
+sent [IPCP ConfAck id=3D0x2 <compress VJ 0f 01> <addr
+10.0.1.234>]
+local  IP address 10.0.1.178
+remote IP address 10.0.1.234
+Script /etc/ppp/ip-up started (pid 4254)
+Script /etc/ppp/ip-up finished (pid 4254), status 0x0
+
+ifconfig shows ppp0 alright :
+ppp0      Link encap:Point-to-Point Protocol =20
+          inet addr:10.0.1.178  P-t-P:10.0.1.234=20
+Mask:255.255.255.255
+          UP POINTOPOINT RUNNING NOARP MULTICAST=20
+MTU:1500  Metric:1
+          RX packets:5 errors:0 dropped:0 overruns:0
+frame:0
+          TX packets:5 errors:0 dropped:0 overruns:0
+carrier:0
+          collisions:0 txqueuelen:3=20
+          RX bytes:78 (78.0 b)  TX bytes:72 (72.0 b)
+
+so this seems to work
+
+any ideas ?
+
+Thank you,=20
+
+Adrian
+
+
+=09
+
+=09
+	=09
+Vous manquez d=92espace pour stocker vos mails ?=20
+Yahoo! Mail vous offre GRATUITEMENT 100 Mo !
+Cr=E9ez votre Yahoo! Mail sur http://fr.benefits.yahoo.com/
+
+Le nouveau Yahoo! Messenger est arriv=E9 ! D=E9couvrez toutes les nouveaut=
+=E9s pour dialoguer instantan=E9ment avec vos amis. A t=E9l=E9charger gratu=
+itement sur http://fr.messenger.yahoo.com
