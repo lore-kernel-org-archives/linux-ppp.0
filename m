@@ -1,553 +1,77 @@
 From: Arvin Schnell <arvin@suse.de>
-Date: Wed, 28 Jul 2004 21:45:58 +0000
-Subject: Re: 2.6.6 kernel, active-filter completely stops idle reset (repost)
-Message-Id: <20040728214558.GA19634@suse.de>
+Date: Fri, 16 Jul 2004 09:59:08 +0000
+Subject: rename ppp interface
+Message-Id: <20040716095908.GA32556@suse.de>
 MIME-Version: 1
-Content-Type: multipart/mixed; boundary="mP3DRpeJDSE+ciuQ"
+Content-Type: multipart/mixed; boundary="huq684BweRXVnRxX"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <Pine.LNX.4.21.0406271108100.489-100000@corncob.localhost.tld>
-In-Reply-To: <Pine.LNX.4.21.0406271108100.489-100000@corncob.localhost.tld>
 To: linux-ppp@vger.kernel.org
 
 
---mP3DRpeJDSE+ciuQ
+--huq684BweRXVnRxX
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-On Mon, Jul 26, 2004 at 06:26:37PM -0500, Clifford Kite wrote:
-> Below is a copy of an email sent to this mailing list on June 27, 2004,
-> to which there has been no reply.  So here it is again.  If anyone
-> knows why the pppd active-filter option broke under the 2.6.6 kernel
-> then *please* respond.  If anyone even knows of a part of the kernel,
-> aside from PPP support, that might cause the problem then please respond.
 
 Hi,
 
-at SUSE we had problems with the idle time (and still do have at
-least one bug) and kernel 2.6.5.  But I myself don't know all the
-details, esp. not on the kernel side.
+as you might know with the linux kernel 2.6 it is possible to
+rename network interfaces.  I have made a small patch to allow
+the pppd to rename it is ppp interface.  The patch is only to
+demonstrate the issue - it is far from complete (no option, no
+documentation, pppstats needs adaption).  If there is willingness
+to include this feature in the mainline I can make a complete
+patch.
 
-The first problem was due to a update of libpcap to version
-0.8.1.  The pppd uses an internal header file of libpcap.  I have
-fixed that and sent a patch to this mailing list.
-
-IIRC with the new libpcap the "inbound" and "outbound" keywords
-did not work any longer.  The libpcap authors told us to use
-DLT_LINUX_SLL instead of DLT_PPP since the latter is really
-buggy.
-
-So we changed that but still some things didn't work,
-e.g. traffic wouldn't bring up a dial on demand connection and
-the idle time was broken.  This was (partly?) due to the fact
-that DLT_LINUX_SLL assume a 16 byte faked ethernet header on each
-packet.
-
-Well, attached are two patches, one for the pppd and one for the
-kernel.  I think that are all patches we have concerning that
-problem.  Some parts of them aren't nice, esp. with that 16 bytes
-fake header.  Maybe they are of help to you anyway.
+Besides that, does anybody see problems with renaming of ppp
+interfaces?
 
 ciao Arvin
 
-PS: Since I'm on vacation I will only read mail on a very
-    irregular basis.
-
 -- 
 Dipl.-Phys. Arvin Schnell
-SUSE Linux AG
+SuSE Linux AG
 Research & Development
 email: arvin@suse.de
 
---mP3DRpeJDSE+ciuQ
+--huq684BweRXVnRxX
 Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="ppp-2.4.2-libpcap.diff"
+Content-Disposition: attachment; filename="ppp-2.4.2-nameif.diff"
 
---- pppd/demand.c
-+++ pppd/demand.c
-@@ -50,8 +50,9 @@
- #include <sys/socket.h>
- #ifdef PPP_FILTER
- #include <net/if.h>
--#include <net/bpf.h>
-+#include <pcap-bpf.h>
- #include <pcap.h>
-+#include <linux/if_ether.h>
- #endif
- 
- #include "pppd.h"
-@@ -61,6 +62,10 @@
- 
- static const char rcsid[] = RCSID;
- 
-+#ifdef PPP_FILTER
-+static char *___frame;
-+#endif
-+
- char *frame;
- int framelen;
- int framemax;
-@@ -92,7 +97,13 @@
-     if (framemax < PPP_MRU) */
- 	framemax = PPP_MRU;
-     framemax += PPP_HDRLEN + PPP_FCSLEN;
-+#ifdef PPP_FILTER
-+    /* for DLT_LINUX_SLL we need to build a 16 byte fake header */
-+    ___frame = malloc(framemax + 16);
-+    frame = ___frame + 16;
-+#else
-     frame = malloc(framemax);
-+#endif
-     if (frame == NULL)
- 	novm("demand frame");
-     framelen = 0;
-@@ -348,12 +359,43 @@
- 	return 0;
-     proto = PPP_PROTOCOL(p);
- #ifdef PPP_FILTER
--    if (pass_filter.bf_len != 0
--	&& bpf_filter(pass_filter.bf_insns, p, len, len) == 0)
--	return 0;
--    if (active_filter.bf_len != 0
--	&& bpf_filter(active_filter.bf_insns, p, len, len) == 0)
--	return 0;
-+    if (active_filter.bf_len || pass_filter.bf_len) {
-+	/* for DLT_LINUX_SLL we need to build a 16 byte fake header
-+	 * first word direction flag, last word ETHERNET protocol type
-+	 * current header is only 4 bytes
-+	 */
-+	u_int32_t sav;
-+	u_int16_t ethp;
-+
-+	switch(proto) {
-+	    case PPP_IP:
-+		ethp = ETH_P_IP;
-+		break;
-+	    case PPP_IPX:
-+		ethp = ETH_P_IPX;
-+		break;
-+	    case PPP_IPV6:
-+		ethp = ETH_P_IPV6;
-+		break;
-+	    default:
-+		goto unhandled_proto;
-+	}
-+	/* save current header value */
-+	sav = *(u_int32_t *)p;
-+	*(u_int16_t *)(p+2) = htons(ethp);
-+	p -= 12;
-+	/* outgoing in DLT_LINUX_SLL */
-+	*(u_int16_t *)p = htons(4);
-+	if (pass_filter.bf_len != 0
-+	    && bpf_filter(pass_filter.bf_insns, p, len, len) == 0)
-+	    return 0;
-+	if (active_filter.bf_len != 0
-+	    && bpf_filter(active_filter.bf_insns, p, len, len) == 0)
-+	    return 0;
-+	p += 12;
-+	*(u_int32_t *)p = sav;
-+    }
-+unhandled_proto:
- #endif
-     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
- 	if (protp->protocol < 0xC000 && (protp->protocol & ~0x8000) == proto) {
---- pppd/sys-linux.c
-+++ pppd/sys-linux.c
-@@ -85,7 +85,7 @@
- #endif /* IPX_CHANGE */
- 
- #ifdef PPP_FILTER
--#include <net/bpf.h>
-+#include <pcap-bpf.h>
- #include <linux/filter.h>
- #endif /* PPP_FILTER */
- 
---- ./pppd/options.c.orig	2004-02-18 15:42:37.366603970 +0000
-+++ ./pppd/options.c	2004-02-18 15:44:01.243247770 +0000
-@@ -56,7 +56,6 @@
- #endif
- #ifdef PPP_FILTER
- #include <pcap.h>
--#include <pcap-int.h>	/* XXX: To get struct pcap */
- #endif
- 
- #include "pppd.h"
-@@ -122,7 +121,6 @@
- #ifdef PPP_FILTER
- struct	bpf_program pass_filter;/* Filter program for packets to pass */
- struct	bpf_program active_filter; /* Filter program for link-active pkts */
--pcap_t  pc;			/* Fake struct pcap so we can compile expr */
- #endif
- 
- char *current_option;		/* the name of the option being parsed */
-@@ -1439,12 +1437,20 @@
- setpassfilter(argv)
-     char **argv;
+--- ./pppd/main.c.orig	2004-07-15 14:16:09.000000000 +0000
++++ ./pppd/main.c	2004-07-15 15:01:24.000000000 +0000
+@@ -777,8 +777,11 @@
+ set_ifunit(iskey)
+     int iskey;
  {
--    pc.linktype = DLT_PPP;
--    pc.snapshot = PPP_HDRLEN;
-+    pcap_t* pc = pcap_open_dead (DLT_LINUX_SLL, PPP_HDRLEN);
-  
--    if (pcap_compile(&pc, &pass_filter, *argv, 1, netmask) == 0)
-+    if (!pc) {
-+	option_error("error in pass-filter expression: pcap_open_dead failed\n");
-+	return 0;
-+    }
+-    info("Using interface %s%d", PPP_DRV_NAME, ifunit);
++    if (1)
++	slprintf(ifname, sizeof(ifname), "modem");
++    else
+     slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
++    info("Using interface %s", ifname);
+     script_setenv("IFNAME", ifname, iskey);
+     if (iskey) {
+ 	create_pidfile(getpid());	/* write pid to file */
+--- ./pppd/sys-linux.c.orig	2004-07-15 14:16:18.000000000 +0000
++++ ./pppd/sys-linux.c	2004-07-16 09:36:24.373838222 +0000
+@@ -647,6 +647,17 @@
+ 	}
+ 	if (x < 0)
+ 		error("Couldn't create new ppp unit: %m");
 +
-+    if (pcap_compile(pc, &pass_filter, *argv, 1, netmask) == 0) {
-+	pcap_close (pc);
- 	return 1;
--    option_error("error in pass-filter expression: %s\n", pcap_geterr(&pc));
-+    }
++	if (1) {
++		struct ifreq ifr;
++		memset(&ifr, 0, sizeof(struct ifreq));
++		strcpy(ifr.ifr_name, "ppp0");
++		strcpy(ifr.ifr_newname, "modem");
++		x = ioctl(sock_fd, SIOCSIFNAME, &ifr);
++		if (x < 0)
++		    error("Couldn't rename interface %s to %s: %m", "ppp0", "modem");
++	}
 +
-+    option_error("error in pass-filter expression: %s\n", pcap_geterr(pc));
-+    pcap_close (pc);
-     return 0;
+ 	return x;
  }
  
-@@ -1455,12 +1461,20 @@
- setactivefilter(argv)
-     char **argv;
- {
--    pc.linktype = DLT_PPP;
--    pc.snapshot = PPP_HDRLEN;
-+    pcap_t* pc = pcap_open_dead (DLT_LINUX_SLL, PPP_HDRLEN);
-  
--    if (pcap_compile(&pc, &active_filter, *argv, 1, netmask) == 0)
-+    if (!pc) {
-+	option_error("error in active-filter expression: pcap_open_dead failed\n");
-+	return 0;
-+    }
-+
-+    if (pcap_compile(pc, &active_filter, *argv, 1, netmask) == 0) {
-+	pcap_close (pc);
- 	return 1;
--    option_error("error in active-filter expression: %s\n", pcap_geterr(&pc));
-+    }
-+
-+    option_error("error in active-filter expression: %s\n", pcap_geterr(pc));
-+    pcap_close (pc);
-     return 0;
- }
- #endif
 
---mP3DRpeJDSE+ciuQ
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename=ppp-filter-fix
-
-diff -ur linux-2.6.5-7.61cvs20040528072728.org/drivers/isdn/i4l/Kconfig linux/drivers/isdn/i4l/Kconfig
---- linux-2.6.5-7.61cvs20040528072728.org/drivers/isdn/i4l/Kconfig	2004-05-31 23:52:23.438980163 +0200
-+++ linux/drivers/isdn/i4l/Kconfig	2004-05-28 13:10:10.000000000 +0200
-@@ -31,6 +31,17 @@
- 	  by bundling several ISDN-connections, using this protocol. See
- 	  <file:Documentation/isdn/README.syncppp> for more information.
- 
-+config IPPP_FILTER
-+	bool "Filtering for synchronous PPP"
-+	depends on ISDN_PPP
-+	help
-+	  Say Y here if you want to be able to filter the packets passing over
-+	  IPPP interfaces.  This allows you to control which packets count as
-+	  activity (i.e. which packets will reset the idle timer or bring up
-+	  a demand-dialled link) and which packets are to be dropped entirely.
-+	  You need to say Y here if you wish to use the pass-filter and
-+	  active-filter options to ipppd.
-+
- config ISDN_PPP_BSDCOMP
- 	tristate "Support BSD compression"
- 	depends on ISDN_PPP
-diff -ur linux-2.6.5-7.61cvs20040528072728.org/drivers/isdn/i4l/isdn_ppp.c linux/drivers/isdn/i4l/isdn_ppp.c
---- linux-2.6.5-7.61cvs20040528072728.org/drivers/isdn/i4l/isdn_ppp.c	2004-05-31 23:52:23.461977141 +0200
-+++ linux/drivers/isdn/i4l/isdn_ppp.c	2004-05-29 00:01:48.099568121 +0200
-@@ -606,7 +606,7 @@
- 
- 				if (copy_from_user(&uprog, (void *) arg, sizeof(uprog)))
- 					return -EFAULT;
--				if (uprog.len > 0 && uprog.len < 65536) {
-+				if (uprog.len > 0) {
- 					len = uprog.len * sizeof(struct sock_filter);
- 					code = kmalloc(len, GFP_KERNEL);
- 					if (code == NULL)
-@@ -1117,30 +1117,36 @@
- 	}
- 
- #ifdef CONFIG_IPPP_FILTER
--	/* check if the packet passes the pass and active filters
--	 * the filter instructions are constructed assuming
--	 * a four-byte PPP header on each packet (which is still present) */
--	skb_push(skb, 4);
--	skb->data[0] = 0;	/* indicate inbound */
--
--	if (is->pass_filter.filter
--	    && sk_run_filter(skb, is->pass_filter.filter,
--	                    is->pass_filter.len) == 0) {
-+	/* the DLT_LINUX_SLL filter instructions are constructed assuming
-+	 * a 16 byte faked ethernet header on each packet first word
-+	 * is the direction flag the last contain the ethernet protocol
-+	 * so we need 16 byte headroom, which should be always available
-+	 * to avoid underrun abort filtering if here is no room
-+	 */
-+	if (unlikely(skb_headroom(skb) < 16)) {
-+		printk(KERN_WARNING "ppp filters (in) not running - need %d byte more headroom\n",
-+			16 - skb_headroom(skb));
-+		goto no_filter;
-+	}
-+	*(u_int16_t *)skb_push(skb, 2) = skb->protocol;
-+	*(u_int16_t *)skb_push(skb, 14) = 0; /* indicate inbound in DLT_LINUX_SLL */
-+	if (is->pass_filter.filter &&
-+	    sk_run_filter(skb, is->pass_filter.filter, is->pass_filter.len) == 0) {
- 		if (is->debug & 0x2)
- 			printk(KERN_DEBUG "IPPP: inbound frame filtered.\n");
- 		kfree_skb(skb);
- 		return;
- 	}
--	if (!(is->active_filter.filter
--	      && sk_run_filter(skb, is->active_filter.filter,
--	                       is->active_filter.len) == 0)) {
-+	if (!(is->active_filter.filter &&
-+	    sk_run_filter(skb, is->active_filter.filter, is->active_filter.len) == 0)) {
- 		if (is->debug & 0x2)
- 			printk(KERN_DEBUG "IPPP: link-active filter: reseting huptimer.\n");
- 		lp->huptimer = 0;
- 		if (mlp)
- 			mlp->huptimer = 0;
- 	}
--	skb_pull(skb, 4);
-+	skb_pull(skb, 16);
-+no_filter:
- #else /* CONFIG_IPPP_FILTER */
- 	lp->huptimer = 0;
- 	if (mlp)
-@@ -1259,29 +1265,34 @@
- 	skb_pull(skb,IPPP_MAX_HEADER);
- 
- #ifdef CONFIG_IPPP_FILTER
--	/* check if we should pass this packet
--	 * the filter instructions are constructed assuming
--	 * a four-byte PPP header on each packet */
--	skb_push(skb, 4);
--	skb->data[0] = 1;	/* indicate outbound */
--	*(u_int16_t *)(skb->data + 2) = htons(proto);
--
--	if (ipt->pass_filter.filter 
--	    && sk_run_filter(skb, ipt->pass_filter.filter,
--		             ipt->pass_filter.len) == 0) {
-+	/* the DLT_LINUX_SLL filter instructions are constructed assuming
-+	 * a 16 byte faked ethernet header on each packet first word
-+	 * is the direction flag the last contain the ethernet protocol
-+	 * so we need 16 byte headroom, which _should_ be always available
-+	 * to avoid underrun abort filtering if here is unlikely no room
-+	 */
-+	if (unlikely(skb_headroom(skb) < 16)) {
-+		printk(KERN_WARNING "ppp filters(out) not running - need %d byte more headroom\n",
-+			16 - skb_headroom(skb));
-+		goto no_filter;
-+	}
-+	*(u_int16_t *)skb_push(skb, 2) = skb->protocol;
-+	*(u_int16_t *)skb_push(skb, 14) = htons(4); /* indicate outbound in DLT_LINUX_SLL */
-+	if (ipt->pass_filter.filter &&
-+	    sk_run_filter(skb, ipt->pass_filter.filter, ipt->pass_filter.len) == 0) {
- 		if (ipt->debug & 0x4)
- 			printk(KERN_DEBUG "IPPP: outbound frame filtered.\n");
- 		kfree_skb(skb);
- 		goto unlock;
- 	}
--	if (!(ipt->active_filter.filter
--	      && sk_run_filter(skb, ipt->active_filter.filter,
--		               ipt->active_filter.len) == 0)) {
-+	if (!(ipt->active_filter.filter &&
-+	    sk_run_filter(skb, ipt->active_filter.filter, ipt->active_filter.len) == 0)) {
- 		if (ipt->debug & 0x4)
- 			printk(KERN_DEBUG "IPPP: link-active filter: reseting huptimer.\n");
- 		lp->huptimer = 0;
- 	}
--	skb_pull(skb, 4);
-+	skb_pull(skb, 16);
-+no_filter:
- #else /* CONFIG_IPPP_FILTER */
- 	lp->huptimer = 0;
- #endif /* CONFIG_IPPP_FILTER */
-@@ -1435,15 +1446,12 @@
- int isdn_ppp_autodial_filter(struct sk_buff *skb, isdn_net_local *lp)
- {
- 	struct ippp_struct *is = ippp_table[lp->ppp_slot];
--	u_int16_t proto;
- 	int drop = 0;
-+	u_int16_t savprot;
- 
- 	switch (ntohs(skb->protocol)) {
- 	case ETH_P_IP:
--		proto = PPP_IP;
--		break;
- 	case ETH_P_IPX:
--		proto = PPP_IPX;
- 		break;
- 	default:
- 		printk(KERN_ERR "isdn_ppp_autodial_filter: unsupported protocol 0x%x.\n",
-@@ -1451,14 +1459,22 @@
- 		return 1;
- 	}
- 
--	/* the filter instructions are constructed assuming
--	 * a four-byte PPP header on each packet. we have to
--	 * temporarily remove part of the fake header stuck on
--	 * earlier.
-+	/* the DLT_LINUX_SLL filter instructions are constructed assuming
-+	 * a 16 byte faked ethernet header on each packet first word
-+	 * is the direction flag the last contain the ethernet protocol
-+	 * so we need 16 - IPPP_MAX_HEADER byte extra headroom, which 
-+	 * _should_ be always available to avoid underrun abort filtering
-+	 * if here is unlikely no room
- 	 */
--	skb_pull(skb, IPPP_MAX_HEADER - 4);
--	skb->data[0] = 1;	/* indicate outbound */
--	*(u_int16_t *)(skb->data + 2) = htons(proto);
-+	if (unlikely(skb_headroom(skb) < 16 - IPPP_MAX_HEADER)) {
-+		printk(KERN_WARNING "ppp filters(autodial) not running - need %d byte more headroom\n",
-+			16 - IPPP_MAX_HEADER - skb_headroom(skb));
-+		return 0;
-+	}
-+	skb_pull(skb, IPPP_MAX_HEADER - 2);
-+	savprot = *(u_int16_t *)skb->data;
-+	*(u_int16_t *)skb->data = skb->protocol;
-+	*(u_int16_t *)skb_push(skb, 14) = htons(4); /* indicate outbound in DLT_LINUX_SLL */
- 	
- 	drop |= is->pass_filter.filter
- 	        && sk_run_filter(skb, is->pass_filter.filter,
-@@ -1467,7 +1483,9 @@
- 	        && sk_run_filter(skb, is->active_filter.filter,
- 	                         is->active_filter.len) == 0;
- 	
--	skb_push(skb, IPPP_MAX_HEADER - 4);
-+	skb_pull(skb, 14);
-+	*(u_int16_t *)skb->data = savprot;
-+	skb_push(skb, IPPP_MAX_HEADER - 2);
- 	return drop;
- }
- #endif
-diff -ur linux-2.6.5-7.61cvs20040528072728.org/drivers/net/ppp_generic.c linux/drivers/net/ppp_generic.c
---- linux-2.6.5-7.61cvs20040528072728.org/drivers/net/ppp_generic.c	2004-05-31 23:52:23.494972805 +0200
-+++ linux/drivers/net/ppp_generic.c	2004-05-29 00:01:54.953663457 +0200
-@@ -991,29 +991,49 @@
- 
- 	if (proto < 0x8000) {
- #ifdef CONFIG_PPP_FILTER
--		/* check if we should pass this packet */
--		/* the filter instructions are constructed assuming
--		   a four-byte PPP header on each packet */
--		*skb_push(skb, 2) = 1;
--		if (ppp->pass_filter.filter
--		    && sk_run_filter(skb, ppp->pass_filter.filter,
--				     ppp->pass_filter.len) == 0) {
--			if (ppp->debug & 1)
--				printk(KERN_DEBUG "PPP: outbound frame not passed\n");
--			kfree_skb(skb);
--			return;
-+		/* the DLT_LINUX_SLL filter instructions are constructed assuming
-+		 * a 16 byte faked ethernet header on each packet first word
-+		 * is the direction flag the last contain the ethernet protocol
-+		 */
-+		if (ppp->pass_filter.filter || ppp->active_filter.filter) {
-+			int npi = proto_to_npindex(proto);
-+
-+			if (npi < 0) /* we only filter defined protocols */
-+				goto no_filter;
-+			
-+			/* we only have a 2 byte header yet so we need 14 bytes more headroom
-+			 * to avoid underrun abort filtering if here is no room
-+			 */
-+			if (unlikely(skb_headroom(skb) < 14)) {
-+				printk(KERN_WARNING "ppp filters (out) not running - need %d byte more headroom\n",
-+					14 - skb_headroom(skb));
-+				goto no_filter;
-+			}
-+			/* we set the ethernet protocol in the header */
-+			*(u_int16_t *)skb->data = htons(npindex_to_ethertype[npi]);
-+			*(u_int16_t *)skb_push(skb, 14) = htons(4); /* indicate outbound in DLT_LINUX_SLL */
-+			/* check if we should pass this packet */
-+			if (ppp->pass_filter.filter &&
-+			    sk_run_filter(skb, ppp->pass_filter.filter, ppp->pass_filter.len) == 0) {
-+				if (ppp->debug & 1)
-+					printk(KERN_DEBUG "PPP: outbound frame not passed\n");
-+				kfree_skb(skb);
-+				return;
-+			}
-+			/* if this packet passes the active filter, record the time */
-+			if (!(ppp->active_filter.filter &&
-+			    sk_run_filter(skb, ppp->active_filter.filter, ppp->active_filter.len) == 0))
-+				ppp->last_xmit = jiffies;
-+			skb_pull(skb, 14);
-+			*(u_int16_t *)skb->data = htons(proto); /* rewrite PPP protocol value */
- 		}
--		/* if this packet passes the active filter, record the time */
--		if (!(ppp->active_filter.filter
--		      && sk_run_filter(skb, ppp->active_filter.filter,
--				       ppp->active_filter.len) == 0))
--			ppp->last_xmit = jiffies;
--		skb_pull(skb, 2);
-+	}
-+no_filter:
- #else
- 		/* for data packets, record the time */
- 		ppp->last_xmit = jiffies;
--#endif /* CONFIG_PPP_FILTER */
- 	}
-+#endif /* CONFIG_PPP_FILTER */
- 
- 	++ppp->stats.tx_packets;
- 	ppp->stats.tx_bytes += skb->len - 2;
-@@ -1553,23 +1573,37 @@
- 		/* network protocol frame - give it to the kernel */
- 
- #ifdef CONFIG_PPP_FILTER
--		/* check if the packet passes the pass and active filters */
--		/* the filter instructions are constructed assuming
--		   a four-byte PPP header on each packet */
--		*skb_push(skb, 2) = 0;
--		if (ppp->pass_filter.filter
--		    && sk_run_filter(skb, ppp->pass_filter.filter,
--				     ppp->pass_filter.len) == 0) {
--			if (ppp->debug & 1)
--				printk(KERN_DEBUG "PPP: inbound frame not passed\n");
--			kfree_skb(skb);
--			return;
-+		/* the DLT_LINUX_SLL filter instructions are constructed assuming
-+		 * a 16 byte faked ethernet header on each packet first word
-+		 * is the direction flag the last contain the ethernet protocol
-+		 */
-+		if (ppp->pass_filter.filter || ppp->active_filter.filter) {
-+			/* we only have a 2 byte header yet so we need 14 bytes more headroom
-+			 * to avoid underrun abort filtering if here is no room
-+			 */
-+			if (unlikely(skb_headroom(skb) < 14)) {
-+				printk(KERN_WARNING "ppp filters (in) not running - need %d byte more headroom\n",
-+					14 - skb_headroom(skb));
-+				goto no_filter;
-+			}
-+			/* we set the ethernet protocol in the header */
-+			*(u_int16_t *)skb->data = htons(npindex_to_ethertype[npi]);
-+			*(u_int16_t *)skb_push(skb, 14) = 0; /* indicate inbound in DLT_LINUX_SLL */
-+			/* check if we should pass this packet */
-+			if (ppp->pass_filter.filter &&
-+			    sk_run_filter(skb, ppp->pass_filter.filter, ppp->pass_filter.len) == 0) {
-+				if (ppp->debug & 1)
-+					printk(KERN_DEBUG "PPP: inbound frame not passed\n");
-+				kfree_skb(skb);
-+				return;
-+			}
-+			if (!(ppp->active_filter.filter &&
-+			    sk_run_filter(skb, ppp->active_filter.filter, ppp->active_filter.len) == 0))
-+				ppp->last_recv = jiffies;
-+			skb_pull(skb, 14);
-+			/* we do not need to restore the old protocol value it is pulled next step */
- 		}
--		if (!(ppp->active_filter.filter
--		      && sk_run_filter(skb, ppp->active_filter.filter,
--				       ppp->active_filter.len) == 0))
--			ppp->last_recv = jiffies;
--		skb_pull(skb, 2);
-+no_filter:
- #else
- 		ppp->last_recv = jiffies;
- #endif /* CONFIG_PPP_FILTER */
-
---mP3DRpeJDSE+ciuQ--
+--huq684BweRXVnRxX--
