@@ -1,55 +1,30 @@
-From: "Murugaiyan N" <murugaiyan@banyannetworks.com>
-Date: Sat, 27 Dec 2003 12:01:13 +0000
-Subject: RE: Linux Kernel PPPoE/PPP Interactions
-Message-Id: <NIBBLPOFOMEFBJKBJLGFOEFNCEAA.murugaiyan@banyannetworks.com>
+From: "Eble, Dan" <DanE@aiinet.com>
+Date: Tue, 30 Dec 2003 15:37:48 +0000
+Subject: LCP packet priority
+Message-Id: <AD59566A9D83864F871AE2E52503064001663CE9@aimail.aiinet.priv>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <NIBBLPOFOMEFBJKBJLGFKEFACEAA.murugaiyan@banyannetworks.com>
-In-Reply-To: <NIBBLPOFOMEFBJKBJLGFKEFACEAA.murugaiyan@banyannetworks.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-but actually, nothing i am able to receive.  but write on the fd and
-devPPPFd sends
-the packets out with proper pppoe header, and the client is receiving the
-packets.
+We are using PPPD 2.4.1 and kernel 2.4.21-pre4 (PowerPC).  When we try to
+pass more traffic through a link than it can handle, the link goes down.
+For now, I am presuming that LCP echo requests or responses are being
+dropped, causing the daemon to give up.  (I figured I would ask here first
+and investigate more later, since it sometimes takes a while to receive a
+response.)
 
-what things prevent it to read?
-If i do a read it is blocking and nothing is read?
+Given a choice, I'd rather have the driver drop network protocol packets
+than control packets.  I scanned ppp_generic.c and I did not notice any
+priority treatment of LCP packets.  Did I overlook it, or is it not
+implemented?
 
+Please copy responses to me, as I am not subscribed to the list.
+Thank you for your time.
 
-- Murugaiyan
-
-
-
----------------------
-Broadband Division
-www.banyannetworks.com
-
------Original Message-----
-From: linux-ppp-owner@vger.kernel.org
-[mailto:linux-ppp-owner@vger.kernel.org]On Behalf Of Paul Mackerras
-Sent: Tuesday, November 16, 2004 5:15 PM
-To: Murugaiyan N
-Cc: Michal Ostrowski; linux-ppp@vger.kernel.org
-Subject: RE: Linux Kernel PPPoE/PPP Interactions
-
-
-Murugaiyan N writes:
-
-> my understanding is for the set of system calls, the the user space
-program
-> should get the ppp control packets.
-> But it is not happening, please point out the problem.
-
-LCP packets (and anything else with protocol >= 0xc000) will come in
-on `fd', other control packets (e.g. IPCP) will come in on pppDevFd.
-
-Paul.
--
-To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
+-- 
+Dan Eble <dane@aiinet.com>  _____  .
+                           |  _  |/|
+Applied Innovation Inc.    | |_| | |    "All Protocols MUST be odd"
+http://www.aiinet.com/     |__/|_|_|      -- RFC 1661 (PPP)
