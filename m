@@ -1,7 +1,7 @@
-From: James Carlson <carlson@workingcode.com>
-Date: Tue, 13 Apr 2004 16:44:53 +0000
+From: "Robert P. J. Day" <rpjday@mindspring.com>
+Date: Tue, 13 Apr 2004 17:00:10 +0000
 Subject: Re: PPP connect hangs at "getlogname (AUTO_PPP), read:"
-Message-Id: <16508.6405.195808.156097@c-24-147-210-59.ne.client2.attbi.com>
+Message-Id: <Pine.LNX.4.58.0404131258310.10875@localhost.localdomain>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.LNX.4.58.0404130851580.8284@localhost.localdomain>
 In-Reply-To: <Pine.LNX.4.58.0404130851580.8284@localhost.localdomain>
@@ -10,28 +10,26 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Robert P. J. Day writes:
-> "Couldn't get channel number: Invalid argument"?  that sounds like a
-> fundamental problem at the kernel level, where the kernel itself is unable
-> to allocate something critical for PPP.
 
-Yes.  It means that the kernel rejected the PPPIOCGCHAN ioctl on
-/dev/ppp.  This implies that the kernel's PPP driver implementation is
-very far out of sync with the version of user space code in use, or is
-otherwise damaged in some way.
 
-> any hints as to what that error message means, and how to fix it, while
-> i'm hunting?
+On Tue, 13 Apr 2004, James Carlson wrote:
 
-Find out what kernel version is in use and what user space bits are in
-use.  There's a mismatch somewhere.
+> Robert P. J. Day writes:
+> > "Couldn't get channel number: Invalid argument"?  that sounds like a
+> > fundamental problem at the kernel level, where the kernel itself is unable
+> > to allocate something critical for PPP.
+> 
+> Yes.  It means that the kernel rejected the PPPIOCGCHAN ioctl on
+> /dev/ppp.  This implies that the kernel's PPP driver implementation is
+> very far out of sync with the version of user space code in use, or is
+> otherwise damaged in some way.
 
-> p.s.  thanks loads for the help thus far, i'm feeling a bit out of my 
-> depth at the moment.  historically, i remember it being so much easier to 
-> configure PPP, but i wasn't working with a single-board computer running
-> embedded linux at the time. :-P
+ok, that might make sense.  the kernel we're using for the embedded system
+is a hacked version of 2.4.22-pre8, in which the PPP files have internal
+version numbers of 2.4.2.
 
-It shouldn't be so hard ... :-/
+the user space code on the system is, OTOH, ppp-2.4.1.  is that enough of
+a mismatch to be causing all this grief?  i can fairly quickly upgrade to 
+the user space 2.4.2 stuff if that's the obvious problem.
 
--- 
-James Carlson                                  <carlson@workingcode.com>
+rday
