@@ -1,7 +1,7 @@
-From: James Carlson <carlson@workingcode.com>
-Date: Tue, 30 Dec 2003 16:07:16 +0000
+From: "Eble, Dan" <DanE@aiinet.com>
+Date: Wed, 31 Dec 2003 16:12:05 +0000
 Subject: RE: LCP packet priority
-Message-Id: <16369.41652.742553.584895@h006008986325.ne.client2.attbi.com>
+Message-Id: <AD59566A9D83864F871AE2E52503064001663CEE@aimail.aiinet.priv>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <AD59566A9D83864F871AE2E52503064001663CE9@aimail.aiinet.priv>
 In-Reply-To: <AD59566A9D83864F871AE2E52503064001663CE9@aimail.aiinet.priv>
@@ -10,33 +10,28 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Eble, Dan writes:
-> > Perhaps the implementation could be tweaked to check the input idle
-> > time before declaring the link dead due to lack of LCP Echo-Response.
-> 
-> Wouldn't that fail to detect a failure of the transmit path?
+James Carlson wrote,
+> On thinking about it more, I guess I do like the priority scheme.
 
-Yes; it's not perfect.
+Bill Unruh replied to me privately and pointed out some shortcomings of the
+drivers I'm using: no flow control, and no link state monitoring (which is
+why I am using LCP echo).
 
-Note that for the "priority" scheme to work, you'd need to have the
-same control-over-data priority treatment at the peer end, otherwise,
-the loss of the LCP Echo-Response would give you the same behavior as
-the loss of the LCP Echo-Request.
+I am under some time constraints that make it difficult for me to make the
+drivers work "the" right way, so I will have to make them work "a" right
+way.  I just now modified the serial device driver to examine skb->priority
+and reserve a few slots in its transmit ring for TC_PRIO_CONTROL packets.
+This is a very comfortable 5-line change.
 
-On thinking about it more, I guess I do like the priority scheme.
-After all, the same issues affect CCP Reset-Request, and more deeply
-so.  (For CCP algorithms that use in-band signaling, such as STAC mode
-4, we'd need to prioritize some data containing magic signaling bits.
-This implies a design where something other than just the PPP Protocol
-field is used to signal the priority.)
+I have also added a line to ppp_write() to set skb->priority to
+TC_PRIO_CONTROL unconditionally.  This appears to work--the daemon no longer
+croaks when I run 3 flood pings across the link--but I would like to know if
+any kind of packets other than control packets can pass through ppp_write().
+Does this change hand out a high priority too liberally?
 
->  Well, I
-> suppose in that case, the peer would stop receiving packets and terminate
-> the connection.
-
-Only if the peer is also doing the LCP Echo-Request/Response dance.
-(That's what I was assuming when I wrote that, but you've pointed out
-that it's not the best assumption.)
-
+Thanks.
 -- 
-James Carlson                                  <carlson@workingcode.com>
+Dan Eble <dane@aiinet.com>  _____  .
+                           |  _  |/|
+Applied Innovation Inc.    | |_| | |    "All Protocols MUST be odd"
+http://www.aiinet.com/     |__/|_|_|      -- RFC 1661 (PPP)
