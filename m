@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Sat, 10 Apr 2004 19:41:06 +0000
+From: James Carlson <carlson@workingcode.com>
+Date: Sat, 10 Apr 2004 19:52:01 +0000
 Subject: Re: pppd routing
-Message-Id: <Pine.LNX.4.50.0404101235160.31485-100000@string.physics.ubc.ca>
+Message-Id: <16504.20577.925270.677283@c-24-147-210-59.ne.client2.attbi.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <40799D08.40700@netscape.net>
 In-Reply-To: <40799D08.40700@netscape.net>
@@ -10,45 +10,11 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Sun, 11 Apr 2004, nick wrote:
-
-> 
-> Hi, I am still trying to connect to the Internet from Linux and I cannot 
-> seem to get the network/routing right.
-> 
-> When I connect from windows, the DNS server, personal IP and routing are 
->    established automatically, but not under linux ? Why ?
-> 
-> 
->  >Did u get the ip address? Maybe you should check is there are DNS 
->  >servers ips on your /etc/resolv.conf using the cat command if you want 
->  >cat /etc/resolv.conf. If there is none, you should add the following 
->  >line:
->  >nameserver1 IP_ADDRESS of the DNS server
->  >nameserver2 IP_ADDRESS of the second DNS server
->  >Example:
->  >nameserver1 200.176.3.10
->  >nameserver2 200.176.3.11
-> 
-> 
-> I did that, but it did not solve anything.
-> Now, i cannot even get the Linux up and running. I had the bad idea to 
-> run 'setup' and tell Linux to start 'sendmail' at startup. When it gets 
-
-It only blocks for about 3 min. then it continues. So start it up, go
-out for a coffee or watch one of the Stanley cup games, and after that
-come back and remove the sendmail. It is trying to do some address
-lookups and failing on overly long timeouts.
-
-> to sendmail, it just blocks and Linux won't start. I tried to pass 
-> "linux single", to grub, so I can run setup againg and remove , but it 
-> does not work.
-
-"it does not work" What does not work? 
-
-> 
+nick writes:
 > Someone else says:
-> 
+
+That "someone else" was me.
+
 > "One of (at least) three possible things:
 >    - your local name service is misconfigured (what's in
 >            /etc/resolv.conf?)
@@ -59,26 +25,82 @@ lookups and failing on overly long timeouts.
 > I looked at "netstat -nr" and "route -n", but since I run windows/linux 
 > on the same laptop (and cannot connect to the net from Linux), I could 
 > not capture the output into a file and send it along with the email.
-> 
+
+That shouldn't be a problem.  Just mount up the Windows filesystem
+under Linux and write the debug output on that.
+
 > Again, I use 'usedefaultroute' (or 'defaultroute)in pppd script/conf, 
 > wasn't it suppose to add the routing automatically to the routing table 
+> ?
 
-No, it does not do so if you also have an ethernet card with a default
-route. 
-Put
-route del default 
-at the end of /etc/rc.d/rc.local
-and run it as root befor you start up pppd (only once).
+Yes, but only if it works!  If there's an existing default route (due
+to prior misconfiguration of your system), then pppd won't replace the
+broken default route, and you'll have exactly the symptoms you
+describe.
 
-Can you store the file onto your win filesystem? Can you write it to
-floppy? Can you write it to CDRom?
+This is a _common_ system configuration mistake, especially (for some
+reason) on Linux, but without seeing the "netstat -nr" output, I can't
+tell you whether or not you're running into it.
 
-Can you write it down?
+> In /var/log/messages I have 4 IPs:
+> -IP_assigned to me
+> -peers_IP
+> -DNS_primary
+> -DNS_secondary
+> 
+> What is the form of route command that I am supposed to run in order to 
+> be able to go outside peers_ip ?
 
-Look at the line which starts 0.0.0.0 or default. Does it end with ppp0
-or with eth0?
+You shouldn't have to run any such command.
 
+>  >- the peer's routing is broken (is this your ISP or some other
+>  >          machine?)
+> 
+> Actually, I have a sprint cell phone with Vision on it, but from what I 
+> read on the net, this should work, plus, I am positive it does connect, 
+> because I see traffic on my cell (sending+receiving) when I do ping the 
+> machine I am connected to.
 
+OK, but that doesn't verify the default route or the DNS resolver
+configuration.
 
-Without info it is hard to give advice.
+>  >    - you have a misconfigured default route and/or local Ethernet
+>            interface that is causing packets not to go through the PPP
+>            link when they should.
+> 
+> This is may be the problem.
 
+"netstat -nr", please.
+
+>  >    - you're missing the "defaultroute" option.
+> 
+> I've got this.
+
+OK.
+
+>  >- you need to get DNS server addresses from your ISP -- either
+>  >use the "usepeerdns" option and link /etc/resolv.conf to
+>  >/etc/ppp/resolv.conf
+> 
+> How do I link /etc/resolv.conf to /etc/ppp/resolv.conf ?
+
+Do this:
+
+	# rm -f /etc/resolv.conf
+	# ln -s /etc/ppp/resolv.conf /etc/resolv.conf
+
+>  >*OR* create /etc/resolv.conf and add appropriate static addresses >there.
+> 
+> I did this.
+
+If those addresses are correct, then you shouldn't have trouble with
+DNS.  It's hard to tell, though.
+
+There are many other possible problems.  If you can't get debug
+output, I don't think anyone will be able to diagnose them for you.
+
+Here's another random suggestion (since this is a cell phone): try
+using the "default-asyncmap" option.
+
+-- 
+James Carlson                                  <carlson@workingcode.com>
