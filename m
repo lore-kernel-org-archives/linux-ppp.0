@@ -1,86 +1,60 @@
-From: Stephan Scholz <sscholz@astaro.com>
-Date: Mon, 08 Nov 2004 09:50:54 +0000
-Subject: Re: ppp_mppe osize issue
-Message-Id: <418F417E.5080107@astaro.com>
+From: Arkadiusz Miskiewicz <arekm@pld-linux.org>
+Date: Tue, 23 Nov 2004 10:57:42 +0000
+Subject: some change in ppp 2.4.3: tcflush failed: Bad file descriptor
+Message-Id: <200411231157.43347.arekm@pld-linux.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20041106000351.3d60f2ba@emach>
-In-Reply-To: <20041106000351.3d60f2ba@emach>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-PPPD reduces the MTU of the interface, because MPPE encryption needs
-additional 4 bytes. Windows clients do not see if that way, however.
-This leads to problems, because the Windows client sends a TCP MSS
-of 4 bytes too large for PPPD.
-What you can do is change the PPPD, so that it does not reduce the MTU anymore.
-See the patch below.
+Hi,
 
-Alternatively, set the MTU of the PPP interface in the ip-up script.
+Something changed in ppp 2.4.3. Now after disconnect I'm getting:
 
-Stephan
+Nov 17 16:00:23 arm pppd[17641]: local  IP address xx
+Nov 17 16:00:24 arm pppd[17641]: remote IP address xx
+Nov 17 16:00:24 arm pppd[17641]: primary   DNS address xx
+Nov 17 16:00:24 arm pppd[17641]: secondary DNS address xx
+Nov 18 16:00:21 arm pppd[17641]: LCP terminated by peer
+Nov 18 16:00:21 arm pppd[17641]: Connect time 1440.0 minutes.
+Nov 18 16:00:21 arm pppd[17641]: Sent 97298679 bytes, received 1835111999=20
+bytes.
+Nov 18 16:00:22 arm pppd[17641]: Child process /etc/ppp/ip-down (pid 19630)=
+=20
+terminated with signal 15
+Nov 18 16:00:24 arm pppd[17641]: Connection terminated.
+Nov 18 16:00:25 arm pppd[17641]: Using interface ppp0
+Nov 18 16:00:25 arm pppd[17641]: Connect: ppp0 <--> /dev/pts/12
+Nov 18 16:00:56 arm pppd[17641]: LCP terminated by peer
+Nov 18 16:00:59 arm pppd[17641]: Connection terminated.
+Nov 18 16:00:59 arm pppd[17641]: tcflush failed: Bad file descriptor
+Nov 18 16:00:59 arm pppd[17641]: Using interface ppp0
+Nov 18 16:00:59 arm pppd[17641]: Connect: ppp0 <--> /dev/pts/13
+Nov 18 16:01:29 arm pppd[17641]: LCP terminated by peer
+Nov 18 16:01:32 arm pppd[17641]: Connection terminated.
+Nov 18 16:01:32 arm pppd[17641]: tcflush failed: Bad file descriptor
+Nov 18 16:01:32 arm pppd[17641]: Using interface ppp0
+Nov 18 16:01:32 arm pppd[17641]: Connect: ppp0 <--> /dev/pts/15
+Nov 18 16:02:02 arm pppd[17641]: LCP terminated by peer
+Nov 18 16:02:05 arm pppd[17641]: Connection terminated.
+Nov 18 16:02:05 arm pppd[17641]: tcflush failed: Bad file descriptor
+Nov 18 16:02:05 arm pppd[17641]: Using interface ppp0
 
+With 2.4.2 there was no problem with ,,tcflush failed: Bad file descriptor'=
+'=20
+on the same kernel.
 
-diff -u -r1.1.1.1 -r1.1.1.1.4.1
---- sources/p/pppd/pppd/ccp.c	2004/01/16 09:47:28	1.1.1.1
-+++ sources/p/pppd/pppd/ccp.c	2004/10/15 15:08:50	1.1.1.1.4.1
-@@ -1191,7 +1191,12 @@
-  		     */
-  		    mtu = netif_get_mtu(f->unit);
-  		    if (mtu)
--			netif_set_mtu(f->unit, mtu - MPPE_PAD);
-+		    {
-+			// Removed the lowering of the MTU, because it causes
-+			// problems with routing (TCP/MSS: Windows clients
-+			// do not care about this reduced packet size)
-+			//netif_set_mtu(f->unit, mtu - MPPE_PAD);
-+		    }
-  		    else
-  			newret = CONFREJ;
-  		}
+pppd is called with:
+/usr/sbin/pppd lock persist holdoff 30 maxfail 0 crtscts asyncmap 00000000 =
 
+defaultroute usepeerdns mtu 1480 user xyz noauth unit 0 pty "pppoa -I eth1"=
+=20
+ipparam ppp0 linkname ppp0
 
-Guy Rouillier wrote:
-> (I sent this earlier this week under the subject "osize too small" and
-> now realize that most spam filters probably kicked it out.  Resending...
-> 
-> I'm using ppp with pptp to connect to a MS server at work.  Kernel is
-> 2.6.3 AMD64 on Mandrake 10.0, ppp 2.4.2.  I built this kernel myself to
-> fix the 64-bit issues with ppp (fix previously reported.)   When I have
-> VPN up and run a browser, it will retrieve a particular page fine the
-> first time.  However, if I click the submit button on that page again
-> (which transmits a bunch of data - I authored this page so know all
-> about it) the browser just goes into continuous wait and never actually
-> transmits anything.  I see the following in dmesg:
-> 
-> PPP generic driver version 2.4.2
-> ppp_mppe: module license 'BSD without advertisement clause' taints
-> kernel.
-> PPP MPPE Compression module registered
-> Module ppp_mppe cannot be unloaded due to unsafe usage in
-> include/linux/module.h:503
-> mppe_compress[0]: osize too small! (have: 1400 need: 1404)
-> ppp: compressor dropped pkt
-> mppe_compress[0]: osize too small! (have: 1400 need: 1404)
-> ppp: compressor dropped pkt
-> 
-> What is the appropriate fix for this? ifconfig shows an MTU of 1396 for
-> ppp0.  I tried specifying mtu 1500 when starting pppd, but it still ends
-> up 1396.  I suppose the server end is constraining it.  Appreciate all
-> suggestions - I can rebuild the kernel if necessary.
-> 
+where pppoa comes from eagle-usb.
 
-
--- 
-Stephan Scholz <sscholz@astaro.com> | Development
-Astaro AG | www.astaro.com | Phone +49-721-490069-0 | Fax -55
-
-Documentation: http://docs.astaro.org
-User Bulletin Board: http://www.astaro.org
-
-- Certified by ICSA labs - June 2004
-- Computer Reseller News: "CRN Certified Program" - June 2004
-- Linux Pro Italy: Best Rating 10 out of 10 points - May 2004
-- Linux Enterprise Readers' Choice Award: Best Firewall - October 2003
-
+Did anyone seen such problem with new ppp?
+--=20
+Arkadiusz Mi=B6kiewicz                    PLD/Linux Team
+http://www.t17.ds.pwr.wroc.pl/~misiek/  http://ftp.pld-linux.org/
