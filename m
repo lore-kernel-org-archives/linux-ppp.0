@@ -1,37 +1,48 @@
-From: Guy Rouillier <guy-rouillier@speakeasy.net>
-Date: Sat, 30 Oct 2004 03:40:02 +0000
-Subject: osize too small
-Message-Id: <20041029234002.4b2b80fc@emach>
+From: Charles Price <cpwp@w3z.co.uk>
+Date: Tue, 19 Oct 2004 15:25:50 +0000
+Subject: Re: [SUCCESS] Kernel-mode PPPoE server.
+Message-Id: <200410191625.55081.cpwp@w3z.co.uk>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="nextPart1663686.a99FdkGxpX"
 List-Id: <linux-ppp.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I'm using ppp with pptp to connect to a MS server at work.  Kernel is
-2.6.3 AMD64 on Mandrake 10.0, ppp 2.4.2.  I built this kernel myself to
-fix the 64-bit issues with ppp (fix previously reported.)   When I have
-VPN up and run a browser, it will retrieve a particular page fine the
-first time.  However, if I click the submit button on that page again
-(which transmits a bunch of data - I authored this page so know all
-about it) the browser just goes into continuous wait and never actually
-transmits anything.  I see the following in dmesg:
+--nextPart1663686.a99FdkGxpX
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-PPP generic driver version 2.4.2
-ppp_mppe: module license 'BSD without advertisement clause' taints
-kernel.
-PPP MPPE Compression module registered
-Module ppp_mppe cannot be unloaded due to unsafe usage in
-include/linux/module.h:503
-mppe_compress[0]: osize too small! (have: 1400 need: 1404)
-ppp: compressor dropped pkt
-mppe_compress[0]: osize too small! (have: 1400 need: 1404)
-ppp: compressor dropped pkt
+I find that when I build pppd and rp-pppoe, two copies of rp-pppoe.so are=20
+created - one built by each package. The copy from rp-pppoe-3.5 is installe=
+d=20
+in /etc/ppp/plugins and doesn't work, but I copied the pppd-cvs version ove=
+r=20
+the top of it and everything works perfectly.
 
-What is the appropriate fix for this? ifconfig shows an MTU of 1396 for
-ppp0.  I tried specifying mtu 1500 when starting pppd, but it still ends
-up 1396.  I suppose the server end is constraining it.  Appreciate all
-suggestions - I can rebuild the kernel if necessary.
+I'm not sure what went wrong - probably my installation technique ;-)
 
--- 
-Guy Rouillier
+Thank you for your help on this one, Michel.
+
+Regards,
+
+Charlie Price
+
+On Tuesday 19 October 2004 11:30, Michal Ostrowski wrote:
+> Try using the binary from the system that works on the new system.  I'm
+> not seeing there being any sort of pppoe specific problem.  It appears
+> to be an issue of pppd not sending the first LCP packet.
+>
+
+--nextPart1663686.a99FdkGxpX
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.4 (GNU/Linux)
+
+iD8DBQBBdTIC3k8SswDN/tkRAj0/AJ9da6Ih8hMPwEF+pEFqQjFrfI5UuQCeMkjB
+9S1aM/LMBpypK0KC85QXwD4=
+=iyHT
+-----END PGP SIGNATURE-----
+
+--nextPart1663686.a99FdkGxpX--
