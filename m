@@ -1,38 +1,21 @@
-From: "Miguel-Munoz" <miguelmunoz@sepsa.es>
-Date: Thu, 22 Jul 2004 09:11:36 +0000
+From: "Simon Chow" <simonchow@keytechsys.com.hk>
+Date: Fri, 23 Jul 2004 08:47:28 +0000
 Subject: Re: pppd and AT+WMUX(Multiplex mode)
-Message-Id: <001301c46fcb$ec299990$08330680@sepsa.es>
+Message-Id: <cdqjku$68j$1@sea.gmane.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <loom.20040721T163210-958@post.gmane.org>
 In-Reply-To: <loom.20040721T163210-958@post.gmane.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Continuing with the same issue...
-I=B4m trying to do the same with the same modem.
-I=B4m thinking in use a 'virtual' ttyS, changing the device driver.
-So I would have a point where I could extarct the headers
-(data or commands), almost from the port.
-Am I wrong?
-
-Thanks
-
-Miguel
-
------ Original Message -----=20
-From: <carlsonj@workingcode.com>
-To: "Simon Chow" <simonchow@keytechsys.com.hk>
-Cc: <linux-ppp@vger.kernel.org>
-Sent: Wednesday, July 21, 2004 5:44 PM
-Subject: Re: pppd and AT+WMUX(Multiplex mode)
-
-
+<carlsonj@workingcode.com> wrote in message
+news:16638.36676.350168.813237@carlson.workingcode.com...
 > Simon Chow writes:
 > > I am researching how to handle the AT packets and Data packets offered
 by
-> > the Wavecom GSM modem in AT+WMUX=3D1 mode. I want to modify the pppd
+> > the Wavecom GSM modem in AT+WMUX=1 mode. I want to modify the pppd
 programme
 > > and I think that the tty.c in pppd may be the key to change. The
 charshunt
@@ -54,10 +37,18 @@ Wavecom
 > first.  Otherwise, it'll probably be handled as bad PPP frames and
 > discarded.
 >
-> --=20
+> -- 
 > James Carlson                                 <carlsonj@workingcode.com>
 > -
 > To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
 > the body of a message to majordomo@vger.kernel.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+
+
+How about I modify the ppp_async_input function in ppp_async.c to detect the
+0xAA and 0xDD, and the ppp_async_push function to encapsulate the PPP frame
+with 0xDD?
+
+
 
