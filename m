@@ -1,29 +1,39 @@
-From: Ralf Hildebrandt <Ralf.Hildebrandt@charite.de>
-Date: Sun, 01 Feb 2004 12:33:19 +0000
-Subject: Bad statistics in case of connection problems?
-Message-Id: <20040201123319.GN7617@charite.de>
+From: tatel@euskalnet.net
+Date: Sun, 07 Mar 2004 14:09:26 +0000
+Subject: active-filter
+Message-Id: <3d9ff3e0e9.3e0e93d9ff@euskalnet.net>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I already reported the to the Debian package maintainer of pppd, but
-he said I should take it upstream.
+Hi, 
 
-Short:
-/usr/sbin/pppd: ppp reports wrong connect time and other stats when failing=
- to reconnect
+I'm trying to set an active-filter expression for on-demand, but I'm
+really stuck with. I can't get effective help from neither from
+documentation neither from user mailing lists.
 
-Detailed:
-http://bugs.debian.org/cgi-bin/bugreport.cgi?bug"4621&repeatmerged=3Dno
-(which includes detailed log excerpts -- I don't want to flood this
-list with these details again, since I created a really nice &
-readable bug report already)
+Problem is people scanning (mostly) netBIOS ports. These packets (I
+think) are holding the link up by resetting idle-timeout to zero.
 
---=20
-Ralf Hildebrandt (Im Auftrag des Referat V a)   Ralf.Hildebrandt@charite.de
-Charite - Universit=E4tsmedizin Berlin            Tel.  +49 (0)30-450 570-1=
-55
-Gemeinsame Einrichtung von FU- und HU-Berlin    Fax.  +49 (0)30-450 570-916
-Referat V a - Kommunikationsnetze -             AIM.  ralfpostfix
+I'm using woody with ppp 2.4.1 from debs and compiled kernel with
+filtering option enabled
+
+If I set something like "active-filter 'inbound port 135'" I get a parse
+error message. This stucks me since man tcpdump says inbound is for ppp
+connections.
+
+If I set something like "active-filter 'dst port 135'" there is no parse
+error message, but modem dials nothing
+
+Does anybody know an appropiate active-filter expression?
+
+Thanks a lot
+
+Roman
+
+
+
+
+
