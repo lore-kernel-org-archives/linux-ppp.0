@@ -1,7 +1,7 @@
-From: K-sPecial <spam@blazemail.com>
-Date: Tue, 16 Nov 2004 22:59:16 +0000
+From: carlsonj@workingcode.com
+Date: Wed, 17 Nov 2004 11:43:17 +0000
 Subject: Re: Socket doesn't get EOF
-Message-Id: <419A8644.1030805@blazemail.com>
+Message-Id: <16795.14677.115819.798144@carlson.workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <41998875.2020305@blazemail.com>
 In-Reply-To: <41998875.2020305@blazemail.com>
@@ -10,35 +10,24 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-carlsonj@workingcode.com wrote:
-> K-sPecial writes:
-> 
->>Hey, i've got an irc bot of over 3000 lines of perl. I test for EOF on 
->>occasion and do a reconnect if eof is detected. This works greatly for 
->>instances as when the socket times out or is disconnected in most 
->>manors. It doesn't although register an eof when pppd dies. I realy 
->>don't know if this might be specific to perl or if even in C this is an 
->>issue.
-> 
-> 
-> This is a frequently-asked question about TCP/IP.
-> 
-> No, you won't get EOF.  No, it's not a bug.  It's a feature, and it's
-> by design.  The TCP layer sees IP as a connectionless datagram
-> service, and tries its best to deliver the data the application
-> provides.  IP sees the datalink layers as unrelated to any particular
-> transport, so when a datalink layer goes down, the transport (such as
-> TCP) isn't involved.  If IP can route around the problem, it does so.
-> If it can't, it drops the packets and hopes that either (A) the link
-> comes back 'soon' or (B) the transport gives up eventually.
-> 
-> If you want a shorter timeout, set a timer in your application.
-> 
+K-sPecial writes:
+> Thanks, that was very informative, it made sense and I much appreciate 
+> the prompt response. I have added a timeout on the socket and will get a 
+> glimpse of what happens next time pppd dies.
 
-Thanks, that was very informative, it made sense and I much appreciate 
-the prompt response. I have added a timeout on the socket and will get a 
-glimpse of what happens next time pppd dies.
+You can also have pppd clobber the application via the
+/etc/ppp/ip-down script.  I'd suggest that doing so is a mistake.  If
+the link comes back (it was just a short glitch), then the application
+fails for no reason.  If the network is designed with multiple paths,
+then there's really no good way to know when (or if) to kill the
+application.
 
---K-sPecial
+Moreover, you'd have no way to know if some intermediate router
+failed, and you'd likely want to have the application "notified" in
+some way if that were to happen for the same reason that you want pppd
+to kill the application.  If you can't detect router failure in
+practice, is there much additional value to detecting local interface
+failure?
 
-
+-- 
+James Carlson                                 <carlsonj@workingcode.com>
