@@ -1,44 +1,44 @@
-From: James Carlson <carlson@workingcode.com>
-Date: Fri, 05 Mar 2004 16:29:00 +0000
-Subject: Re: Writing a dialer
-Message-Id: <16456.43724.44500.724716@c-24-147-210-59.ne.client2.attbi.com>
+From: Johan Gill <johane@lysator.liu.se>
+Date: Thu, 04 Mar 2004 10:33:27 +0000
+Subject: Strange problem seeing certain websites over dial-up connection
+Message-Id: <404705F7.40308@lysator.liu.se>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200403031714.i23HEtJN021770@webmail2.magma.ca>
-In-Reply-To: <200403031714.i23HEtJN021770@webmail2.magma.ca>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Javier Govea writes:
-> Just to thank you James, all your comments were very helpful. My execv invocation indeed
-> was missing "pppd" in arg[0] and the '\0' escapes don't really affect in any way.
+Hi, I would be happy if anyone has a clue about this.
 
-OK.
+When I use my Slackware 8.1 system with a modem (kernel 2.4.18, I also 
+tried 2.4.24), I cannot access the websites www.amigbg.com and 
+www.viforaldrar.se with any browser. This works on another Linux system 
+(2.4.20-28.8smp, without a modem). I can telnet the hosts, so my 
+location should not be the problem. The problem is that an HTTP request 
+is sent, but no answer is recorded. Both webservers were IIS 5.0 when I 
+checked the other day. I could rip the packets apart in a few weeks to 
+see what I find, but I thought I should post this now.
 
-> But my
-> real problem was that i was missing the "nodetach" option. Without this option either
-> 'chat' seems to run as an independent process or 'pppd' loses control over 'chat'.
+Some .config lines:
+CONFIG_PPP=m
+# CONFIG_PPP_MULTILINK is not set
+# CONFIG_PPP_FILTER is not set
+CONFIG_PPP_ASYNC=m
+CONFIG_PPP_SYNC_TTY=m
+CONFIG_PPP_DEFLATE=m
+CONFIG_PPP_BSDCOMP=m
+CONFIG_PPPOE=m
 
-Neither of those is actually true.  Instead, if you don't use
-"nodetach", then pppd *itself* will fork() and your program's wait()
-call will return 'early.'  It's not that pppd "loses control" over
-chat, but rather that *your* program loses control over pppd.  Chat
-works the same regardless of whether "nodetach" is (or is not) used.
+And lsmod says:
+Module                  Size  Used by    Not tainted
+ppp_deflate             2968   2  (autoclean)
+zlib_deflate           17880   0  (autoclean) [ppp_deflate]
+bsd_comp                3992   0  (autoclean)
+ppp_async               6560   1  (autoclean)
+ppp_generic            15872   3  (autoclean) [ppp_deflate bsd_comp 
+ppp_async]
+slhc                    4656   1  (autoclean) [ppp_generic]
 
-Pppd doesn't (and can never) "lose control" over chat, regardless of
-the options used.  If it did, then chat and pppd would fail miserably,
-since pppd switches the line from plain text I/O into PPP mode after
-chat is done.
+Regards
+/Johan Gill <johane@lysator.liu.se>
 
-If you've never read "Advanced Programming in the UNIX Environment" by
-W. Richard Stevens, I strongly recommend it.  Especially chapters 8
-and 9.
-
-> In any
-> case by adding this option everything seems to work fine.
-
-Sounds good.
-
--- 
-James Carlson                                  <carlson@workingcode.com>
