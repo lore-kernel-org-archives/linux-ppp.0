@@ -1,7 +1,7 @@
-From: Clifford Kite <kite_linux-ppp@ev1.net>
-Date: Thu, 14 Oct 2004 16:24:38 +0000
+From: Bill Unruh <unruh@physics.ubc.ca>
+Date: Thu, 14 Oct 2004 16:45:40 +0000
 Subject: Re: even after PPP connection established, pings don't work
-Message-Id: <Pine.LNX.4.21.0410141057090.2269-100000@corncob.localhost.tld>
+Message-Id: <Pine.LNX.4.58.0410140944060.24959@string.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.LNX.4.60.0410141106110.21794@localhost.localdomain>
 In-Reply-To: <Pine.LNX.4.60.0410141106110.21794@localhost.localdomain>
@@ -12,45 +12,32 @@ To: linux-ppp@vger.kernel.org
 
 On Thu, 14 Oct 2004, Robert P. J. Day wrote:
 
-|  at the moment, i don't have access to the test box (dang, not enough
-|of them to go around), but i'm currently baffled by the fact that
-|connecting from my embedded board running linux with PPP 2.4.1 to
-|another linux system running PPP 2.4.2 seems to work just fine, until
-|i try to ping.  then ... nothing.
-|
-|  we have the embedded system with on-board modem, connected to
-|teltone box, connected to external modem, connected to host.  starting
-|pppd on the embedded system, everything works fine, dialing,
-|connection, *both* systems claim to have established a PPP
-|connection, *both* systems show the PPP connnection in their
-|"ifconfig" output, there are no error messages in the log files ...
-|all in all, you'd think everything was fine.
-|
-|  but running ping on either side just hangs.
-|
-|  now, the one complication is that the host is already on the network
-|and has a configured eth0 and a default gateway.  and we don't want to
-|mess with that so, on the host, we deliberately leave off the
-|"defaultroute" option.  from what i read, this shouldn't cause any
-|problems.  as long as there's a PPP interface, i should be able to
-|directly ping the IP address at the *other* end of that interface,
-|even if my default route in the routing table refers entirely to
-|another interface and gateway, no?
+> On Thu, 14 Oct 2004, Bill Unruh wrote:
+> 
+> > You need to give us detailed info ...
+> 
+> i realize i wasn't overly detailed, but the question was a fairly
+> generic one -- even if i don't use the "defaultroute" option when
+> creating the PPP link, should i (theoretically) still be able to ping
+> the IP address at the other end of the PPP link (given that the
+> routing table entry for that link should have the "UH" flags for a
+> host-specific entry?)
 
-Yes.  A ping that hangs is usually due to one of three things:
+Yes. You should, assuming that the two machines allow pings and respond
+to pings, assuming your firewall lets stuff through, etc.
 
-1)  A default route is set wrong.  Not applicable when pinging
-    between the PPP link hosts by IP address.
-2)  If pinging by host name then a nameserver is wrong.  Pinging 
-    by IP address should work.
-3)  Something is wrong with the serial connection that affects
-    the data being sent.
+So, to ask it another way, can I ping two ppp connected machines, one
+from the other even though the default route points to eth0? Yes.
 
-A broken firewall *might* also account for it.  I'm not firewall-aware
-enough to say with absolute certainty that one could cause such a problem,
-but strongly suspect that it could.
+> 
+>   as long as i'm convinced that what i'm doing *should* work, i'll
+> carry on with additional troubleshooting.
+> 
+> rday
+> 
 
----
-Clifford Kite                                 http://ckite.no-ip.net
-
-
+-- 
+William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
+Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
+UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
+Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
