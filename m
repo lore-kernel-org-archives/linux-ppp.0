@@ -1,7 +1,7 @@
 From: a b <theorieduchaos@yahoo.fr>
-Date: Thu, 28 Oct 2004 13:10:05 +0000
-Subject: ppp 2.4.3 cvs authentication issue
-Message-Id: <20041028131005.10117.qmail@web25203.mail.ukl.yahoo.com>
+Date: Thu, 28 Oct 2004 13:45:25 +0000
+Subject: Re: ppp 2.4.3 cvs authentication issue
+Message-Id: <20041028134525.68215.qmail@web25209.mail.ukl.yahoo.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20041028124517.7204.qmail@web25210.mail.ukl.yahoo.com>
 In-Reply-To: <20041028124517.7204.qmail@web25210.mail.ukl.yahoo.com>
@@ -12,36 +12,12 @@ To: linux-ppp@vger.kernel.org
 
 Hi again,
 
-I'm tring to configure both sides: server AND client.
+You were right: I was missing the "user" option ... it
+works now with mschap-v2, thank you ... but, next step
+is to use mppe, of course:
 
-Ok, I have followed your suggestions and here is the
-result:
-
-client:=20
-
-logfile /tmp/vpn.log
-dump
-debug
-lock
-pty "/usr/sbin/pptp 10.0.0.178 --nolaunchpppd"
-nodetach
-
-server:
-
-logfile /tmp/vpn.log
-dump
-debug
-auth
-refuse-pap
-refuse-eap
-refuse-chap
-refuse-mschap
-require-mschap-v2
-lock
-
-
-server logs:=20
-tail -f /tmp/vpn.log -n 100
+I add the require-mppe-128 option to the server and
+get:=20
 
 pppd options in effect:
 debug           # (from /etc/ppp/options.poptop)
@@ -61,35 +37,61 @@ refuse-eap              # (from
 115200          # (from command line)
 lock            # (from /etc/ppp/options.poptop)
 local           # (from command line)
-ipparam 10.0.0.124         # (from command line)
-10.0.1.178:10.0.1.234           # (from command line)
-using channel 10
+ipparam 192.168.100.124         # (from command line)
+10.0.1.178:10.0.1.235           # (from command line)
+require-mppe-128                # (from
+/etc/ppp/options.poptop)
+using channel 15
 Using interface ppp0
 Connect: ppp0 <--> /dev/pts/1
 sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <auth chap
-MS-v2> <magic 0xa5e8afe7> <pcomp> <accomp>]
+MS-v2> <magic 0x6abacb92> <pcomp> <accomp>]
 rcvd [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic
-0x45ac117b> <pcomp> <accomp>]
+0x11fc1593> <pcomp> <accomp>]
 sent [LCP ConfAck id=3D0x1 <asyncmap 0x0> <magic
-0x45ac117b> <pcomp> <accomp>]
-rcvd [LCP ConfRej id=3D0x1 <auth chap MS-v2>]
-sent [LCP ConfReq id=3D0x2 <asyncmap 0x0> <magic
-0xa5e8afe7> <pcomp> <accomp>]
-rcvd [LCP ConfAck id=3D0x2 <asyncmap 0x0> <magic
-0xa5e8afe7> <pcomp> <accomp>]
-peer refused to authenticate: terminating link
-sent [LCP TermReq id=3D0x3 "peer refused to
-authenticate"]
+0x11fc1593> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=3D0x1 <asyncmap 0x0> <auth chap
+MS-v2> <magic 0x6abacb92> <pcomp> <accomp>]
+sent [CHAP Challenge id=3D0xd3
+<6efa5d8f23196c829082eaa9456a3865>, name "mypptpdserver.mydomain.com"]
+rcvd [CHAP Response id=3D0xd3
+<c809d9e158ba9bd9355aa162dd23741b000000000000000076554555ea86eb4480c7e47807=
+6e857ce65b277c44f8fb2a00>,
+name =3D "adrian"]
+sent [CHAP Success id=3D0xd3
+"S[4A15FB47B29F113A4708536D079228081E2007 M=ACcess
+granted"]
+Couldn't set pass-filter in kernel: Invalid argument
+sent [CCP ConfReq id=3D0x1 <mppe +H -M +S -L -D -C>]
 rcvd [CCP ConfReq id=3D0x1 <deflate 15> <deflate(old#)
 15> <bsd v1 15>]
-Discarded non-LCP packet when LCP not open
+MPPE required but peer negotiation failed
+sent [LCP TermReq id=3D0x2 "MPPE required but peer
+negotiation failed"]
+sent [CCP ConfRej id=3D0x1 <deflate 15> <deflate(old#)
+15> <bsd v1 15>]
 rcvd [IPCP ConfReq id=3D0x1 <compress VJ 0f 01> <addr
 10.0.0.124>]
 Discarded non-LCP packet when LCP not open
-rcvd [LCP TermAck id=3D0x3]
+rcvd [CCP ConfRej id=3D0x1 <mppe +H -M +S -L -D -C>]
+Discarded non-LCP packet when LCP not open
+rcvd [LCP TermAck id=3D0x2]
 Connection terminated.
+Connect time 0.0 minutes.
+Sent 10 bytes, received 31 bytes.
 
-Still not working ...=20
+lsmod|grep ppp
+ppp_deflate             7104  0=20
+zlib_deflate           23832  1 ppp_deflate
+zlib_inflate           23648  1 ppp_deflate
+ppp_mppe               14304  0 [unsafe]
+ppp_async              13280  0=20
+ppp_generic            32752  4
+ppp_deflate,bsd_comp,ppp_mppe,ppp_async
+slhc                    8224  1 ppp_generic
+
+
+I might be missing something obvious again...
 
 Thank you,
 
@@ -97,46 +99,14 @@ Adrian
 
  --- carlsonj@workingcode.com a =E9crit :=20
 > a b writes:
-> > I'm trying to set up a pptpd server under Mandrake
-> > 10.0 and I think my problem is related to pppd and
-> the
-> > authentication.
+> > rcvd [LCP ConfRej id=3D0x1 <auth chap MS-v2>]
 >=20
-> You're the server side?  Then why is your peer
-> demanding that you
-> authenticate yourself?
+> Something is still misconfigured on the peer's side.
+>  It's refusing to
+> authenticate.
 >=20
-> > client:
-> >=20
-> > cat /etc/ppp/peers/pptp0=20
-> [...]
-> > refuse-pap
-> > refuse-eap
-> > refuse-chap
-> > refuse-mschap
-> > require-mschap-v2
->=20
-> There's the misconfiguration.  The client should not
-> have the above
-> five options.  Instead, it should just have
-> "noauth."  (As long as the
-> client doesn't have a default route, it won't even
-> need "noauth.")
->=20
-> > Please note that if I simply change two lines on
-> both
-> > sides:
-> >=20
-> > add noauth and comment out require-mschap-v2 I get
->=20
-> Don't change both sides.  The server looks fine.=20
-> It's the client
-> that's misconfigured.
->=20
-> You have it set up so that both sides demand
-> authentication and both
-> sides *refuse* that demand.  What else could
-> possibly be the result?
+> Are you perhaps missing the "user" option on that
+> side?
 >=20
 > --=20
 > James Carlson                               =20
