@@ -1,88 +1,61 @@
-From: Oleg Makarenko <mole@quadra.ru>
-Date: Sun, 05 Sep 2004 18:23:15 +0000
-Subject: Re: [pptp-devel] Re: [2/2]: ppp_mppe inclusion
-Message-Id: <413B5993.604@quadra.ru>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="------------030801030407090005020108"
+From: "Tomas Vadfors" <tomas_vadfors@hotmail.com>
+Date: Tue, 28 Sep 2004 17:23:51 +0000
+Subject: Problem with interface ppp0
+Message-Id: <BAY12-F36sjCGvseE4D000072ea@hotmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20040720204723.GC27576@lists.us.dell.com>
-In-Reply-To: <20040720204723.GC27576@lists.us.dell.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------030801030407090005020108
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Hello!
 
-Hi Matt
+I've got a slight problem. I have always before been able to connect to the=
+=20
+internet using my 56K V90 modem. Setup in the program kppp has been=20
+straightforward, but since I upgraded my Debian system to unstable (Sid) an=
+d=20
+built a new kernel (2.6.3) I have had a problem.
 
-Matt Domsch wrote:
+The modem dials, and seems to connect, but I can't go to any webpages. I=20
+don't think it's a DNS-related problem, I think it has something to do with=
+=20
+the "interface" ppp0. Please observe that the connection is not abrupted=20
+immediately, I've specified "noauth" somewhere rootish. This is the output =
 
->On Mon, Aug 30, 2004 at 05:42:05PM -0500, Matt Domsch wrote:
->  
->
->>On Fri, Jul 30, 2004 at 11:33:09PM +0400, Oleg Makarenko wrote:
->>    
->>
->>>2.  For some reason you can not use non GFP_KERNEL memory and scatter 
->>>lists or at least mix them in crypto_digest().  That is why sha_pad is 
->>>now in struct state {}.
->>>      
->>>
->
->Can you describe what happens when you do?
->  
->
+from kppp in the xterm from which it was run:
 
-please try the attached patch for tcrypt.c to see what is going on 
-yourself.  modrpobe the resulting module with mode=2 parameter to test 
-sha1 and see how it fails the tests.
+Opener: received SetSecret
+Opener: received SetSecret
+Opener: received OpenLock
 
-For mode=0 (or without any parameter) you should get kernel panic.
+Opener: received OpenDevice
+Opener: received ExecPPPDaemon
+Kernel supports ppp alright.
+pppd: using the noauth option requires root privilege
+received unexpected SIGCHLD.
+In parent: pppd pid 1114
+Couldn't find interface ppp0: No such device
+Couldn't find interface ppp0: No such device
+Couldn't find interface ppp0: No such device
+Couldn't find interface ppp0: No such device
+     ....
+    (this actually repeats over and over until I press Cancel in the kppp=20
+window)
 
-=oleg
+Opener: received RemoveSecret
+Opener: received RemoveSecret
+Opener: received OpenResolv
+Opener: received OpenResolv
+error opening resolv.conf!
+Opener: received KillPPPDaemon
+In killpppd(): Sending SIGTERM to 1114
+Opener: received RemoveLock
 
+Thanks for any help!
 
+/Tomas
 
+_________________________________________________________________
+L=E4ttare att hitta dr=F6mresan med MSN Resor http://www.msn.se/resor/
 
-
-
-
---------------030801030407090005020108
-Content-Type: text/x-patch;
- name="tcrypt.diff"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="tcrypt.diff"
-
---- tcrypt.c.orig	2004-08-14 09:37:38.000000000 +0400
-+++ tcrypt.c	2004-09-05 21:11:19.000000000 +0400
-@@ -58,6 +58,8 @@
- static char *xbuf;
- static char *tvmem;
- 
-+static char tvmem_buf[TVMEMSIZE];
-+
- static char *check[] = {
- 	"des", "md5", "des3_ede", "rot13", "sha1", "sha256", "blowfish",
- 	"twofish", "serpent", "sha384", "sha512", "md4", "aes", "cast6", 
-@@ -820,7 +822,8 @@
- static int __init
- init(void)
- {
--	tvmem = kmalloc(TVMEMSIZE, GFP_KERNEL);
-+	tvmem = &tvmem_buf[0];
-+
- 	if (tvmem == NULL)
- 		return -ENOMEM;
- 
-@@ -833,7 +836,6 @@
- 	do_test();
- 
- 	kfree(xbuf);
--	kfree(tvmem);
- 	return 0;
- }
- 
-
---------------030801030407090005020108--
