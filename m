@@ -1,75 +1,80 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Date: Wed, 03 Mar 2004 09:09:58 +0000
-Subject: Re: ppp-2.4.2 released
-Message-Id: <20040303090958.GD16266@edu.joroinen.fi>
+From: Andy <fs@globalnetit.com>
+Date: Sun, 21 Mar 2004 07:59:16 +0000
+Subject: pppd 2.4.2b3 IPCP converge failure
+Message-Id: <1079855955.1133.48.camel@dell.tranquilitynj.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
-In-Reply-To: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, Mar 03, 2004 at 07:13:08AM +0800, Bernard Blackham wrote:
-> A while ago, Pasi wrote:
-> > > > > > There's still the MTU bug (with MPPE) left..
->=20
-> > > What bug is that?
->=20
-> > I've sent couple of mails about this.. I'll explain it below.
->=20
-> > Now, the problem is, that the web-server is already sending packets whi=
-ch
-> > have *right* size (the size client told), but the pptp-server rejects t=
-hem
-> > because of the ppp-interface MTU is too low (in the pptp server).=20
-> >=20
-> > pppd/ccp.c near line 1192:
-> >=20
-> > mtu =3D netif_get_mtu(f->unit);
-> > if (mtu)
-> >     netif_set_mtu(f->unit, mtu - MPPE_PAD);
-> > else
-> >     newret =3D CONFREJ;
-> >=20
-> > MPPE_PAD is defined as 4.
-> >=20
-> >=20
-> > The pptp client sets the MTU to x (for example 1400), and the pptp serv=
-er sets=20
-> > the MTU to x-4 (1396). This obviously happens only when using MPPE.
-> >=20
-> > The pptp-client is not able to load the web page at all, because the cl=
-ient
-> > doesn't receive any data from the web server! the pptp-server rejects t=
-he
-> > incoming (http) packets.
-> >=20
-> > This does not happen with all web sites.
->=20
-> Just a metoo message - I've been experiencing the exact same
-> problems here. We have a poptop server serving over 100 concurrent
-> connections and many users have noted that they weren't able to
-> access the campus website.
->=20
-> The campus website is behind a Cisco load balancer, so this may be a
-> suspect in breaking PMTU. Disabling the above lines of code also
-> solved the problem here though and we've had few complaints since.
->=20
+Can anyone suggest what might have caused this to happen:
 
-Good to hear.=20
+Mar 20 18:39:55 pppd[24048]: sent [IPCP ConfReq id=0xae <addrs
+68.244.143.67 0.0.0.0> <ms-dns1 68.28.178.11> <ms-dns3 68.28.186.11>]
+Mar 20 18:39:55 pppd[24048]: rcvd [IPCP ConfRej id=0xae <addrs
+68.244.143.67 0.0.0.0>]
+Mar 20 18:39:55 pppd[24048]: sent [IPCP ConfReq id=0xaf <addrs
+68.244.143.67 0.0.0.0> <ms-dns1 68.28.178.11> <ms-dns3 68.28.186.11>]
+Mar 20 18:39:55 pppd[24048]: rcvd [IPCP ConfRej id=0xaf <addrs
+68.244.143.67 0.0.0.0>]
+Mar 20 18:39:55 pppd[24048]: sent [IPCP ConfReq id=0xb0 <addrs
+68.244.143.67 0.0.0.0> <ms-dns1 68.28.178.11> <ms-dns3 68.28.186.11>]
+Mar 20 18:39:55 pppd[24048]: rcvd [IPCP ConfRej id=0xb0 <addrs
+68.244.143.67 0.0.0.0>]
+Mar 20 18:39:55 pppd[24048]: sent [IPCP ConfReq id=0xb1 <addrs
+68.244.143.67 0.0.0.0> <ms-dns1 68.28.178.11> <ms-dns3 68.28.186.11>]
+Mar 20 18:39:55 pppd[24048]: rcvd [IPCP ConfRej id=0xb1 <addrs
+68.244.143.67 0.0.0.0>]
+Mar 20 18:39:55 pppd[24048]: sent [IPCP ConfReq id=0xb2 <addrs
+68.244.143.67 0.0.0.0> <ms-dns1 68.28.178.11> <ms-dns3 68.28.186.11>]
+Mar 20 18:39:56 pppd[24048]: rcvd [IPCP ConfRej id=0xb2 <addrs
+68.244.143.67 0.0.0.0>]
+Mar 20 18:39:56 pppd[24048]: sent [IPCP ConfReq id=0xb3 <addrs
+68.244.143.67 0.0.0.0> <ms-dns1 68.28.178.11> <ms-dns3 68.28.186.11>]
+Mar 20 18:39:56 pppd[24048]: rcvd [IPCP ConfRej id=0xb3 <addrs
+68.244.143.67 0.0.0.0>]
 
-Even if this is not a pppd bug, I think we should create some kind of
-workaround (option?) for this?
+etc ad infinitum
 
-Other ppp-servers don't seem to have this same problem.. so it makes you
-feel that pppd is broken :)
+this appears in the logs of a remote embedded system that connects thru
+ppp over a wireless link, it went off the air for about an hour today
+and when it came back its logs were full of this stuff. There's about 5
+IPCP ConfReq/ConfRej messages each second. Every 3 seconds there are
+these additional messages:
 
--- Pasi K=E4rkk=E4inen
-      =20
-                                   ^
-                                .     .
-                                 Linux
-                              /    -    \
-                             Choice.of.the
-                           .Next.Generation.
+Mar 20 18:39:45 pppd[24048]: rcvd [IPCP ConfReq id=0xff <addr
+68.28.165.192>]
+Mar 20 18:39:45 pppd[24048]: sent [IPCP ConfAck id=0xff <addr
+68.28.165.192>]
+
+but although my box acked the new address, it proceeded to ignore it.
+
+Evenually (mercifully!) the peer sent a Term and hung up, my box then
+reconnected successfully.
+
+The embedded system has limited space for logs, so I have only the last
+5 minutes or so of this event, I can't see what happened to start it
+off.
+
+I'm wondering about the ConfReq packets, what is the second address
+field doing there (as in addrs 68.244.143.67 0.0.0.0) - that looks wrong
+to me. And there certainly seems to be a protocol error here in pppd
+handling the ConfRej's - this is from rfc1661, section 5.4:
+
+      Reception of a valid Configure-Reject indicates that when a new
+      Configure-Request is sent, it MUST NOT include any of the
+      Configuration Options listed in the Configure-Reject.
+
+
+I don't explicitly set the ipcp-max-configure option, so it should have
+defaulted to 10, according to the manpage, which also states that the
+ipcp-max-failure option applies to ConfNak's, so presumably the
+ConfRej's weren't being counted.
+
+This system is running 2.4.2b3, I see that ipcp.c has been updated in
+2.4.2, I wonder if this is a known bug. Apologies if it is, but I
+couldn't find a changelog or anything that describes what's been fixed.
+
+
+
