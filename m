@@ -1,29 +1,37 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Mon, 17 May 2004 05:33:08 +0000
-Subject: Re: has anyone gotten PPP and MPPE working with kernel 2.6.x yet??
-Message-Id: <20040517053308.GM27992@hp.com>
+From: Thomas Chen <tchen@on-go.com>
+Date: Tue, 04 May 2004 14:37:23 +0000
+Subject: ppp MULTILINK issue / problem
+Message-Id: <BCBD226C.57C%tchen@on-go.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1084670191.4575.151.camel@bast.picotech.net>
-In-Reply-To: <1084670191.4575.151.camel@bast.picotech.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Sun, May 16, 2004 at 11:19:45PM -0600, Jeffrey D. Means wrote:
-> > > MPPE required, but keys are not available. Possible plugin problem?
-> nope just upgraded kernel and pppd same config files used for pppd and
-> radius
 
-It might be a radius plugin incompatibility with 2.6.  It needs further
-investigation by someone who uses the plugin.  Try the PPTP mailing
-lists, I know some radius and pptpd users lurk there.  Perhaps someone
-else on the PPP list will respond.
+i am testing PPP MULTILINK
 
-But I can answer the question in your subject; I've been using MPPE with
-2.6.5 for quite a few weeks, without problems.  
+server side is running LINUX 2.4.18-3
+client side is running LINUX 2.4.19
 
--- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+the link between them are 56k analog modems
+
+
+i can place calls and set up the MUTILINK.... and the
+links are bundled together just fine....
+
+now i am testing "UNBUNDLING" of the link.... if i unplug
+the one of the modem (not the master link), i do not see
+the IP traffic anymore, though i do see data on the serial
+link (i put a serial line monitor on the serial port),
+but no more IP packets coming out of PPP
+
+i do see a couple linkes of mp_construct sequencing error
+
+appreciate if any pointer on where to look....
+
+thansk
+
+tom
+
+
