@@ -1,25 +1,41 @@
-From: Stephen Hemminger <shemminger@osdl.org>
-Date: Thu, 26 Feb 2004 16:35:01 +0000
-Subject: Re: [Bridge] RE: BCP protocol
-Message-Id: <20040226083501.2302f1bd@dell_ss3.pdx.osdl.net>
+From: "F.H" <shred_man@gmx.de>
+Date: Mon, 02 Feb 2004 00:03:58 +0000
+Subject: not allocating divert_blk for non-ethernet device ppp0 ?
+Message-Id: <000b01c3e920$0eacb250$1e01a8c0@apollo.local>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, 25 Feb 2004 11:51:13 -0500
-"Eble, Dan" <DanE@aiinet.com> wrote:
+Hi
 
-> > -----Original Message-----
-> > From: Stephen Hemminger [mailto:shemminger@osdl.org] 
-> > Sent: Wednesday, February 25, 2004 11:41 AM
-> > 
-> > Could you work with 2.6 rather than 2.4?
-> 
-> I'm truly sorry, but I get paid to work with 2.4.  My employer understands
-> the value of giving back to the open source community, and this is what we
-> have at the moment.  Someone else is going to have to port it to kernel 2.6
-> and pppd 2.4.2.
+I have some problems with my adsl connection. Since I changed the eth1 NIC,
+that connects to my dsl modem, the following errormessage is wrote to my
+syslog and sometimes, resolving internet hostnames are very slow ? I don't
+know what this error mean ? "kernel: divert: not allocating divert_blk for
+non-ethernet device ppp0" Can anyone help me to solve this problem ?
 
-How about if I make a version to integrate in 2.6, can you test it?
+I use Redhat 8.0 with a self generated 2.4.21 kernel.
+
+/var/log/firewall
+
+Feb  2 00:46:35 homer kernel: divert: no divert_blk to free, ppp0 not
+ethernet
+Feb  2 00:46:39 homer kernel: divert: not allocating divert_blk for
+non-ethernet device ppp0
+Feb  2 00:47:15 homer kernel: divert: no divert_blk to free, ppp0 not
+ethernet
+Feb  2 00:48:07 homer kernel: divert: not allocating divert_blk for
+non-ethernet device ppp0
+Feb  2 00:48:56 homer kernel: divert: no divert_blk to free, ppp0 not
+ethernet
+Feb 02  0:49:10 ** Starting Arno's IPTABLES firewall v1.8.2 **
+Feb 02  0:49:11 ** All firewall rules applied **
+Feb  2 00:49:14 homer kernel: divert: not allocating divert_blk for
+non-ethernet device ppp0
+
+Thank you in advance
+Frank
+
+
