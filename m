@@ -1,7 +1,7 @@
 From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Date: Wed, 04 Feb 2004 13:00:16 +0000
+Date: Wed, 04 Feb 2004 13:01:55 +0000
 Subject: Re: ppp-2.4.2 released
-Message-Id: <20040204130016.GP1254@edu.joroinen.fi>
+Message-Id: <20040204130155.GQ1254@edu.joroinen.fi>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
 In-Reply-To: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
@@ -10,42 +10,53 @@ Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-On Tue, Feb 03, 2004 at 11:24:42AM -0500, Andy Gay wrote:
+On Wed, Feb 04, 2004 at 09:11:05AM +1100, James Cameron wrote:
+> On Tue, Feb 03, 2004 at 01:24:27PM +0200, Pasi K?rkk?inen wrote:
+> > The reason why www.yle.fi is not reducing the size, is that the size al=
+ready
+> > is what the client told (mss+headers). I think so..
 >=20
+> No, I disagree.  I'll repeat a critical aspect; the client CANNOT know
+> the right MTU for the path as a whole.  Sure, it knows the MTU of the
+> link next to it, and it will start a connection with an MSS that is
+> compatible with that ... but the client has no knowledge of the network
+> between the router (the pptp-server) and www.yle.fi.
 >=20
-> fcusack@fcusack.com wrote:
+> e.g.
 >=20
-> >On Tue, Feb 03, 2004 at 06:33:23AM -0800, Frank Cusack wrote:
-> >
-> >Even more -- if it's receiving the frag-needed messages and not caching
-> >them, it sounds broken.  ie, even if it is "ignoring" or mishandling them
-> >for the current session, it should be caching the result and for the next
-> >connection within some reasonable time window -- certainly within the=20
-> >amount
-> >of time a user would hit 'reload' -- use a smaller MSS.
-> >=20
-> >
-> Maybe the frag-needed messages aren't geting through, as was suggested=20
-> in an earlier message. I just tried to ping www.yle.fi, got no response, =
-
-> but I can connect to port 80 on it. Likely someone is blocking all ICMP=20
-> to it.
->
-
-At least it reacts to pmtud frag needed icmp packets.. but still doesn't
-work right.
-
-I think it's some kind of loadbalanced (netcraft says the OS is unknown),
-which is causing the problems.
-
-> A traceroute to its address (194.252.88.100) stops at 194.252.88.68,=20
-> which is probably the router at the site. So it's not getting time=20
-> exceeded messages out. You may be able to get somewhere by contacting=20
-> the site admins (if you can find out who that is) and asking them to=20
-> ensure that (at least) ICMP frag-needed is not blocked there.
+>     www.yle.fi =3D router =3D router .. router =3D pptp-server -- client
+>=20
+>     =3D is a link with MTU of 1500
+>     -- is a link with MTU of 1400
+>     .. is a link with MTU of  600
+>=20
+> (I know this is not the case, I'm using it as an illustration of
+> principle).
+>=20
+> Path MTU discovery overrides MSS in a TCP connection.  It must do, or
+> else a link somewhere else along the way with a small MTU would never be
+> handled properly.
 >=20
 
-Yeah. I'll do this.
+Good diagram. That clarified the whole thing.=20
+
+> Have you proved ICMP fragmentation needed packets have arrived at
+> www.yle.fi?  A packet trace at that host would be the proof.
+>=20
+
+I'll ask them..=20
+
+> > I think so too. but www.yle.fi web server doesn't want to go below
+> > mss (told by the client) + headers.
+>=20
+> Just repeating myself; www.yle.fi MUST go below the client's MSS if
+> PMTUD results in a lower value.  As Frank said, the MTU might be
+> assymetric.  As I say, it might be that there's another restricted link.
+> The evidence you present leads me to suspect ICMP filtering.
+>=20
+
+Yep. This is obvious now. Maybe it's broken icmp handling in the
+loadbalancer..
 
 -- Pasi K=E4rkk=E4inen
       =20
