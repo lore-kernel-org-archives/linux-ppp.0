@@ -1,7 +1,7 @@
-From: Frank Cusack <fcusack@fcusack.com>
-Date: Tue, 03 Feb 2004 16:25:55 +0000
+From: James Cameron <james.cameron@hp.com>
+Date: Tue, 03 Feb 2004 22:01:21 +0000
 Subject: Re: ppp-2.4.2 released
-Message-Id: <20040203082555.A14463@google.com>
+Message-Id: <20040203220121.GA8838@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
 In-Reply-To: <16391.33929.908463.444449@cargo.ozlabs.ibm.com>
@@ -10,17 +10,28 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Tue, Feb 03, 2004 at 05:10:38PM +0200, Pasi K?rkk?inen wrote:
-> OK. The problem is that www.yle.fi is not the only site showing
-> this problem. There are many others too.
+On Tue, Feb 03, 2004 at 08:25:55AM -0800, Frank Cusack wrote:
+> MS pptp-server is broken for ppp though.  It sends frames that are too
+> large (>MTU).  This will break some pppd's.  Maybe I can work up a patch
+> in the next few days.  Don't hold your breath, though.
 
-Yeah, lots of sites don't handle PMTU-D correctly. :(
+If you need motivation, section 3.3.4 of RFC1812 says that a router (in
+this case pppd) SHOULD be willing to receive a packet as large as the
+maximum frame size even if that is larger than the MTU.
 
-> I wonder what the right(tm) solution is.. (this problem does not happen with
-> microsoft pptp-server also running mppe).
+http://www.faqs.org/rfcs/rfc1812.html
 
-MS pptp-server is broken for ppp though.  It sends frames that are too
-large (>MTU).  This will break some pppd's.  Maybe I can work up a patch
-in the next few days.  Don't hold your breath, though.
+It then goes on to say ...
 
-/fc
+      If a network is using an MTU smaller than the maximum frame size
+      for the Link Layer, a router may receive packets larger than the
+      MTU from misconfigured and incompletely initialized hosts.  The
+      Robustness Principle indicates that the router should successfully
+      receive these packets if possible.
+
+I've no idea what supercedes RFC1812.
+
+-- 
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
