@@ -1,7 +1,7 @@
-From: "Milan P. Stanic" <mps@rns-nis.co.yu>
-Date: Fri, 23 Jan 2004 22:23:15 +0000
+From: Paul Mackerras <paulus@samba.org>
+Date: Sat, 24 Jan 2004 23:07:34 +0000
 Subject: Re: pppd 2.4.2, Control-C bug?
-Message-Id: <20040123222315.GA24521@rns-nis.co.yu>
+Message-Id: <16402.64182.971593.412675@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.LNX.4.21.0401231150020.2019-100000@corncob.localhost.tld>
 In-Reply-To: <Pine.LNX.4.21.0401231150020.2019-100000@corncob.localhost.tld>
@@ -10,7 +10,8 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Fri, Jan 23, 2004 at 02:53:13PM -0600, Clifford Kite wrote:
+Clifford Kite writes:
+
 > Problem:  After pppd 2.4.2 - with the updetach option - is run by root
 > from a terminal window, a control-C from the keyboard before the PPP
 > link completes doesn't terminate pppd.
@@ -28,27 +29,47 @@ On Fri, Jan 23, 2004 at 02:53:13PM -0600, Clifford Kite wrote:
 > 
 > repeated, seemingly without end.  "kill -TERM $(pidof pppd)" doesn't
 > terminate pppd or the messages.  "kill -KILL $(pidof pppd)" does both.
-> 
-> From /var/log/messages:
-> Jan 23 11:19:34 corncob pppd[1849]: pppd 2.4.2 started by root, uid 0
-> Jan 23 11:19:34 corncob pppd[1849]: Removed stale lock on ttyS1 (pid 1828)
-> Jan 23 11:19:35 corncob pppd[1849]: Terminating on signal 2.
-> Jan 23 11:19:50 corncob last message repeated 33707 times
-> 
-> The same thing occurs after a Control-C before completion of the
-> usual connection script, which reports pppd's return status after
-> "kill -KILL $(pidof pppd)":
-> 
-> The pppd return status is 137
-> 
-> Pppd 2.4.2b3 does correctly terminate with a Control-C by root at the
-> keyboard.
-> 
-> Is it me or pppd 2.4.2? :)
 
-I noticed that, but I patched pppd-2.4.2 to have callback with
-portslave in "server mode". Because that I thought that the patch
-is bad. Your message convinced me that that problem is in the stock
-pppd, especially because the same patch applied to 2.4.2b3 didn't
-show any problem.
+Yes.  We got a "bug" report from a user (who didn't understand what
+the code was actually doing) and one of the ppp team checked in his
+proposed fix.  I didn't catch it because it looked plausible and I
+didn't think hard enough about what was going on, and because I hadn't
+originally put in a big fat comment about the subtle stuff that was
+going on.  The end result is this bug. :(
 
+Just for interest, this is the patch that went in, altering pppd/main.c:
+
+ static void
+ kill_my_pg(sig)
+     int sig;
+ {
+     struct sigaction act, oldact;
+
+     act.sa_handler = SIG_IGN;
+     act.sa_flags = 0;
+-    kill(0, sig);
+     sigaction(sig, &act, &oldact);
++    kill(0, sig);
+     sigaction(sig, &oldact, NULL);
+ }
+
+Now, at this point we have SIGINT and SIGTERM blocked, and the kill()
+call is sending the SIGINT or SIGTERM (whichever we received) to our
+process group, including the current process.  If you do the kill
+after setting the action for the signal to "ignore", then the signal
+is blocked and ignored at the point where we generate it.  According
+to POSIX, it is unspecified whether the signal is immediately
+discarded in this situation or is left pending.  Linux leaves it
+pending.  We then set the action back to the normal action (which is
+to call a signal handler) and then return from the handler, which
+unblocks the signal.  It then gets delivered.  Hence the infinite
+loop.
+
+POSIX also says that setting the action for a pending, blocked signal
+to "ignore" causes the signal to be discarded.  Thus, doing the kill
+before the two sigaction calls ensures that the signal we just sent
+doesn't subsequently get delivered to the current process, and only
+gets delivered to the other processes in the process group.  Which is
+the effect we are trying to achieve.
+
+Paul.
