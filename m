@@ -1,67 +1,109 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Sun, 14 Nov 2004 12:01:25 +0000
-Subject: ppp-2.4.3 released
-Message-Id: <16791.18709.501023.879758@cargo.ozlabs.ibm.com>
+From: Mohan V <mohanv@aftek.com>
+Date: Wed, 15 Dec 2004 14:17:32 +0000
+Subject: usb-serial and PPP
+Message-Id: <41C044AC.2020304@aftek.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-I have just released ppp-2.4.3; it is available at:
+Hello all,
 
-ftp://ftp.samba.org/pub/ppp/ppp-2.4.3.tar.gz.
+I am using Triton board with linux-2.4.19-rmk7-pxa1. I am using=20
+usb-serial driver to get the ppp interface on the board. On the host=20
+(Mandrake 10, 2.6.3 kernel), I am using the MPPP client for dialing.
 
-There are quite a few changes since 2.4.2.  Apart from fixes for
-several bugs, the changes include:
+I give the command on the host and I get the following:
 
-* The configure script now accepts --prefix and --sysconfdir options.
-  These default to /usr/local and /etc.  If you want pppd put in
-  /usr/sbin as before, use ./configure --prefix=/usr.
+mppp -quit 0
 
-* Doing `make install' no longer puts example configuration files in
-  /etc/ppp.  Use `make install-etcppp' if you want that.
+Initializing Modem ...mppp.c(2113): Attempt:   1
+mppp.c(2144): modbuf=3DATZ
+mppp.c(2180): Found what we expected=3DOK
+initialized
+Dialing 1111111, Speed 9600 ...mppp.c(2113): Attempt:   1
+mppp.c(2144): modbuf=3DATX4DT1111111
+mppp.c(2144): modbuf=CARRIER
+mppp.c(2144): modbufmppp.c(2180): Found what we expected=3DCONNECT
+ -done-
+Initiating send-expect sequence ... -done-
+Negotiating ppp handshake...
+mppp.c(1129): smpppd->pppd-args=3Dnoauth nodefaultroute passive debug=20
+nocrtscts noccp nomp nocdtrcts -detach
+mppp.c(1140): pppd args taken from cfg file
+mppp.c(1189): pppd id263
+mppp.c(1930): All Happy!!!!!!!!!!!!  -done-
 
-* The code has been updated to work with version 0.8.3 of libpcap.
-  Unfortunately the libpcap maintainers removed support for the
-  "inbound" and "outbound" keywords on PPP links, meaning that if you
-  link pppd with libpcap-0.8.3, you can't use those keywords in the
-  active-filter and pass-filter expressions.  The support has been
-  reinstated in the CVS version and should be in future libpcap
-  releases.  If you need the in/outbound keywords, use a later release
-  than 0.8.3, or get the CVS version from http://www.tcpdump.org.
+Connected! (Number 1111111) (Baud 9600)
+mppp.c(1971): g_quit=3D1
+mppp.c(1974): g_quit_time=3D0, exiting in 5 seconds
 
-* There is a new option, child-timeout, which sets the length of time
-  that pppd will wait for child processes (such as the command
-  specified with the pty option) to exit before exiting itself.  It
-  defaults to 5 seconds.  After the timeout, pppd will send a SIGTERM
-  to any remaining child processes and exit.  A value of 0 means no
-  timeout.
+using channel 1
+Using interface ppp0
+Connect: ppp0 <--> /dev/usb/acm/0
+Looking for secret in /etc/ppp/pap-secrets for client mohan server (null)
+Looking for secret in /etc/ppp/chap-secrets for client mohan server (null)
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xb9a13aff> <pcomp> <accom=
+p>]
+LCP: timeout sending Config-Requests
 
-* Various bugs have been fixed, including some CBCP packet parsing
-  bugs that could lead to the peer being able to crash pppd if CBCP
-  support is enabled.
+On the device side, I am using an application, which on receiving ATDT=20
+command starts the pppd with the following options:
+pppd /dev/usbser 192.168.100.1: 192.168.100.2 9600 noccp nomp -detach=20
+nocrtscts nocdtrcts noauth proxyarp passive debug
+I am getting the following messages:
 
-* Various fixes and enhancements to the radius and rp-pppoe plugins
-  have been added.
+using channel 1
+Using interface ppp0
+Connect: ppp0 <--> /dev/usbser
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
+sent [LCP ConfReq id=3D0x1 <asyncmap 0x0> <magic 0xca162569> <pcomp> <accom=
+p>
 
-* There is a new winbind plugin, from Andrew Bartlet of the Samba
-  team, which provides the ability to authenticate the peer against an
-  NT domain controller using MS-CHAP or MS-CHAPV2.
+LCP: timeout sending Config-Requests
 
-* There is a new pppoatm plugin, by various authors, sent in by David
-  Woodhouse.
+If i do ifconfig I get the ppp0 interface but with no inet and P-to-P=20
+address.
 
-* The multilink code has been substantially reworked.  The first pppd
-  for a bundle still controls the ppp interface, but it doesn't exit
-  until all the links in the bundle have terminated.  If the first
-  pppd is signalled to exit, it signals all the other pppds
-  controlling links in the bundle.
+Thanks for ur time.
 
-* The TDB code has been updated to the latest version.  This should
-  eliminate the problem that some people have seen where the database
-  file (/var/run/pppd.tdb) keeps on growing.  Unfortunately, however,
-  the new code uses an incompatible database format.  For this reason,
-  pppd now uses /var/run/pppd2.tdb as the database filename.
+regards,
+mohan
 
-Paul.
+
