@@ -1,56 +1,62 @@
-From: Sebastien Hugues <sebastien.hugues@swissinfo.org>
-Date: Tue, 06 Jan 2004 10:53:41 +0000
-Subject: LCP terminated by peer
-Message-Id: <3FFB1210.2080606@swissinfo.org>
+From: Bill Unruh <unruh@physics.ubc.ca>
+Date: Tue, 06 Jan 2004 19:34:28 +0000
+Subject: Re: LCP terminated by peer
+Message-Id: <Pine.LNX.4.50.0401061131120.26940-100000@string.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <3FFB1210.2080606@swissinfo.org>
+In-Reply-To: <3FFB1210.2080606@swissinfo.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi,
+On Tue, 6 Jan 2004, Sebastien Hugues wrote:
 
-I want a GPRS connection throught bluetooth and my Nokia 3650 but it 
-doesn't
-work. Ppp logs are:
+> Hi,
+> 
+> I want a GPRS connection throught bluetooth and my Nokia 3650 but it 
+> doesn't
 
-pppd 2.4.1 started by root, uid 0
-Serial connection established.
-using channel 13
-Using interface ppp0
-Connect: ppp0 <--> /dev/pts/3
-rcvd [LCP ConfReq id=0x0 <auth pap> <mru 1500> <asyncmap 0xa0000>]
-sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0x6208c48e> <pcomp> <accomp>]
-sent [LCP ConfRej id=0x0 <auth pap>]
-rcvd [LCP ConfRej id=0x1 <magic 0x6208c48e> <pcomp> <accomp>]
-sent [LCP ConfReq id=0x2 <asyncmap 0x0>]
-rcvd [LCP ConfReq id=0x1 <mru 1500> <asyncmap 0xa0000>]
-sent [LCP ConfAck id=0x1 <mru 1500> <asyncmap 0xa0000>]
-rcvd [LCP ConfAck id=0x2 <asyncmap 0x0>]
-sent [IPCP ConfReq id=0x1 <addr 0.0.0.0> <compress VJ 0f 01>]
-sent [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
-rcvd [IPCP ConfReq id=0x0 <addr 10.6.6.6>]
-sent [IPCP ConfAck id=0x0 <addr 10.6.6.6>]
-rcvd [LCP ProtRej id=0x0 80 fd 01 01 00 0f 1a 04 78 00 18 04 78 00 15 03 2f]
-rcvd [LCP TermReq id=0x2]
-LCP terminated by peer
-sent [LCP TermAck id=0x2]
-Connection terminated.
-Couldn't release PPP unit: Invalid argument
-Serial link disconnected.
+Put in noccp into the ppp/options file, and set up your pap-secrets file
+properly and use the 
+user username
+where username is your name on the remote ppp host and in the
+pap-secrets file.
 
-my ppp options:
-noauth
-local
-notty
-defaultroute
-nodetach
-nocrtscts
-noipdefault
-debug
+> sent [LCP ConfRej id=0x0 <auth pap>]
 
-Any ideas ? Thanks a lot..
+You reject pap. why?
 
-Regards
-Seb
+> sent [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
 
+You ask for compressions that noone but a linux box would be able to
+use. Why?
+> my ppp options:
+> noauth
+> local
+> notty
+> defaultroute
+> nodetach
+> nocrtscts
+
+why do you have no hardware flow control?
+
+> noipdefault
+> debug
+> 
+> Any ideas ? Thanks a lot..
+> 
+> Regards
+> Seb
+> 
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+
+-- 
+William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
+Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
+UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
+Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
