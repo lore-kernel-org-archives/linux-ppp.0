@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Thu, 24 Jun 2004 21:14:32 +0000
+From: Jaspreet Singh <jaspreet_sachdev@yahoo.com>
+Date: Fri, 25 Jun 2004 14:37:52 +0000
 Subject: Re: restarting pppd
-Message-Id: <Pine.LNX.4.50.0406241412550.23086-100000@string.physics.ubc.ca>
+Message-Id: <20040625143752.50767.qmail@web50204.mail.yahoo.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20040624201058.23124.qmail@web50203.mail.yahoo.com>
 In-Reply-To: <20040624201058.23124.qmail@web50203.mail.yahoo.com>
@@ -10,15 +10,40 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, 24 Jun 2004, Jaspreet Singh wrote:
+You are right. This seems to work. Thanks
+-Jaspreet
 
-> Hi,
-> If I am not using mgetty then is there a way to
-> restart pppd after a connection has been established
-> and terminated?
+--- Andy <fs@globalnetit.com> wrote:
+> That's the "persistent" option, isn't it?
+> 
+> On Thu, 2004-06-24 at 16:10, Jaspreet Singh wrote:
+> > Hi,
+> > If I am not using mgetty then is there a way to
+> > restart pppd after a connection has been
+> established
+> > and terminated?
+> > 
+> > Regards,
+> > Jaspreet
+> > 
+> > 
+> > 
+> > 		
+> > __________________________________
+> > Do you Yahoo!?
+> > Yahoo! Mail - You care about security. So do we.
+> > http://promotions.yahoo.com/new_mail
+> > -
+> > To unsubscribe from this list: send the line
+> "unsubscribe linux-ppp" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at 
+> http://vger.kernel.org/majordomo-info.html
+> 
+> 
 
-Why are you not using mgetty? mgetty is THE way of answering a modem--
-or do you mean that you are not using a modem? 
-You could always start up pppd in /etc/inittab with the passive option
-if you really wanted to, and if you have a direct connection between the
-two machines. In any other case, pls use mgetty.
+
+__________________________________________________
+Do You Yahoo!?
+Tired of spam?  Yahoo! Mail has the best spam protection around 
+http://mail.yahoo.com 
