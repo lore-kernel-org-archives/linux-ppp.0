@@ -1,7 +1,7 @@
-From: "Michael St. Laurent" <mikes@hartwellcorp.com>
-Date: Tue, 16 Mar 2004 17:25:04 +0000
-Subject: RE: Moving logwtmp
-Message-Id: <91A5926EFF44D3118B1200104B7276EB02C56E21@hart-exchange.hartwellcorp.com>
+From: James Carlson <carlson@workingcode.com>
+Date: Tue, 16 Mar 2004 20:26:08 +0000
+Subject: Re: Moving logwtmp
+Message-Id: <16471.25312.832766.345659@c-24-147-210-59.ne.client2.attbi.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <91A5926EFF44D3118B1200104B7276EB02C56E0B@hart-exchange.hartwellcorp.com>
 In-Reply-To: <91A5926EFF44D3118B1200104B7276EB02C56E0B@hart-exchange.hartwellcorp.com>
@@ -10,38 +10,21 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-James Carlson <mailto:carlson@workingcode.com> wrote:
-> James Cameron writes:
->> plogin() in auth.c calls logwtmp().  plogin() is only called if PAP
->> authentication is being done, and the secret is "@login", meaning
->> that the system's authentication is being used.  Or PAM.
+Milan P. Stanic writes:
+> On Tue, Mar 16, 2004 at 07:54:04AM -0500, James Carlson wrote:
+> > I'd support that as a configuration option, though, with appropriate
+> > warnings.  ("If you do this, then your wtmp file will contain
+> > PPP-authenticated names that might not match real UIDs on your system,
+> > and may confuse the heck out of management software.")
 > 
-> Right.  The implication is that the remote peer name is authenticated
-> as being a system user.
-> 
->> But even so, I can see that a logwtmp() in the other authentication
->> paths would help with accounting, and "who".
-> 
-> I'm not so sure that's right.  The problem is that if the peer name
-> isn't authenticated as a system user name, then it's essentially an
-> arbitrary (and PPP-local) identifier, and it really ought not appear
-> in wtmp.  It'd be essentially equivalent to recording wtmp entries for
-> users authenticated via Apache .htaccess.
-> 
-> I'd support that as a configuration option, though, with appropriate
-> warnings.  ("If you do this, then your wtmp file will contain
-> PPP-authenticated names that might not match real UIDs on your system,
-> and may confuse the heck out of management software.")
+> Maybe is beter to make that compile time option.
 
-Sure, a configuration option to turn it on or off would be an excellent
-idea.
+Why?  In my opinion, compile time options should be reserved for
+extreme cases where it just can't be compiled at all on certain
+systems without the flag.
 
-Where should the new code be located?
-
-If nobody more qualified than I is willing to do this one then I'll take a
-crack at it.  However, it might be best if someone more familiar with the
-ppp source code were to do the honors.
+Mere changes in behavior should not require the application to be
+recompiled from source, should they?
 
 -- 
-Michael St. Laurent
-Hartwell Corporation
+James Carlson                                  <carlson@workingcode.com>
