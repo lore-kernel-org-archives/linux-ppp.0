@@ -1,77 +1,51 @@
-From: "Sadiq Shaikh" <sadiq.shaikh@analog.com>
-Date: Tue, 28 Dec 2004 04:34:21 +0000
-Subject: RE: pppoatm: tring to insert module pppoatm.o, although plugin pppoatm.so is loaded.
-Message-Id: <ALEGKCGFAAHCNBMHOENDAEAKCJAA.sadiq.shaikh@analog.com>
+From: Greg Stark <gsstark@mit.edu>
+Date: Fri, 10 Dec 2004 06:30:22 +0000
+Subject: Kernel memory leak with PPPoE
+Message-Id: <87d5xi7ji9.fsf@stark.xeocode.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <ALEGKCGFAAHCNBMHOENDKEAICJAA.sadiq.shaikh@analog.com>
-In-Reply-To: <ALEGKCGFAAHCNBMHOENDKEAICJAA.sadiq.shaikh@analog.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi,
 
-Thank you, it did help me. I could do some progress.
-Now I'm seeing this error "setsockopt(SO_ATMQOS): Invalid argument"
-on console. Whats going wrong now. when i trace it, i found optname
- value for setsockopt is userland is different than in kernel.
-Although i use SO_ATMQOS in pppd/plugins/pppoatm.c
-Also do i need to apply patches to kernel since i'm using 2.4.18 ?
-If yes, where i can get those patches ?
+I'm not sure if this is the right list or perhaps linux-kernel. But I figure
+people here will at least be interested even if it's not strictly in your
+bailiwick.
 
-Thank you in Advance,
--sadiq.
+The other day my ISP went down for a few days (They hadn't paid their bills to
+the ILEC, doh). I discovered that there's a kernel memory leak in the pppoe
+module somewhere.
 
+Since there was no config option I have my pppd patched to keep retrying PPPoE
+forever rather than giving up after a few iterations. (Why do people write
+code with hard coded limitations like that anyways? argh!). 
 
+After a few hours of PPPoE interface creation and teardown on PAP
+authentication failures my router box (a poor 486 with 24M of memory) started
+swapping. By the end of the first day it was swapping madly and eventually
+became totally unresponsive.
 
+The same thing happened later after I rebooted it, except I stopped pppd
+completely. The problem did not go away. I'm pretty convinced it's a kernel
+memory leak by the fact that the machine kept swapping after pppd died. I've
+seen the same symptoms in the past too in the same circumstances (it's not a
+very reliable ISP).
 
------Original Message-----
-From: linux-ppp-owner@vger.kernel.org
-[mailto:linux-ppp-owner@vger.kernel.org]On Behalf Of Gilles Espinasse
-Sent: Monday, December 27, 2004 11:47 AM
-To: Sadiq Shaikh
-Cc: PPP mailing list
-Subject: Re: pppoatm: tring to insert module pppoatm.o, although plugin
-pppoatm.so is loaded.
+This isn't totally up to date source code, but I'm pretty sure the PPPoE
+kernel module hasn't undergone much work in the past year or so has it?
 
+This is Linux 2.4.21 with the ppp_generic, pppox, pppoe modules. pppd version
+2.4.2b2 which I believe I actually built from CVS sources.
 
+I know it's suboptimal to report a bug report without reproducing it with a
+clean unpatched, preferably recent, version. However this is my router box and
+I upgrading it to linux 2.6 would be a major project (and I believe 2.4 suits
+the 486 better). And with the unpatched pppd I would have to script restarting
+pppd repeatedly (and deal with the consequences of the interface disappearing
+and reappearing) since the pppoe module has a hard coded constant number of
+retries before it aborts.
 
------ Original Message -----
-From: "Sadiq Shaikh" <sadiq.shaikh@analog.com>
-To: <linux-ppp@vger.kernel.org>
-Sent: Tuesday, December 28, 2004 12:54 AM
-Subject: pppoatm: tring to insert module pppoatm.o, although plugin
-pppoatm.so is loaded.
-
-
-> Hi,
->
-> I'm working on pppoatm. Recently i have downloaded
-> ppp-2.4.3. I'm running into problem, its will be great
-> if someone answer my questions.Thank you in advance.
->
-> 1) Why ppp0 interface is not created ?
-because of 2)
-
-> 2) why its trying to insert module, when i added it as plugin.
-
-You need both a module for the kernel and a plugin for pppd
-
-> 3) I'm using ppp-2.4.3, linux kernel 2.4.18, any issues with this
-> combination ?
->
-CONFIG_PPPOATM=m is available on my rh7.3 2.4.18-3 .config, I don't know for
-a standard kernel.
-
-I don't know what is the driver you try to support but if it compile on
-2.4.18 and is old, you may need small changes with 2.4.20, 2.4.21 and
-2.4.22. Later no more changes than in 2.4.22 should be necessary if I
-remember well.
-
-
--
-To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+greg
 
