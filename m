@@ -1,42 +1,41 @@
-From: ben_gal@libero.it
-Date: Sun, 27 Feb 2005 10:07:38 +0000
-Subject: Re: Client requesting its authentication
-Message-Id: <20050227100738.GA4752@ytsejam>
+From: Adrian Bunk <bunk@stusta.de>
+Date: Fri, 18 Feb 2005 23:56:30 +0000
+Subject: [2.6 patch] drivers/net/ppp_deflate.c: make 2 structs static
+Message-Id: <20050218235630.GF4337@stusta.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20050224162619.GB5787@ytsejam>
-In-Reply-To: <20050224162619.GB5787@ytsejam>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: jgarzik@pobox.com, paulus@samba.org
+Cc: linux-ppp@vger.kernel.org, linux-net@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On Thu, Feb 24, 2005 at 01:53:20PM -0500, James Carlson wrote:
-> That said, I see the point now, and, no, there's no option that
-> currently does that.  You'll need to add one or, better yet, make pppd
-> just do that by default when EAP TLS client side is configured.
+This patch makes two needlessly global structs static.
 
+Signed-off-by: Adrian Bunk <bunk@stusta.de>
 
-I resolved with this code in auth.c , link_established():
+---
 
+ drivers/net/ppp_deflate.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-    if(need_peer_eap && !ao->neg_eap) {
-       warn("eap required to authenticate us but no suitable secrets");
-        lcp_close(unit, "couldn't negotiate eap");
-        status = EXIT_AUTH_TOPEER_FAILED;
-        return;
-    }
+--- linux-2.6.11-rc3-mm2-full/drivers/net/ppp_deflate.c.old	2005-02-16 18:06:29.000000000 +0100
++++ linux-2.6.11-rc3-mm2-full/drivers/net/ppp_deflate.c	2005-02-16 18:06:45.000000000 +0100
+@@ -600,7 +600,7 @@
+ /*
+  * Procedures exported to if_ppp.c.
+  */
+-struct compressor ppp_deflate = {
++static struct compressor ppp_deflate = {
+ 	.compress_proto =	CI_DEFLATE,
+ 	.comp_alloc =		z_comp_alloc,
+ 	.comp_free =		z_comp_free,
+@@ -618,7 +618,7 @@
+ 	.owner =		THIS_MODULE
+ };
+ 
+-struct compressor ppp_deflate_draft = {
++static struct compressor ppp_deflate_draft = {
+ 	.compress_proto =	CI_DEFLATE_DRAFT,
+ 	.comp_alloc =		z_comp_alloc,
+ 	.comp_free =		z_comp_free,
 
-    if (need_peer_eap && !ho->neg_eap){
-        warn("peer doesn't want to authenticate us with eap");
-        lcp_close(unit, "couldn't negotiate eap");
-        status = EXIT_PEER_AUTH_FAILED;
-        return;
-    }
-
-
-So if the need_peer_eap option is used the eap authentication can't
-be skipped.
-I don't use LCP Configure-Nak because, as you noticed, if the peer
-doesn't ask eap, probably won't accept the suggestion.
-
-Hi.
