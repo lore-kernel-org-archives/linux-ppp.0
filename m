@@ -1,27 +1,19 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Fri, 26 Nov 2004 00:51:02 +0000
-Subject: Re: some change in ppp 2.4.3: tcflush failed: Bad file descriptor
-Message-Id: <16806.32246.147129.888448@cargo.ozlabs.ibm.com>
+From: "Rana, Gaurav (STP)" <Gaurav.Rana@guidant.com>
+Date: Thu, 11 Nov 2004 16:03:34 +0000
+Subject: PPP Timeout
+Message-Id: <AB78549255EA7A4683F64803C159436D02EE4F47@stpmse02.stp.guidant.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200411231157.43347.arekm@pld-linux.org>
-In-Reply-To: <200411231157.43347.arekm@pld-linux.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Arkadiusz Miskiewicz writes:
+I have a question about the PPPD timeout.
 
-> Looking into pppoa code I see that read() of 0 is handled (exit(0) in such 
-> case). Did anything change between 2.4.2 and 2.4.3 in this area? 2.4.2 causes 
-> that pppoa terminates properly while 2.4.3 not.
+I am using PPPD 2.4.2 on Linux (embedded system)
 
-Interesting.  2.4.3 has some changes to make sure that we don't leak
-file descriptors or leave them open when we shouldn't, but maybe
-there's still a bug.  Can you send me the whole strace log?
+I successfully establish a connection with a ISP, get an IP address, and then for testing purposes I plug out the modem wire. Subsequently, any application writing (I use write() ) to the pppd socket just hangs and then after 15 minutes or so write() returns with an error. Is there anyway I could reduce this timeout to 5 minutes or so?
 
-> isn't tcflush failing a reason for a pppoa to not terminate?
+Thanks,
+Gaurav
 
-Nope.
-
-Paul.
