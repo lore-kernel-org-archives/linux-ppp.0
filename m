@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 18 Nov 2004 12:04:29 +0000
+From: K-sPecial <spam@blazemail.com>
+Date: Thu, 18 Nov 2004 18:06:38 +0000
 Subject: Re: Socket doesn't get EOF
-Message-Id: <16796.36813.379818.814193@carlson.workingcode.com>
+Message-Id: <419CE4AE.2020705@blazemail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <41998875.2020305@blazemail.com>
 In-Reply-To: <41998875.2020305@blazemail.com>
@@ -10,33 +10,35 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-K-sPecial writes:
-> Well, yes and no. In the way of the bot, not drasticly. Although the 
-> other day I was programming some perl that needed to know when the 
-> computer was online and when it wasn't. I realy didn't give it as much 
-> thought as I could have, but resorted to the resolution of a popular 
-> name server, such as internic.net. This of course can also have problems 
-> 
-> when your DNS server(s) happens to not cooperate. Honestly i'm sure this 
-> isn't the correct manor to go about such a thing, but for what I needed 
-> it for, it should suffice. I was going to test for interfaces being up, 
-> which would work in the case of pppd, just not in the case of say DSL 
-> where your interface can obviously still be up yet your modem isn't online.
+> Even if the interfaces are up and the modem is "on line," that doesn't
+> mean that any particular host is actually reachable.  That sort of
+> global knowledge just isn't knowable, except in retrospect: if the
+> connection times out, then that host obviously can't be reached.
 
-SIOCGIFCONF can tell you if you have interfaces available.
+Well there the problem lies within, the script was meant to to check if 
+a port was open every so often, if it's down, check if your online, then 
+possibly wait again to see if it opens back up, say 10 minutes (maybe 
+the computer rebooted, maybe crontab will restart it), check again if 
+online, then point the hostname to a different ip and start checking if 
+the old host is back up again (so I can change it back). So just 
+checking if I could access the host is what I was *double* checking, of 
+course I couldn't rely on just the fact that I can't reach the port, 
+before updating it to a new ip.
 
-Even if the interfaces are up and the modem is "on line," that doesn't
-mean that any particular host is actually reachable.  That sort of
-global knowledge just isn't knowable, except in retrospect: if the
-connection times out, then that host obviously can't be reached.
+ > That's what timeouts are for.  You can use the existing default
+ > timeout provided by TCP, or (if that's too long) you can set up your
+ > own timer with alarm() or similar functions.
 
-> But as to your question, I would say there is, when you just need to 
-> know, period, if you can successfuly access a remote node via the 
-> Internet, and don't actualy need the support of an exact cause.
+Yup, i'm not sure but it seems the timeout optino that IO::Socket uses 
+is just a connect timeout, it didn't seem to register when pppd died, 
+could be wrong.
 
-That's what timeouts are for.  You can use the existing default
-timeout provided by TCP, or (if that's too long) you can set up your
-own timer with alarm() or similar functions.
+--K-sPecial
 
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+[ http://xzziroz.freeshell.org
+   irc://xzziroz.dtdns.net       ]
+
+
+
+
+
