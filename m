@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 25 Feb 2005 12:52:00 +0000
+From: ben_gal@libero.it
+Date: Sun, 27 Feb 2005 10:07:38 +0000
 Subject: Re: Client requesting its authentication
-Message-Id: <16927.8048.993418.13355@gargle.gargle.HOWL>
+Message-Id: <20050227100738.GA4752@ytsejam>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20050224162619.GB5787@ytsejam>
 In-Reply-To: <20050224162619.GB5787@ytsejam>
@@ -10,51 +10,33 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Bill Unruh writes:
-> > When you negotiate EAP, the side that sends LCP Configure-Request for
-> > EAP is the authenticator; the other side is the authenticatee.  The
-> > authenticator drives the conversation by sending EAP Request
-> > messages.  The authenticatee merely responds.
-> 
-> Perhaps, but what he wants is for the far side to authenticate itself to
-> him. Period. How it happens is irrelevant. Now if the far side refuses.
-> then he has to decide what to do. It is up to him. He cannot force the
-> other side to do anything. His only option is walking away or not.
+On Thu, Feb 24, 2005 at 01:53:20PM -0500, James Carlson wrote:
+> That said, I see the point now, and, no, there's no option that
+> currently does that.  You'll need to add one or, better yet, make pppd
+> just do that by default when EAP TLS client side is configured.
 
-How the authentication happens *is* relevant.
 
-First of all, EAP TLS is not symmetric.  The two sides have different
-data.  (Think of PAP with the "papcrypt" option; you couldn't reverse
-roles there.)
+I resolved with this code in auth.c , link_established():
 
-Secondly, he wants to see EAP TLS happen.  Sure, he could challenge
-the peer with some other authentication protocol (say, CHAP), but he's
-decided that (for whatever reason) his security requirements include
-having TLS in the picture.  So just switching to a different protocol
-is unacceptable as well.
 
-> > In this case, he wants his peer to be an authenticator.  It's supposed
-> > to have the right keys.  His question is what should he do if that
-> > peer *doesn't* behave as an authenticator.
-> >
-> 
-> He decides whether or not to walk away.
+    if(need_peer_eap && !ao->neg_eap) {
+       warn("eap required to authenticate us but no suitable secrets");
+        lcp_close(unit, "couldn't negotiate eap");
+        status = EXIT_AUTH_TOPEER_FAILED;
+        return;
+    }
 
-Exactly.  That's what I said.
+    if (need_peer_eap && !ho->neg_eap){
+        warn("peer doesn't want to authenticate us with eap");
+        lcp_close(unit, "couldn't negotiate eap");
+        status = EXIT_PEER_AUTH_FAILED;
+        return;
+    }
 
-The interesting wrinkle is that he *could* use an unsolicited LCP
-Configure-Nak to try to prod the peer into doing what he wants.
-Windows apparently does this.  I don't think it's a worthwhile
-exercise, but it's certainly doable.
 
-> > He doesn't have the keys on his side to behave as an authenticator, so
-> > that's out of the question.
-> 
-> That cannot be right, since he is also authenticating the far side. Ie, he
-> MUST have enough info to do that.
+So if the need_peer_eap option is used the eap authentication can't
+be skipped.
+I don't use LCP Configure-Nak because, as you noticed, if the peer
+doesn't ask eap, probably won't accept the suggestion.
 
-The protocol isn't symmetric.  The authentication is mutual, but
-different information is used.  You can't just reverse the roles.
-
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+Hi.
