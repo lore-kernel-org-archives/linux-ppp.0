@@ -1,18 +1,45 @@
-From: Clive Nicolson <clive@baby.bedroom.gen.nz>
-Date: Thu, 08 Jul 2004 02:52:41 +0000
-Subject: Re: pppd with radius-plugin seems to have troubles with traffic
-Message-Id: <Pine.LNX.4.44.0407081449310.27897-100000@pentiumii.bedroom.gen.nz>
+From: "Matthew N. Dodd" <mdodd@patton.com>
+Date: Fri, 16 Jul 2004 16:22:30 +0000
+Subject: RE: ppp MULTILINK issue / problem
+Message-Id: <001e01c46b51$24916d50$67160a0a@ATLANTIC>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20040622154645.GA12959@kolmann.at>
-In-Reply-To: <20040622154645.GA12959@kolmann.at>
+References: <BCBD226C.57C%tchen@on-go.com>
+In-Reply-To: <BCBD226C.57C%tchen@on-go.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-This is no bug, the counter is unsigned 32 bit, so can only count upto
-4294967295. You have to watch out for roll over your self and correct for 
-the situation. There maybe useful tricks in doing that.
+linux-ppp-owner@vger.kernel.org wrote:
+> Subject: ppp MULTILINK issue / problem
+...
+> now i am testing "UNBUNDLING" of the link.... if i unplug
+> the one of the modem (not the master link), i do not see
+> the IP traffic anymore, though i do see data on the serial
+> link (i put a serial line monitor on the serial port),
+> but no more IP packets coming out of PPP
+...
 
-Clive
+I just ran into this and discovered that PPPIOCDISCONN is never being
+called when pppd brings the link down.
+
+This causes the MP fragmentation queue to stall.
+
+Calling this IOCTL in sys-linux.c:generic_disestablish_ppp() fixes the
+problem for me.
+
+ void generic_disestablish_ppp(int dev_fd)
+ {
+     if (new_style_driver) {
++       if (ioctl(ppp_fd, PPPIOCDISCONN) < 0)
++           error("Couldn't detach from PPP unit %d: %m", ifunit);
+        close(ppp_fd);
+        ppp_fd = -1;
+        if (demand) {
+
+--
+Matthew N. Dodd <mdodd@patton.com>
+Software Engineer, Patton Electronics
+7622 Rickenbacker Dr., Gaithersburg,  MD 20879
+(301) 975-1000x184
 
