@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 24 Feb 2005 17:48:57 +0000
+From: ben_gal@libero.it
+Date: Thu, 24 Feb 2005 18:08:07 +0000
 Subject: Re: Client requesting its authentication
-Message-Id: <16926.5001.19271.820045@gargle.gargle.HOWL>
+Message-Id: <20050224180807.GB2421@ytsejam>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20050224162619.GB5787@ytsejam>
 In-Reply-To: <20050224162619.GB5787@ytsejam>
@@ -10,9 +10,14 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Bill Unruh writes:
+On Thu, Feb 24, 2005 at 09:43:11AM -0800, Bill Unruh wrote:
 > He understood you perfectly. That is precicely what the refuse-... do,
-> except that you cannot force the other side to authenticate you . If you
+> except that 
+> you cannot force the other side to authenticate you .
+
+ This is what I wanted to know.
+
+> If you
 > want them to authenticate themselves to you then you must say do.
 > Ie, authentication is under the control of whoever wants the other side to
 > be authenticated. Nothing else makes any sense. Of course since eap in some
@@ -22,19 +27,47 @@ Bill Unruh writes:
 > other side, as Carlson suggested.
 > Why by the way do you want to force the other side to authenticate you?
 
-That's a fair question and I'd be interested in the response.
+Because I've written a patch to pppd that permits eap-tls authentication.
+eap-tls provide mutual authentication, so if you (client) connect to a server,
+you want to be sure of its identity, so the authentication can't be
+skipped. 
 
-If the problem is that the peer doesn't bother demanding
-authentication, and you want the local system to insist that it does,
-there's currently no way to tell pppd that such a behavior is desired.
-We would have to add an option ("need-peer-auth"?) to say that if the
-LCP Authentication option is missing, we need to send an unsolicited
-LCP Configure-Nak to request that it use authentication.
+This is the behaviour I were looking for:
 
-However, I have a hard time imagining any case in which doing
-something like that is at all valid.  If the peer doesn't ask for
-authentication, doesn't that mean it doesn't need you to do it?  If
-so, why would you want it?
+using channel 4
+Using interface ppp0
+Connect: ppp0 <--> /dev/ttyS1
+sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfReq id=0x0 <asyncmap 0x0> <magic 0x290d2a43> <pcomp> <accomp>]
+sent [LCP ConfAck id=0x0 <asyncmap 0x0> <magic 0x290d2a43> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x1 <auth 0xc227>]
+sent [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x2 <auth 0xc227>]
+sent [LCP ConfReq id=0x3 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x3 <auth 0xc227>]
+sent [LCP ConfReq id=0x4 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x4 <auth 0xc227>]
+sent [LCP ConfReq id=0x5 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x5 <auth 0xc227>]
+sent [LCP ConfReq id=0x6 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x6 <auth 0xc227>]
+sent [LCP ConfReq id=0x7 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x7 <auth 0xc227>]
+sent [LCP ConfReq id=0x8 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x8 <auth 0xc227>]
+sent [LCP ConfReq id=0x9 <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0x9 <auth 0xc227>]
+sent [LCP ConfReq id=0xa <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP ConfNak id=0xa <auth 0xc227>]
+sent [LCP ConfReq id=0xb <asyncmap 0x0> <magic 0xb30db629> <pcomp> <accomp>]
+rcvd [LCP TermReq id=0x1 ")\r*C\000<\37777777715t\000\000\002\37777777734"]
+sent [LCP TermAck id=0x1]
+Modem hangup
+Connection terminated.
 
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+Is logged between a windows box (client) set to do eap-tls and the 
+pppd server.
+The server don't want to authenticate the client, but the client want
+eap authentication for itself and finally close the negotiation.
+
