@@ -1,24 +1,27 @@
-From: Clive Nicolson <clive@baby.bedroom.gen.nz>
-Date: Sun, 01 Feb 2004 00:01:09 +0000
-Subject: Re: PPPoATM compression
-Message-Id: <Pine.LNX.4.44.0402011250320.27089-100000@pentiumii.bedroom.gen.nz>
+From: "Eble, Dan" <DanE@aiinet.com>
+Date: Wed, 25 Feb 2004 16:51:13 +0000
+Subject: RE: BCP protocol
+Message-Id: <AD59566A9D83864F871AE2E52503064001663DB2@aimail.aiinet.priv>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-With the way pppoatm is usually implemented with pppd (ie pppd 2.4.2) and 
-a pppoatm plugin, it is up to the ppp code at each end to ask for and 
-accept compression. Try it and see.
+> -----Original Message-----
+> From: Stephen Hemminger [mailto:shemminger@osdl.org] 
+> Sent: Wednesday, February 25, 2004 11:41 AM
+> 
+> Could you work with 2.6 rather than 2.4?
 
-See my atm over adsl (with a specific adsl card) web page for most aal5 
-protocols:
+I'm truly sorry, but I get paid to work with 2.4.  My employer understands
+the value of giving back to the open source community, and this is what we
+have at the moment.  Someone else is going to have to port it to kernel 2.6
+and pppd 2.4.2.
 
-http://gateway.bedroom.gen.nz/~clive/adsl/thefiles/CnxADSL.html
-
-If any of the linux source prevents compression, I'm sure you can fix it!
-
-Clive
-
+-- 
+Dan Eble <dane@aiinet.com>  _____  .
+Software Engineer          |  _  |/|
+Applied Innovation Inc.    | |_| | |
+http://www.aiinet.com/     |__/|_|_|
 
