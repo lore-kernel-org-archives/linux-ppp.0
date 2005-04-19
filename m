@@ -1,24 +1,40 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Date: Mon, 18 Apr 2005 21:40:49 +0000
+From: Clifford Kite <kite_linux-ppp@ev1.net>
+Date: Tue, 19 Apr 2005 14:37:00 +0000
 Subject: Re: Detecting end of GSM datacall
-Message-Id: <E1DNdz7-0002pV-00@gondolin.me.apana.org.au>
+Message-Id: <Pine.LNX.4.21.0504181656110.22497-100000@corncob.inetport.tld>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <426384B8.6050809@nokia.com>
 In-Reply-To: <426384B8.6050809@nokia.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="hz-gb-2312"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Q2xpZmZvcmQgS2l0ZSA8a2l0ZV9saW51eC1wcHBAZXYxLm5ldD4gd3JvdGU6Cj4gCj4gRGVwZW5k
-cyBvbiB3aGF0ICJzZXJ2ZXJzIiBtZWFucy4gIElmIGl0IG1lYW5zICJQUFAgaW1wbGVtZXRhdGlv
-bnMiCj4gdGhlbiBjaGVja291dCB0aGUgdGhyZWFkICJQUFBEIHZpYSBHUFJTIGRpc2Nvbm5lY3Rp
-b24gcHJvYmxlbSIgaW4KPiBjb21wLnByb3RvY29scy5wcHAuCgpUaGF0IGNhbiBiZSB3b3JrZWQg
-YXJvdW5kIHRob3VnaCwgc2VlCgpodHRwOi8vYnVncy5kZWJpYW4ub3JnLzMwMTE0OAotLSAKVmlz
-aXQgT3BlbnN3YW4gYXQgaHR0cDovL3d3dy5vcGVuc3dhbi5vcmcvCkVtYWlsOiBIZXJiZXJ0IFh1
-IH57UG1WPkhJfn0gPGhlcmJlcnRAZ29uZG9yLmFwYW5hLm9yZy5hdT4KSG9tZSBQYWdlOiBodHRw
-Oi8vZ29uZG9yLmFwYW5hLm9yZy5hdS9+aGVyYmVydC8KUEdQIEtleTogaHR0cDovL2dvbmRvci5h
-cGFuYS5vcmcuYXUvfmhlcmJlcnQvcHVia2V5LnR4dAotClRvIHVuc3Vic2NyaWJlIGZyb20gdGhp
-cyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBsaW51eC1wcHAiIGluCnRoZSBib2R5
-IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwub3JnCk1vcmUgbWFqb3Jkb21v
-IGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA==
+On Tue, 19 Apr 2005, Herbert Xu wrote:
+
+|Clifford Kite <kite_linux-ppp@ev1.net> wrote:
+|> 
+|> Depends on what "servers" means.  If it means "PPP implemetations"
+|> then checkout the thread "PPPD via GPRS disconnection problem" in
+|> comp.protocols.ppp.
+|
+|That can be worked around though, see
+|
+|http://bugs.debian.org/301148
+
+Sorry but I don't see any work-around there, only a suggestion to add
+pppd code that would cause Code-Rejects to be counted as echo-replies.
+It's Paul Mackerras' decision but, IMHO, there's a limit to "be liberal
+in what you accept" (RFC 1122).
+
+---
+Clifford Kite                                 http://ckite.no-ip.net
+
+
+
+
+
+
+
+
+
