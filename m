@@ -1,42 +1,73 @@
-From: "Eduardo Ogasawara" <ppp@solucionar.com>
-Date: Fri, 29 Apr 2005 11:25:02 +0000
-Subject: Four doubts about ppp
-Message-Id: <009701c54cae$16185100$640da8c0@N1>
+From: Jesper Juhl <juhl-lkml@dif.dk>
+Date: Thu, 28 Apr 2005 22:54:44 +0000
+Subject: [PATCH] ppp: remove redundant NULL pointer checks before kfree &
+Message-Id: <Pine.LNX.4.62.0504290049240.2476@dragon.hyggekrogen.localhost>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, netdev@oss.sgi.com, linux-kernel@vger.kernel.org
 
-Hi, everybody,
+kfree() and vfree() can both deal with NULL pointers. This patch removes 
+redundant NULL pointer checks from the ppp code in drivers/net/
+
+Signed-off-by: Jesper Juhl <juhl-lkml@dif.dk>
+---
+
+ drivers/net/ppp_deflate.c |    6 ++----
+ drivers/net/ppp_generic.c |   12 ++++--------
+ 2 files changed, 6 insertions(+), 12 deletions(-)
+
+--- linux-2.6.12-rc2-mm3-orig/drivers/net/ppp_deflate.c	2005-04-05 21:21:33.000000000 +0200
++++ linux-2.6.12-rc2-mm3/drivers/net/ppp_deflate.c	2005-04-29 00:44:26.000000000 +0200
+@@ -87,8 +87,7 @@ static void z_comp_free(void *arg)
+ 
+ 	if (state) {
+ 		zlib_deflateEnd(&state->strm);
+-		if (state->strm.workspace)
+-			vfree(state->strm.workspace);
++		vfree(state->strm.workspace);
+ 		kfree(state);
+ 	}
+ }
+@@ -308,8 +307,7 @@ static void z_decomp_free(void *arg)
+ 
+ 	if (state) {
+ 		zlib_inflateEnd(&state->strm);
+-		if (state->strm.workspace)
+-			kfree(state->strm.workspace);
++		kfree(state->strm.workspace);
+ 		kfree(state);
+ 	}
+ }
+--- linux-2.6.12-rc2-mm3-orig/drivers/net/ppp_generic.c	2005-04-11 21:20:47.000000000 +0200
++++ linux-2.6.12-rc2-mm3/drivers/net/ppp_generic.c	2005-04-29 00:46:00.000000000 +0200
+@@ -2510,14 +2510,10 @@ static void ppp_destroy_interface(struct
+ 	skb_queue_purge(&ppp->mrq);
+ #endif /* CONFIG_PPP_MULTILINK */
+ #ifdef CONFIG_PPP_FILTER
+-	if (ppp->pass_filter) {
+-		kfree(ppp->pass_filter);
+-		ppp->pass_filter = NULL;
+-	}
+-	if (ppp->active_filter) {
+-		kfree(ppp->active_filter);
+-		ppp->active_filter = NULL;
+-	}
++	kfree(ppp->pass_filter);
++	ppp->pass_filter = NULL;
++	kfree(ppp->active_filter);
++	ppp->active_filter = NULL;
+ #endif /* CONFIG_PPP_FILTER */
+ 
+ 	kfree(ppp);
 
 
-The following command starts a tunnel.
-
-pppd call tunnel_name
-
-(1) How can I stop the tunnel?
-
-(2) At the server side, when I execute a "service iptables restart", why my 
-client pppd tunnel hangs?
-
-A have two servers. One is adsl the other have fixed IP, ok?
-
-Site 1
-2 Fixed IP x.y.z.1 and x.y.z.2
 
 
-Site 2
-adsl - dynamic ip w.w.w.w
 
-(3) Why I need to make a client call from Site 2 to Site 1 via x.y.z.2, and 
-from Site 1 to Site 2 at w.w.w.w via x.y.z.1, otherwise it does not work?
-
-(4) Is there a easy way to pass the dynamic ip from site 2 to site 1 so that 
-Site 1 can change its ppp-client call?
-
-Thanks for your help, and forgive me from my poor English...
-
+PS. Please CC me on replies.
 
 
 
