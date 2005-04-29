@@ -1,85 +1,42 @@
-From: Ramses van Pinxteren <Ramses@niob.knaw.nl>
-Date: Tue, 19 Apr 2005 06:58:20 +0000
-Subject: Re: pppd + ldap??
-Message-Id: <f06200715be8a5c195096@[195.169.144.222]>
+From: "Eduardo Ogasawara" <ppp@solucionar.com>
+Date: Fri, 29 Apr 2005 11:25:02 +0000
+Subject: Four doubts about ppp
+Message-Id: <009701c54cae$16185100$640da8c0@N1>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <f06200707be81410e288b@[195.169.144.222]>
-In-Reply-To: <f06200707be81410e288b@[195.169.144.222]>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-And there I have a problem, I dont have an existing domain. I dont 
-even have any samba servers right now, except the PDC i am creating. 
-I am struggeling with winbind right now, to get it up and running, 
-but I think that is a bit outside the scope of this maillist and I 
-better go to the samba list for that. If I have everything up and 
-running I will create an howto and publish it in the different 
-maillists.
-
-Thanks
-ramses
+Hi, everybody,
 
 
->Lacking a radius server, it is pretty easy to configure winbind/samba to
->authenticate against an existing Samba domain.  There are a number of
->docs on the poptop homepage, most of them working off the info in this
->great howto:
->
->http://download.samba.org/ftp/unpacked/lorikeet/trunk/pppd/final-
->report.pdf
->
->
->
->
->On Wed, 2005-04-13 at 09:43 +0200, Ramses van Pinxteren wrote:
->>  Well, let me exactly explain what I want it to do, perhaps you, (or
->>  one of the list members) can point me in the right direction.
->>
->>  I want to get poptop (VPN) authenticate to an ldap database. so
->>  poptop calls pppd, who in turn connects to LDAP using one way or the
->>  other. Thusfar, I have seen some pages (not working ofcourse) that
->>  people authenticate to a samba server, that connects to ldap.
->>
->>  Until now I have a samba authentication server (no shares, or
->>  printers) that connects to LDAP, but i don't yet have a radius
->>  server. What is the easiest way to go? Connect to the samba server
->>  (running on the same machine) or setup a radius server?
->>
->>  And does anyone have a WORKING howto for setting up either one of them?
->>
->>  Thanks
->>  ramses
->>
->>
->>  >You would use the radius plugin to authenticate against a RADIUS 
->>server which
->>  >in turn would be configured to authenticate against LDAP.
->>  >
->>  >Ray
->>  >
->>  >On Tue, Apr 12, 2005 at 11:14:53AM +0200, Ramses van Pinxteren wrote:
->>  >>  Hi,
->>  >>
->>  >>  I read on the net somewhere that ldap authentication was done by
->>  >>  radius.so plugin?? if this is true, then I hope someone can help me
->>  >>  with setting this plugin up?
->>  >>
->>  >>  thanks,
->>  >>  ramses
->>  >-
->>  >To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
->>  >the body of a message to majordomo@vger.kernel.org
->>  >More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>
->>  -
->>  To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
->>  the body of a message to majordomo@vger.kernel.org
->>  More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
->-
->To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
->the body of a message to majordomo@vger.kernel.org
->More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The following command starts a tunnel.
+
+pppd call tunnel_name
+
+(1) How can I stop the tunnel?
+
+(2) At the server side, when I execute a "service iptables restart", why my 
+client pppd tunnel hangs?
+
+A have two servers. One is adsl the other have fixed IP, ok?
+
+Site 1
+2 Fixed IP x.y.z.1 and x.y.z.2
+
+
+Site 2
+adsl - dynamic ip w.w.w.w
+
+(3) Why I need to make a client call from Site 2 to Site 1 via x.y.z.2, and 
+from Site 1 to Site 2 at w.w.w.w via x.y.z.1, otherwise it does not work?
+
+(4) Is there a easy way to pass the dynamic ip from site 2 to site 1 so that 
+Site 1 can change its ppp-client call?
+
+Thanks for your help, and forgive me from my poor English...
+
+
+
 
