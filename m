@@ -1,25 +1,22 @@
-From: "Alexey A. Kiritchun" <kaa@nightmail.ru>
-Date: Tue, 31 May 2005 08:29:32 +0000
-Subject: persist and pty problems: any pathes to test?
-Message-Id: <200505311229.32688.kaa@nightmail.ru>
+From: "David S. Miller" <davem@davemloft.net>
+Date: Tue, 03 May 2005 21:37:26 +0000
+Subject: Re: [PATCH] ppp: remove redundant NULL pointer checks before kfree
+Message-Id: <20050503143726.63758ce3.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <Pine.LNX.4.62.0504290049240.2476@dragon.hyggekrogen.localhost>
+In-Reply-To: <Pine.LNX.4.62.0504290049240.2476@dragon.hyggekrogen.localhost>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Jesper Juhl <juhl-lkml@dif.dk>
+Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@oss.sgi.com, linux-kernel@vger.kernel.org
 
-Hello.
+On Fri, 29 Apr 2005 00:54:44 +0200 (CEST)
+Jesper Juhl <juhl-lkml@dif.dk> wrote:
 
-Can anyone tell me, is any work being done to make 'persist' work?
-As of 2.4.3, as far as I can see, pppd behaves strangely with 'persist'. For 
-me, it does not restart the pty script, in case the script has terminated 
-without really opening conection.
+> kfree() and vfree() can both deal with NULL pointers. This patch removes 
+> redundant NULL pointer checks from the ppp code in drivers/net/
+> 
+> Signed-off-by: Jesper Juhl <juhl-lkml@dif.dk>
 
-strace shows, that pppd gets stuck select(2)ing on an empty set of fds, and 
-the only way to reinitiate connection is to send a signal to it.
-
-If some patches do exist to fix this, I'll be glad to test them.
-
-Thanks.
--- 
-Alexey A. Kiritchun
+Applied, thanks Jesper.
