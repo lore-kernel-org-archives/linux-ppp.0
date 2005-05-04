@@ -1,42 +1,66 @@
-From: Jacek Kawa <jfk@zeus.polsl.gliwice.pl>
-Date: Wed, 04 May 2005 10:08:42 +0000
-Subject: Re: persist + tty is broken in 2.4.3
-Message-Id: <20050504100842.GA25810@finwe.eu.org>
+From: "Eduardo Ogasawara" <ppp@solucionar.com>
+Date: Wed, 04 May 2005 14:01:40 +0000
+Subject: Re: Four doubts about ppp
+Message-Id: <003801c550b1$cbd7acf0$640da8c0@N1>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20050504095017.GA7882@wonderland.linux.it>
-In-Reply-To: <20050504095017.GA7882@wonderland.linux.it>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Marco d'Itri wrote:
+I have solved problems (3) and (4).
 
-[...]
-> I believe that this may be related to the multilink changes, because
-> CVS 20040428 still works.
-> Any help is welcome, because I do not know how to debug this.
-> 
-> These are the common failure modes:
-> 
-> Apr 23 11:18:07 saturn pppd[2233]: Connection terminated.
-> Apr 23 11:18:07 saturn pppd[2233]: tcflush failed: Bad file descriptor
-> Apr 23 11:18:07 saturn pppd[2233]: Modem hangup
-> Apr 23 11:18:17 saturn pppd[2233]: tcsetattr: Invalid argument (line 964)
-> Apr 23 11:18:18 saturn pppd[2233]: tcsetattr: Invalid argument (line 1003)
-> Apr 23 11:18:18 saturn pppd[2233]: Exit.
-> 
-> May  2 09:31:14 shed pppd[8131]: Starting link
-> May  2 09:31:14 shed pppd[8131]: tcgetattr: No such device or address (line 909)
-> May  2 09:31:15 shed pppd[8131]: tcsetattr: No such device or address (line 1003)
-> May  2 09:31:15 shed pppd[8131]: Exit.
+These two problems were solved installing PPP-Server on Linux, instead of 
+using a Windows VPN Server.
 
-You may also find it informative (I hope so) to confront it with previous 
-report about it here, with strace log included:
+Using PPP-Server, I was able to make the reverse routing using the 
+${PEERNAME} in /etc/ppp/if-up to differ a normal client
+call from our other side.
 
-http://marc.theaimsgroup.com/?l=linux-ppp&m1165758709183&w=2
+Still I don't know how to stop a tunnel from a command line, I always need 
+to establish a VNC remote connection, and run pptpconfig
+to stop the tunnel.
 
-bye
+If you have any tip to problems (1) e (2) I would be glad.
 
--- 
-Jacek Kawa  **Jeste ze clovek nikdy nevi/co ho ceka... [Jarek Nohavica]**
+Thanks,
+
+Eduardo
+
+
+----- Original Message ----- 
+From: Eduardo Ogasawara
+To: ppp@vger.kernel.org
+Sent: Friday, April 29, 2005 8:22 AM
+Subject: Four doubts about ppp
+
+
+Hi, everybody,
+
+
+The following command starts a tunnel.
+
+pppd call tunnel_name
+
+(1) How can I stop the tunnel?
+
+(2) At the server side, when I execute a "service iptables restart", why my 
+client pppd tunnel hangs?
+
+A have two servers. One is adsl the other have fixed IP, ok?
+
+Site 1
+2 Fixed IP x.y.z.1 and x.y.z.2
+
+
+Site 2
+adsl - dynamic ip w.w.w.w
+
+(3) Why I need to make a client call from Site 2 to Site 1 via x.y.z.2, and 
+from Site 1 to Site 2 at w.w.w.w via x.y.z.1, otherwise it does not work?
+
+(4) Is there a easy way to pass the dynamic ip from site 2 to site 1 so that 
+Site 1 can change its ppp-client call?
+
+Thanks for your help, and forgive me from my poor English... 
+
