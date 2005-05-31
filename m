@@ -1,66 +1,25 @@
-From: "Eduardo Ogasawara" <ppp@solucionar.com>
-Date: Wed, 04 May 2005 14:01:40 +0000
-Subject: Re: Four doubts about ppp
-Message-Id: <003801c550b1$cbd7acf0$640da8c0@N1>
+From: "Alexey A. Kiritchun" <kaa@nightmail.ru>
+Date: Tue, 31 May 2005 08:29:32 +0000
+Subject: persist and pty problems: any pathes to test?
+Message-Id: <200505311229.32688.kaa@nightmail.ru>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I have solved problems (3) and (4).
+Hello.
 
-These two problems were solved installing PPP-Server on Linux, instead of 
-using a Windows VPN Server.
+Can anyone tell me, is any work being done to make 'persist' work?
+As of 2.4.3, as far as I can see, pppd behaves strangely with 'persist'. For 
+me, it does not restart the pty script, in case the script has terminated 
+without really opening conection.
 
-Using PPP-Server, I was able to make the reverse routing using the 
-${PEERNAME} in /etc/ppp/if-up to differ a normal client
-call from our other side.
+strace shows, that pppd gets stuck select(2)ing on an empty set of fds, and 
+the only way to reinitiate connection is to send a signal to it.
 
-Still I don't know how to stop a tunnel from a command line, I always need 
-to establish a VNC remote connection, and run pptpconfig
-to stop the tunnel.
+If some patches do exist to fix this, I'll be glad to test them.
 
-If you have any tip to problems (1) e (2) I would be glad.
-
-Thanks,
-
-Eduardo
-
-
------ Original Message ----- 
-From: Eduardo Ogasawara
-To: ppp@vger.kernel.org
-Sent: Friday, April 29, 2005 8:22 AM
-Subject: Four doubts about ppp
-
-
-Hi, everybody,
-
-
-The following command starts a tunnel.
-
-pppd call tunnel_name
-
-(1) How can I stop the tunnel?
-
-(2) At the server side, when I execute a "service iptables restart", why my 
-client pppd tunnel hangs?
-
-A have two servers. One is adsl the other have fixed IP, ok?
-
-Site 1
-2 Fixed IP x.y.z.1 and x.y.z.2
-
-
-Site 2
-adsl - dynamic ip w.w.w.w
-
-(3) Why I need to make a client call from Site 2 to Site 1 via x.y.z.2, and 
-from Site 1 to Site 2 at w.w.w.w via x.y.z.1, otherwise it does not work?
-
-(4) Is there a easy way to pass the dynamic ip from site 2 to site 1 so that 
-Site 1 can change its ppp-client call?
-
-Thanks for your help, and forgive me from my poor English... 
-
+Thanks.
+-- 
+Alexey A. Kiritchun
