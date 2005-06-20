@@ -1,47 +1,93 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 30 Jun 2005 15:36:29 +0000
-Subject: Re: PPP Encapsulated in GRE with IP Precedence headers
-Message-Id: <17092.4477.875971.589942@gargle.gargle.HOWL>
+From: domen@coderock.org
+Date: Mon, 20 Jun 2005 21:53:56 +0000
+Subject: [patch 1/1] list_for_each_entry: drivers-net-ppp_generic.c
+Message-Id: <20050620215355.508947000@nd47.coderock.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20050630051424.GA13477@digitalpath.net>
-In-Reply-To: <20050630051424.GA13477@digitalpath.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Ray Van Dolson writes:
-> > If it's just plain IP over PPP, and you're not negotiating any of MP,
-> > ECP, CCP, VJ Header Compression, or Robust Header Compression, then
-> > you should be able to get away with this.  The above protocols,
-> > though, generally assume strict ordering (it is point-to-point,
-> > right?) and will fall apart if that's compromised.
-> 
-> Unfortunately we are using MPPE, so perhaps this solution is not as viable as
-> I thought it would be.  Thanks for the clarification.
+From: Domen Puncer <domen@coderock.org>
 
-I did say "generally."
 
-If the actual compressor/encryptor is able to deal with multiple
-session states for the separate flows that can be scheduled
-independently, then this could still work.
 
-But I don't see that MPPE (in particular) can do that.  It has just
-one 'coherency count' field, and doesn't seem to maintain multiple
-histories.  Unless there's buffering and reordering done at the
-receiver (which would pretty much nullify any goodness you might hope
-to get from priority queuing), I think you're sunk.
+Make code more readable with list_for_each_entry.
+Compile tested.
 
-An alternate path that might do the job would be to set up multiple
-parallel PPP sessions (one for each distinct ordering class), and
-direct the traffic on entry from IP into PPP based on DSCP.  Though it
-looks feasible from the protocol level, that might take some doing
-depending on the implementations involved.
+Signed-off-by: Domen Puncer <domen@coderock.org>
+Signed-off-by: Maximilian Attems <janitor@sternwelten.at>
+Signed-off-by: Domen Puncer <domen@coderock.org>
+---
+ ppp_generic.c |   21 ++++++---------------
+ 1 files changed, 6 insertions(+), 15 deletions(-)
 
-(In practice, I haven't been any too impressed with prioritization
-schemes that do more than just make sure that network control traffic
-has highest priority.  And even then there are some interesting
-failure modes ...)
+Index: quilt/drivers/net/ppp_generic.c
+=================================--- quilt.orig/drivers/net/ppp_generic.c
++++ quilt/drivers/net/ppp_generic.c
+@@ -1228,8 +1228,7 @@ static int ppp_mp_explode(struct ppp *pp
+ 
+ 	nch = 0;
+ 	hdrlen = (ppp->flags & SC_MP_XSHORTSEQ)? MPHDRLEN_SSN: MPHDRLEN;
+-	list = &ppp->channels;
+-	while ((list = list->next) != &ppp->channels) {
++	list_for_each(list, &ppp->channels) {
+ 		pch = list_entry(list, struct channel, clist);
+ 		nch += pch->avail = (skb_queue_len(&pch->file.xq) = 0);
+ 		/*
+@@ -1688,7 +1687,7 @@ static void
+ ppp_receive_mp_frame(struct ppp *ppp, struct sk_buff *skb, struct channel *pch)
+ {
+ 	u32 mask, seq;
+-	struct list_head *l;
++	struct channel *ch;
+ 	int mphdrlen = (ppp->flags & SC_MP_SHORTSEQ)? MPHDRLEN_SSN: MPHDRLEN;
+ 
+ 	if (!pskb_may_pull(skb, mphdrlen + 1) || ppp->mrru = 0)
+@@ -1742,8 +1741,7 @@ ppp_receive_mp_frame(struct ppp *ppp, st
+ 	 * The list of channels can't change because we have the receive
+ 	 * side of the ppp unit locked.
+ 	 */
+-	for (l = ppp->channels.next; l != &ppp->channels; l = l->next) {
+-		struct channel *ch = list_entry(l, struct channel, clist);
++	list_for_each_entry(ch, &ppp->channels, clist) {
+ 		if (seq_before(ch->lastseq, seq))
+ 			seq = ch->lastseq;
+ 	}
+@@ -2229,10 +2227,8 @@ static struct compressor_entry *
+ find_comp_entry(int proto)
+ {
+ 	struct compressor_entry *ce;
+-	struct list_head *list = &compressor_list;
+ 
+-	while ((list = list->next) != &compressor_list) {
+-		ce = list_entry(list, struct compressor_entry, list);
++	list_for_each_entry(ce, &compressor_list, list) {
+ 		if (ce->comp->compress_proto = proto)
+ 			return ce;
+ 	}
+@@ -2498,20 +2494,15 @@ static struct channel *
+ ppp_find_channel(int unit)
+ {
+ 	struct channel *pch;
+-	struct list_head *list;
+ 
+-	list = &new_channels;
+-	while ((list = list->next) != &new_channels) {
+-		pch = list_entry(list, struct channel, list);
++	list_for_each_entry(pch, &new_channels, list) {
+ 		if (pch->file.index = unit) {
+ 			list_del(&pch->list);
+ 			list_add(&pch->list, &all_channels);
+ 			return pch;
+ 		}
+ 	}
+-	list = &all_channels;
+-	while ((list = list->next) != &all_channels) {
+-		pch = list_entry(list, struct channel, list);
++	list_for_each_entry(pch, &all_channels, list) {
+ 		if (pch->file.index = unit)
+ 			return pch;
+ 	}
 
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+--
