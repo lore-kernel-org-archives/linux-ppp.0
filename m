@@ -1,32 +1,37 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 16 Jun 2005 13:34:08 +0000
-Subject: Re: Help - Auto PPPoA and PPPoE detection in ADSL line
-Message-Id: <17073.32720.962546.144718@gargle.gargle.HOWL>
+From: Ray Van Dolson <rayvd@digitalpath.net>
+Date: Thu, 30 Jun 2005 05:14:24 +0000
+Subject: PPP Encapsulated in GRE with IP Precedence headers
+Message-Id: <20050630051424.GA13477@digitalpath.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <61CBBC5FF0C80E4286E28E959D967F5A01FC9E60@SGEXCHG.aztech.com>
-In-Reply-To: <61CBBC5FF0C80E4286E28E959D967F5A01FC9E60@SGEXCHG.aztech.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Marco d'Itri writes:
-> On Jun 16, Ranjeet Kumar - R&D <Ranjeet.Kumar@aztech.com> wrote:
-> 
-> > We have ADSL modem running Linux Version - 2.4 and pppd version 2.4.1. We
-> > want to detect the protocol, whether it is PPPoE or PPPoA, of the connected
-> > ADSL line. Can anybody help me in providing information on how to achieve
-> > this task? We are using pppoe and pppoa plugin with pppd to connect to DSLAM
-> > (ISP).
-> The PPP book by James Carlson explains how to do it.
+Background:
+We are using Poptop + PPP/MPPE and are running some VoIP applications
+over this and want to "prioritize" the voice traffic.  This is easily
+done in a non-tunnelled environment because the voice protocol we are
+using (RTP) sets the "Expedite Immediately" flag in the DSCP headers of
+the IP packet.  Cisco routers and iptables/tc can be made to flag on
+this and do the "right" thing (ie: prioritize).
 
-Actually, I just discuss regular sync detection methods.  Methods on
-ATM _should_ be similar in concept, but aren't described there.
+However, when Poptop encapsulates the PPP frames into GRE, it does not
+put any sort of DSCP flags in the corresponding GRE IP packets.  We are
+hoping to have Poptop/pptpclient modified to unpack the PPP frame it
+receives, examine the IP packet within and copy any DSCP flags into the
+GRE IP packet.  Thus if the IP packet in question was RTP, the
+resulting GRE packet would have the High Precedence DSCP flag set.
 
-> OTOH it's probably better to implement this in a standalone application
-> than in pppd.
+The question is, does PPP go haywire if packets start arriving out of
+order as a result of this?  Would we end up being worse-off than if we
+didn't do this at all?  I can see how a GRE-only tunnel would handle
+this just fine, but the added layer of PPP makes me think any sort of
+re-ordering of the GRE packets would break the PPP connection.
 
-I agree with that.
+Thoughts?  Flames?
 
 -- 
-James Carlson                                 <carlsonj@workingcode.com>
+Ray Van Dolson
+Linux/Unix Systems Administrator
+Digital Path, Inc.
