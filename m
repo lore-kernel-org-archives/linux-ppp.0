@@ -1,56 +1,37 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Thu, 28 Jul 2005 12:28:18 +0000
-Subject: Re: Current size of PPP transmit queue
-Message-Id: <Pine.LNX.4.61.0507280524170.13575@info.physics.ubc.ca>
+From: Greg Stark <gsstark@mit.edu>
+Date: Sun, 10 Jul 2005 17:10:18 +0000
+Subject: options in plugins?
+Message-Id: <87wtny1tad.fsf@stark.xeocode.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <87ABB5B9BD11A240B9CBB3F0485AEC89236138@IMCSRV4.MITRE.ORG>
-In-Reply-To: <87ABB5B9BD11A240B9CBB3F0485AEC89236138@IMCSRV4.MITRE.ORG>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, 28 Jul 2005, Ramses van Pinxteren wrote:
 
-> Hi,
-> I am setting up a VPN server and I am running into a wierd problem. On mac i 
-> can connect most of the time, but on windows I get 99% of the times an error 
-> that there is a loopback detected. (error 737) I have the funny feeling it is 
-> ppp related...
->
-> I am using the following software versions:
-> dkms-2.0.5.2-4.fc4
-> kernel_ppp_mppe-0.0.5-5dkms
-> pptpd-1.2.1-2
-> ppp-2.4.3-5.fc4
-> kernel_ppp_mppe-0.0.5-5dkms
-> radiusclient-0.3.2-0.1.fc3.rf
-> freeradius-1.0.4-1.FC4.1
->
-Unfortunately although you have the 
-debug
-option for pppd , I think y ou forgot to put a line like
-local2.*;daemon.*     /var/log/ppplog
-into /etc/syslog.conf
-and then do 
-killall -1 syslogd
+I'm not sure if development on pppd is still active. It seems there are dozens
+of patches floating around and no upstream releases coming. Is it? Is this
+still the list to reach the upstream maintainers?
 
-YOu are not getting any of the pppd negotiation messages, which would be
-needed to analyse your problem.
+My question is whether there's a way to add options in a plugin. It seems the
+options list is a static array in plugins.c and plugins are loaded using
+dlsym. So unless I've missed some piece of infrastructure there isn't.
 
+This is really unfortunate. My ultimate goal is to make the timeouts and
+retries in pppoe configurable just as they are for LCP. Currently they're set
+to 5s with unbounded exponential backoff and a max of 3 retries. That makes
+any temporary outage of even about 30s result in a complete failure.
 
->
-> this is the dump of the logfile:
-...
-> Jul 28 12:21:43 h222 pppd[21758]: pppd 2.4.3 started by root, uid 0
-> Jul 28 12:21:43 h222 pppd[21758]: Using interface ppp0
-> Jul 28 12:21:43 h222 pppd[21758]: Connect: ppp0 <--> /dev/pts/5
-> Jul 28 12:21:43 h222 pppd[21758]: Modem hangup
+I've hacked my personal copy to just retry every 5s forever but in an ideal
+world there would be a pppoe-restart and pppoe-maxfail just like lcp-restart
+and maxfail that could be set in the options or peers files.
 
-Note no negotiation messages.
+But I don't see any reasonable way to do that without writing a lot of code.
+Nor am I clear whether such a patch would eventually get released. There's not
+much point in writing it just for myself -- I have my personal version hacked
+up for my use already. If development is dead then there's not much point in
+fixing this problem so generally.
 
-> Jul 28 12:21:43 h222 pppd[21758]: Connection terminated.
-> Jul 28 12:21:43 h222 pppd[21758]: Exit.
-> Jul 28 12:21:43 h222 pptpd[21757]: CTRL: Client 192.87.138.220 control 
-> connection finished
->
+-- 
+greg
+
