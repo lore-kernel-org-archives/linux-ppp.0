@@ -1,8 +1,10 @@
 From: Sasha Shipka <xaotuk@gmail.com>
-Date: Mon, 11 Jul 2005 15:17:37 +0000
+Date: Mon, 11 Jul 2005 16:55:43 +0000
 Subject: frozen ppp
-Message-Id: <440a9a95050711081730710cc3@mail.gmail.com>
+Message-Id: <440a9a9505071109556d979a24@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <440a9a95050711081730710cc3@mail.gmail.com>
+In-Reply-To: <440a9a95050711081730710cc3@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -39,9 +41,9 @@ Pattern is id, which is increased every time.
 Things I tried:
 * to reduce or increase mtu on ppp interface.
 * to add following line to iptables:
-iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS 
+iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS
 --clamp-mss-to-pmtu
 * to disable mru decrease in ccp.c code (I saw that in archives of this list)
-* to add nomppe-128 to pppd options
+* to add nomppe-128 (or nomppe-40) to pppd options
 
 Nothing of those didn't help...
