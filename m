@@ -1,62 +1,47 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 11 Jul 2005 10:52:17 +0000
-Subject: Re: options in plugins?
-Message-Id: <17106.20321.572648.290053@gargle.gargle.HOWL>
+From: Sasha Shipka <xaotuk@gmail.com>
+Date: Mon, 11 Jul 2005 15:17:37 +0000
+Subject: frozen ppp
+Message-Id: <440a9a95050711081730710cc3@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <87wtny1tad.fsf@stark.xeocode.com>
-In-Reply-To: <87wtny1tad.fsf@stark.xeocode.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Grant Coady writes:
-> On 10 Jul 2005 13:10:18 -0400, Greg Stark <gsstark@mit.edu> wrote:
-> >
-> >I'm not sure if development on pppd is still active. It seems there are dozens
-> >of patches floating around and no upstream releases coming. Is it? Is this
-> >still the list to reach the upstream maintainers?
-> 
-> It is a very quiet list, I emailed someone last year to see if they 
-> taking patches and no response.  Only monitoring this group couple 
-> weeks, seems little traffic, holiday season?
+I'm trying to use wireless pppoe connection to my ISP from linux.
+I'm using rp-pppoe and pppd 2.4.3. Kernel is 2.4.23 with mppe patch
+from pptp site.
+As I can see they use ms server solution (mschapv2 etc.).
+After I connect, ppp if is up and running. I can open smaller web
+pages or irc connection. But if I try do download a file or open
+bigger web page my connection frozes. When it's frozen my ppp log goes
+like this:
 
-It's a fairly quiet list most of the time, as the code base is fairly
-mature.
+ul 11 14:56:02 duat pppd[7741]: rcvd [proto=0xcba5] 69 73 df e1 5f ed
+4c cb a0 3f ae 62 eb e6 0b 95 42 3b ef 7f f6 8d ea b3 18 9d c1 6d f9
+35 2c 70 ...
+Jul 11 14:56:02 duat pppd[7741]: Unsupported protocol 0xcba5 received
+Jul 11 14:56:02 duat pppd[7741]: sent [LCP ProtRej id=0x2 cb a5 69 73
+df e1 5f ed 4c cb a0 3f ae 62 eb e6 0b 95 42 3b ef 7f f6 8d ea b3 18
+9d c1 6d f9 35 ...]
+Jul 11 14:56:02 duat pppd[7741]: rcvd [proto=0x2160] 39 46 b0 a7 ca 94
+63 3d 4a 70 fb 91 e5 47 49 a2 bd ee 7c 6a c9 3f 4f 34 51 d5 5c 5e 81
+1f 0a b4 ...
+Jul 11 14:56:02 duat pppd[7741]: Unsupported protocol 0x2160 received
+Jul 11 14:56:02 duat pppd[7741]: sent [LCP ProtRej id=0x3 21 60 39 46
+b0 a7 ca 94 63 3d 4a 70 fb 91 e5 47 49 a2 bd ee 7c 6a c9 3f 4f 34 51
+d5 5c 5e 81 1f ...]
+Jul 11 14:56:02 duat pppd[7741]: rcvd [proto=0xa662] 79 1c 0c 79 6f fe
+b4 0e 4a 0b e9 81 6a 8f 89 6d 61 29 a2 37 c2 b6 95 f0 cc ba a8 e5 6f
+ab fb f1 ...
 
-There ought to be a FAQ on getting changes integrated with a given
-project, as it seems to be an obscure art.  In short, just sending a
-bunch of diffs to the maintainers rarely (if ever) works.  The sorts
-of things we want to know are:
+Pattern is id, which is increased every time.
+Things I tried:
+* to reduce or increase mtu on ppp interface.
+* to add following line to iptables:
+iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS 
+--clamp-mss-to-pmtu
+* to disable mru decrease in ccp.c code (I saw that in archives of this list)
+* to add nomppe-128 to pppd options
 
-  - What exactly are you doing?  Are you fixing a problem you saw or
-    adding a new feature?  If it's a problem, what are the symptoms
-    and can it be reproduced?  If it's a new feature, how does it fit
-    in with existing features, and why were the existing features "not
-    enough" to do what was needed?
-
-  - What testing have you done?  Have you checked for memory leaks?
-    Have you checked for compatibility with other implementations (if
-    necessary)?
-
-  - Are you _sure_ this is the right fix, or are you just soliciting
-    comments?  Is there perhaps a bigger (and unfixed) problem lurking
-    behind this one?
-
-It's not that it's some sort of "club," but if we don't know who you
-are and what you're doing, it's not always clear what to do about the
-bags of bits we sometimes get.
-
-> >But I don't see any reasonable way to do that without writing a lot of code.
-> >Nor am I clear whether such a patch would eventually get released. There's not
-> >much point in writing it just for myself -- I have my personal version hacked
-> >up for my use already. If development is dead then there's not much point in
-> >fixing this problem so generally.
-> 
-> Scratch your itch, see if anyone else agrees with solution?
-
-As others have pointed out, this feature already exists.  No need to
-scratch anything.
-
--- 
-James Carlson                                 <carlsonj@workingcode.com>
+Nothing of those didn't help...
