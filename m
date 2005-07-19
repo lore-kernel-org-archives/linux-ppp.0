@@ -1,40 +1,60 @@
-From: Cristi Mitrana <cristi.mitrana@gmail.com>
-Date: Mon, 18 Jul 2005 13:36:34 +0000
-Subject: Re: Linux Greatest Feature
-Message-Id: <f1de940b05071806368720815@mail.gmail.com>
+From: David Corbin <dcorbin@machturtle.com>
+Date: Tue, 19 Jul 2005 11:13:53 +0000
+Subject: auth eap
+Message-Id: <200507190713.53851.dcorbin@machturtle.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <dbfm3g$h6$1@sea.gmane.org>
-In-Reply-To: <dbfm3g$h6$1@sea.gmane.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
- hello, 
+I'm trying to get a PPTP tunnel running (on a gentoo client).  The tunnel 
+tries to start, but then fails.  At the end is my output from attempting to 
+diagnose the failure.
 
-> Under Linux this doesn't happen. I get disconnected, and I have to wait
-> for the sockets to TIMEOUT. So I end up with Psi spewing things into a
-> blackhole, and Thunderbird flat out screws up and can barely function.
-> 
-> A long while back I made a post about this to the Linux PPP mailing
-> list. The reason that was laid out is that sockets and the devices are
-> in seperate layers so a socket doesn't know what device it is on. That's
-> nice if you have an ethernet cable powering a static IP, and you like to
-> unplug it just for shits. It's not so nice when you're on a dynamic IP
-> and well, those connections just don't make any sense anymore.
->
+From the "No auth is possible", and the "auth eap", I assume there is a 
+problem with the way something is built on my system, but I can find very 
+little useful information about 'eap'.
 
- The behaviour you describe I see it as an advantage, it keeps your
-connection 'up' even if the link goes down, say ppp disconects
-accidentally and you have not finished transfering you files, ppp
-connects and the link is up again, so the transfer continues without
-interruption. This is ok for TCP/IP  connections, for some other this
-might not be the case.
-  The timeouts for the link to announce itself as 'down' can be
-customized with the '/proc' (sysctl) interface, so you can customize
-it. The linux kernel has by default a bigger timeout than MS Windows'
-kernel/net stack so that's why you perceive the difference more
-easily.
+Can anyone point me in the right direction?  
+Thanks
+David
 
-hth,
- mitu
+
+Connect: ppp0 <--> /dev/pts/4
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+rcvd [LCP ConfReq id=0x0 <mru 1400> <auth eap> <magic 0x110e0fd3> <pcomp> 
+<accomp> <callback CBCP> <mrru 1614> <endpoint 
+[local:ca.14.8c.08.a1.f5.4f.e5.82.f7.00.db.32.c5.73.48.00.00.00.00]> < 17 04 
+00 24>]
+No auth is possible
+sent [LCP ConfRej id=0x0 <auth eap> <callback CBCP> <mrru 1614> < 17 04 00 
+24>]
+rcvd [LCP ConfAck id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+rcvd [LCP TermReq id=0x1 11 0e 0f d3 00 3c cd 74 00 00 03 97]
+sent [LCP TermAck id=0x1]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
+<accomp>]
+Script pptp vpn.enttek.net --nolaunchpppd finished (pid 7810), status = 0x0
+Modem hangup
+Connection terminated.
