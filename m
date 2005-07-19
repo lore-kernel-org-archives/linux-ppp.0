@@ -1,60 +1,61 @@
-From: David Corbin <dcorbin@machturtle.com>
-Date: Tue, 19 Jul 2005 11:13:53 +0000
-Subject: auth eap
-Message-Id: <200507190713.53851.dcorbin@machturtle.com>
+From: James Carlson <carlsonj@workingcode.com>
+Date: Tue, 19 Jul 2005 11:36:06 +0000
+Subject: Re: auth eap
+Message-Id: <17116.58790.439911.91739@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <200507190713.53851.dcorbin@machturtle.com>
+In-Reply-To: <200507190713.53851.dcorbin@machturtle.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I'm trying to get a PPTP tunnel running (on a gentoo client).  The tunnel 
-tries to start, but then fails.  At the end is my output from attempting to 
-diagnose the failure.
+David Corbin writes:
+> I'm trying to get a PPTP tunnel running (on a gentoo client).  The tunnel 
+> tries to start, but then fails.  At the end is my output from attempting to 
+> diagnose the failure.
+> 
+> >From the "No auth is possible", and the "auth eap", I assume there is a 
+> problem with the way something is built on my system, but I can find very 
+> little useful information about 'eap'.
 
-From the "No auth is possible", and the "auth eap", I assume there is a 
-problem with the way something is built on my system, but I can find very 
-little useful information about 'eap'.
+The "no auth is possible" message means that there are no valid
+credentials for the protocol requested by the peer (nothing usable in
+the various /etc/ppp/*_secrets files), so there's no point even trying
+to authenticate.
 
-Can anyone point me in the right direction?  
-Thanks
-David
+EAP (Extensible Authentication Protocol) is somewhat like a transport
+protocol.  It can carry any of a wide range of "authentication
+methods" -- what you might call protocols.
 
+In the current ppp-2.4 sources, there's support for the RFC-required
+MD5-Challenge (using /etc/ppp/chap-secrets) and draft SRP-SHA1 (using
+/etc/ppp/srp-secrets) methods.
 
-Connect: ppp0 <--> /dev/pts/4
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-rcvd [LCP ConfReq id=0x0 <mru 1400> <auth eap> <magic 0x110e0fd3> <pcomp> 
-<accomp> <callback CBCP> <mrru 1614> <endpoint 
-[local:ca.14.8c.08.a1.f5.4f.e5.82.f7.00.db.32.c5.73.48.00.00.00.00]> < 17 04 
-00 24>]
-No auth is possible
-sent [LCP ConfRej id=0x0 <auth eap> <callback CBCP> <mrru 1614> < 17 04 00 
-24>]
-rcvd [LCP ConfAck id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-rcvd [LCP TermReq id=0x1 11 0e 0f d3 00 3c cd 74 00 00 03 97]
-sent [LCP TermAck id=0x1]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-sent [LCP ConfReq id=0x1 <mru 1000> <asyncmap 0x0> <magic 0xe7f43b5b> <pcomp> 
-<accomp>]
-Script pptp vpn.enttek.net --nolaunchpppd finished (pid 7810), status = 0x0
-Modem hangup
-Connection terminated.
+Thus "no auth is possible" message means that the pppd didn't find any
+usable keys in either location, meaning that no known EAP methods are
+usable, and the peer's request for EAP itself can't be satisfied.
+
+Since you're using Microsoft's proprietary PPTP, adding keys to those
+files probably won't help.  Your peer is likely planning to insist on
+one of the many proprietary EAP methods that pppd doesn't currently
+support, and will also require MPPE key exchange for use with tunnel
+encryption.
+
+To find out which EAP method is needed, you could either ask the
+person who owns that peer system, or set up some temporary credentials
+in /etc/ppp/chap-secrets and find out what EAP method the peer
+requests.  When it's not one that's implemented by pppd (almost a
+certainty), you'll need to go off and find code (a patch) that does
+this for you, or implement it yourself.
+
+It might be easier, though, to find patches that support MPPE and
+MS-CHAPv2, and ask the owner of that peer system to enable MS-CHAPv2
+support.  Though you're still likely to have some trouble getting your
+system to support this, I'd expect that'd be more likely to succeed.
+
+For what it's worth (and it might not be much), PPTP is quirky and of
+probably questionable value.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
