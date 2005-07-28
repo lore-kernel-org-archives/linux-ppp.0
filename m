@@ -1,113 +1,142 @@
-From: Ray Van Dolson <rayvd@digitalpath.net>
-Date: Fri, 01 Jul 2005 16:58:56 +0000
-Subject: Unsupported protocol errors cause some tunnels to "freeze"
-Message-Id: <20050701165855.GA9760@digitalpath.net>
+From: Ramses van Pinxteren <ramses@niob.knaw.nl>
+Date: Thu, 28 Jul 2005 10:27:45 +0000
+Subject: Error 737: loopback detected
+Message-Id: <f06200735bf0e633de939@[195.169.144.222]>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-We're trying to get things stabilized for using VoIP over our tunnels (hence
-the TOS stuff I was attempting before which was thwarted).
+Never forget to change a subjectline. Keeps things simpler. Forget 
+the last message I send, Better reply this one to keep the archives 
+clean hihi
 
-We're doing PPP within PPTP/GRE with MPPE encryption and occasionally are
-running into links that "freeze" but do not disconnect.
+Hi,
+I am setting up a VPN server and I am running into a wierd problem. 
+On mac i can connect most of the time, but on windows I get 99% of 
+the times an error that there is a loopback detected. (error 737) I 
+have the funny feeling it is ppp related...
 
-On the client side:
+I am using the following software versions:
+dkms-2.0.5.2-4.fc4
+kernel_ppp_mppe-0.0.5-5dkms
+pptpd-1.2.1-2
+ppp-2.4.3-5.fc4
+kernel_ppp_mppe-0.0.5-5dkms
+radiusclient-0.3.2-0.1.fc3.rf
+freeradius-1.0.4-1.FC4.1
 
-pppd 2.4.2b3
-MPPE Patch that comes with that version
-Linux kernel 2.4.20
 
-pppd options on client side:
+As much as possible come from the yum repository of pptpd/pptpclient 
+at sourceforge
 
-defaultroute
-usepeerdns
-pty 'pptp 192.168.1.53 --nolaunchpppd'
-user 'xxx@xxx'
-nodeflate
-nobsdcomp
-require-mppe
-require-mschap-v2
-persist
-mtu 1460
-mru 1460
-ipcp-accept-remote
-ipcp-accept-local
-lcp-echo-failure 5
-lcp-echo-interval 20
-noauth
+I am using Fedore core 4 btw.
 
-Server side:
+I hope someone can make heads or tails from this. I cant :(
 
-pppd 2.4.3
-MPPE/MPPC Module from Jan Dubiec, MPPC disabled.
-Kernel 2.6.11.6
+this is the dump of the logfile:
+Jul 28 12:21:42 h222 pptpd[21757]: CTRL: Client 192.87.138.220 
+control connection started
+Jul 28 12:21:42 h222 pptpd[21757]: CTRL: Starting call (launching 
+pppd, opening GRE)
+Jul 28 12:21:42 h222 pppd[21758]: Plugin radius.so loaded.
+Jul 28 12:21:42 h222 pptpd[21757]: GRE: Bad checksum from pppd.
+Jul 28 12:21:42 h222 pptpd[21757]: GRE: Received too short packet from pppd.
+Jul 28 12:21:42 h222 pppd[21758]: RADIUS plugin initialized.
+Jul 28 12:21:42 h222 pptpd[21757]: GRE: Bad checksum from pppd.
+Jul 28 12:21:42 h222 pppd[21758]: Plugin 
+/usr/lib/pptpd/pptpd-logwtmp.so loaded.Jul 28 12:21:42 h222 
+pptpd[21757]: GRE: Bad checksum from pppd.
+Jul 28 12:21:42 h222 pppd[21758]: pptpd-logwtmp: $Version$
+Jul 28 12:21:42 h222 pptpd[21757]: GRE: Bad checksum from pppd.
+Jul 28 12:21:42 h222 pppd[21758]: pppd options in effect:
+Jul 28 12:21:42 h222 pppd[21758]: debug         # (from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: dump          # (from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: plugin radius.so              # 
+(from command line)
+Jul 28 12:21:42 h222 pppd[21758]: plugin 
+/usr/lib/pptpd/pptpd-logwtmp.so       # (from command line)
+Jul 28 12:21:42 h222 pppd[21758]: +mschap-v2            # (from 
+/etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: -chap         # (from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: -mschap               # (from 
+/etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: name pptpd            # (from 
+/etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: pptpd-original-ip 192.87.138.220 # 
+(from command line)
+Jul 28 12:21:42 h222 pppd[21758]: 115200                # (from command line)
+Jul 28 12:21:42 h222 pppd[21758]: lock          # (from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: local         # (from command line)
+Jul 28 12:21:42 h222 pppd[21758]: asyncmap 0            # (from 
+/etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: lcp-echo-failure 30           # 
+(from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: lcp-echo-interval 5           # 
+(from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: ipcp-accept-local             # 
+(from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: ipcp-accept-remote            # 
+(from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: ipparam 192.87.138.220 # (from command line)
+Jul 28 12:21:42 h222 pppd[21758]: ms-dns xxx # [don't know how to 
+print value] # (from /etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: proxyarp              # (from 
+/etc/ppp/options.pptpd)
+Jul 28 12:21:42 h222 pppd[21758]: 192.168.0.1:192.168.0.21 # (from 
+command line)
+Jul 28 12:21:43 h222 pppd[21758]: require-mppe-128              # 
+(from /etc/ppp/options.pptpd)
+Jul 28 12:21:43 h222 pppd[21758]: pppd 2.4.3 started by root, uid 0
+Jul 28 12:21:43 h222 pppd[21758]: Using interface ppp0
+Jul 28 12:21:43 h222 pppd[21758]: Connect: ppp0 <--> /dev/pts/5
+Jul 28 12:21:43 h222 pppd[21758]: Modem hangup
+Jul 28 12:21:43 h222 pppd[21758]: Connection terminated.
+Jul 28 12:21:43 h222 pppd[21758]: Exit.
+Jul 28 12:21:43 h222 pptpd[21757]: CTRL: Client 192.87.138.220 
+control connection finished
 
-We are using the following pppd options on the server:
 
+Here is my options.pptpd
 lock
+debug
+dump
 name pptpd
 proxyarp
-require-mschap-v2
-mppe required,stateless
-nomppc
-ms-dns xx.xx.xx.xx
-ms-dns xx.xx.xx.xx
-plugin radius.so
-plugin radattr.so
-nodeflate
-mtu 1456
-mru 1456
-lcp-restart 5
-lcp-echo-interval 20
-lcp-echo-failure 5
-nobsdcomp
-novj
-noaccomp
-nodeflate
-nopcomp
+asyncmap 0
+-chap
+-mschap
++mschap-v2
+require-mppe-128
+#require-mppe
+lcp-echo-failure 30
+lcp-echo-interval 5
+ipcp-accept-local
+ipcp-accept-remote
+ms-dns 192.87.138.99
+#plugin radius.so
 
-The clients are running on Linksys devices and are a bit tricker to change
-settings on.
+My pptpd.conf
+#ppp /usr/sbin/pppd
+option /etc/ppp/options.pptpd
+debug
+dump
+# stimeout 10
+#noipparam
+logwtmp
+#bcrelay eth1
+# (Recommended)
+localip 192.168.0.1
+remoteip 192.168.0.20-238,192.168.0.245
+# or
+#localip 192.168.10.224-238,192.168.10.245
+#remoteip 192.168.11.224-238,192.168.11.245
+# CED
 
-What happens is occasionally, randomly, and totally unreproducibly one of our
-connections freezes up.  LCP and GRE (PPTP) appear to still be passing
-traffic, so the connection doesn't drop, it still is passing data in both
-directions, it's just that the pppd driver doesn't appear to think it's valid.
 
-Here's what we see in the debug logs when this occurs:
 
-Jul  1 09:16:21 chico-pptp2 pppd[6643]: Unsupported protocol 0x83 received
-Jul  1 09:16:31 chico-pptp2 pppd[6643]: Unsupported protocol 0xf9 received
-Jul  1 09:16:41 chico-pptp2 pppd[6643]: Unsupported protocol 0x63 received
-Jul  1 09:16:51 chico-pptp2 pppd[6643]: Unsupported protocol 0x6b received
-Jul  1 09:17:44 chico-pptp2 pppd[6643]: Unsupported protocol 0xc1 received
-Jul  1 09:17:54 chico-pptp2 pppd[6643]: Unsupported protocol 0xd083 received
-Jul  1 09:18:19 chico-pptp2 pppd[6643]: Unsupported protocol 'AppleTalk SmartBuffered' (0x3b) received
-Jul  1 09:18:22 chico-pptp2 pppd[6643]: Unsupported protocol 0x11 received
-Jul  1 09:18:28 chico-pptp2 pppd[6643]: Unsupported protocol 0xf7 received
-
-Just random protocol numbers.
-
-Our theory is that the MPPE compressesion is somehow getting screwed up and
-we're getting gibberish in the protocol field.  Unsure how this would happen
-however.  Sending a SIGUSR2 to the pppd processes does not seem to renegotiate
-compression, but instead just drops the link.
-
-I am fairly certain GRE/PPTP is not the problem as data appears to be
-travelling back and forth and arriving at the destination, but pppd chokes on
-it.  I guess it's possible that pptpclient / ppptd are messing up the packets.
-
-Options we are considering:
-
- - Upgrading pppd to 2.4.3 on the client side.
- - Upgrading MPPE module on client side (trickier, since we are tied to kernel
-   2.4.20)
- - Trying noccp option (shot in the dark).
-
-I've done tcpdumps on the raw GRE traffic, but it hasn't proven to be real
-informative.  Any recommendations on how I can further troubleshoot this?
-
-Ray
+-
+To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
