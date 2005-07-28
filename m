@@ -1,12 +1,17 @@
 From: Boky Gmail <verynotbad@gmail.com>
-Date: Wed, 27 Jul 2005 21:26:06 +0000
+Date: Thu, 28 Jul 2005 17:00:07 +0000
 Subject: Authentificating with certificates ("unknown authentication type 13; Naking")
-Message-Id: <e8666cf9050727142635284b29@mail.gmail.com>
+Message-Id: <e8666cf90507281000253ddc40@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <e8666cf9050727142635284b29@mail.gmail.com>
+In-Reply-To: <e8666cf9050727142635284b29@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+Note: resending; it seems it didn't get through the first time round.
+----
 
 Hi all.
 
