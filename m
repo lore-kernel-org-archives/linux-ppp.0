@@ -1,55 +1,42 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Wed, 31 Aug 2005 05:33:15 +0000
-Subject: Re: Spontaneous LCP ConfReq after connection made
-Message-Id: <20050831053315.GF5800@hp.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="tThc/1wpZn/ma/RB"
+From: Paul Mackerras <paulus@samba.org>
+Date: Thu, 25 Aug 2005 11:15:08 +0000
+Subject: Re: Current size of PPP transmit queue
+Message-Id: <17165.43068.108457.219674@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20050812073342.GL28862@hp.com>
-In-Reply-To: <20050812073342.GL28862@hp.com>
+References: <87ABB5B9BD11A240B9CBB3F0485AEC89236138@IMCSRV4.MITRE.ORG>
+In-Reply-To: <87ABB5B9BD11A240B9CBB3F0485AEC89236138@IMCSRV4.MITRE.ORG>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Feighery,Patrick D. writes:
 
---tThc/1wpZn/ma/RB
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> I have an application that needs to know the number of packets/bytes
+> that are currently in ppp's transmit queue.  My understanding is no
+> utility currently exists to capture and display this attribute - please
+> correct me if I misspeak.
 
-Providing a touch more closure to this thread; since blocking certain
-packets from being sent through the link, the symptom no longer occurs,
-so I think the peer is indeed broken.
+The flow of data is from the network code into the ppp_generic module,
+and from there to the ppp_async module (assuming you're doing PPP over
+an async serial port), and then to the serial driver.  Both the
+ppp_generic and the ppp_async modules buffer no more than one packet.
+The network code and the serial driver have queues in them.  I don't
+know of any utility that can display how much is buffered at the
+various points.
 
-The ip-up script now does this;
+> I've been going the kernel (2.6.5) trying to find this queue (which I
+> assume is in the serial driver) so I can write an ioctl to get this
+> information to my application.  I'm familiar with other operating
+> systems, but this is my first real time going through the linux kernel.
+> Any pointer to this information and how I can get hold of it would be
+> greatly appreciated.
 
-# eth1 satellite service is 192.168.x.x
-iptables --insert OUTPUT 1 --source 192.168.0.0/255.255.0.0 \
-    --destination 0.0.0.0/0.0.0.0 --jump DROP \
-    --out-interface ${PPP_IFACE}
+Which level are you most interested in?  The ppp_generic and ppp_async
+modules are probably the least interesting in terms of having the
+least amount of data buffered.
 
-# eth0 internal network is 10.0.x.x
-iptables --insert OUTPUT 1 --source 10.0.0.0/255.255.0.0 \
-    --destination 0.0.0.0/0.0.0.0 --jump DROP \
-    --out-interface ${PPP_IFACE}
+In any case, adding an attribute in the sysfs filesystem is probably a
+better approach than a new ioctl.
 
-# block any PPTP VPN traffic
-iptables --insert OUTPUT 1 --protocol GRE --jump DROP \
-    --out-interface ${PPP_IFACE}
-
---=20
-James Cameron
-http://ftp.hp.com.au/sigs/jc/
-
---tThc/1wpZn/ma/RB
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.1 (GNU/Linux)
-
-iD8DBQFDFUEbIiWKUhK+Mj4RAjU5AKCOG5XSvrvPRSZtOeDVBEHV0x2x/QCeOta7
-viCDGFOOhpFyKpZnjGKuy18=
-=bO8x
------END PGP SIGNATURE-----
-
---tThc/1wpZn/ma/RB--
+Paul.
