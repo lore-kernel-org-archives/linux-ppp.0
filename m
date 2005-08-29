@@ -1,24 +1,43 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Mon, 29 Aug 2005 03:10:20 +0000
-Subject: ppp-2.4.4b1 released
-Message-Id: <17170.31900.251643.605643@cargo.ozlabs.ibm.com>
+From: James Cameron <james.cameron@hp.com>
+Date: Mon, 29 Aug 2005 04:19:02 +0000
+Subject: Re: ppp-2.4.4b1 released
+Message-Id: <20050829041902.GB15594@hp.com>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="jRHKVT23PllUwdXP"
 List-Id: <linux-ppp.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+References: <17170.31900.251643.605643@cargo.ozlabs.ibm.com>
+In-Reply-To: <17170.31900.251643.605643@cargo.ozlabs.ibm.com>
 To: linux-ppp@vger.kernel.org
 
-I have just put ppp-2.4.4b1.tar.gz on the samba.org ftp server at:
 
-ftp://ftp.samba.org/pub/ppp/ppp-2.4.4b1.tar.gz
+--jRHKVT23PllUwdXP
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-This is mostly a bug-fix release, with many bugs fixed to do with
-persist mode and demand dialling.  The one new feature is that pppd
-now runs an /etc/ppp/ip-pre-up script after creating the ppp interface
-and putting the negotiated IP addresses on it but before marking it
-up.  Since pppd waits for this script to finish, it must run quickly.
+Successful test.  Seemed snappier during initial negotiation, but didn't
+try to find out why.  Test configuration was two i686 lab boxes running
+Linux 2.6.12.5 with Matt Domsch's current MPPE patch, connection via
+pptp 1.5.0 and pptpd 1.3.0.
 
-Please test.  If there are no problems with it, I will re-release it
-as ppp-2.4.4 final.
+My test /etc/ppp/ip-pre-up script was executed.
 
-Paul.
+--=20
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+
+--jRHKVT23PllUwdXP
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+
+iD8DBQFDEoy2IiWKUhK+Mj4RAvRqAJwKnblHw/rCQr/VnO3wyMrZ13n1SACdEzPu
+QdxSQyQkNTTpDHaRMEnwaVs=
+=3URB
+-----END PGP SIGNATURE-----
+
+--jRHKVT23PllUwdXP--
