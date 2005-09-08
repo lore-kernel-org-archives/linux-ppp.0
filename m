@@ -1,7 +1,7 @@
 From: Jim Barber <jim.barber@ddihealth.com>
-Date: Thu, 08 Sep 2005 02:40:37 +0000
+Date: Thu, 08 Sep 2005 03:03:02 +0000
 Subject: Re: Windows IPSec/L2TP VPN client and Linux server with RADIUS, and
-Message-Id: <431FA4A5.1010208@ddihealth.com>
+Message-Id: <431FA9E6.4030108@ddihealth.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <431C13DD.9080600@ddihealth.com>
 In-Reply-To: <431C13DD.9080600@ddihealth.com>
@@ -9,6 +9,21 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+Further to below, I compared the freeradius dictionary.microsoft file
+with the one I've been supplied with.
+Apart from the differences I described below, also the word "octects"
+in the freeradius file is "string" in the dictionary file for
+radiusclient.
+Also, some of the entries in the freeradius dictionary have strings
+like "encrypt=1" or "encrypt=2". These strings don't exist in the
+radiusclient dictionary file.
+
+Regards,
+Jim Barber.
+
+
+---------
 
 Success!
 
