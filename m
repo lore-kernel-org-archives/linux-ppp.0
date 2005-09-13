@@ -1,48 +1,51 @@
-From: Markus.Reichert@devolo.de
-Date: Tue, 30 Aug 2005 16:38:54 +0000
-Subject: pppd: How to avoid packet loss with dial on demand?
-Message-Id: <OF6B6A0111.A598F39B-ONC125706D.0055E4E8-C125706D.005B7416@devolo.de>
+From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
+Date: Tue, 13 Sep 2005 10:24:37 +0000
+Subject: Re: ppp-2.4.4b1 released
+Message-Id: <20050913102437.GU12310@edu.joroinen.fi>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <17170.31900.251643.605643@cargo.ozlabs.ibm.com>
+In-Reply-To: <17170.31900.251643.605643@cargo.ozlabs.ibm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-Hello,
+On Mon, Aug 29, 2005 at 01:10:20PM +1000, Paul Mackerras wrote:
+> I have just put ppp-2.4.4b1.tar.gz on the samba.org ftp server at:
+>=20
+> ftp://ftp.samba.org/pub/ppp/ppp-2.4.4b1.tar.gz
+>=20
+> This is mostly a bug-fix release, with many bugs fixed to do with
+> persist mode and demand dialling.  The one new feature is that pppd
+> now runs an /etc/ppp/ip-pre-up script after creating the ppp interface
+> and putting the negotiated IP addresses on it but before marking it
+> up.  Since pppd waits for this script to finish, it must run quickly.
+>=20
+> Please test.  If there are no problems with it, I will re-release it
+> as ppp-2.4.4 final.
+>
 
-I'm currently working on a fix for the following problem:
+Hi!
 
-If a Linux router does masquerading in combination with dial on demand
-and dynamic IP, ICMP and UDP packets get lost as ip_dynaddr works only
-for TCP connections (fix uses TCP retransmissions).
+Could you please add this patch to pppd?
 
-The problem is that the PPP gets a packet from IP which is already 
-address-
-translated, but with the old interface IP address. This packet triggers 
-the
-dial-in. Thereafter pppd sends out the (unmodified) queued packet using 
-the interface
-with its new IP address. Result: The answer can't get back as the old IP
-of the interface disappeared.
+http://nrg.joroinen.fi/ppp/pppd-2.4.3-radius-dns-wins-1.diff
 
-I want to fix the problem within pppd, as I think this is the right place 
-to do so. As there
-is a function demand_rexmit where obviously all queued packets go through 
-after dial-in,
-I already patched PPP to replace the old IP by the new one.
+It adds support for fetching dns- and wins-server information from radius..
+If radius server does not reply with dns/wins information, the values from
+the pppd configuration file are used.
 
-But answers to these packets have to be re-translated as well. Can 
-somebody tell me
-where I find the right place in pppd to do that? I'm currently not sure 
-how to tell the kernel
-PPP to send the packets to pppd instead of handling the IP traffic 
-completely on its own.
-I need to see the incoming packets for the IP address re-translation.
+Or if there's something in this patch you'd like to be changed, please tell=
+ me.
 
-Thanks for suggestions,
+Thanks!
 
-Markus
-
-
-
-
+-- Pasi K=E4rkk=E4inen
+=20
+      =20
+                                   ^
+                                .     .
+                                 Linux
+                              /    -    \
+                             Choice.of.the
+                           .Next.Generation.
