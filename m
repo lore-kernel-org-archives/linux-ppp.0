@@ -1,40 +1,47 @@
-From: John Horne <john.horne@plymouth.ac.uk>
-Date: Thu, 06 Oct 2005 16:40:51 +0000
-Subject: Re: Radius plugin failover - not working?
-Message-Id: <1128616852.6168.16.camel@jhorne.csd.plymouth.ac.uk>
+From: "Eugene Paskevich" <eugene@raptor.kiev.ua>
+Date: Thu, 06 Oct 2005 05:39:10 +0000
+Subject: Re: CBCP rewrite patch + feature request
+Message-Id: <op.sx7lzkta2m4sxy@condor.raptor.kiev.ua>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1128531556.19093.60.camel@jhorne.csd.plymouth.ac.uk>
-In-Reply-To: <1128531556.19093.60.camel@jhorne.csd.plymouth.ac.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, 2005-10-05 at 17:59 +0100, John Horne wrote:
-> 
-> We have a server running Fedora Core 3 linux (2.6.12-1.1372_FC3 kernel),
-> with pptpd 1.2.2, freeradius 1.0.1, and ppp 2.4.3 (with mppe/mppc patch)
-> and the radius plugin. This is all used as a VPN server for mainly
-> Windows XP clients using mppe/pptp. This works fine - the radius plugin
-> talks fine with the local radius server.
-> 
-> However, I have being testing failover with another server using the
-> same software, and the failover does not seem to work.
+On Wed, 14 Sep 2005 09:57:06 +0300, Eugene Paskevich  
+<eugene@raptor.kiev.ua> wrote:
+
+> As you asked, Paul, I ported my patch to 2.4.4b1 version.
+> All your remarks were took into the account while porting.
+> But some things were changed so no surprise you will have
+> more remarks. :-)
 >
-Hello,
+> Patch features:
+>
+> 1) README corrections and additions.
+> 2) chat/chat.c: got rid of compilation warning complaining
+>    trigraph misuse when compiled using gcc-3.4.4.
+> 3) New hook and plugin for it. Both described in README.
+> 4) Almost fully rewritten and reorganized cbcp.c
+>    With addition of server side capabilities, code for list
+>    callback type, retransmitting timeouted packets.
+> 5) Some defines were enumerated in cbcp.h
+> 6) #ifdef'ed out unused cbcp definitions if code is compiled
+>    without CBCP_SUPPORT.
+> 7) corrected tiny misspellings with dialling -> dialing.
+>
+> Feature request:
+>
+> 1) Utilize new hook in radius plugin.
 
-Okay, you can ignore this. It was due to my misunderstanding of the
-'key' in the radiusclient/servers file. I have now corrected this, and
-failover works fine :-)
+I beg your pardon, Paul, but it's been three weeks since
+I've sent this patch and I haven't seen any comments upon it.
+Sorry for my impatience, but I think that this time must be
+sufficient at least for reviewing and commenting, isn't it?
 
-Sorry for the hassle.
-
-
-
-John.
+May be you'd like me to convert this patch into a series of
+simple patches with some logical division?
 
 -- 
----------------------------------------------------------------
-John Horne, University of Plymouth, UK  Tel: +44 (0)1752 233914
-E-mail: John.Horne@plymouth.ac.uk       Fax: +44 (0)1752 233839
-
+Eugene Paskevich             |   *=)-----------   |     Plug me into
+eugene@raptor.kiev.ua        |   -----------(=*   |      The Matrix
