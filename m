@@ -1,32 +1,34 @@
-From: Matt Domsch <Matt_Domsch@dell.com>
-Date: Wed, 23 Nov 2005 04:31:19 +0000
-Subject: Re: [pptp-devel] Re: pppd and NetworkManager - 3 issues
-Message-Id: <20051123043119.GB18231@lists.us.dell.com>
+From: Jay Nitikman <jay@permeable.com>
+Date: Sat, 12 Nov 2005 18:03:23 +0000
+Subject: ioctl(ppp_dev_fd, PPPIOCSCOMPRESS, (caddr_t) &data) fails
+Message-Id: <43762E6B.5020108@permeable.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <438341FB.70709@ncl.ac.uk>
-In-Reply-To: <438341FB.70709@ncl.ac.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, Nov 23, 2005 at 10:39:30AM +1100, James Cameron wrote:
-> a) The IP of the VPN server
-[snip] 
-> Another method is to do the DNS resolution before you call pppd or pptp,
-> that way you'll have the IP address already.
+My working vpn connection stopped working "suddenly". I did some testing 
+and discovered that the call:
 
-For establishing static routes, the Microsoft Network Access
-Quarantine feature of Windows Server 2003, and other uses, one really
-does need to know the IP of the server.  For my purposes, my
-hand-rolled scripts do the DNS resolution, then call pppd with the IP
-address, and this works quite well.
+ioctl(ppp_dev_fd, PPPIOCSCOMPRESS, (caddr_t) &data)
 
-Thanks,
-Matt
+in ccp_test() in sys-linux.c in pppd always returns EINVAL.
+
+My kernel, 2.6.10-gentoo-r6, has MPPE compiled in, not as a module.
+The ppp_dev_fd has a value of "22" which seems reasonable.  So it 
+appears that PPPIOCSCOMPRESS is invalid.  Huh?
+
+I am using Gentoo ppp-2.4.3-r9.
+
+This has been working fine for months.  I have tried rebooting, both 
+cold and warm.  I've tried rebuilding ppp-2.4.3-r9.  I've tried 
+ppp-2.4.2-r15.  My vpn provider says that nothing has changed on their side.
+
+Any ideas why that ioctl should fail and how to fix it?
 
 -- 
-Matt Domsch
-Software Architect
-Dell Linux Solutions linux.dell.com & www.dell.com/linux
-Linux on Dell mailing lists @ http://lists.us.dell.com
+-----------------
+Jay Nitikman
+jay@permeable.com
+-----------------
