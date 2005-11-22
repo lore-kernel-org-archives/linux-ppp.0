@@ -1,33 +1,94 @@
-From: Jay Nitikman <jay@permeable.com>
-Date: Mon, 14 Nov 2005 13:20:49 +0000
-Subject: Re: ioctl(ppp_dev_fd, PPPIOCSCOMPRESS, (caddr_t) &data) fails
-Message-Id: <43788F31.6050409@permeable.com>
+From: James Shaker <james@vartek-corp.com>
+Date: Tue, 22 Nov 2005 16:03:30 +0000
+Subject: an embedded linux ppp problem
+Message-Id: <43834152.8030300@vartek-corp.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <43762E6B.5020108@permeable.com>
-In-Reply-To: <43762E6B.5020108@permeable.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I finally got it to work with modules.  I found conflicting module 
-information online, but the following works for me:
+I am running busybox in an embedded application.  I have the chat script 
+working up to the login portion.  At that point the script hangs waiting 
+for the "ogin:".  When I have the modem hooked up to my laptop and 
+manually dialed into the callin server I get the right prompts. However 
+when the modem is connected to the embedded device, the last message 
+sent is CONNECT 115200.
 
-Compiled in Kernel: PPP
-Kernel Module: PPP-MPPE, SHA1, SHA256, SHA512, ARC4
+Here are is some of the scripts:
 
-Set "mpppe stateless" in options.pptp
+$ cat ppp-on
+#!/bin/sh
+PHN=xxxxxxxxxxx
+TELEPHONE=$PHN
+ACCOUNT=xxxxxxxx
+PASSWORD=xxxxxxx
+LOCAL_IP=0.0.0.0
+REMOTE_IP=0.0.0.0
+NETMASK%5.255.255.0
+PROTOCOL=PPP
+export TELEPHONE ACCOUNT PASSWORD PROTOCOL
+DIALER_SCRIPT=/etc/ppp/ppp-on-dialer
+/bin/setserial /dev/ttyAM1 auto_irq autoconfig
+exec pppd $LOCAL_IP:$REMOTE_IP /dev/ttyAM1 115200 modem connect 
+$DIALER_SCRIPT &
+ 
+$ cat ppp-on-dialer
+#!/bin/sh
+/usr/sbin/chat -E -v -s -f /etc/ppp/pppconnect
 
-It really worked for six months with PPP-MPPE compiled into the kernel.
+$ cat pppconnect
+TIMEOUT 6
+ABORT 'BUSY'
+ABORT 'NO ANSWER'
+'' AT
+'OK' ATH0
+TIMEOUT 60
+OK ATDTxxxxxxxxxxx
+CONNECT ''
+ogin: xxxxx
+assword: 'xxxxxx
 
-Thanks,
+Here what the connect-errors shows:
 
-James Cameron wrote:
-> Try it as a module?  I've never got it to work statically compiled.
-> 
+timeout set to 6 seconds
+abort on (BUSY)
+abort on (NO ANSWER)
+send (AT^M)
+expect (OK)
+AT^M^M
+OK
+ -- got it
 
--- 
------------------
-Jay Nitikman
-jay@permeable.com
------------------
+send (ATH0^M)
+timeout set to 60 seconds
+expect (OK)
+^M
+ATH0^M^M
+OK
+ -- got it
+
+send (ATDT18669686661^M)
+expect (CONNECT)
+^M
+ATDT18669686661^M^M
+MESSAGE-WAITING^M
+^M
+CONNECT
+ -- got it
+
+send (^M)
+expect (115200)
+ 115200
+ -- got it
+
+send ( ^M)
+expect (allin)
+^M
+alarm
+Failed
+
+
+Any suggestions of what to try are greatly appreciated.
+
+James
