@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Sun, 15 Jan 2006 18:35:20 +0000
+From: Bill Unruh <unruh@physics.ubc.ca>
+Date: Sun, 15 Jan 2006 19:42:45 +0000
 Subject: Re: pppd over gprs modem
-Message-Id: <17354.38376.983043.409418@gargle.gargle.HOWL>
+Message-Id: <Pine.LNX.4.61.0601151136120.12735@info.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <43CA8E4E.2020603@asist-traffic.com>
 In-Reply-To: <43CA8E4E.2020603@asist-traffic.com>
@@ -10,64 +10,106 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Babarovic Ivica writes:
+Well, there are a few things where you and he (the gprs modem) disagree. So
+why don't you set up your system so that you do not disagree.
+a) He wants chap. Give him chap. Set up /etc/ppp/chap-secrets in teh same
+way as you have pap-secrets.
+Secondly he does not want compression. Put noccp into /etc/ppp/options.
+Thirdly he wants asyncmap a0000 PUt
+asyncmap 0xa0000 
+into ppp/options.
+
+Yes, I know the negotiations seem to settle it, but it is possible that
+although he complies with your wishes, this pisses him off enough to
+terminate the requests.
+Also Why send him your IP. Let him send you the suggestion.
+0.0.0.0:0.0.0.0
+in options.
+
+On Sun, 15 Jan 2006, Babarovic Ivica wrote:
+
+> Hi!
+>
 > I'm trying to configure pppd to run over GPRS modem.
 > So far withouth any success. Peer just keeps on reseting the link.
-
-You should first be aware that GPRS is very strange.  It is (in my
-opinion) badly designed for networking, in particular because it
-deliberately redefines the operation of PPP.  The actual
-authentication does *NOT* take place during PPP's Authentication
-phase.  Instead, it takes place during Network phase, when IPCP runs.
-
-The implication of this is that authentication errors (bad user name,
-bad passphrase) on GPRS are typically reported as IPCP addressing
-errors.  During authentication phase, the peer sends "ack" even if
-your credentials are completely wrong.  This makes no operational
-sense, of course, but it's how it was designed.
-
-Problems are just par for the course.
-
->  pppd /dev/ttyS1 19200 nocrtscts noauth defaultroute novj novjccomp user
+>
+> This is how I start up pppd:
+> pppd /dev/ttyS1 19200 nocrtscts noauth defaultroute novj novjccomp user
 > simobil ipcp-accept-local ipcp-accept-remote connect "exec
-
-Instead of those ipcp-accept-* options, you probably want
-"noipdefault."
-
+> /usr/sbin/chat -v '' atd*99***# '' \d\c" debug
+>
+> and this is what I get in logs:
+> Nov 25 08:54:39 nova pppd[1175]: pppd 2.4.3 started by root, uid 0
+> Nov 25 08:54:40 nova chat[1176]: send (atd*99***#^M)
+> Nov 25 08:54:40 nova chat[1176]: send (dc^M)
+> Nov 25 08:54:40 nova pppd[1175]: Serial connection established.
+> Nov 25 08:54:40 nova pppd[1175]: using channel 75
+> Nov 25 08:54:40 nova pppd[1175]: Using interface ppp0
+> Nov 25 08:54:40 nova pppd[1175]: Connect: ppp0 <--> /dev/ttyS1
 > Nov 25 08:54:40 nova pppd[1175]: rcvd [LCP ConfReq id=0x3 <asyncmap
 > 0xa0000> <pcomp> <accomp> <magic 0x4895f5d2> <auth chap MD5>]
+> Nov 25 08:54:40 nova pppd[1175]: sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+> <magic 0x1f8c437d> <pcomp> <accomp>]
 > Nov 25 08:54:40 nova pppd[1175]: sent [LCP ConfNak id=0x3 <auth pap>]
-
-One problem is that the peer is asking you to use CHAP, and you're
-insisting that you want to use PAP instead.  If you're absolutely sure
-that the peer has PAP credentials for you (and not CHAP), then this is
-probably right.  Otherwise, it's not.
-
-If it's not, then you should have appropriate credentials specified in
-/etc/ppp/chap-secrets, like this:
-
-	simobil * "your password"
-
+> Nov 25 08:54:40 nova pppd[1175]: rcvd [LCP ConfNak id=0x1 <asyncmap
+> 0xa0000>]
+> Nov 25 08:54:40 nova pppd[1175]: sent [LCP ConfReq id=0x2 <asyncmap
+> 0xa0000> <magic 0x1f8c437d> <pcomp> <accomp>]
+> Nov 25 08:54:40 nova pppd[1175]: rcvd [LCP ConfReq id=0x5 <asyncmap
+> 0xa0000> <pcomp> <accomp> <magic 0x4895f5d2> <auth pap>]
+> Nov 25 08:54:40 nova pppd[1175]: sent [LCP ConfAck id=0x5 <asyncmap
+> 0xa0000> <pcomp> <accomp> <magic 0x4895f5d2> <auth pap>]
+> Nov 25 08:54:40 nova pppd[1175]: rcvd [LCP ConfAck id=0x2 <asyncmap
+> 0xa0000> <magic 0x1f8c437d> <pcomp> <accomp>]
+> Nov 25 08:54:40 nova pppd[1175]: sent [PAP AuthReq id=0x1 user="simobil"
+> password=<hidden>]
+> Nov 25 08:54:41 nova pppd[1175]: rcvd [PAP AuthAck id=0x1 ""]
+> Nov 25 08:54:41 nova pppd[1175]: PAP authentication succeeded
 > Nov 25 08:54:41 nova pppd[1175]: sent [CCP ConfReq id=0x1 <deflate 15>
 > <deflate(old#) 15> <bsd v1 15>]
-
-You might as well specify "noccp".  It won't make much of a
-difference, though.
-
 > Nov 25 08:54:41 nova pppd[1175]: sent [IPCP ConfReq id=0x1 <addr
 > 192.168.254.57>]
-
-This is due to the misuse of the ipcp-allow-* options above.  To avoid
-confusing the peer, you shouldn't be sending it an RFC 1918 address.
-
+> Nov 25 08:54:41 nova pppd[1175]: rcvd [LCP ProtRej id=0x6 80 fd 01 01 00
+> 0f 1a 04 78 00 18 04 78 00 15 03 2f]
+> Nov 25 08:54:41 nova pppd[1175]: Protocol-Reject for 'Compression
+> Control Protocol' (0x80fd) received
 > Nov 25 08:54:41 nova pppd[1175]: rcvd [LCP TermReq id=0x7]
-[...]
+> Nov 25 08:54:41 nova pppd[1175]: LCP terminated by peer
+> Nov 25 08:54:41 nova pppd[1175]: sent [LCP TermAck id=0x7]
+> Nov 25 08:54:44 nova pppd[1175]: rcvd [LCP TermReq id=0x7]
+> Nov 25 08:54:44 nova pppd[1175]: sent [LCP TermAck id=0x7]
+> Nov 25 08:54:44 nova pppd[1175]: Connection terminated.
+> Nov 25 08:54:45 nova chat[1179]: send (atd*99***#^M)
+> Nov 25 08:54:45 nova chat[1179]: send (dc^M)
+> Nov 25 08:54:45 nova pppd[1175]: Serial connection established.
+> Nov 25 08:54:45 nova pppd[1175]: using channel 76
+> Nov 25 08:54:45 nova pppd[1175]: Using interface ppp0
+> Nov 25 08:54:45 nova pppd[1175]: Connect: ppp0 <--> /dev/ttyS1
+> Nov 25 08:54:45 nova pppd[1175]: tcflush failed: Bad file descriptor
+> Nov 25 08:54:46 nova pppd[1175]: tcsetattr: Invalid argument (line 1010)
+> Nov 25 08:54:46 nova pppd[1175]: Exit.
+>
+>
+>
 > Why is LCP terminated by peer?
-
-This is typically the case when the authentication data are wrong.
-
-Your user name, passphrase, or chosen authentication protocol are not
-correct for this link.
+> Any ideas?
+>
+> System is running on a 2.6.14 kernel. with this options:
+> CONFIG_PPP=y
+> CONFIG_PPP_FILTER=y
+> CONFIG_PPP_ASYNC=y
+> CONFIG_PPP_SYNC_TTY=y
+> CONFIG_PPP_DEFLATE=y
+> CONFIG_PPP_BSDCOMP=y
+>
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
 
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
+Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
+UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
+Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
