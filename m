@@ -1,89 +1,59 @@
-From: "Ionut Turturica" <ionut.turturica@galati.uti.ro>
-Date: Sun, 29 Jan 2006 21:46:44 +0000
-Subject: Re: IPCP problem
-Message-Id: <op.s35tf6n1blqxiz@jono>
+From: Babarovic Ivica <ivica@asist-traffic.com>
+Date: Wed, 18 Jan 2006 17:10:57 +0000
+Subject: advice needed
+Message-Id: <43CE76A1.1020409@asist-traffic.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <op.s35d59crblqxiz@jono>
-In-Reply-To: <op.s35d59crblqxiz@jono>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi!
 
-Yes, when MPPE is disabled the link comes up but obviously I don't want a  
-not encrypted link. The confusing thing is that Windows' native PPTP  
-client works just fine, pppd does not. I have no idea what software the  
-peer uses and I can't find out, my guess is that it's a M$ Windows.
+I have a working setup with a vxworks machine sending
+data over GPRS modem. It sets up a modem and establish
+a ppp link with provider.
 
-It would be nice to have some similar logs from windows' client to see how  
-does it handle this. There must be a bug in the peer software.
+Now I have to send some additional data(pictures) which hardware
+that vxworks runs on cannot provide. That's why I included a small
+industrial board with framegraber an put linux on it. Basically I inserted
+this linux box between vxworks box and a GPRS modem connecting
+them with serial lines.
 
-On Sun, 29 Jan 2006 22:20:49 +0200, James Carlson  
-<carlsonj@workingcode.com> wrote:
+Since I need to keep vxworks setup and programs untouched  (it needs to
+work as
+plug in linux box, plug out linux box) I've come with a following idea.
 
-> Ionut Turturica writes:
->> It looks like the pptpd server requests first time mppe-stateful, then  
->> it
->> changes its mind and wants mppe-stateless. Is there any way to fix this?
->> (I don't have access to pptpd's config)
->
-> That's not how I read this log.
->
->> sent [CCP ConfReq id=0x1 <mppe +H -M +S -L -D -C>]
->
-> The local system tells its peer that it would like to do 128 bit MPPE
-> (+S) with stateless mode (+H).
->
->> rcvd [CCP ConfReq id=0x1]
->
-> The peer says that it doesn't want to use MPPE or CCP at all.  Are you
-> sure that you should be using MPPE with this peer?
->
->> sent [CCP ConfAck id=0x1]
->
-> The local system agrees to avoid MPPE for the peer!  That looks like a
-> bug to me.  It's theoretically possible, to encrypt in just one
-> direction, but it doesn't sound like a good thing.  This should have
-> been a CCP Configure-Nak instead.
->
->> rcvd [CCP ConfNak id=0x1 <mppe -H -M +S -L -D -C>]
->
-> The peer says that it agrees to 128 bit MPPE, but only if stateful
-> (-H) mode is used.
->
->> sent [CCP ConfReq id=0x2 <mppe -H -M +S -L -D -C>]
->
-> We re-request using the peer's options.
->
->> rcvd [CCP ConfAck id=0x2 <mppe -H -M +S -L -D -C>]
->> MPPE 128-bit stateful receive compression enabled
->
-> MPPE is now up in one direction (data sent from the peer to this
-> system -- the receive side -- should be encrypted, the other side is
-> not).
->
->> rcvd [CCP ConfReq id=0x1]
->> MPPE disabled
->
-> The peer is pretty confused.  It just restarted CCP negotiation for no
-> apparent reason.  As a result, we've torn down MPPE, as required by
-> the protocol.
->
->> sent [LCP TermReq id=0x2 "MPPE disabled"]
->> sent [CCP ConfReq id=0x3 <mppe +H -M +S -L -D -C>]
->> sent [CCP ConfAck id=0x1]
->
-> We're apparently trying to restart CCP.
->
->> rcvd [LCP TermAck id=0x2]
->
-> The peer loses its mind and shuts down the link.
->
-> I'm not sure that the peer agrees that this link should be using MPPE
-> at all.  Though there's one anomalous thing coming out of pppd, it
-> seems to me that the real problems here are on the peer's side.
->
-> Other than disabling MPPE entirely, I'm not sure what you can do to
-> fix this.
->
+I made a program that connects serial ports on linux board so vxworks
+box can
+freely access modem across linux box and initialize it. I'm catching the
+"CONNECT" string here  and after that, I break the serial port
+connection/exit
+program. I start ppp link on serial side towards vxworks and that makes
+it happy.
+
+Now the problem comes when I want to attach to a connected stream towards
+modem on linux. Remember this stream was created by vxworks box.
+I thought I want be having any problems but pppd refuses to connect or
+refuses to attach itself to this stream and start ppp negotiation.
+I thought pppd will behave similar as when manually dialing to a provider.
+Scenario: Minicom, dial, connect, exit minicom, start pppd, ppp link
+comes up.
+
+But for some reason pppd refuses this for the stream vxworks box created.
+
+All I get in log is: pppd 2.4.3 started by root, uid 0
+no further lines.
+
+Let me add that if I kill this stream somehow(enter minicom and exit)
+I can easily establish my own link from scratch. But of course this needs
+to be automated. So what do you think is causing pppd not to establish
+ppp link with the stream vxworks creates?
+
+
+I hope I was clear enough since my English is a bit basic. If not please ask
+for whatever info you need. I'll provide.
+
+
+TIA,
+I.B.
