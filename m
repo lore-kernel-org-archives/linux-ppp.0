@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Wed, 18 Jan 2006 17:19:55 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 18 Jan 2006 17:35:36 +0000
 Subject: Re: advice needed
-Message-Id: <Pine.LNX.4.61.0601180916490.19177@info.physics.ubc.ca>
+Message-Id: <17358.31848.806895.303983@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <43CE76A1.1020409@asist-traffic.com>
 In-Reply-To: <43CE76A1.1020409@asist-traffic.com>
@@ -10,24 +10,11 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, 18 Jan 2006, Babarovic Ivica wrote:
-
-> Hi!
->
-> I have a working setup with a vxworks machine sending
-> data over GPRS modem. It sets up a modem and establish
-> a ppp link with provider.
->
-> Now I have to send some additional data(pictures) which hardware
-> that vxworks runs on cannot provide. That's why I included a small
-> industrial board with framegraber an put linux on it. Basically I inserted
-> this linux box between vxworks box and a GPRS modem connecting
-> them with serial lines.
->
+Babarovic Ivica writes:
 > Since I need to keep vxworks setup and programs untouched  (it needs to
 > work as
 > plug in linux box, plug out linux box) I've come with a following idea.
->
+> 
 > I made a program that connects serial ports on linux board so vxworks
 > box can
 > freely access modem across linux box and initialize it. I'm catching the
@@ -35,41 +22,53 @@ On Wed, 18 Jan 2006, Babarovic Ivica wrote:
 > connection/exit
 > program. I start ppp link on serial side towards vxworks and that makes
 > it happy.
->
-> Now the problem comes when I want to attach to a connected stream towards
-> modem on linux. Remember this stream was created by vxworks box.
-> I thought I want be having any problems but pppd refuses to connect or
-> refuses to attach itself to this stream and start ppp negotiation.
-> I thought pppd will behave similar as when manually dialing to a provider.
-> Scenario: Minicom, dial, connect, exit minicom, start pppd, ppp link
-> comes up.
->
-> But for some reason pppd refuses this for the stream vxworks box created.
->
-> All I get in log is: pppd 2.4.3 started by root, uid 0
-> no further lines.
->
-> Let me add that if I kill this stream somehow(enter minicom and exit)
-> I can easily establish my own link from scratch. But of course this needs
-> to be automated. So what do you think is causing pppd not to establish
-> ppp link with the stream vxworks creates?
 
-Because it is already a ppp link. YOu cannot negotiate another ppp link on
-top of a ppp link.
+PPP itself (irrespective of the hardware or OS in use) generally can't
+work that way because it's a network protocol that involves shared
+state between the peers.  The local problems of having this somehow
+"work" on Linux pale in comparison to the high-level problems.
 
-And you now have horrendous timing problems. How do you make sure your
-linux box does not send data interleaved with the data from the vxbox?
+I can think of two ways to make the overall model work, and perhaps a
+few variations on them.  The first (and certainly easiest) method
+would be to have two _separate_ PPP links, like this:
 
+	VxWorks <---PPP1---> Linux <---PPP2---> GPRS
 
-Can your vsworks box support ethernet? If it can just make an ethernet
-connection from Linux to the vxworks. (I have no idea what a vxworks box is
-so can make no suggestions)
+In this scenario, the Linux box would see two network interfaces --
+probably named "ppp0" and "ppp1."  To get packets from VxWorks out to
+the GPRS system, any of the following variations would work:
 
-Why not have the linux box do everything the vxbox does.
+  - Run NAT on the Linux box so that both VxWorks and the Linux
+    applications are behind the same IP address, as far as the GPRS
+    device can tell.  If you have inbound connections over GPRS, this
+    may be harder to use.
 
->
->
-> I hope I was clear enough since my English is a bit basic. If not please ask
-> for whatever info you need. I'll provide.
->
->
+  - Route (forward) between these interfaces.  The VxWorks system and
+    the Linux system will need separate IP addresses, and the GPRS
+    system will need to know to treat your Linux box as the next hop
+    router for the VxWorks system.  If you have cooperation of the
+    GPRS provider (unlikely, I'd imagine), this solution would be
+    simple.
+
+  - Run application layer proxies on the Linux box.  The VxWorks
+    system would connect to SOCKS proxies or other (perhaps custom)
+    applications that in turn open connections over the second PPP
+    link to the rest of the world.
+
+The other solution, which is much closer to what I think you're
+suggesting, but is also much closer to being science fiction, would be
+to have the Linux box behave as a custom L2 bridge for PPP traffic.
+You'd have to modify the kernel so that it knows how to forward
+particular IP packets to the intended receiver, and the pppd daemon so
+that it knows how to forward PPP negotiation parameters (IPCP
+addresses and the like) between two separate links.  The result would
+be something like:
+
+	VxWorks <---PPP1a---> Linux <---PPP1b---> GPRS
+
+Doable, perhaps, but quite an involved project, and something that
+would likely require the help of people who know both the Linux kernel
+and pppd code _very_ well.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
