@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Wed, 01 Feb 2006 06:00:43 +0000
+From: James Cameron <james.cameron@hp.com>
+Date: Wed, 01 Feb 2006 06:12:11 +0000
 Subject: Re: Hot to perform a null login?
-Message-Id: <Pine.LNX.4.61.0601312157440.11123@info.physics.ubc.ca>
+Message-Id: <20060201061211.GM3755@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1138770376.8869.17.camel@localhost.localdomain>
 In-Reply-To: <1138770376.8869.17.camel@localhost.localdomain>
@@ -10,37 +10,22 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, 1 Feb 2006, Matthew Percival wrote:
+Given that it's Telstra, the dominant carrier in Australia, requiring a
+null username on a GSM call is not at all unusual, and probably
+something that Matthew won't ever be able to work around as far as the
+provider is concerned.  Authentication and billing is done using the GSM
+number, and not the authentication username.  On the CDMA modem that I
+have with the same carrier, a non-null shared username is used.
+Everybody uses the same username as far as I can tell.
 
-> G'Day,
->
->> Why would you want to do this? It is not at all clear that anything can
->> understand a null login name.  Why do you think you need to send a null
->> username
->
-> 	Apparently that is what is required for the server I am connecting to.
-> You would need to ask the provider for why or how: I am just trying to
-> do what I have been told.
+Matthew, could you show us a debug log of the connection attempt?  Bill
+asked for that before, and it would be really helpful.  Add the option
+debug to the command line you use to start pppd.
 
-Surely not.
+I agree with Bill that the "sent [PAP AuthReq" suggests that your end is
+attempting to authenticate the peer.  Use the dump option to find out
+where the options are coming from.
 
-
->
->> You might have a line
->>
->> ''    GSM  ''
->> in /etc/pap-secrets and have
->> user ''
->> as an option for pppd.
->
-> 	I just tried that, but it still defaulted to my local name.
->> From /var/log/syslog:
-> Feb  1 16:28:29 localhost pppd[15869]: sent [PAP AuthReq id=0x1
-> user="matthew" password=<hidden>]
-
-Uh, you have the login  option set.  Don't.
-
-However a blank username could well get badly interpreted by various
-things. I think you need tocheck again as to what they really want. a null
-username makes no sense at all.
-
+-- 
+James Cameron
+http://ftp.hp.com.au/sigs/jc/
