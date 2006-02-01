@@ -1,7 +1,7 @@
 From: James Cameron <james.cameron@hp.com>
-Date: Wed, 01 Feb 2006 23:03:14 +0000
+Date: Wed, 01 Feb 2006 23:13:07 +0000
 Subject: Re: Hot to perform a null login?
-Message-Id: <20060201230314.GA4191@hp.com>
+Message-Id: <20060201231307.GB4191@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1138770376.8869.17.camel@localhost.localdomain>
 In-Reply-To: <1138770376.8869.17.camel@localhost.localdomain>
@@ -10,29 +10,17 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-G'day Matthew,
+It might be possible to test without changing code if you add the
+usehostname option and set the system hostname to a null string.
 
-I've checked the code, and a null username given to the user option is
-overridden by the value given to the name option.  And the name option
-defaults in the same way to the hostname or is forced to it if the
-usehostname option is used.  
+I'd tried this on my test system, got an error from the hostname
+command, and presumed it wouldn't accept a null string.  After I'd sent
+the previous mail, I found some things were no longer working, so I
+checked and the change had taken effect, "hostname" by itself gave a
+blank line.
 
-This is in auth_check_options(), line 1214 of auth.c CVS revision 1.108.
-
-    /* Default our_name to hostname, and user to our_name */
-    if (our_name[0] = 0 || usehostname)
-	strlcpy(our_name, hostname, sizeof(our_name));
-    if (user[0] = 0)
-	strlcpy(user, our_name, sizeof(user));
-
-Therefore it is not possible with the current code to offer a null
-string for PAP authentication, since this matches the tests above.  To
-achieve it, you will have to change the code and recompile.  I suggest
-commenting out the last two lines I've quoted above, and then use
-
-	user ''
-
-as Bill initially suggested.
+So at the risk of breaking stuff that relies on a valid hostname, give
+it a try.
 
 -- 
 James Cameron
