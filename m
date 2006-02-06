@@ -1,7 +1,7 @@
 From: "Ionut Turturica" <ionut.turturica@galati.uti.ro>
-Date: Mon, 06 Feb 2006 20:52:34 +0000
+Date: Mon, 06 Feb 2006 21:01:41 +0000
 Subject: Re: PPPoE stuff
-Message-Id: <op.s4kj9wttblqxiz@jono>
+Message-Id: <op.s4kko3rnblqxiz@jono>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <op.s4kigj0bblqxiz@jono.amd>
 In-Reply-To: <op.s4kigj0bblqxiz@jono.amd>
@@ -11,22 +11,32 @@ Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
 
-I bridged a tap device + eth0 and resulted br0, I see no problem with  
-this. PPPoE does the initial handshake and starts a new session then  
-passes to pppd which fails..
+Indeed, the XP machine doesn't receive any ppp packet as if anything  
+that's written to that pty is lost :/
 
-On Mon, 06 Feb 2006 22:36:45 +0200, Jar <jar@pcuf.fi> wrote:
+PS: ignore that pptp messages..I used same log file for both pptp and  
+pppoe.
 
-> Ionut Turturica wrote:
+On Mon, 06 Feb 2006 22:27:20 +0200, James Carlson  
+<carlsonj@workingcode.com> wrote:
+
+> Ionut Turturica writes:
+>> Any hints for this?
+>> I'm trying to connect a XP machine with a rp-pppoe server. I see that XP
+>> client keeps requesting CallBack, and we refuse it..
 >
->> Feb  6 22:06:22 lfs pppoe-server[31771]: Session 2 created for client   
->> 00:11:2f:22:c0:7a (10.67.15.2) on br0 using Service-Name ''
->> Feb  6 22:06:53 lfs pppd[31771]:   script /usr/sbin/pppoe -n -I br0 -e   
->> 2:00:11:2f:22:c0:7a -S '', pid 31772
+> The lack of response to your LCP Configure-Request messages (he should
+> have sent at least an ack or nak) seems to indicate that this is a
+> low-level communications problem of some sort.  No packets are getting
+> through at all, so negotiation is simply impossible.  PPP is running,
+> but the PPPoE mechanism is failing.
 >
-> Why you run pppoe over bridge interface br0? Is that going to work?  
-> Which bridge port it is going to use? Usually pppoe is running over  
-> ethernet device, it doesn't need ip interface. Interface can have an ip,  
-> but pppoe doesn't use it.
+>> Feb  6 22:06:42 lfs pptp[31703]: anon log[decaps_gre:pptp_gre.c:407]:
+>> buffering packet 1003 (expecting 1000, lost or reordered)
+> [...]
+>> Feb  6 22:06:58 lfs pppoe-server[31611]: Sent PADT
+>
+> That's sort of scary.  Is this PPTP, PPPoE, or what?  Why messages
+> from both?  (Or are those just unrelated?)
 >
 
