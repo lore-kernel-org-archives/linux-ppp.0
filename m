@@ -1,33 +1,37 @@
-From: Rick Jones <rick.jones2@hp.com>
-Date: Wed, 08 Feb 2006 23:00:24 +0000
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Wed, 08 Feb 2006 23:08:03 +0000
 Subject: Re: [PATCH] ppp: don't use 0 in pointer context
-Message-Id: <43EA7808.6060105@hp.com>
+Message-Id: <20060208230803.GA26038@gondor.apana.org.au>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <E1F6xei-0006hc-00@gondolin.me.apana.org.au>	<OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com> <20060208.144712.66821895.davem@davemloft.net>
+References: <E1F6xei-0006hc-00@gondolin.me.apana.org.au> <OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com> <20060208.144712.66821895.davem@davemloft.net>
 In-Reply-To: <20060208.144712.66821895.davem@davemloft.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: 
-Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
+Content-Type: text/plain; charset="hz-gb-2312"
+Content-Transfer-Encoding: base64
+To: "David S. Miller" <davem@davemloft.net>
+Cc: dlstevens@us.ibm.com, adobriyan@gmail.com, carlsonj@workingcode.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
 
-David S. Miller wrote:
-> From: David Stevens <dlstevens@us.ibm.com>
-> Date: Wed, 8 Feb 2006 14:45:08 -0800
-> 
-> 
->>        Why would sparse complain about this? 0 is a well-defined
->>pointer value (the only value guaranteed to be by the language).
-> 
-> 
-> Because sparse goes beyond the standards and tries to
-> catch cases that usually end up being bugs.
-
-So, how might it tell when someone is mistakenly using a pointer as a boolean if 
-it takes a pass on if(foo) or if(!foo)  instead of looking for if(foo = NULL) 
-or if(foo != NULL)?    (or I suppose if (NULL = foo) and if (NULL != foo))
-
-it would seem that the compars with NULL, when read by pseudorandom folks would 
-be more likely to reinforce that foo is a pointer rather than a boolean/flag.
-
-rick jones
+T24gV2VkLCBGZWIgMDgsIDIwMDYgYXQgMDI6NDc6MTJQTSAtMDgwMCwgRGF2aWQgUy4gTWlsbGVy
+IHdyb3RlOgo+IEZyb206IERhdmlkIFN0ZXZlbnMgPGRsc3RldmVuc0B1cy5pYm0uY29tPgo+IERh
+dGU6IFdlZCwgOCBGZWIgMjAwNiAxNDo0NTowOCAtMDgwMAo+IAo+ID4gICAgICAgICBXaHkgd291
+bGQgc3BhcnNlIGNvbXBsYWluIGFib3V0IHRoaXM/IDAgaXMgYSB3ZWxsLWRlZmluZWQKPiA+IHBv
+aW50ZXIgdmFsdWUgKHRoZSBvbmx5IHZhbHVlIGd1YXJhbnRlZWQgdG8gYmUgYnkgdGhlIGxhbmd1
+YWdlKS4KPiAKPiBCZWNhdXNlIHNwYXJzZSBnb2VzIGJleW9uZCB0aGUgc3RhbmRhcmRzIGFuZCB0
+cmllcyB0bwo+IGNhdGNoIGNhc2VzIHRoYXQgdXN1YWxseSBlbmQgdXAgYmVpbmcgYnVncy4KCldl
+bGwgdG8gYmUgZnJhbmsgdGhlIG9ubHkgc2lnbmlmaWNhbnQgTlVMTC8wIGJ1ZyB0aGF0IEkga25v
+dyBjYW4ndApiZSBjYXVnaHQgYnkgY29udmVydGluZyAwIHRvIE5VTEwgYW55d2F5LiAgVGhlIGJ1
+ZyBvbmx5IGV4aXN0cyBvbgphcmNoaXRlY3R1cmVzIHdoZXJlIHRoZSByZXByZXNlbnRhdGlvbnMg
+b2YgbnVsbC1wb2ludGVycyBvZiB0eXBlcwphcmUgZGlmZmVyZW50LiAgT24gdGhvc2UgYXJjaGl0
+ZWN0dXJlcywgaWYgeW91IGhhdmUgc29tZXRoaW5nIGxpa2UKCmludCBmdW5jKGNoYXIgKmZtdCwg
+Li4uKTsKCi4uLgoKCWZ1bmMoImZvbyIsIE5VTEwpOwoKVGhlbiB0aGlzIG1heSBicmVhayBpZiBm
+dW5jIGFjdHVhbGx5IGV4cGVjdGVkIGEgaW50ICogd2hpbGUgTlVMTApjb3VsZCBiZSBzb21ldGhp
+bmcgZGlmZmVyZW50IGFsdG9nZXRoZXIuICBUaGUgb25seSBzYWZlIHdheSB0bwp3cml0ZSB0aGlz
+IGlzIHRvIGhhdmUKCglmdW5jKCJmb28iLCAoaW50ICopTlVMTCk7CgpvcgoKCWZ1bmMoImZvbyIs
+IChpbnQgKikwKTsKCkNoZWVycywKLS0gClZpc2l0IE9wZW5zd2FuIGF0IGh0dHA6Ly93d3cub3Bl
+bnN3YW4ub3JnLwpFbWFpbDogSGVyYmVydCBYdSB+e1BtVj5ISX59IDxoZXJiZXJ0QGdvbmRvci5h
+cGFuYS5vcmcuYXU+CkhvbWUgUGFnZTogaHR0cDovL2dvbmRvci5hcGFuYS5vcmcuYXUvfmhlcmJl
+cnQvClBHUCBLZXk6IGh0dHA6Ly9nb25kb3IuYXBhbmEub3JnLmF1L35oZXJiZXJ0L3B1YmtleS50
+eHQKLQpUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJz
+Y3JpYmUgbGludXgtcHBwIiBpbgp0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZn
+ZXIua2VybmVsLm9yZwpNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwu
+b3JnL21ham9yZG9tby1pbmZvLmh0bWw=
