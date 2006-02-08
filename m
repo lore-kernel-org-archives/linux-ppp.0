@@ -1,90 +1,30 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
-Date: Wed, 08 Feb 2006 23:22:14 +0000
+From: Paul Mackerras <paulus@samba.org>
+Date: Wed, 08 Feb 2006 23:26:58 +0000
 Subject: Re: [PATCH] ppp: don't use 0 in pointer context
-Message-Id: <20060208232214.GC14543@mipter.zuzino.mipt.ru>
+Message-Id: <17386.32322.548974.883642@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <E1F6xei-0006hc-00@gondolin.me.apana.org.au> <OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com>
-In-Reply-To: <OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com>
+References: <E1F6xei-0006hc-00@gondolin.me.apana.org.au>
+	<OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com>
+	<20060208232214.GC14543@mipter.zuzino.mipt.ru>
+In-Reply-To: <20060208232214.GC14543@mipter.zuzino.mipt.ru>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: David Stevens <dlstevens@us.ibm.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, James Carlson <carlsonj@workingcode.com>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: David Stevens <dlstevens@us.ibm.com>, Herbert Xu <herbert@gondor.apana.org.au>, James Carlson <carlsonj@workingcode.com>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
 
-On Wed, Feb 08, 2006 at 02:45:08PM -0800, David Stevens wrote:
-> netdev-owner@vger.kernel.org wrote on 02/08/2006 02:19:20 PM:
-> 
-> > James Carlson <carlsonj@workingcode.com> wrote:
-> > > Alexey Dobriyan writes:
-> > >> -     if (ap = 0)
-> > >> +     if (!ap)
-> > >
-> > > And the solution is to treat it as a boolean instead?!  I'm not sure
-> > > which is more ugly.
-> >
-> > Treating it as a boolean looks good to me.  It's better than the
-> existing
-> > code because it shuts sparse up.
->
->         Why would sparse complain about this? 0 is a well-defined
-> pointer value (the only value guaranteed to be by the language).
->         From K&R ANSI C edition, section 5.4:
->
->         "Pointers and integers are not interchangeable. Zero is the sole
-> exception: the constant zero may be assigned to a pointer, and a pointer
-> may be compared with the constant zero."
+Alexey Dobriyan writes:
 
-O is an integer, NULL is a pointer. You compare integers with integers
-and pointers with pointers. You don't compare integers with pointers
-because they are fundamentally different objects. The former counts
-things, the latter points to them.
+> The fact that they can be represented by the same bit patterns is
+> irrelevant.
 
-The fact that they can be represented by the same bit patterns is
-irrelevant. The fact that K&R, C89, C99 make
+Indeed it is.  The fact that the C standard says that "0" is a valid
+representation for a null pointer in C source code *is* relevant,
+though.  That is in fact something that *wasn't* in K&R C but was
+introduced in ISO Standard C, and I think it makes sense.
 
-	p = malloc();
-	if (p = NULL)
+Anyway, this whole discussion is silly.  Can we move on to discussing
+whether "disc" or "disk" is the correct spelling, or something else
+equally productive? :)
 
-legal C is irrelevant.
-
-Because
-
-	p = malloc();
-	if (!p)
-		err;
-
-is idiomatic C, I've used this form.
-
-<full-disclosure>
-Oh, and for the record: current sparse from Linus doesn't warn about
-this. Slightly modified sparse warns. Bugs which were uncovered by
-more or less trivial and slightly broken sparse patch [1] are:
-
-	[PATCH] dscc4: fix dscc4_init_dummy_skb check
-	[PATCH] opl3sa2: fix adding second dma channel
-	[PATCH] gusclassic: fix adding second dma channel
-	[PATCH] ipw2200: fix ->eeprom[EEPROM_VERSION] check
-	[PATCH] ixj: fix writing silence check
-
-ppp-NULL.patch is the biggest part of
-	187 files changed, 494 insertions(+), 499 deletions(-)
-so I've flushed it first.
-
-[1]:
-
---- a/evaluate.c
-+++ b/evaluate.c
-@@ -934,6 +934,10 @@ static struct symbol *evaluate_compare(s
- 	/* Pointer types? */
- 	if (is_ptr_type(ltype) || is_ptr_type(rtype)) {
- 		// FIXME! Check the types for compatibility
-+		if (is_ptr_type(ltype) && !is_ptr_type(rtype))
-+			bad_expr_type(expr);
-+		if (!is_ptr_type(ltype) && is_ptr_type(rtype))
-+			bad_expr_type(expr);
- 		expr->op = modify_for_unsigned(expr->op);
- 		goto OK;
- 	}
-
-</full-disclosure>
-
+Paul.
