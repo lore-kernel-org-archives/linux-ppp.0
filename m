@@ -1,34 +1,22 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Date: Wed, 08 Feb 2006 23:49:37 +0000
+From: "David S. Miller" <davem@davemloft.net>
+Date: Wed, 08 Feb 2006 23:58:59 +0000
 Subject: Re: [PATCH] ppp: don't use 0 in pointer context
-Message-Id: <E1F6z45-0006qL-00@gondolin.me.apana.org.au>
+Message-Id: <20060208.155859.82670094.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20060208232214.GC14543@mipter.zuzino.mipt.ru>
-In-Reply-To: <20060208232214.GC14543@mipter.zuzino.mipt.ru>
+	<E1F6z45-0006qL-00@gondolin.me.apana.org.au>
+In-Reply-To: <E1F6z45-0006qL-00@gondolin.me.apana.org.au>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="hz-gb-2312"
-Content-Transfer-Encoding: base64
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: dlstevens@us.ibm.com, herbert@gondor.apana.org.au, carlsonj@workingcode.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: herbert@gondor.apana.org.au
+Cc: adobriyan@gmail.com, dlstevens@us.ibm.com, carlsonj@workingcode.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
 
-QWxleGV5IERvYnJpeWFuIDxhZG9icml5YW5AZ21haWwuY29tPiB3cm90ZToKPiAKPiBPaCwgYW5k
-IGZvciB0aGUgcmVjb3JkOiBjdXJyZW50IHNwYXJzZSBmcm9tIExpbnVzIGRvZXNuJ3Qgd2FybiBh
-Ym91dAo+IHRoaXMuIFNsaWdodGx5IG1vZGlmaWVkIHNwYXJzZSB3YXJucy4gQnVncyB3aGljaCB3
-ZXJlIHVuY292ZXJlZCBieQo+IG1vcmUgb3IgbGVzcyB0cml2aWFsIGFuZCBzbGlnaHRseSBicm9r
-ZW4gc3BhcnNlIHBhdGNoIFsxXSBhcmU6Cj4gCj4gICAgICAgIFtQQVRDSF0gZHNjYzQ6IGZpeCBk
-c2NjNF9pbml0X2R1bW15X3NrYiBjaGVjawo+ICAgICAgICBbUEFUQ0hdIG9wbDNzYTI6IGZpeCBh
-ZGRpbmcgc2Vjb25kIGRtYSBjaGFubmVsCj4gICAgICAgIFtQQVRDSF0gZ3VzY2xhc3NpYzogZml4
-IGFkZGluZyBzZWNvbmQgZG1hIGNoYW5uZWwKPiAgICAgICAgW1BBVENIXSBpcHcyMjAwOiBmaXgg
-LT5lZXByb21bRUVQUk9NX1ZFUlNJT05dIGNoZWNrCj4gICAgICAgIFtQQVRDSF0gaXhqOiBmaXgg
-d3JpdGluZyBzaWxlbmNlIGNoZWNrCgpUaGUgZmlyc3QgdHdvIGNhbiBhbHNvIGJlIGNhdWdodCB3
-aXRoIGdjYyAtcGVkYW50aWMuICBJbiBmYWN0LCBjYXRjaGluZwp0aGUgbGFzdCB0d28gc2hvdWxk
-IGJlIGRvYWJsZSB0aGVyZSBhcyB3ZWxsLiAgVGhlIGRpZmZlcmVuY2UgYmV0d2VlbgpnY2MgLXBl
-ZGFudGljIGFuZCBzcGFyc2UgaXMgdGhhdCBpdCBkb2Vzbid0IHdhcm4gYWJvdXQgb2J2aW91c2x5
-IGNvcnJlY3QKY2FzZXMgbGlrZSBwICE9IDAgb3IgcCA9IDAuCgpDaGVlcnMsCi0tIApWaXNpdCBP
-cGVuc3dhbiBhdCBodHRwOi8vd3d3Lm9wZW5zd2FuLm9yZy8KRW1haWw6IEhlcmJlcnQgWHUgfntQ
-bVY+SEl+fSA8aGVyYmVydEBnb25kb3IuYXBhbmEub3JnLmF1PgpIb21lIFBhZ2U6IGh0dHA6Ly9n
-b25kb3IuYXBhbmEub3JnLmF1L35oZXJiZXJ0LwpQR1AgS2V5OiBodHRwOi8vZ29uZG9yLmFwYW5h
-Lm9yZy5hdS9+aGVyYmVydC9wdWJrZXkudHh0Ci0KVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxp
-c3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXBwcCIgaW4KdGhlIGJvZHkgb2Yg
-YSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5vcmcKTW9yZSBtYWpvcmRvbW8gaW5m
-byBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1s
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Thu, 09 Feb 2006 10:49:37 +1100
+
+> The difference between gcc -pedantic and sparse is that it doesn't
+> warn about obviously correct cases like p != 0 or p = 0.
+
+So obviously correct that you left out an equals sign in the
+second case :-)
