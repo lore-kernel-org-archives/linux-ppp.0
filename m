@@ -1,24 +1,26 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 08 Feb 2006 22:14:13 +0000
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Wed, 08 Feb 2006 22:19:20 +0000
 Subject: Re: [PATCH] ppp: don't use 0 in pointer context
-Message-Id: <17386.27957.822041.83512@gargle.gargle.HOWL>
+Message-Id: <E1F6xei-0006hc-00@gondolin.me.apana.org.au>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20060208222559.GA14543@mipter.zuzino.mipt.ru>
-In-Reply-To: Alexey Dobriyan's message of 9 February 2006 01:28:47
+References: <17386.27957.822041.83512@gargle.gargle.HOWL>
+In-Reply-To: <17386.27957.822041.83512@gargle.gargle.HOWL>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Al Viro <viro@ftp.linux.org.uk>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="hz-gb-2312"
+Content-Transfer-Encoding: base64
+To: James Carlson <carlsonj@workingcode.com>
+Cc: adobriyan@gmail.com, viro@ftp.linux.org.uk, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-Alexey Dobriyan writes:
-> -	if (ap = 0)
-> +	if (!ap)
-
-And the solution is to treat it as a boolean instead?!  I'm not sure
-which is more ugly.
-
-Why wouldn't explicit comparison against NULL be the preferred fix?
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+SmFtZXMgQ2FybHNvbiA8Y2FybHNvbmpAd29ya2luZ2NvZGUuY29tPiB3cm90ZToKPiBBbGV4ZXkg
+RG9icml5YW4gd3JpdGVzOgo+PiAtICAgICBpZiAoYXAgPSAwKQo+PiArICAgICBpZiAoIWFwKQo+
+IAo+IEFuZCB0aGUgc29sdXRpb24gaXMgdG8gdHJlYXQgaXQgYXMgYSBib29sZWFuIGluc3RlYWQ/
+ISAgSSdtIG5vdCBzdXJlCj4gd2hpY2ggaXMgbW9yZSB1Z2x5LgoKVHJlYXRpbmcgaXQgYXMgYSBi
+b29sZWFuIGxvb2tzIGdvb2QgdG8gbWUuICBJdCdzIGJldHRlciB0aGFuIHRoZSBleGlzdGluZwpj
+b2RlIGJlY2F1c2UgaXQgc2h1dHMgc3BhcnNlIHVwLgotLSAKVmlzaXQgT3BlbnN3YW4gYXQgaHR0
+cDovL3d3dy5vcGVuc3dhbi5vcmcvCkVtYWlsOiBIZXJiZXJ0IFh1IH57UG1WPkhJfn0gPGhlcmJl
+cnRAZ29uZG9yLmFwYW5hLm9yZy5hdT4KSG9tZSBQYWdlOiBodHRwOi8vZ29uZG9yLmFwYW5hLm9y
+Zy5hdS9+aGVyYmVydC8KUEdQIEtleTogaHR0cDovL2dvbmRvci5hcGFuYS5vcmcuYXUvfmhlcmJl
+cnQvcHVia2V5LnR4dAotClRvIHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBs
+aW5lICJ1bnN1YnNjcmliZSBsaW51eC1wcHAiIGluCnRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBt
+YWpvcmRvbW9Admdlci5rZXJuZWwub3JnCk1vcmUgbWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92
+Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA==
