@@ -1,37 +1,22 @@
-From: David Stevens <dlstevens@us.ibm.com>
-Date: Wed, 08 Feb 2006 22:45:08 +0000
+From: "David S. Miller" <davem@davemloft.net>
+Date: Wed, 08 Feb 2006 22:47:12 +0000
 Subject: Re: [PATCH] ppp: don't use 0 in pointer context
-Message-Id: <OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com>
+Message-Id: <20060208.144712.66821895.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <E1F6xei-0006hc-00@gondolin.me.apana.org.au>
-In-Reply-To: <E1F6xei-0006hc-00@gondolin.me.apana.org.au>
+	<OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com>
+In-Reply-To: <OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: adobriyan@gmail.com, James Carlson <carlsonj@workingcode.com>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
+To: dlstevens@us.ibm.com
+Cc: herbert@gondor.apana.org.au, adobriyan@gmail.com, carlsonj@workingcode.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
 
-netdev-owner@vger.kernel.org wrote on 02/08/2006 02:19:20 PM:
+From: David Stevens <dlstevens@us.ibm.com>
+Date: Wed, 8 Feb 2006 14:45:08 -0800
 
-> James Carlson <carlsonj@workingcode.com> wrote:
-> > Alexey Dobriyan writes:
-> >> -     if (ap = 0)
-> >> +     if (!ap)
-> > 
-> > And the solution is to treat it as a boolean instead?!  I'm not sure
-> > which is more ugly.
-> 
-> Treating it as a boolean looks good to me.  It's better than the 
-existing
-> code because it shuts sparse up.
+>         Why would sparse complain about this? 0 is a well-defined
+> pointer value (the only value guaranteed to be by the language).
 
-        Why would sparse complain about this? 0 is a well-defined
-pointer value (the only value guaranteed to be by the language).
-        From K&R ANSI C edition, section 5.4:
-
-        "Pointers and integers are not interchangeable. Zero is the sole
-exception: the constant zero may be assigned to a pointer, and a pointer
-may be compared with the constant zero."
-
-                                                        +-DLS
-
+Because sparse goes beyond the standards and tries to
+catch cases that usually end up being bugs.
