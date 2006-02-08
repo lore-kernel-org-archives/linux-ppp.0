@@ -1,30 +1,34 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Wed, 08 Feb 2006 23:26:58 +0000
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Wed, 08 Feb 2006 23:49:37 +0000
 Subject: Re: [PATCH] ppp: don't use 0 in pointer context
-Message-Id: <17386.32322.548974.883642@cargo.ozlabs.ibm.com>
+Message-Id: <E1F6z45-0006qL-00@gondolin.me.apana.org.au>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <E1F6xei-0006hc-00@gondolin.me.apana.org.au>
-	<OF71FA79DA.C4F20DA5-ON8825710F.007B701A-8825710F.007CB97E@us.ibm.com>
-	<20060208232214.GC14543@mipter.zuzino.mipt.ru>
+References: <20060208232214.GC14543@mipter.zuzino.mipt.ru>
 In-Reply-To: <20060208232214.GC14543@mipter.zuzino.mipt.ru>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="hz-gb-2312"
+Content-Transfer-Encoding: base64
 To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: David Stevens <dlstevens@us.ibm.com>, Herbert Xu <herbert@gondor.apana.org.au>, James Carlson <carlsonj@workingcode.com>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
+Cc: dlstevens@us.ibm.com, herbert@gondor.apana.org.au, carlsonj@workingcode.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
 
-Alexey Dobriyan writes:
-
-> The fact that they can be represented by the same bit patterns is
-> irrelevant.
-
-Indeed it is.  The fact that the C standard says that "0" is a valid
-representation for a null pointer in C source code *is* relevant,
-though.  That is in fact something that *wasn't* in K&R C but was
-introduced in ISO Standard C, and I think it makes sense.
-
-Anyway, this whole discussion is silly.  Can we move on to discussing
-whether "disc" or "disk" is the correct spelling, or something else
-equally productive? :)
-
-Paul.
+QWxleGV5IERvYnJpeWFuIDxhZG9icml5YW5AZ21haWwuY29tPiB3cm90ZToKPiAKPiBPaCwgYW5k
+IGZvciB0aGUgcmVjb3JkOiBjdXJyZW50IHNwYXJzZSBmcm9tIExpbnVzIGRvZXNuJ3Qgd2FybiBh
+Ym91dAo+IHRoaXMuIFNsaWdodGx5IG1vZGlmaWVkIHNwYXJzZSB3YXJucy4gQnVncyB3aGljaCB3
+ZXJlIHVuY292ZXJlZCBieQo+IG1vcmUgb3IgbGVzcyB0cml2aWFsIGFuZCBzbGlnaHRseSBicm9r
+ZW4gc3BhcnNlIHBhdGNoIFsxXSBhcmU6Cj4gCj4gICAgICAgIFtQQVRDSF0gZHNjYzQ6IGZpeCBk
+c2NjNF9pbml0X2R1bW15X3NrYiBjaGVjawo+ICAgICAgICBbUEFUQ0hdIG9wbDNzYTI6IGZpeCBh
+ZGRpbmcgc2Vjb25kIGRtYSBjaGFubmVsCj4gICAgICAgIFtQQVRDSF0gZ3VzY2xhc3NpYzogZml4
+IGFkZGluZyBzZWNvbmQgZG1hIGNoYW5uZWwKPiAgICAgICAgW1BBVENIXSBpcHcyMjAwOiBmaXgg
+LT5lZXByb21bRUVQUk9NX1ZFUlNJT05dIGNoZWNrCj4gICAgICAgIFtQQVRDSF0gaXhqOiBmaXgg
+d3JpdGluZyBzaWxlbmNlIGNoZWNrCgpUaGUgZmlyc3QgdHdvIGNhbiBhbHNvIGJlIGNhdWdodCB3
+aXRoIGdjYyAtcGVkYW50aWMuICBJbiBmYWN0LCBjYXRjaGluZwp0aGUgbGFzdCB0d28gc2hvdWxk
+IGJlIGRvYWJsZSB0aGVyZSBhcyB3ZWxsLiAgVGhlIGRpZmZlcmVuY2UgYmV0d2VlbgpnY2MgLXBl
+ZGFudGljIGFuZCBzcGFyc2UgaXMgdGhhdCBpdCBkb2Vzbid0IHdhcm4gYWJvdXQgb2J2aW91c2x5
+IGNvcnJlY3QKY2FzZXMgbGlrZSBwICE9IDAgb3IgcCA9IDAuCgpDaGVlcnMsCi0tIApWaXNpdCBP
+cGVuc3dhbiBhdCBodHRwOi8vd3d3Lm9wZW5zd2FuLm9yZy8KRW1haWw6IEhlcmJlcnQgWHUgfntQ
+bVY+SEl+fSA8aGVyYmVydEBnb25kb3IuYXBhbmEub3JnLmF1PgpIb21lIFBhZ2U6IGh0dHA6Ly9n
+b25kb3IuYXBhbmEub3JnLmF1L35oZXJiZXJ0LwpQR1AgS2V5OiBodHRwOi8vZ29uZG9yLmFwYW5h
+Lm9yZy5hdS9+aGVyYmVydC9wdWJrZXkudHh0Ci0KVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxp
+c3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXBwcCIgaW4KdGhlIGJvZHkgb2Yg
+YSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5vcmcKTW9yZSBtYWpvcmRvbW8gaW5m
+byBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1s
