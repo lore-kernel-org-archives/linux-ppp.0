@@ -1,115 +1,85 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Thu, 02 Feb 2006 21:47:57 +0000
-Subject: Re: EDGE modem gives error.. LCP: timeout sending config requests
-Message-Id: <Pine.LNX.4.61.0602021341230.21576@info.physics.ubc.ca>
+From: Phil Mayers <p.mayers@imperial.ac.uk>
+Date: Wed, 08 Feb 2006 16:16:19 +0000
+Subject: Windows mobile 2005 clients
+Message-Id: <43EA1953.9000005@imperial.ac.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <BAD05164DBF6BF44AD171A36DBC6E77505DACA6A@pusehe0w.eh.pweh.com>
-In-Reply-To: <BAD05164DBF6BF44AD171A36DBC6E77505DACA6A@pusehe0w.eh.pweh.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, 2 Feb 2006, Desai, Ankit (Export) wrote:
+All,
 
-> Hi,
+Apologies for the cross posting - strictly this is a PPP issue, but I
+think given the number of posts the poptop people may want to see it as
+well.
 
-It is almost certainly never going to work. The other side, whatever it is
-demands pap authentication, you refuse. They then refuse to allow you to
-connect. End of story.
+We've recently migrated a win2k PPTP service to Linux with poptop. The
+vast majority of clients work fine, but windows mobile 2005 clients are
+failing.
 
-Why are you refusing to connect via pap?
+I've discovered that the problem is the WM2005 PPTP client PPP layer
+sets none of the 40, 56 or 128 bit MPPE flags, and pppd instantly
+terminates the connection when this happens. A win2k VPN server NAKs
+with the preferred keysize.
 
-You need an entry in /etc/ppp/pap-secrets and you need the 
-user <username> 
-option to pppd to let it know which of the lines in pap-secrets to use
-(yes, you need it even if there is only  one line)
+sent [CHAP Challenge id=0x3e <CHAL>, name = "pptpd"]
+rcvd [CHAP Response id=0x3e <RESP>, name = "user"]
+sent [CHAP Success id=0x3e "S=BYTES"]
+sent [CCP ConfReq id=0x1 <mppe +H -M +S +L -D -C>]
+rcvd [CCP ConfReq id=0x0 <mppe -H -M -S -L -D +C>]
+sent [LCP TermReq id=0x2 "MPPE required but peer negotiation failed"]
+sent [CCP ConfRej id=0x0 <mppe -H -M -S -L -D +C>]
 
+The following patch to pppd seems to fix this, HOWEVER the connection
+does not come up correctly - there seems to be a key generation error
+because the keys are generated twice in the ppp state machine:
 
->
-> I am trying to use EDGE wireless modem to create a ppp connection. The
-> wireless modem is an embedded Multi-tech edge modem. The problem is: during
-> connection, the modem spits out error message: LCP: timeout sending config
-> requests.
->
-> My /etc/ppp/options file as follows:
-> -detach
-> debug
-> /dev/ttyS0
-> connect '/usr/sbin/chat -v -V -t3 -f /etc/ppp/chat'
->
-> My /etc/ppp/chat file is:
->
-> ''		'AT'
-> OK		'AT+CFUN=1'
-> AT+CFUN		'\c'
-> OK		'AT&F'
-> AT&F		'\c'
-> OK		'AT&D1'
-> AT&D1   	'\c'
-> OK		'AT+CGDCONT=1,"IP","proxy","",0,0'
-> AT+CGDCONT 	'\c'
-> TIMEOUT 30
-> OK		'AT+CGREG=1'
-> CGREG:\s1-\c-	'ATD*99***1#'
-> CONNECT 	'\d\c'
->
-> The weird part is those above two files work well with the EDGE PCMCIA modem
-> (Cingular GC82) but they don't work with the Multitech embedded modem.
+sent [CCP ConfReq id=0x1 <mppe +H -M +S +L -D -C>]
+rcvd [CCP ConfReq id=0x0 <mppe -H -M -S -L -D -C>]
+sent [CCP ConfNak id=0x0 <mppe -H -M +S -L -D -C>]
+rcvd [CCP ConfNak id=0x1 <mppe -H -M +S -L -D -C>]
+sent [CCP ConfReq id=0x2 <mppe -H -M +S -L -D -C>]
+rcvd [CCP ConfReq id=0x1 <mppe -H -M +S -L -D -C>]
+mppe_decomp_init[0]: initialized with 128-bit stateful mode
+sent [CCP ConfAck id=0x1 <mppe -H -M +S -L -D -C>]
+mppe_decomp_init[0]: keys: master: BYTES1 initial session: BYTES2
+rcvd [CCP ConfAck id=0x2 <mppe -H -M +S -L -D -C>]
+mppe_comp_init[0]: initialized with 128-bit stateful mode
+mppe_comp_init[0]: keys: master: BYTES3 initial session: BYTES4
+<SNIP IPCP>
+Script /etc/ppp/ip-up started (pid 24653)
+Script /etc/ppp/ip-up finished (pid 24653), status = 0x0
+decompress[0]: ccount 0
+rcvd [proto=0xc7] fe 99 67 83 1b 1a 4d cf cd fb 9c f8 ce e2 6f 9c 1a 07
+23 85 25 c2 b9 d8 cc fd 3d 9f 90 ee c4 3f ...
+sent [LCP ProtRej id=0x4 00 c7 fe 99 67 83 1b 1a 4d cf cd fb 9c f8 ce e2
+6f 9c 1a 07 23 85 25 c2 b9 d8 cc fd 3d 9f 90 ee ...]
 
-Those lines seem to work perfectly well with the Multitech as well. It is
-not a modem problem. It is an authentication problem.
+Is anyone more knowledgeable than I am about how to fix the next bit? Or
+is this approach totally wrong?
 
->
-> Any help will be appreciated.
->
-> The debug message is as follows:
+--- ppp-2.4.3/pppd/ccp.c        2006-02-08 14:28:03.000000000 +0000
++++ ppp-2.4.3/pppd/ccp.c        2006-02-08 14:30:45.000000000 +0000
+@@ -1157,9 +1157,16 @@
+                         break;
+                     }
+                 } else {
+-                   /* Neither are set. */
+-                   newret = CONFREJ;
+-                   break;
++                   /* Neither are set. NAK with the best we support */
++                   if (ao->mppe & MPPE_OPT_128)
++                       ho->mppe |= MPPE_OPT_128;
++                   else if (ao->mppe & MPPE_OPT_40)
++                       ho->mppe |= MPPE_OPT_40;
++                   else {
++                       newret = CONFREJ;
++                       break;
++                   }
++                   newret = CONFNAK;
+                 }
 
-Send the whole message including the timestamps. They can often give
-information. (In this case they are not really needed as far as I can tell.
+                 /* rebuild the opts */
 
->
-> Perms of /dev/ttyS0 are ok, no 'mesg n' neccesary.
-> AT
-> OK
-> AT+CFUN=1
-> OK
-> AT&F
-> OK
-> AT&D1
-> OK
-> AT+CGDCONT=1,"IP","proxy","",0,0
-> OK
-> AT+CGREG=1
-> OK
-> ATD*99***1#
-> CONNECTSerial connection established.
-> using channel 24
-> Using interface ppp0
-> Connect: ppp0 <--> /dev/ttyS0
-> rcvd [LCP ConfReq id=0x4 <mru 1600> <auth pap> <magic 0x5cd90830> <asyncmap
-
-They request pap
-
-> 0x0> <pcomp> <accomp>]
-> sent [LCP ConfReq id=0x1 <magic 0xdf5ba0ae> <pcomp> <accomp>]
-> sent [LCP ConfRej id=0x4 <mru 1600> <auth pap> <asyncmap 0x0>]
-
-You refuse pap
-
-> rcvd [LCP ConfAck id=0x1 <magic 0xdf5ba0ae> <pcomp> <accomp>]
-> rcvd [LCP ConfReq id=0x5 <auth pap> <magic 0x5cd90830> <pcomp> <accomp>]
-
-They request it,
-
-> sent [LCP ConfRej id=0x5 <auth pap>]
-
-You refuse it.
-
-This continues about 1000 times until they finally give up.
-
-<rest of boring negotiation removed.>
-
-So set up your system to use pap.
-
-
+Is anyone more knowledgeable than I am an
