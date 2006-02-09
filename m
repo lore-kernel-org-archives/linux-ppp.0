@@ -1,29 +1,32 @@
-From: "Randy.Dunlap" <rdunlap@xenotime.net>
-Date: Thu, 09 Feb 2006 00:05:11 +0000
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Thu, 09 Feb 2006 00:06:31 +0000
 Subject: Re: [PATCH] ppp: don't use 0 in pointer context
-Message-Id: <Pine.LNX.4.58.0602081604530.1564@shark.he.net>
+Message-Id: <20060209000631.GA26438@gondor.apana.org.au>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20060208232214.GC14543@mipter.zuzino.mipt.ru>
- <E1F6z45-0006qL-00@gondolin.me.apana.org.au> <20060208.155859.82670094.davem@davemloft.net>
+References: <20060208232214.GC14543@mipter.zuzino.mipt.ru> <E1F6z45-0006qL-00@gondolin.me.apana.org.au> <20060208.155859.82670094.davem@davemloft.net>
 In-Reply-To: <20060208.155859.82670094.davem@davemloft.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="hz-gb-2312"
+Content-Transfer-Encoding: base64
 To: "David S. Miller" <davem@davemloft.net>
-Cc: herbert@gondor.apana.org.au, adobriyan@gmail.com, dlstevens@us.ibm.com, carlsonj@workingcode.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
+Cc: adobriyan@gmail.com, dlstevens@us.ibm.com, carlsonj@workingcode.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, netdev-owner@vger.kernel.org, viro@ftp.linux.org.uk
 
-On Wed, 8 Feb 2006, David S. Miller wrote:
-
-> From: Herbert Xu <herbert@gondor.apana.org.au>
-> Date: Thu, 09 Feb 2006 10:49:37 +1100
->
-> > The difference between gcc -pedantic and sparse is that it doesn't
-> > warn about obviously correct cases like p != 0 or p = 0.
->
-> So obviously correct that you left out an equals sign in the
-> second case :-)
-
-You should thank him.  8;)
-
--- 
-~Randy
+T24gV2VkLCBGZWIgMDgsIDIwMDYgYXQgMDM6NTg6NTlQTSAtMDgwMCwgRGF2aWQgUy4gTWlsbGVy
+IHdyb3RlOgo+IEZyb206IEhlcmJlcnQgWHUgPGhlcmJlcnRAZ29uZG9yLmFwYW5hLm9yZy5hdT4K
+PiBEYXRlOiBUaHUsIDA5IEZlYiAyMDA2IDEwOjQ5OjM3ICsxMTAwCj4gCj4gPiBUaGUgZGlmZmVy
+ZW5jZSBiZXR3ZWVuIGdjYyAtcGVkYW50aWMgYW5kIHNwYXJzZSBpcyB0aGF0IGl0IGRvZXNuJ3QK
+PiA+IHdhcm4gYWJvdXQgb2J2aW91c2x5IGNvcnJlY3QgY2FzZXMgbGlrZSBwICE9IDAgb3IgcCA9
+IDAuCj4gCj4gU28gb2J2aW91c2x5IGNvcnJlY3QgdGhhdCB5b3UgbGVmdCBvdXQgYW4gZXF1YWxz
+IHNpZ24gaW4gdGhlCj4gc2Vjb25kIGNhc2UgOi0pCgpBY3R1YWxseSBJIGludGVuZGVkIHRoYXQg
+dG8gYmUgYW4gYXNzaWdubWVudCBhcyB0aGlzIGlzIHNvbWV0aGluZyB0aGF0CmhhcyBnZW5lcmF0
+ZWQgbWFueSBzcGFyc2UgcGF0Y2hlcy4gIE5vdyBpZiB0aGlzIHdhcyBhIGNvbXBhcmlzb24KbWlz
+dGFrZW5seSB3cml0dGVuIGFzIGFuIGFzc2lnbm1lbnQsIGdjYyB3b3VsZCBwaWNrIGl0IHVwIGFu
+eXdheToKCmEuYzozOiB3YXJuaW5nOiBzdWdnZXN0IHBhcmVudGhlc2VzIGFyb3VuZCBhc3NpZ25t
+ZW50IHVzZWQgYXMgdHJ1dGggdmFsdWUKCkNoZWVycywKLS0gClZpc2l0IE9wZW5zd2FuIGF0IGh0
+dHA6Ly93d3cub3BlbnN3YW4ub3JnLwpFbWFpbDogSGVyYmVydCBYdSB+e1BtVj5ISX59IDxoZXJi
+ZXJ0QGdvbmRvci5hcGFuYS5vcmcuYXU+CkhvbWUgUGFnZTogaHR0cDovL2dvbmRvci5hcGFuYS5v
+cmcuYXUvfmhlcmJlcnQvClBHUCBLZXk6IGh0dHA6Ly9nb25kb3IuYXBhbmEub3JnLmF1L35oZXJi
+ZXJ0L3B1YmtleS50eHQKLQpUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUg
+bGluZSAidW5zdWJzY3JpYmUgbGludXgtcHBwIiBpbgp0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8g
+bWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZwpNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRwOi8v
+dmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWw=
