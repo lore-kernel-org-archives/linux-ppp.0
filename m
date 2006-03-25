@@ -1,7 +1,7 @@
-From: Ray Van Dolson <rayvd@digitalpath.net>
-Date: Fri, 24 Mar 2006 23:27:38 +0000
+From: James Cameron <james.cameron@hp.com>
+Date: Sat, 25 Mar 2006 06:36:59 +0000
 Subject: Re: killing a pptp tunnel with a single ping
-Message-Id: <20060324232738.GA18163@digitalpath.net>
+Message-Id: <20060325063659.GA3071@fax.sno.cpqcorp.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20060324232128.GA23810@wonderland.linux.it>
 In-Reply-To: <20060324232128.GA23810@wonderland.linux.it>
@@ -10,11 +10,22 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Sat, Mar 25, 2006 at 12:21:28AM +0100, Marco d'Itri wrote:
-> The other side is running 12.4(3) IOS.
-> No MTU is explicitly set on either side.
+I've tried but failed to reproduce this.  Could you obtain and post the
+pppd debug dump log showing the negotiation of the tunnel?  That will
+help to narrow the scope.
 
-Any reason not to explicitly set the MTU to something like 1450?  MPPE has
-some overhead so it'd be nice to see that 1496 packet get fragmented.
+I've also done a test that excludes pptp, by using pppd over ssh, such
+as:
 
-Ray
+# echo "test test test *" >> /etc/ppp/chap-secrets
+# ssh peer 'echo "test test test *" >> /etc/ppp/chap-secrets'
+# pppd noauth silent require-mppe name test remotename test debug dump
+  logfd 2 nodetach pty "ssh -t -e none peer pppd name test
+  require-mschap-v2 require-mppe 10.0.5.1:10.0.5.2"
+
+But the ping as described did nothing wrong.  2.6.16 kernel.org.
+
+Then again, what's the -M dont?  My ping (Debian) doesn't have that.
+
+-- 
+James Cameron
