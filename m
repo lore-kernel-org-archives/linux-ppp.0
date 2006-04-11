@@ -1,44 +1,33 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 07 Mar 2006 22:11:36 +0000
-Subject: Re: LCP terminated by peer (Normal Termination by NCP) - Please help
-Message-Id: <17422.1304.257789.219098@gargle.gargle.HOWL>
+From: "K.Senthil Kumar" <senthil_avn@linuxmail.org>
+Date: Tue, 11 Apr 2006 05:32:40 +0000
+Subject: PPTP conf help...
+Message-Id: <20060411053240.25971CA0A4@ws5-11.us4.outblaze.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <BAD05164DBF6BF44AD171A36DBC6E77505DACADD@pusehe0w.eh.pweh.com>
-In-Reply-To: <BAD05164DBF6BF44AD171A36DBC6E77505DACADD@pusehe0w.eh.pweh.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Desai, Ankit (Export) writes:
-> rcvd [LCP ConfReq id=0x2 <mru 1600> <auth pap> <magic 0xd8397cb7> <asyncmap
-> 0x0> <pcomp> <accomp>]
-> 
-> sent [LCP ConfReq id=0x1 <magic 0x58526cf7> <pcomp> <accomp>]
-> 
-> sent [LCP ConfRej id=0x2 <mru 1600> <asyncmap 0x0>]
+hi folks,
 
-This is curious.  It means that you've explicitly configured pppd to
-reject those options.  Why?  What's in your configuration?
+i'm new to linux. i want to setup a vpn server in my office.
 
-> sent [IPCP ConfReq id=0x1 <addr 0.0.0.0> <compress VJ 0f 01> <ms-dns1
-> 0.0.0.0> <ms-dns3 0.0.0.0>]
-> 
-> sent [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15>]
-> 
-> rcvd [LCP ProtRej id=0x0 80 fd 01 01 00 0c 1a 04 78 00 18 04 78 00 35]
-> 
-> rcvd [LCP TermReq id=0x0 "Normal Termination by NCP"]
+i'm running fedora 4 with magnia file server (sg30). i have connected with internet through adsl (d-link 502t) router.
 
-Obviously, the peer is well within its rights to terminate the
-connection for any reason or no reason at all.  You need to check the
-logs on the peer's side to find out why it sent that message.  The
-text message the peer chose to include isn't very illuminating.
+now my magnia server takes care of vpn, apache and other things. i want to replace magnia with pc as server. 
 
-One thing to try might be turning off CCP ("noccp").  Perhaps that
-just confuses the peer.  (There's no reason that the perfectly normal
-LCP Protocol-Reject shouldn't handle the problem as expected, but
-perhaps the peer has bugs.)
+i tried to configure pptp server in my pc. in first attempt clients can connect with the pptp, in the following attempts it is saying an error 800, the server is not reachable. my pc is not directly connected to router, but thorugh magnia server as hub.
+
+is pppoe needed to establish vpn server? how can i route it to my pc from router? can you please give me step by step details.
+
+thanks in advance.
+
+with luv
+senthil
 
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+_______________________________________________
+Check out the latest SMS services @ http://www.linuxmail.org
+This allows you to send and receive SMS through your mailbox.
+
+Powered by Outblaze
