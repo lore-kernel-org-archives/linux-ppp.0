@@ -1,107 +1,131 @@
-From: Stephen Hemminger <shemminger@osdl.org>
-Date: Mon, 17 Apr 2006 22:08:28 +0000
-Subject: Fw: [Bug 6402] New: KERNEL 2.6.16-rX (Gentoo) && PPPD && SNAT
-Message-Id: <20060417150828.3dbf6bb5@localhost.localdomain>
+From: Vladimir <bobahu4@mail.ru>
+Date: Thu, 20 Apr 2006 13:21:38 +0000
+Subject: lost packets with 2.6.17-rc2 (and rc1)
+Message-Id: <20060420182138.d412a5d0.bobahu4@mail.ru>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+It's problems using ppp driver in 2.6.17-rc2(and rc1)
+Kernel lose packets.
 
+e.g.
 
-Begin forwarded message:
+$ ping -c10 google.com
+PING google.com (64.233.187.99) 56(84) bytes of data.
+64 bytes from 64.233.187.99: icmp_seq=2 ttl#4 timeU7 ms
+64 bytes from 64.233.187.99: icmp_seq=3 ttl#4 timeU8 ms
+64 bytes from 64.233.187.99: icmp_seq=4 ttl#4 timeW5 ms
+64 bytes from 64.233.187.99: icmp_seq=5 ttl#4 timeY7 ms
+64 bytes from 64.233.187.99: icmp_seq=6 ttl#4 timeW9 ms
+64 bytes from 64.233.187.99: icmp_seq=7 ttl#4 timeX0 ms
+64 bytes from 64.233.187.99: icmp_seq=8 ttl#4 timeW6 ms
+64 bytes from 64.233.187.99: icmp_seq=9 ttl#4 timee9 ms
 
-Date: Mon, 17 Apr 2006 14:56:59 -0700
-From: bugme-daemon@bugzilla.kernel.org
-To: shemminger@osdl.org
-Subject: [Bug 6402] New: KERNEL 2.6.16-rX (Gentoo) && PPPD && SNAT
+--- google.com ping statistics ---
+10 packets transmitted, 8 received, 20% packet loss, time 11355ms
+rtt min/avg/max/mdev = 557.688/585.883/659.876/30.434 ms
 
+I use "pppd call mts" command to connect
 
-http://bugzilla.kernel.org/show_bug.cgi?idd02
+-------------------
+/etc/ppp/peers/mts
 
-           Summary: KERNEL 2.6.16-rX (Gentoo) && PPPD && SNAT
-    Kernel Version: 2.6.16.ALL
-            Status: NEW
-          Severity: high
-             Owner: shemminger@osdl.org
-         Submitter: slavon@bigtelecom.ru
+hide-password
+noauth
+connect "/usr/sbin/chat -f /etc/ppp/mts.chat"
 
+/dev/ttyACM0
+115200
+defaultroute
+noipdefault
+user "mts"
+remotename mts
+ipparam mts
 
-After start download file its stop after 4-10 mb and network is down.
+usepeerdns
+nobsdcomp
+nodeflate
+novj
+nodetach
 
-Interface ppp0 is UP.
-No new dmeseg or debug of syslog
+usepeerdns
 
-try to ping ppp client:
+--------------------
 
-slavon ~ # ping 192.168.0.2
-PING 192.168.0.2 (192.168.0.2) 56(84) bytes of data.
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-ping: sendmsg: No buffer space available
-
-#ifconfig ppp0
-ppp0      Link encap:Point-to-Point Protocol
-          inet addr:192.168.0.1  P-t-P:192.168.0.2  Mask:255.255.255.255
-          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1396  Metric:1
-          RX packets:1648 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:2407 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:3
-          RX bytes:75765 (73.9 Kb)  TX bytes:3242633 (3.0 Mb)
-
-#iptables-save
-*nat
-:PREROUTING ACCEPT [6826:411515]
-:POSTROUTING ACCEPT [11117:531811]
-:OUTPUT ACCEPT [11118:531895]
--A POSTROUTING -s 192.168.0.0/255.255.255.0 -j SNAT --to-source XXX.XXX.XXX.XXX
-COMMIT
-
-slavon ~ # pppd --version
 pppd version 2.4.3
 
-slavon ~ # pptpd --version
-pptpd v1.3.1
 
-I try it in 3 Computers 2 - x86 and 1 - x86-64 - All have this trouble
+No such problem with 2.6.16.x
 
-its gentoo patches for kernel
+lsmod output 
 
- * Applying 1000_linux-2.6.16.1.patch (-p0+) 
- * Applying 1001_linux-2.6.16.2.patch (-p0+) 
- * Applying 1002_linux-2.6.16.3.patch (-p0+) 
- * Applying 1003_linux-2.6.16.4.patch (-p0+) 
- * Applying 1700_sparc-obp64-naming.patch (-p0+) 
- * Applying 1705_sparc-U1-hme-lockup.patch (-p0+) 
- * Applying 1710_sparc-sparsemem.patch (-p0+) 
- * Applying 1715_ppc32-crosscc-ssp.patch (-p0+) 
- * Applying 2400_sky2-1.1.patch (-p0+) 
- * Applying 2405_skge-1.5.patch (-p0+) 
- * Applying 2600_input-mod-devicetable.patch (-p0+) 
- * Applying 4000_deprecate-sk98lin.patch (-p0+) 
- * Applying 4100_libata-enable-atapi.patch (-p0+) 
- * Applying 4105_dm-bbr.patch (-p0+) 
- * Applying 4110_promise-pdc2037x.patch (-p0+) 
- * Applying 4200_fbsplash-0.9.2-r5.patch (-p0+) 
- * Applying 4205_vesafb-tng-1.0-rc1-r3.patch (-p0+) 
- * Applying 4300_squashfs-3.0.patch (-p0+) 
- * Applying 4400_speakup-20060103.patch (-p0+) 
- * Applying 4401_speakup-highlight-tracking-amd64.patch (-p0+) 
- * Applying 4405_alpha-sysctl-uac.patch (-p0+) 
+Module                  Size  Used by
+ppp_async               8448  1
+ppp_generic            22420  5 ppp_async
+slhc                    6016  1 ppp_generic
+crc_ccitt               1920  1 ppp_async
+fglrx                 444876  21
+snd_rtctimer            2444  1
+i2c_i801                7564  0
+i2c_dev                 7172  0
+raw                     6560  1
+ipv6                  216032  18
+joydev                  7872  0
+snd_es1938             17444  0
+snd_opl3_lib            8320  1 snd_es1938
+snd_hwdep               6788  1 snd_opl3_lib
+snd_mpu401_uart         5504  1 snd_es1938
+snd_rawmidi            18592  1 snd_mpu401_uart
+snd_pcm_oss            36768  0
+snd_mixer_oss          15488  1 snd_pcm_oss
+snd_intel8x0           27804  2
+snd_ac97_codec         85280  1 snd_intel8x0
+snd_ac97_bus            1920  1 snd_ac97_codec
+snd_pcm                72840  5 snd_es1938,snd_pcm_oss,snd_intel8x0,snd_ac97_codec
+snd_page_alloc          7688  2 snd_intel8x0,snd_pcm
+parport_pc             25284  1
+lp                      9160  0
+parport                19008  2 parport_pc,lp
+usblp                  11136  0
+iptable_filter          2304  0
+ip_tables              10840  1 iptable_filter
+x_tables               10500  1 ip_tables
+af_packet              15624  0
+it87                   17572  0
+hwmon_vid               2816  1 it87
+i2c_isa                 3456  1 it87
+ide_cd                 35588  0
+cdrom                  37024  1 ide_cd
+loop                   12808  0
+reiser4               372056  1
+supermount             33172  1
+configfs               21520  1
+intel_agp              18844  1
+agpgart                26588  2 fglrx,intel_agp
+i8xx_tco                5908  0
+snd_seq_oss            28672  0
+snd_seq_midi_event      5632  1 snd_seq_oss
+snd_seq                42704  5 snd_seq_oss,snd_seq_midi_event
+snd_timer              18948  4 snd_rtctimer,snd_opl3_lib,snd_pcm,snd_seq
+snd_seq_device          6540  4 snd_opl3_lib,snd_rawmidi,snd_seq_oss,snd_seq
+snd                    42724  18 snd_es1938,snd_opl3_lib,snd_hwdep,snd_mpu401_uart,snd_rawmidi,snd_pcm_oss,snd_mixer_oss,snd_intel8x0,snd_ac97_codec,snd_pcm,snd_seq_oss,snd_seq,snd_timer,snd_seq_device
+soundcore               7008  1 snd
+evdev                   7680  1
+analog                  9888  0
+ns558                   4608  0
+gameport               10504  4 snd_es1938,analog,ns558
+8139too                21376  0
+mii                     4736  1 8139too
+cdc_acm                11040  2
+uhci_hcd               18828  0
+ehci_hcd               26248  0
+ohci_hcd               17668  0
+usbcore               108288  6 usblp,cdc_acm,uhci_hcd,ehci_hcd,ohci_hcd
+container               3328  0
+button                  5008  0
 
 
-!! In 2.6.15 kernel ALL WORK.
-
-------- You are receiving this mail because: -------
-You are the assignee for the bug, or are watching the assignee.
+Vladimir
