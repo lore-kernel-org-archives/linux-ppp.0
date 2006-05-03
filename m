@@ -1,71 +1,34 @@
-From: Pieter Loubser <ploubser@sanpeople.com>
-Date: Wed, 03 May 2006 09:46:05 +0000
-Subject: VJCOMP Issue with Siemens MC75
-Message-Id: <1146649565.11976.253.camel@io.sanpeople.com>
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 03 May 2006 12:45:18 +0000
+Subject: Re: VJCOMP Issue with Siemens MC75
+Message-Id: <17496.42462.869304.709471@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1146649565.11976.253.camel@io.sanpeople.com>
+In-Reply-To: <1146649565.11976.253.camel@io.sanpeople.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Pieter Loubser writes:
+> I think its because when the Siemens replies with the confrej, it
+> rejects the vjcomp twice in the same message.
 
-Hi,
+Yes.  The peer is broken.
 
+> It does work if I disable the VJ comp in PPP with "novj" and
+> "novjccomp". But I would like not to, for vjcomp is supported  on some
+> other GPRS/EDGE modules and this is a generic setup. Anyway it should
+> just reject it correctly and continue. The Siemens MC55 module (the
+> MC75's predecessor) works fine, and rejects vjcomp properly.
 
-I have a problem when using the GSM/GPRS/EDGE Siemens MC75 module
-with PPP (version 2.4.2).
+Sometimes, there's little you can do but choose between tweaking your
+configuration for a particularly broken peer, or just avoiding that
+device in the hope that the manufacturer will fix it.
 
+You could hack the code (you have source, after all), but I doubt that
+it'd be good to have the main line of pppd damaged to accomodate this
+confused system.
 
-LCP comes up fine and authentication succeed, but while negotiating
-IPCP, the VJ compression keeps failing.
-
-
-<snip>
-
-sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 0.0.0.0>
-     <ms-dns1 0.0.0.0> <ms-dns3 0.0.0.0>]
-rcvd [IPCP ConfRej id=0x1 <compress VJ 0f 01> <compress VJ 0f 01>]
-Received bad configure-nak/rej:  02 06 00 2d 0f 01 02 06 00 2d 0f 01
-
-rcvd [IPCP ConfReq id=0x1 <addr 10.0.0.1>]
-sent [IPCP ConfAck id=0x1 <addr 10.0.0.1>]
-sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 0.0.0.0>
-     <ms-dns10.0.0.0> <ms-dns3 0.0.0.0>]
-rcvd [IPCP ConfRej id=0x1 <compress VJ 0f 01> <compress VJ 0f 01>]
-Received bad configure-nak/rej:  02 06 00 2d 0f 01 02 06 00 2d 0f 01
-
-sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 0.0.0.0>
-     <ms-dns1 0.0.0.0> <ms-dns3 0.0.0.0>]
-rcvd [IPCP ConfRej id=0x1 <compress VJ 0f 01> <compress VJ 0f 01>]
-Received bad configure-nak/rej:  02 06 00 2d 0f 01 02 06 00 2d 0f 01
-
-<snip>
-
-
-It never gets past this.
-
-
-
-I think its because when the Siemens replies with the confrej, it
-rejects the vjcomp twice in the same message.
-
-
-It does work if I disable the VJ comp in PPP with "novj" and
-"novjccomp". But I would like not to, for vjcomp is supported  on some
-other GPRS/EDGE modules and this is a generic setup. Anyway it should
-just reject it correctly and continue. The Siemens MC55 module (the
-MC75's predecessor) works fine, and rejects vjcomp properly.
-
-
-
-Any thoughts?
-
-
-
-
-Thank you,
-
-Pieter
-
-
-
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
