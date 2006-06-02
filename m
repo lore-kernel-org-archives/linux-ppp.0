@@ -1,79 +1,78 @@
-From: "=?gb2312?B?us7G1b2t?=" <pjhe@mail.ustc.edu.cn>
-Date: Fri, 05 May 2006 03:20:50 +0000
-Subject: LCP terminated by peer?
-Message-Id: <346799250.11283@ustc.edu.cn>
+From: Marcos Dione <mdione@fcq.unc.edu.ar>
+Date: Fri, 02 Jun 2006 16:10:35 +0000
+Subject: Re: 4 adsl lines in one nic
+Message-Id: <20060602131035.sdpe7qwh59c084ow@webmail.fcq.unc.edu.ar>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-I use pppd and find sometimes the connection is closed by server, how can i fix
-it? following is the print info, thanks!
+Quoting Bill Unruh <unruh@physics.ubc.ca>:
+> On Thu, 1 Jun 2006, Marcos Dione wrote:
+>>  hi all. first of all, I'm not suscribed to this list, so please cc: me =
+in
+>> the answers. I hope my preventive cc: to myself does the work for you; j=
+ust
+>> =ABreply-to-all=BB.
+>>
+>>  I'm setting up a machine with 4 ADSL lines connected to the same nic vi=
+a a
+>> switch. I'm not sure this is `supported=B4 or if I should add the 3 extr=
+a nics
+>> it `should=B4 have.
+>
+> No idea what it is that you are trying to accomplish. By switch, do you
+> mean a physical rotary type switch, or an ethernet switch.
+> The adsl lines I assume come into modems. Then you have an ethernet
+> connection from the modem to the "switch". Why? Why would you want 4 ADSL
+> lines? How are you going to route them?
 
+  yes, it's an ethernet switch. the four adsl lines will be connected to one
+machine and used in a load balancing scheme, but that? another story. we're
+connecting the 4 lines to one nic due to hardware limitations.
 
-pppd options in effect:
-debug           # (from command line)
-kdebug 0                # (from command line)
--detach         # (from command line)
-dump            # (from command line)
-lock            # (from command line)
-connect /usr/ppp-on-dialer              # (from command line)
-disconnect /usr/ppp-off-command         # (from command line)
-escape ff               # (from command line)
-asyncmap 20a0000                # (from command line)
-noipdefault             # (from command line)
-defaultroute            # (from command line)
-netmask 255.255.255.0           # (from command line)
-:               # (from command line)
-Serial connection established.
-using channel 7
-Using interface ppp0
-Connect: ppp0 <--> /dev/ttyS1
-mtu = 1500, accm = 4294967295, pcomp = 0, accomp = 0
-tty_recv_config: mru = 1500, asyncmap = 4294967295, pcomp = 1, accomp = 1
-sent [LCP ConfReq id=0x1 <asyncmap 0x20a0000> <magic 0x5d93a4c4> <pcomp>
-<accomp>]
-rcvd 24
-rcvd [LCP ConfAck id=0x1 <asyncmap 0x20a0000> <magic 0x5d93a4c4> <pcomp>
-<accomp>]
-rcvd 29
-rcvd [LCP ConfReq id=0x3 <asyncmap 0xa0000> <pcomp> <accomp> <magic 0x93cecf54>
-<auth chap MD5>]
-sent [LCP ConfRej id=0x3 <auth chap MD5>]
-rcvd 28
-rcvd [LCP ConfReq id=0x5 <asyncmap 0xa0000> <pcomp> <accomp> <magic 0x93cecf54>
-<auth pap>]
-sent [LCP ConfRej id=0x5 <auth pap>]
-rcvd 24
-rcvd [LCP ConfReq id=0x7 <asyncmap 0xa0000> <pcomp> <accomp> <magic 0x93cecf54>]
-sent [LCP ConfAck id=0x7 <asyncmap 0xa0000> <pcomp> <accomp> <magic 0x93cecf54>]
-mtu = 1500, accm = 655360, pcomp = 1, accomp = 1
-tty_recv_config: mru = 1500, asyncmap = 34209792, pcomp = 1, accomp = 1
-sent [IPCP ConfReq id=0x1 <addr 0.0.0.0> <compress VJ 0f 01>]
-sent [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
-rcvd 14
-rcvd [IPCP ConfRej id=0x1 <compress VJ 0f 01>]
-sent [IPCP ConfReq id=0x2 <addr 0.0.0.0>]
-rcvd 25
-rcvd [LCP ProtRej id=0x8 80 fd 01 01 00 0f 1a 04 78 00 18 04 78 00 15 03 2f]
-rcvd 14
-rcvd [IPCP ConfReq id=0x1 <addr 192.168.254.254>]
-sent [IPCP CodfAck id=0x1 <adrr 192.168.254.254>]
-sent [IPCP ConfReq id=0x2 <addr 0.0.0.0>]
-rcvd 14
-rcvd [IPCP ConfNak id=0x2 <addr 10.49.18.78>]
-sent [IPCP ConfReq id=0x3 <addr 10.49.18.78>]
-rcvd 14
-rcvd [IPCP ConfAck id=0x3 <addr 10.49.18.78>]
-local  IP address 10.49.18.78
-remote IP address 192.168.254.254
-rcvd 8
-rcvd [LCP TermReq id=0x9]
-LCP terminated by peer
-mtu = 1500, accm = 4294967295, pcomp = 0, accomp = 0
-tty_recv_config: mru = 1500, asyncmap = 34209792, pcomp = 1, accomp = 1
-sent [LCP TermAck id=0x9]
-Connection terminated.
+> Then are you running pppoe on those lines? Is that what the relationship =
+to
+> ppp is?
 
+  I need to run pppoe on these lines to get the service.
+
+> Not surprising you cannot do proxyarp. The machines MUST be on the same
+> subnet to do proxyarp.
+
+  it's not my problem. I should have ommited that line.
+
+>>  I'm starting to think that those are configure-acks `routed=B4 to the w=
+rong
+>> pppd, because if I bring up one line at a time, all establish the connec=
+tion
+>> succesfully. I just wanted to make sure I was reaching to the correct
+>> conclusion.
+>>
+>>  also, would it be possible to make pppd abort if too much bad
+>> configure-acks? since I'm the one with the problem, I'm interested=20
+>> in hacking
+>
+> Why? especially since it eventually works?
+
+  it works *sometimes*.
+
+>> that. do you think it does any sense, or should I stop doing stupid=20
+>> things and
+>> put one nic per ADSL line?
+>
+> If you are paid more than 10 cents per hour, that would probably be cheap=
+er.
+
+  not everything is money. now I'm plain wondering if this could work or no=
+t.
+
+--=20
+Marcos Dione
+Departamento de C=F3mputos
+Facultad de Ciencias Qu=EDmicas - UNC
+
+----------------------------------------------------------------
+Facultad de Ciencias Qu=C3micas - Universidad Nacional de C=C3rdoba
 
