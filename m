@@ -1,37 +1,21 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Wed, 28 Jun 2006 08:44:11 +0000
-Subject: ppp-2.4.4 released
-Message-Id: <17570.16731.506369.109070@cargo.ozlabs.ibm.com>
+From: xeb@mail.ru
+Date: Sat, 03 Jun 2006 08:07:25 +0000
+Subject: driver for pptp
+Message-Id: <E1FmRAL-0004G1-00.xeb-mail-ru@f25.mail.ru>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Version 2.4.4 of ppp is now on samba.org; you can get it from:
+Hello.
+I have developed the driver for Point-to-Point Tunneling Protocol (PPTP).
+This driver works in pair with plugin for pppd.
+It is enough to use pppd's plugin for start of the client.
+Also there is a server (based on pptpd) which uses this driver.
+By results of my testing the speed of transfer has increased on >50% and cpu usage has decreased on >50% in comparison with original pptpd and pptpclient.
+I have published the project on http://accel-pptp.sourceforge.net/
+There is more then 65 downloads but no any bug report (and no any positive result report).
+I think the driver still requires testing.
 
-ftp://ftp.samba.org/pub/ppp/ppp-2.4.4.tar.gz
-
-or
-
-http://www.samba.org/ftp/ppp/ppp-2.4.4.tar.gz
-
-There aren't a lot of new features in this release, but quite a few
-bugs have been fixed.
-
-What's new in ppp-2.4.4.
-************************
-
-* Pppd will now run /etc/ppp/ip-pre-up, if it exists, after creating
-  the ppp interface and configuring its IP addresses but before
-  bringing it up.  This can be used, for example, for adding firewall
-  rules for the interface.
-
-* Lots of bugs fixed, particularly in the area of demand-dialled and
-  persistent connections.
-
-* The rp-pppoe plugin now accepts any interface name (that isn't an
-  existing pppd option name) without putting "nic-" on the front of
-  it, not just eth*, nas*, tap* and br*.
-
-Paul.
+Hope this driver will go to a kernel tree and will make linux more productive.
