@@ -1,35 +1,41 @@
-From: "Jorge Daniel Sequeira Matias" <martin@andorinha.ist.utl.pt>
-Date: Tue, 27 Jun 2006 22:50:30 +0000
+From: Phil Mayers <p.mayers@imperial.ac.uk>
+Date: Tue, 27 Jun 2006 23:03:06 +0000
 Subject: Re: pppd stuck in ioctl(TIOCSETD) in Linux 2.6.15.4+
-Message-Id: <006801c69a3c$29f846d0$0201a8c0@athlon64>
+Message-Id: <44A1B92A.1050608@imperial.ac.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <004b01c69a3a$6b80c660$0201a8c0@athlon64> <44A1B482.80901@trash.net>
+References: <004b01c69a3a$6b80c660$0201a8c0@athlon64>
+In-Reply-To: <004b01c69a3a$6b80c660$0201a8c0@athlon64>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
-Cc: Netfilter Development Mailinglist <netfilter-devel@lists.netfilter.org>
 
+Jorge Daniel Sequeira Matias wrote:
+> 
+>  Hi everyone,
+> 
+>  I'm running a PPTP VPN Server for almost 4 years now. This server is 
+> running in a Debian Linux (unstable).
+>  The configuration for the last 1 year and a half was the following:
+> 
+>  Computer 2x Intel Xeon 2.6GHz and 512MB RAM
+>  Linux v2.6.11.6 (vanilla) with MPPE patch
 
------ Original Message ----- 
-From: "Patrick McHardy" <kaber@trash.net>
-To: "Jorge Daniel Sequeira Matias" <martin@andorinha.ist.utl.pt>
-Cc: <linux-ppp@vger.kernel.org>; "Netfilter Development Mailinglist" 
-<netfilter-devel@lists.netfilter.org>
-Sent: Tuesday, June 27, 2006 11:43 PM
-Subject: Re: pppd stuck in ioctl(TIOCSETD) in Linux 2.6.15.4+
+>   After the upgrade to a Linux v2.6.15.4 (vanilla) with no patches to 
 
+There were a couple of bugs recently in the TTY layer related to poptop 
+and running pppd on PTYs, but I believe 2.6.15 did not contain them 
+(though I find the git logs incomprehensible so could be wrong). See:
 
+http://bugzilla.kernel.org/show_bug.cgi?idd02
+http://bugzilla.kernel.org/show_bug.cgi?ide30
 
->> [...]
-> Does the problem go away without the ip_conntrack_pptp module loaded?
+Just in case, you should definitely try the latest kernel - 2.6.17.1 is 
+stable.
 
-  When I had the 2.6.15.4 installed I have recompiled without this module. 
-The problem didn't go away.
-  I know that 2.6.16.x has a different Netfilter structure but I have not 
-tried yet to remove "ip_conntrack_pptp" with this version.
-  Right now I have 2.6.16.16 with the module loaded.
+If that doesn't solve it and if you can reliably reproduce it you could 
+do a "git bisect" to track the bug down (tedious though):
 
-Regards,
-Jorge Matias
-
+http://www.kernel.org/pub/software/scm/git/docs/git-bisect.html
+http://www.kernel.org/pub/software/scm/git/docs/howto/isolate-bugs-with-bisect.txt
+http://www.reactivated.net/weblog/archives/2006/01/using-git-bisect-to-find-buggy-kernel-patches/
