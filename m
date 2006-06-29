@@ -1,7 +1,7 @@
-From: Ray Van Dolson <rayvd@digitalpath.net>
-Date: Thu, 29 Jun 2006 22:22:30 +0000
+From: Paul Mackerras <paulus@samba.org>
+Date: Thu, 29 Jun 2006 23:02:43 +0000
 Subject: Re: Radius plugin bug.
-Message-Id: <20060629222230.GA4716@digitalpath.net>
+Message-Id: <17572.23571.497967.716675@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20060629065205.GA18383@digitalpath.net>
 In-Reply-To: <20060629065205.GA18383@digitalpath.net>
@@ -10,24 +10,13 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, Jun 29, 2006 at 10:37:30AM +0100, Ben McKeegan wrote:
-> Hi Ray,
-> 
-> That's not the only problem with the way radattr handles its files. 
-> With multilink enabled it doesn't work at all as it always misses the 
-> interface name out of the filename, so all pppd processes write to 
-> exactly the same file!
+Ray Van Dolson writes:
 
-Thanks for the reply Ben.  I may indeed try to make use of your patch, but
-it seems to me the best way to handle this would be to not release the ppp
-unit number until the plugins have finished their cleanup() functions.
+> I'm by no means a C master and am trying to find out where in the code the
+> "lock" on the device name pppXXX is released at.  I'm trying to trace
+> backwards from the sifdown() call in sys-linux.c but getting a little lost.
 
-I'm by no means a C master and am trying to find out where in the code the
-"lock" on the device name pppXXX is released at.  I'm trying to trace
-backwards from the sifdown() call in sys-linux.c but getting a little lost.
+The device name gets released in generic_disestablish_ppp() in
+sys-linux.c, called (usually) from tty_disestablish_ppp().
 
-Anyone have any pointers on how this works?  Is it a matter of just putting
-the sys_cleanup() call in cleanup() in main.c after the cleanup calls for
-the channels?
-
-Ray
+Paul.
