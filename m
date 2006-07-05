@@ -1,98 +1,126 @@
-From: "J Richard Glass" <richard@mikeradford.org>
-Date: Tue, 11 Jul 2006 22:42:33 +0000
-Subject: Re: perl implementation of passwordfd.so
-Message-Id: <44941.10.92.1.103.1152657753.squirrel@mail.mikeradford.org>
+From: Ray Van Dolson <rayvd@digitalpath.net>
+Date: Wed, 05 Jul 2006 19:40:21 +0000
+Subject: Re: Radius plugin bug.
+Message-Id: <20060705194021.GA13527@digitalpath.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <34510.10.92.1.103.1152638038.squirrel@mail.mikeradford.org>
-In-Reply-To: <34510.10.92.1.103.1152638038.squirrel@mail.mikeradford.org>
+References: <20060629065205.GA18383@digitalpath.net>
+In-Reply-To: <20060629065205.GA18383@digitalpath.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Figured it out. I needed to increase the $SYSTEM_FD_MAX ($^F) before
-opening the pipe. The default only passes system file descriptors to
-exec()ed processes. Sorry for the trouble.
+Well have been working on this a little, and may have found a potential
+solution that works.
 
-Thanks.
+Feedback would be appreciate from real programmers as to negative
+consequences of reorganizing the code a little...
 
-Richard
+Basically, I am removing the calls to free the ppp interface from the
+link_terminated function and relocating them to later in the process --
+after the plugin cleanup functions have been called removing the radius
+attribute file.
 
+Seems to be working OK so far on our server...
 
-> Hi,
->
-> I was working with the C example for the passwordfd.so plugin and got
-> it to work with a dial up ppp connection but I really want to use this
-> plugin with perl. So I am hoping that someone on this list has some
-> experience using perl with passwordfd.
->
-> I keep getting the error... "Can't read secret from fd". I've set up
-> my script to fork and create a pipe to a READER file handle and a
-> WRITER file handle. I write to the password to the WRITER FH (close
-> the handle) and pass the file descriptor (fileno READER) to pppd in an
-> exec(). The interaction with the modem works and the last message I
-> get is Connect: ppp0 <--> /dev/ttyS0 before the error can't read from
-> fd.
->
-> Any help would be greatly appreciated.
->
-> Thanks.
->
-> Richard
->
-> Here's the gist in code and the resulting OUTPUT:
->
->   defined(my $pid = fork) or die "Can't fork: $!";
->   if ($pid > 0) {
->     pipe(PPPD_RDR, PPPD_WTR) || die "pipe failed: $!";
->
->     PPPD_WTR->autoflush(1);
->     close PPPD_WTR;
->
->     my $fn = fileno PPPD_RDR;
->
->     my $pppd_connect = "pppd call pwfd-test $device $flowcontrol user
-> $username passwordfd $fn connect '$chatscript' $route" ;
->
->     exec($pppd_connect) || die "can't exec program: $!";
->   }
->
->
-> OUTPUT
-> Plugin passwordfd.so loaded.
->
-> NO CARRIER
-> ATZ
-> OK
-> ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0
-> OK
-> ATDT912132706960
-> CONNECT 9600/ARQ/V34/LAPM
->
-> STATION ID - lsaca17rs05pr004,lsaca41ev
->
-> Welcome
-> Please Sign-on:Serial connection established.
-> Using interface ppp0
-> Connect: ppp0 <--> /dev/ttyS0
-> Can't read secret from fd
-> Can't read secret from fd
-> Can't read secret from fd
-> Can't read secret from fd
-> CHAP authentication failed
-> Modem hangup
-> Connection terminated.
->
->
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp"
-> in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-
-
-J Richard Glass
-richard@mikeradford.org
-206.915.8046
-
+diff -uNrp ppp-2.4.3.orig/pppd/auth.c ppp-2.4.3/pppd/auth.c
+--- ppp-2.4.3.orig/pppd/auth.c	2004-11-12 02:30:51.000000000 -0800
++++ ppp-2.4.3/pppd/auth.c	2006-07-05 12:03:47.000000000 -0700
+@@ -83,6 +83,7 @@
+ #include <sys/socket.h>
+ #include <utmp.h>
+ #include <fcntl.h>
+ #if defined(_PATH_LASTLOG) && defined(__linux__)
+ #include <lastlog.h>
+ #endif
+@@ -621,6 +622,7 @@ link_terminated(unit)
+      * the ppp unit back to the loopback.  Set the
+      * real serial device back to its normal mode of operation.
+      */
++    /*
+     if (fd_ppp >= 0) {
+ 	remove_fd(fd_ppp);
+ 	clean_check();
+@@ -629,6 +631,8 @@ link_terminated(unit)
+ 	    mp_exit_bundle();
+ 	fd_ppp = -1;
+     }
++    */
+     if (!hungup)
+ 	lcp_lowerdown(0);
+     if (!doing_multilink && !demand)
+@@ -638,10 +642,14 @@ link_terminated(unit)
+      * Run disconnector script, if requested.
+      * XXX we may not be able to do this if the line has hung up!
+      */
++    /*
+     if (devfd >= 0 && the_channel->disconnect) {
+ 	the_channel->disconnect();
+ 	devfd = -1;
+     }
++    */
+ 
+     if (doing_multilink && multilink_master) {
+ 	if (!bundle_terminating)
+diff -uNrp ppp-2.4.3.orig/pppd/main.c ppp-2.4.3/pppd/main.c
+--- ppp-2.4.3.orig/pppd/main.c	2004-11-13 04:05:48.000000000 -0800
++++ ppp-2.4.3/pppd/main.c	2006-07-05 12:03:52.000000000 -0700
+@@ -1098,8 +1108,9 @@ die(status)
+ {
+     if (!doing_multilink || multilink_master)
+ 	print_link_stats();
+-    cleanup();
+     notify(exitnotify, status);
++    cleanup();
+     syslog(LOG_INFO, "Exit.");
+     exit(status);
+ }
+@@ -1113,10 +1124,46 @@ cleanup()
+ {
+     sys_cleanup();
+ 
+-    if (fd_ppp >= 0)
++    /*
++    if (fd_ppp >= 0) {
++        syslog(LOG_INFO, "Calling disestablish_ppp from cleanup()");
+ 	the_channel->disestablish_ppp(devfd);
+-    if (the_channel->cleanup)
++    }
++    */
++
++    /*
++     * If we may want to bring the link up again, transfer
++     * the ppp unit back to the loopback.  Set the
++     * real serial device back to its normal mode of operation.
++     */
++
++    if (fd_ppp >= 0) {
++	remove_fd(fd_ppp);
++	clean_check();
++        syslog(LOG_INFO, "Calling disestablish_ppp from cleanup()");
++	the_channel->disestablish_ppp(devfd);
++	if (doing_multilink)
++	    mp_exit_bundle();
++	fd_ppp = -1;
++    }
++
++    /*
++     * Run disconnector script, if requested.
++     * XXX we may not be able to do this if the line has hung up!
++     */
++    if (devfd >= 0 && the_channel->disconnect) {
++	syslog(LOG_INFO, "Running disconnector scripts...");
++	the_channel->disconnect();
++	devfd = -1;
++	syslog(LOG_INFO, "Finished running disconnector scripts...");
++    }
++
++    if (the_channel->cleanup) {
++        syslog(LOG_INFO, "Calling cleanup from cleanup()");
+ 	(*the_channel->cleanup)();
++    }
++
++    syslog(LOG_INFO, "Removing pidfiles.");
+     remove_pidfiles();
+ 
+ #ifdef USE_TDB
