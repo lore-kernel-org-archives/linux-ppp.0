@@ -1,43 +1,30 @@
-From: md@Linux.IT (Marco d'Itri)
-Date: Tue, 25 Jul 2006 23:07:56 +0000
-Subject: Re: ppp 2.4.4 eap-tls patch
-Message-Id: <20060725230756.GA8907@wonderland.linux.it>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="nFreZHaLTZJo0R7j"
+From: Jorge Daniel Sequeira Matias <martin@andorinha.ist.utl.pt>
+Date: Tue, 11 Jul 2006 12:18:33 +0000
+Subject: Re: pppd stuck in ioctl(TIOCSETD) in Linux 2.6.15.4+
+Message-Id: <200607111318.33956.martin@andorinha.ist.utl.pt>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <44C5F014.40202@gmail.com>
-In-Reply-To: <44C5F014.40202@gmail.com>
+References: <004b01c69a3a$6b80c660$0201a8c0@athlon64>
+In-Reply-To: <004b01c69a3a$6b80c660$0201a8c0@athlon64>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+On Friday 30 June 2006 00:26, Paul Mackerras wrote:
+> Jorge Daniel Sequeira Matias writes:
+> >   It didn't solve. After running 2.6.17.1 for almost 48 hours I already
+> > have 4 pppd processes stuck in "ioctl(TIOCSETD..." in the connection
+> > finish section.
+>
+> Try the newly-released version 2.4.4 of pppd, please.
 
---nFreZHaLTZJo0R7j
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+  I have tried pppd v2.4.4 and didn't see any problem because with 2.6.17.1 I 
+have a new problem.
+  With 2.6.17.1, the "pptpctrl" processes, are heating all the CPU even if the 
+VPN user traffic is low (like 40kbits/sec).
+  I think this new problem is hiding the "pppd" problem because the VPN server 
+is so slow that less people establishes connections. The OS network is now 
+very lagged ...
 
-On Jul 26, James Cameron <james.cameron@hp.com> wrote:
-
-> > > Is there any reason why you couldn't use MatrixSSL?
-> > I would hate to see EAP-TLS depend on a niche license.
-> MatrixSSL is dual licensed, and last I checked the GPL is quite common
-Sorry, I meant "on a niche library", as in "I do not want to add another
-dependency without a good reason".
-
---=20
-ciao,
-Marco
-
---nFreZHaLTZJo0R7j
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.3 (GNU/Linux)
-
-iD8DBQFExqRMFGfw2OHuP7ERAlblAKCOQRyhL5tz3JVcrP+VjbrW1bmOXwCglsGd
-bzdBSqsLntR+dUIquRxpjwA=
-=HYR4
------END PGP SIGNATURE-----
-
---nFreZHaLTZJo0R7j--
+Regards,
+Jorge Matias
