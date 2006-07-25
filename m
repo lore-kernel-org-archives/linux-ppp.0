@@ -1,28 +1,46 @@
-From: Jan Just Keijser <jan.just.keijser@gmail.com>
-Date: Tue, 25 Jul 2006 10:19:00 +0000
-Subject: ppp 2.4.4 eap-tls patch
-Message-Id: <44C5F014.40202@gmail.com>
+From: James Cameron <james.cameron@hp.com>
+Date: Tue, 25 Jul 2006 11:04:46 +0000
+Subject: Re: ppp 2.4.4 eap-tls patch
+Message-Id: <20060725110445.GC6568@hp.com>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="DSayHWYpDlRfCAAQ"
 List-Id: <linux-ppp.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+References: <44C5F014.40202@gmail.com>
+In-Reply-To: <44C5F014.40202@gmail.com>
 To: linux-ppp@vger.kernel.org
 
-hi all,
 
-based on Beniamino Galvani's work ( <bengal@interfree.it 
-<mailto:bengal@interfree.it>> ) I have created a patch for ppp 2.44 to 
-allow EAP-TLS authentication (RFC2716), both in client and server mode, 
-including MPPE 40/128 bit encryption. You can find the patch on
-  http://www.nikhef.nl/~janjust/ppp/ppp-2.4.4-eaptls-mppe-0.9.patch 
-<http://www.nikhef.nl/%7Ejanjust/ppp/ppp-2.4.4-eaptls-mppe-0.9.patch>
-The patched code is marked by #ifdef USE_EAPTLS blocks. This allows me 
-to enable or disable it in the Makefiles using
-  USE_EAPTLS=y|n
-respectively.
-I have tested the patch on Linux acting as a server, with Windows 2000 
-and XP clients as well as a Linux client with the same patch applied.
+--DSayHWYpDlRfCAAQ
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-share and enjoy,
+Thanks, I've asked the pptp and pptpd mailing lists for test reports,
+since there have been some requests for EAP-TLS support.
 
-JJK / Jan Just Keijser
+You've used OpenSSL, which has a license that is not altogether open,
+specifically clause 6 which requires acknowledgement.  Is there any
+reason why you couldn't use MatrixSSL?
+
+The OpenWrt project already ships MatrixSSL, and I can see this EAP-TLS
+support being useful in OpenWrt.
+
+--=20
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+
+--DSayHWYpDlRfCAAQ
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.3 (GNU/Linux)
+
+iD8DBQFExfrNIiWKUhK+Mj4RAh89AJ0ZPoQwSEsvYhlKOEiV7pXbwSQ4MACfRSe4
+gtnG2NQVoCXI6qD+hbY1Bz0=
+=rMvG
+-----END PGP SIGNATURE-----
+
+--DSayHWYpDlRfCAAQ--
