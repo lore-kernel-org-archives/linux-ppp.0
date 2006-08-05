@@ -1,25 +1,27 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Tue, 01 Aug 2006 04:29:43 +0000
-Subject: Re: [PATCH] Missing failure handling
-Message-Id: <17614.55479.693532.236235@cargo.ozlabs.ibm.com>
+From: Ron Kellam <ronkbox-news@yahoo.com>
+Date: Sat, 05 Aug 2006 12:20:58 +0000
+Subject: Generic PPP over HDLC in the 2.6 kernel?
+Message-Id: <ap29d2t8ac8dtmf5n66b9cplq4otbc3s2p@4ax.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20060720191629.GD7643@lumumba.uhasselt.be>
-In-Reply-To: <20060720191629.GD7643@lumumba.uhasselt.be>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Panagiotis Issaris <takis@lumumba.uhasselt.be>
-Cc: linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-Panagiotis Issaris writes:
+Can anyone please update me on the state of generic ppp over wan hdlc
+in the 2.6 kernel?
 
-> -	cardmap_set(&all_ppp_units, unit, ppp);
-> +	ret = cardmap_set(&all_ppp_units, unit, ppp);
-> +	if (ret != 0) {
-> +		printk(KERN_ERR "PPP: couldn't set cardmap\n");	
+I'm wanting to do this for a ppc 2.6.14 kernel, and am only just
+coming up to speed on the issues of pppd not working hdlc, and the wan
+hdlc stuff only being sync ppp oriented.
 
-This is a pretty useless message, in that it will mean nothing to a
-user who sees it.  It would be better to set ret = -ENOMEM and not
-print the message, I think.
+Trawling the mailing list I came up with Dan Eble's 2.4.21 patches of
+2003, but I don't know enough about the subtleties of 2.4 vs 2.6
+kernels to know what success I might have had crafting his work into a
+2.6 kernel.  One set of patches he supplied was for a HDLC plugin to
+pppd 2.4.1/2 - I should be fine with these, it's just the kernel stuff
+that I'm unsure of.
 
-Paul.
+Cheers,
+Ron Kellam
+
