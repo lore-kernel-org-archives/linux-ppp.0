@@ -1,62 +1,60 @@
-From: "Ludovic MARCILLY" <lmarcilly@aressi.fr>
-Date: Tue, 12 Sep 2006 12:21:58 +0000
-Subject: Re-4: Authentication problems
-Message-Id: <DIIE.000007710001E2CB@aressi.fr>
+From: James Carlson <carlsonj@workingcode.com>
+Date: Tue, 12 Sep 2006 12:27:28 +0000
+Subject: Re: Re-4: Authentication problems
+Message-Id: <17670.42928.503705.546835@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <DIIE.000007710001E2CB@aressi.fr>
+In-Reply-To: <DIIE.000007710001E2CB@aressi.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Ok. So if i want my client to authenticate with CHAP, i have to put these options in my config file on the client side:
-
-refuse-pap
-refuse-eap
-refuse-mschap
-refuse-mschap-v2
-
-Am i right? I will test it now in order to be sure.
-
-And if i just configure authentication on the server? For example, no require-[pap|chap|eap|mschap|mschap-v2] and no refuse-[pap|chap|eap|mschap|mschap-v2] in the config file on the client side but just enable chap on the server side. Will it work?
-
-Thanks a lot for your help. I have difficulties to understand the require and refuse options.
-
--------- Original Message --------
-Subject: Re: Re-2: Authentication problems (12-sept.-2006 13:21)
-From:    James Carlson <carlsonj@workingcode.com>
-To:      lmarcilly@aressi.fr
-
-> Gilles Espinasse writes:
-> > > So i can't put these options in the config file on the client side? If i
-> > > understand, he server ask the client for PAP, CHAP or MS-CHAP method to
-> > > authenticate? The client doesn't choose authentication method? Is it right?
-> > >
-> > If one authentication is not configured on the client side, pppd will 
-> > answer
-> > with a nak on the request and could offer another authentication method if
-> > available (that the server may or not accept).
+Ludovic MARCILLY writes:
+> Ok. So if i want my client to authenticate with CHAP, i have to put these options in my config file on the client side:
 > 
-> "Configured" in this case means that pppd has access to credentials --
-> a user name and pass phrase or shared secret for a given
-> authentication protocol -- and that it's not told _not_ to use them.
+> refuse-pap
+> refuse-eap
+> refuse-mschap
+> refuse-mschap-v2
 > 
-> On the authenticatee ("client") side, all that you can do is agree to
-> the peer's request or suggest an alternative; you can't demand to be
-> identified with a given protocol.
+> Am i right?
+
+No.
+
+If you want to authenticate with CHAP, then just put the right
+credentials into /etc/ppp/chap-secrets.  That's all you need to do.
+For example, this in the pppd options:
+
+	user lmarcilly
+
+and this in the /etc/ppp/chap-secrets file:
+
+	lmarcilly * "my pass phrase"
+
+That's it.  Those "refuse-*" options are there in case there's some
+reason you _MUST_ prevent yourself from using those other protocols
+when available.
+
+They're potential workarounds for unforseen cases.  They're not meant
+to be used in most instances.
+
+In fact, that's true of most of the pppd options.  The best
+configuration *BY FAR* is the one that sets the fewest options.  The
+rest should be left to the default, which is generally chosen to be
+the most interoperable configuration.
+
+> I will test it now in order to be sure.
 > 
-> Authentication must work that way.  Allowing the authenticatee to
-> specify the means of validation is insecure.
-> 
-> On the other side, if you're setting up a "server," you use the
-> 'require-pap' keyword (note that "+pap" is obsolescent) to say that
-> the peers must use PAP to identify themselves.
-> 
-> -- 
-> James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+> And if i just configure authentication on the server? For example, no require-[pap|chap|eap|mschap|mschap-v2] and no refuse-[pap|chap|eap|mschap|mschap-v2] in the config file on the client side but just enable chap on the server side. Will it work?
 
+Yes.
 
-To: carlsonj@workingcode.com
-    g.esp@free.fr
-Cc: linux-ppp@vger.kernel.org
+> Thanks a lot for your help. I have difficulties to understand the
+> require and refuse options.
 
+require = server
+refuse = client
 
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
