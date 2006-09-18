@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 18 Sep 2006 16:10:05 +0000
+From: jfj <jfj@freemail.gr>
+Date: Mon, 18 Sep 2006 19:39:11 +0000
 Subject: Re: pppd security
-Message-Id: <17678.50397.206464.812992@gargle.gargle.HOWL>
+Message-Id: <450EF5DF.3050802@freemail.gr>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <450EBBCE.5030204@freemail.gr>
 In-Reply-To: <450EBBCE.5030204@freemail.gr>
@@ -10,23 +10,33 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-jfj writes:
-> My question now is, if it is possible to attack this by
-> sending data directly to the PPP layer. Can one open
-> /dev/ppp, construct a UDP packet, encapsulate this into
-> a PPP packet, write it to some /dev/ppp device and reach
-> some internet host?
 
-No more or less so than it's possible to do the same via an Ethernet
-adapter.
+James Carlson wrote:
 
-/dev/ppp provides a datalink layer interface to the system.  The
-security on such interfaces (in general) ought to be the same.
+> No more or less so than it's possible to do the same via an Ethernet
+> adapter.
 
-(Note that you wouldn't want to "encapsulate" it as PPP.  That's what
-the PPP driver itself does.  If you were to open /dev/ppp for such a
-hack, you'd transmit raw IP packets, much in the same way you would if
-you opened an Ethernet driver.)
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+ > /dev/ppp provides a datalink layer interface to the system. The
+ > security on such interfaces (in general) ought to be the same.
+
+So it is possible to dump UDP packets to /dev/ppp (and /dev/eth (and PPP
+packets to /dev/tty)). More or less...
+
+If I understand correctly, the only program that is supposed to use
+/dev/ppp is pppd, to establish the connection. After that the packets
+go there through the internal TCP/IP stack. And noone else should
+be messing with /dev/ppp normally.
+
+If so, does it sound like a feasible idea to hack the kernel to forbid
+opening the /dev/ppp device to other processes, once pppd is working?
+
+Another idea is to rename /dev/ppp to /dev/secretppp and hack pppd
+to use that instead?
+
+Other ideas to lock access to /dev/ppp?
+
+Thanks,
+
+jerald
+
