@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 18 Sep 2006 19:48:22 +0000
+From: jfj <jfj@freemail.gr>
+Date: Mon, 18 Sep 2006 20:29:34 +0000
 Subject: Re: pppd security
-Message-Id: <17678.63494.325517.506667@gargle.gargle.HOWL>
+Message-Id: <450F01AE.9060306@freemail.gr>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <450EBBCE.5030204@freemail.gr>
 In-Reply-To: <450EBBCE.5030204@freemail.gr>
@@ -10,54 +10,36 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-jfj writes:
-> 
-> James Carlson wrote:
-> 
-> > No more or less so than it's possible to do the same via an Ethernet
-> > adapter.
+James Carlson wrote:
+
+>>If so, does it sound like a feasible idea to hack the kernel to forbid
+>>opening the /dev/ppp device to other processes, once pppd is working?
 > 
 > 
->  > /dev/ppp provides a datalink layer interface to the system. The
->  > security on such interfaces (in general) ought to be the same.
+> It sounds plausible, but since I don't understand the trust model
+> you're working with, I'm afraid I can't address the broader questions.
 > 
-> So it is possible to dump UDP packets to /dev/ppp (and /dev/eth (and PPP
-> packets to /dev/tty)). More or less...
+> (In particular, pppd needs a substantial amount of privilege in order
+> to run the /etc/ppp/ip-{up,down} scripts properly.  Given that level
+> of privilege, and the trust that it necessarily implies, I think that
+> if you have problems in pppd, you're already sunk, no matter how you
+> try to limit the scope.)
 > 
-> If I understand correctly, the only program that is supposed to use
-> /dev/ppp is pppd, to establish the connection.
 
-Yes.
+The trust model is this: We suppose that malware is running.
+Suppose from a buffer overflow in libPNG which achieved
+priviledge escallation to root. It is OK for malware to run but
+it will not be able to connect to anyone. Thus the attacker
+will be blind, he will never know that the malware is
+working and it will operate in isolation. Therefore,
+nobody will be able to *control* the host or *get* data from
+it. Sure, the running malware may delete everything :)
 
-> After that the packets
-> go there through the internal TCP/IP stack. And noone else should
-> be messing with /dev/ppp normally.
+So the host may be compromised but it will be more like the
+good old viruses that were transmitted in the boot sector
+and didn't have a link to their creator.
 
-That's right.
+Anyway. Thanks for the tips.
 
-> If so, does it sound like a feasible idea to hack the kernel to forbid
-> opening the /dev/ppp device to other processes, once pppd is working?
+jerald
 
-It sounds plausible, but since I don't understand the trust model
-you're working with, I'm afraid I can't address the broader questions.
-
-(In particular, pppd needs a substantial amount of privilege in order
-to run the /etc/ppp/ip-{up,down} scripts properly.  Given that level
-of privilege, and the trust that it necessarily implies, I think that
-if you have problems in pppd, you're already sunk, no matter how you
-try to limit the scope.)
-
-> Another idea is to rename /dev/ppp to /dev/secretppp and hack pppd
-> to use that instead?
-
-I don't see any point to that at all.  That'd just be security-by-
-obscurity.
-
-> Other ideas to lock access to /dev/ppp?
-
-I'd worry first about the trust model.  Trusted applications shouldn't
-be jumping through hoops to get the job done, because if they're
-compromised, then all bets are already off.
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
