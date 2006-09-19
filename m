@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 18 Sep 2006 20:46:03 +0000
+From: jfj <jfj@freemail.gr>
+Date: Tue, 19 Sep 2006 12:07:21 +0000
 Subject: Re: pppd security
-Message-Id: <17679.1419.804724.890626@gargle.gargle.HOWL>
+Message-Id: <450FDD79.9090404@freemail.gr>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <450EBBCE.5030204@freemail.gr>
 In-Reply-To: <450EBBCE.5030204@freemail.gr>
@@ -10,41 +10,47 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-jfj writes:
-> The trust model is this: We suppose that malware is running.
-> Suppose from a buffer overflow in libPNG which achieved
-> priviledge escallation to root. It is OK for malware to run but
-> it will not be able to connect to anyone.
+James Carlson wrote:
 
-What's the point in that?
+>jfj writes:
+>  
+>
+>>The trust model is this: We suppose that malware is running.
+>>Suppose from a buffer overflow in libPNG which achieved
+>>priviledge escallation to root. It is OK for malware to run but
+>>it will not be able to connect to anyone.
+>>    
+>>
+>
+>What's the point in that?
+>
+>If your fix becomes common practice, then attackers will just learn to
+>open /dev/kmem and rewrite the bits that are preventing them from
+>doing what they need to do.  Or more simply just overwrite a binary
+>that has the privileges desired, and exec that.
+>
+>If your fix doesn't become common practice, then the problem (to a
+>large extent) hasn't been solved.
+>  
+>
 
-If your fix becomes common practice, then attackers will just learn to
-open /dev/kmem and rewrite the bits that are preventing them from
-doing what they need to do.  Or more simply just overwrite a binary
-that has the privileges desired, and exec that.
+In order for this to work is must not be common practice.
+I'm trying to secure a very specific system. The logic is that it
+will be a custom system where, for example, one must do a
+couple of ioctl()s on a socket before it is activated. If the
+ioctl()s are known, we've done nothing.
 
-If your fix doesn't become common practice, then the problem (to a
-large extent) hasn't been solved.
+It is based on trying to predict what a malware would
+attempt and sabotage it by adding non-standard calls.
+Without feedback from the inside, the attackers work
+will be quite difficult.
 
-> Thus the attacker
-> will be blind, he will never know that the malware is
-> working and it will operate in isolation. Therefore,
-> nobody will be able to *control* the host or *get* data from
-> it. Sure, the running malware may delete everything :)
-> 
-> So the host may be compromised but it will be more like the
-> good old viruses that were transmitted in the boot sector
-> and didn't have a link to their creator.
+And if the malware tries too many things, it will be
+detected sooner or later. (/dev/kmem disabled by
+CAP_RAWIO)
 
-As long as the system still has a network connection, and root remains
-all-powerful, I think you're stuck with that problem.
+Now I'm thinking about getting `struct ppp*` from `struct file*`
+in ppp_open() and failing if n_channels is non zero. Sounds reasonable?
 
-I suspect that achieving what you describe really means reigning in
-the power of root, so that even if someone gets access to UID 0, he
-doesn't have access to the rest of the system, and drastically
-reducing the scope of [bracketing] privileges, so that nothing that
-requires additional privileges is ever using libPNG in the first
-place.
+jerald
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
