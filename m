@@ -1,8 +1,10 @@
 From: "Irfan Khan" <irfan.f.khan@gmail.com>
-Date: Tue, 19 Sep 2006 03:18:34 +0000
+Date: Tue, 19 Sep 2006 04:56:51 +0000
 Subject: Hooking up ppp to virtual serial driver
-Message-Id: <e67aee670609182006v11ba9ddan35207b149b05b11c@mail.gmail.com>
+Message-Id: <e67aee670609182156w79acbf3bg3ba0bc02186aa73b@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <e67aee670609182006v11ba9ddan35207b149b05b11c@mail.gmail.com>
+In-Reply-To: <e67aee670609182006v11ba9ddan35207b149b05b11c@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
