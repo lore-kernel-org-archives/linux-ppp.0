@@ -1,60 +1,44 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 12 Sep 2006 12:27:28 +0000
-Subject: Re: Re-4: Authentication problems
-Message-Id: <17670.42928.503705.546835@gargle.gargle.HOWL>
+From: Christian <crich-ml@beronet.com>
+Date: Wed, 20 Sep 2006 08:10:28 +0000
+Subject: syncppp
+Message-Id: <4510F774.4080104@beronet.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <DIIE.000007710001E2CB@aressi.fr>
-In-Reply-To: <DIIE.000007710001E2CB@aressi.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Ludovic MARCILLY writes:
-> Ok. So if i want my client to authenticate with CHAP, i have to put these options in my config file on the client side:
-> 
-> refuse-pap
-> refuse-eap
-> refuse-mschap
-> refuse-mschap-v2
-> 
-> Am i right?
+Hi List,
 
-No.
+i'm trying to understand how ppp transports frames in the "sync" mode. I
+want to do the following scenario:
 
-If you want to authenticate with CHAP, then just put the right
-credentials into /etc/ppp/chap-secrets.  That's all you need to do.
-For example, this in the pppd options:
+pppd sync notty
 
-	user lmarcilly
+I've hacked pppd  to use a simple framing method for stdin/stdout, to
+guarantee the transport of complete ppp frames. But unfortunately i
+found out, that in the tty.c i get mixed up frames from the
+master_pty_f, like i read a buffer and in the buffer i get :
 
-and this in the /etc/ppp/chap-secrets file:
+[ppp frame 1][part of ppp frame 2]
 
-	lmarcilly * "my pass phrase"
+the next buffer contains then:
 
-That's it.  Those "refuse-*" options are there in case there's some
-reason you _MUST_ prevent yourself from using those other protocols
-when available.
+[rest of ppp frame 2]
 
-They're potential workarounds for unforseen cases.  They're not meant
-to be used in most instances.
 
-In fact, that's true of most of the pppd options.  The best
-configuration *BY FAR* is the one that sets the fewest options.  The
-rest should be left to the default, which is generally chosen to be
-the most interoperable configuration.
+so that is what i transmit to my sync device, but the other side rejects
+the second frame because it seems not valid.
 
-> I will test it now in order to be sure.
-> 
-> And if i just configure authentication on the server? For example, no require-[pap|chap|eap|mschap|mschap-v2] and no refuse-[pap|chap|eap|mschap|mschap-v2] in the config file on the client side but just enable chap on the server side. Will it work?
+I don't really understand yet where pppd reads the frames from the
+kernel device, maybe somebody could give me a pointer.
 
-Yes.
+I just want to check if the frames come like that from the kernel or if
+it happens because the slave side pty-buffer gets full befor we can read
+it on the master side, so the framing is messed up.
 
-> Thanks a lot for your help. I have difficulties to understand the
-> require and refuse options.
 
-require = server
-refuse = client
+Thanks for any help!
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+Christian
+
