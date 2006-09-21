@@ -1,21 +1,22 @@
 From: Thilo Riessner <thilo@riessner.de>
-Date: Thu, 21 Sep 2006 08:18:02 +0000
-Subject: tty-device when using capiplugin
-Message-Id: <200609211018.03456.thilo@riessner.de>
+Date: Thu, 21 Sep 2006 15:19:23 +0000
+Subject: failure during first LCP Packets
+Message-Id: <200609211719.24720.thilo@riessner.de>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Using pppd with capiplugin, everything works fine when starting it from a 
-comand line. But when it is started by cron daemon, there is the following 
-error message:
-	no device specified and stdin is not a tty
-I guess, that the reason is, that I don't give pppd a device name, for capi 
-don't uses it anyway. And calling it command line, pppd uses stdin as device. 
-Being called by crond, there is no stdin, and pppd fails. 
-What device should I give to pppd when calling it in background (without 
-stdin)? Using /dev/null works, but is it sensfull?
+I am connecting to a Endres and Hauser Fieldgate modem using pppd 2.4.1 and 
+capiplugin 1.31 or an analog modem from behind a telephone system. Sometimes 
+it works flawlessly, but sometimes the remote modem seems not to hear the 
+pppd's answer. It sends the CHAP or IPCP packet several times, and pppd 
+answers it every time, but it does not lead to success. 
+It is the same behaviour with several remote modems of the same type and from 
+different linux systems.
+There are indices that this behaviour does not occur, when calling the remote 
+modem from outside the company, but I didn't verify that so long. Does 
+anybody know what may be going on here, and has a hint how to work around?
 
 Thilo
