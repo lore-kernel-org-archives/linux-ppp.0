@@ -1,35 +1,21 @@
-From: "Irfan Khan" <irfan.f.khan@gmail.com>
-Date: Tue, 19 Sep 2006 04:56:51 +0000
-Subject: Hooking up ppp to virtual serial driver
-Message-Id: <e67aee670609182156w79acbf3bg3ba0bc02186aa73b@mail.gmail.com>
+From: Thilo Riessner <thilo@riessner.de>
+Date: Thu, 21 Sep 2006 08:18:02 +0000
+Subject: tty-device when using capiplugin
+Message-Id: <200609211018.03456.thilo@riessner.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <e67aee670609182006v11ba9ddan35207b149b05b11c@mail.gmail.com>
-In-Reply-To: <e67aee670609182006v11ba9ddan35207b149b05b11c@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi Everyone,
-I am new to ppp,
-here is what I am trying to do with ppp in linux:
-- Writing a serial tty driver
-- this driver shall not handle any real serial port (hardware).
-- want to divert all the ppp traffic to this driver.
+Using pppd with capiplugin, everything works fine when starting it from a 
+comand line. But when it is started by cron daemon, there is the following 
+error message:
+	no device specified and stdin is not a tty
+I guess, that the reason is, that I don't give pppd a device name, for capi 
+don't uses it anyway. And calling it command line, pppd uses stdin as device. 
+Being called by crond, there is no stdin, and pppd fails. 
+What device should I give to pppd when calling it in background (without 
+stdin)? Using /dev/null works, but is it sensfull?
 
-Now the issue is, when I tried a simple tty driver with minimal functions,
-and tried-
--  pppd /dev/flex_modem(drivername) 115200
-
-i am getting a kernel log
-Could not attach to channel 0: No such device or address.
-
-After primary analysis, I found ppp tries to attach to the tty channed
-and getting failed.
-
-Please help me to solve this probem.
-
-Any pointers would be of great help.
-
-TIA
-Irfan
+Thilo
