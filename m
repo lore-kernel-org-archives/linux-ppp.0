@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 30 Oct 2006 12:48:04 +0000
+From: Christian <crich-ml@beronet.com>
+Date: Mon, 30 Oct 2006 13:44:54 +0000
 Subject: Re: Way how frames are read in pppd
-Message-Id: <17733.62596.807197.644325@gargle.gargle.HOWL>
+Message-Id: <454601D6.5040109@beronet.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <4540C35F.9010104@beronet.com>
 In-Reply-To: <4540C35F.9010104@beronet.com>
@@ -10,47 +10,50 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Christian writes:
-> Hi List (James:-)
-> 
-> I have still some issues with my litle project. Let me explain for short
-> what i'm doing:
-> 
-> 
-> Application (synchdlc) <---> Stdin/Stdout <----> pppd (synchdlc)
+Hello James,
 
-That diagram doesn't make sense to me.
+>It's still not at all clear to me what you're trying to do, or why
+>you're doing it.
+>
+>You're using async devices here -- ptys -- so why are you expecting
+>synchronous behavior?
+>
+>  
+>
 
-Standard input and output can be open on a pseudoterminal (pty), and
-pppd will work that way, but ptys accept only async data, not sync.
+OK, maybe i do not understand everything correctly, let me in short
+explain what i have:
 
-Ptys emulate terminals, which are devices attached to the system by
-way of asynchronous ports.  They don't emulate synchronous
-interfaces.  You'll need to invent your own sort of pty-like driver if
-you want to run synchronous.
+I have a device which gives me a function to transmit data in a hdlc
+frame, so i can just call some function like:
 
-> to ensure boundaries i have hacked pppd to add framing for stdin/stdout,
-> so that packets in pppd transmitted to stdout contain headers and
-> packets received contain headers as well.
+tx_frame(char *p, int l);
 
-That sounds like a brutal hack.  What are you trying to do?
+and i can be sure the data will come out on the other side in exactly 1
+hdlc frame with size l.
 
-> My problem is the following:
-> 
-> I don't understand where exactly the  PPP(IP) frames are read in pppd
-> and transmitted to the master_pty. It is certainly not (only) in
-> read_packet. I have found out that the kernel writes correct packets
-> with copy_to_user to the userspace. pppd reads them and somehow
-> transmits them to the master_fd. At this point the boundaries got lost.
-> 
-> I have tried to read the pppd code for a while, but i think i can't see
-> the forest anymore because of all the trees.
+on the other hand i have installed a callback like
 
-It's still not at all clear to me what you're trying to do, or why
-you're doing it.
+rx_frame(char *p, int l);
 
-You're using async devices here -- ptys -- so why are you expecting
-synchronous behavior?
+where i receive the data from exactly 1 hdlc frame with length l.
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+It means i'm handling data directly without any knowledge of hldc,
+because the controller supports hdlc coding/decoding.
+
+then i tried to use pppd with stdin/stdout, but this obviously did not
+work, because there is no boundaries in stdin/stdout so it will fail
+when data packets increase in size or in speed, also i needed to enable
+the sync option which made it work for a few small slowly coming packets.
+
+I assume sync=no hdlc, and when not using the sync option pppd will do
+hdlc on stdin/stdout, maybe you can enlighten that to me a bit?
+
+I have read that i can set a pty end into N_HDLC mode, so that each read
+returns exactly 1 packet, do you think i can handle my task in that way ?
+
+
+I hope very much you can help me,
+
+Christian
+
