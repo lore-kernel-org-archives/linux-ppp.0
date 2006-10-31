@@ -1,7 +1,7 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Mon, 30 Oct 2006 23:15:53 +0000
+From: Christian <crich-ml@beronet.com>
+Date: Tue, 31 Oct 2006 17:21:07 +0000
 Subject: Re: Way how frames are read in pppd
-Message-Id: <17734.34729.950457.744885@cargo.ozlabs.ibm.com>
+Message-Id: <45478603.1090000@beronet.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <4540C35F.9010104@beronet.com>
 In-Reply-To: <4540C35F.9010104@beronet.com>
@@ -10,23 +10,36 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Christian writes:
 
-> I have a device which gives me a function to transmit data in a hdlc
-> frame, so i can just call some function like:
-> 
-> tx_frame(char *p, int l);
-> 
-> and i can be sure the data will come out on the other side in exactly 1
-> hdlc frame with size l.
-> 
-> on the other hand i have installed a callback like
-> 
-> rx_frame(char *p, int l);
-> 
-> where i receive the data from exactly 1 hdlc frame with length l.
+Hi James,
 
-Have a look at Documentation/networking/ppp_generic.txt and
-drivers/net/ppp_synctty.c in the Linux kernel sources.
+>>>You can feel free to use this one:
+>>>
+>>> ftp://ftp.workingcode.com/pub/carlson/ppp/ahdlc.c
+>>> ftp://ftp.workingcode.com/pub/carlson/ppp/ahdlc.h
+>>>
+>>> 
+>>>
+>>>      
+>>>
+>>I tried to fetch them, but i got:
+>>    
+>>
+>
+>I'll send you a copy by email.
+>  
+>
 
-Paul.
+I could easily integrate your hdlc implementation, and it works like a
+charm! I even do not need to crudely patch pppd, that's really good !
+
+Thank you very much James !
+
+You can see your hdlc implementation in our application bundle at
+www.beronet.com/downloads/apps/app_bundle.tar.gz
+ in the next few days.
+
+I will mention your work in the README.
+
+Christian
+
