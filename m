@@ -1,73 +1,100 @@
-From: "Max Malzkuhn" <mmalzkuhn@edgewaternetworks.com>
-Date: Fri, 15 Dec 2006 22:18:09 +0000
-Subject: pppoe-server question
-Message-Id: <005c01c72096$ea347c80$d50a0a0a@MaxLab>
+From: Yan Burman <burman.yan@gmail.com>
+Date: Tue, 12 Dec 2006 19:13:08 +0000
+Subject: [PATCH 2.6.19] ppp: replace kmalloc+memset with kzalloc
+Message-Id: <1165950788.10231.8.camel@localhost>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org, trivial@kernel.org
 
-Hello All,
- 
-I searched the archives and saw a few people that had a problem similar to
-mine, but saw no resolutions so I thought I'd try again.
- 
-I am trying to bring up a pppoe-server access concentrator on a RC5 linux
-box.
- 
-I have rp.pppoe-server version 3.8 and pppd version 2.4.4.
- 
-I start the server as such:
- 
-pppoe-server -I eth1 -L 10.10.60.1 -R 10.10.60.100
- 
-The client and server converse through most of the PAD stuff, PADI, PADO,
-PADR, PADS.
- 
-Then they need to exchange LCP and the syslog on the system running the
-pppoe-server acts like it is doing so:
- 
-Dec 15 12:05:53 testwan pppd[15724]: rcvd [LCP ConfReq id=0x2 <magic
-0x788d0dc1>]
-Dec 15 12:05:53 testwan pppd[15724]: sent [LCP ConfAck id=0x2 <magic
-0x788d0dc1>]
-Dec 15 12:05:54 testwan pppd[15724]: sent [LCP ConfReq id=0x1 <magic
-0x833ad232>]
-Dec 15 12:05:57 testwan pppd[15724]: sent [LCP ConfReq id=0x1 <magic
-0x833ad232>]
-Dec 15 12:05:59 testwan pppd[15724]: rcvd [LCP ConfReq id=0x2 <magic
-0x788d0dc1>]
-Dec 15 12:05:59 testwan pppd[15724]: sent [LCP ConfAck id=0x2 <magic
-0x788d0dc1>]
-Dec 15 12:06:00 testwan pppd[15724]: sent [LCP ConfReq id=0x1 <magic
-0x833ad232>]
-Dec 15 12:06:03 testwan pppd[15724]: sent [LCP ConfReq id=0x1 <magic
-0x833ad232>]
-Dec 15 12:06:05 testwan pppd[15724]: rcvd [LCP ConfReq id=0x2 <magic
-0x788d0dc1>]
-Dec 15 12:06:05 testwan pppd[15724]: sent [LCP ConfAck id=0x2 <magic
-0x788d0dc1>]
-Dec 15 12:06:06 testwan pppd[15724]: sent [LCP ConfReq id=0x1 <magic
-0x833ad232>]
-Dec 15 12:06:09 testwan pppd[15724]: sent [LCP ConfReq id=0x1 <magic
-0x833ad232>]
-Dec 15 12:06:11 testwan pppoe-server[15691]: Sent PADT
-Dec 15 12:06:11 testwan pppd[15724]: Terminating on signal 15
+Replace kmalloc+memset with kzalloc
 
+Signed-off-by: Yan Burman <burman.yan@gmail.com>
+
+diff -rubp linux-2.6.19-rc5_orig/drivers/net/ppp_async.c linux-2.6.19-rc5_kzalloc/drivers/net/ppp_async.c
+--- linux-2.6.19-rc5_orig/drivers/net/ppp_async.c	2006-11-09 12:16:21.000000000 +0200
++++ linux-2.6.19-rc5_kzalloc/drivers/net/ppp_async.c	2006-11-11 22:44:04.000000000 +0200
+@@ -159,12 +159,11 @@ ppp_asynctty_open(struct tty_struct *tty
+ 	int err;
  
-However, running ethereal on this interface on this same box shows only the
-LCP packets coming in, none going out at all which
-causes the client to timeout and send a PADT.
+ 	err = -ENOMEM;
+-	ap = kmalloc(sizeof(*ap), GFP_KERNEL);
++	ap = kzalloc(sizeof(*ap), GFP_KERNEL);
+ 	if (ap = 0)
+ 		goto out;
  
-Anyone have any ideas why the server would imply it sent the packets when it
-actually did not?
+ 	/* initialize the asyncppp structure */
+-	memset(ap, 0, sizeof(*ap));
+ 	ap->tty = tty;
+ 	ap->mru = PPP_MRU;
+ 	spin_lock_init(&ap->xmit_lock);
+diff -rubp linux-2.6.19-rc5_orig/drivers/net/ppp_deflate.c linux-2.6.19-rc5_kzalloc/drivers/net/ppp_deflate.c
+--- linux-2.6.19-rc5_orig/drivers/net/ppp_deflate.c	2006-11-09 12:16:21.000000000 +0200
++++ linux-2.6.19-rc5_kzalloc/drivers/net/ppp_deflate.c	2006-11-11 22:44:04.000000000 +0200
+@@ -121,12 +121,11 @@ static void *z_comp_alloc(unsigned char 
+ 	if (w_size < DEFLATE_MIN_SIZE || w_size > DEFLATE_MAX_SIZE)
+ 		return NULL;
  
-It should not be "pure" connectivity issue, because while this is happening,
-I actually have an ssh session going on between these two systems on this
-same interface.
+-	state = (struct ppp_deflate_state *) kmalloc(sizeof(*state),
+-							GFP_KERNEL);
++	state = kzalloc(sizeof(*state), GFP_KERNEL);
+ 	if (state = NULL)
+ 		return NULL;
  
-Any assistance would be most appreciated.
+-	memset (state, 0, sizeof (struct ppp_deflate_state));
+ 	state->strm.next_in   = NULL;
+ 	state->w_size         = w_size;
+ 	state->strm.workspace = vmalloc(zlib_deflate_workspacesize());
+@@ -341,11 +340,10 @@ static void *z_decomp_alloc(unsigned cha
+ 	if (w_size < DEFLATE_MIN_SIZE || w_size > DEFLATE_MAX_SIZE)
+ 		return NULL;
  
-Max
+-	state = (struct ppp_deflate_state *) kmalloc(sizeof(*state), GFP_KERNEL);
++	state = kzalloc(sizeof(*state), GFP_KERNEL);
+ 	if (state = NULL)
+ 		return NULL;
+ 
+-	memset (state, 0, sizeof (struct ppp_deflate_state));
+ 	state->w_size         = w_size;
+ 	state->strm.next_out  = NULL;
+ 	state->strm.workspace = kmalloc(zlib_inflate_workspacesize(),
+diff -rubp linux-2.6.19-rc5_orig/drivers/net/ppp_mppe.c linux-2.6.19-rc5_kzalloc/drivers/net/ppp_mppe.c
+--- linux-2.6.19-rc5_orig/drivers/net/ppp_mppe.c	2006-11-09 12:16:21.000000000 +0200
++++ linux-2.6.19-rc5_kzalloc/drivers/net/ppp_mppe.c	2006-11-11 22:44:04.000000000 +0200
+@@ -200,12 +200,10 @@ static void *mppe_alloc(unsigned char *o
+ 	    || options[0] != CI_MPPE || options[1] != CILEN_MPPE)
+ 		goto out;
+ 
+-	state = (struct ppp_mppe_state *) kmalloc(sizeof(*state), GFP_KERNEL);
++	state = kzalloc(sizeof(*state), GFP_KERNEL);
+ 	if (state = NULL)
+ 		goto out;
+ 
+-	memset(state, 0, sizeof(*state));
+-
+ 	state->arc4 = crypto_alloc_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC);
+ 	if (IS_ERR(state->arc4)) {
+ 		state->arc4 = NULL;
+diff -rubp linux-2.6.19-rc5_orig/drivers/net/ppp_synctty.c linux-2.6.19-rc5_kzalloc/drivers/net/ppp_synctty.c
+--- linux-2.6.19-rc5_orig/drivers/net/ppp_synctty.c	2006-11-09 12:16:21.000000000 +0200
++++ linux-2.6.19-rc5_kzalloc/drivers/net/ppp_synctty.c	2006-11-11 22:44:04.000000000 +0200
+@@ -207,13 +207,12 @@ ppp_sync_open(struct tty_struct *tty)
+ 	struct syncppp *ap;
+ 	int err;
+ 
+-	ap = kmalloc(sizeof(*ap), GFP_KERNEL);
++	ap = kzalloc(sizeof(*ap), GFP_KERNEL);
+ 	err = -ENOMEM;
+ 	if (ap = 0)
+ 		goto out;
+ 
+ 	/* initialize the syncppp structure */
+-	memset(ap, 0, sizeof(*ap));
+ 	ap->tty = tty;
+ 	ap->mru = PPP_MRU;
+ 	spin_lock_init(&ap->xmit_lock);
+
+
 
