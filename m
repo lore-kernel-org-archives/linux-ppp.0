@@ -1,47 +1,72 @@
-From: Charlie Brady <charlieb-linux-ppp@e-smith.com>
-Date: Wed, 22 Nov 2006 00:24:55 +0000
-Subject: chap_passwd_hook() not used in server mode - why?
-Message-Id: <Pine.LNX.4.64.0611211913060.15007@e-smith.charlieb.ott.istop.com>
+From: jfj <jfj@freemail.gr>
+Date: Thu, 28 Dec 2006 15:47:55 +0000
+Subject: Help with PPPoE
+Message-Id: <4593E72B.30603@freemail.gr>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi.
 
-get_secret() in auth.c has this code:
+I have kernel 2.6.17.13 with "PPP over Ethernet" compiled in (not a module)
+and pppd 2.4.4b1.  I have added the option "plugin rp-pppoe.so" to
+/etc/ppp/options.
 
-...
-     } else if (!am_server && chap_passwd_hook) {
-         if ( (*chap_passwd_hook)(client, secbuf) < 0) {
-             error("Unable to obtain CHAP password for %s on %s from plugin",
-                   client, server);
-             return 0;
-         }
-     } else {
-...
+Now when I type
 
-I'm curious as to the reason for not enabling the hook to be used when 
-pppd is running in server mode. When authenticating PPTP connections using 
-MSCHAPv2, it would be useful to read NT hashes from smbpasswd or from 
-ldap. The current hook structure doesn't facilitate that, however, and as 
-a result, a number of plugin authors have duplicated large parts of 
-chap_ms.c in their plugin's chap_verify function.
+	pppd eth0
 
-The only plugin I've found which implements a chap_passwd_hook function is 
-passwordfd, and I doubt that that would ever be used in server mode.
+I get
 
-Would anyone object to this patch?
+	unrecognized option 'eth0'
 
---- ppp-2.4.4.orig/pppd/auth.c  2006-06-18 07:26:00.000000000 -0400
-+++ ppp-2.4.4/pppd/auth.c       2006-11-21 19:12:25.000000000 -0500
-@@ -1938,7 +1938,7 @@
+But wasn't the plugin supposed to enable this device?
 
-      if (!am_server && passwd[0] != 0) {
-         strlcpy(secbuf, passwd, sizeof(secbuf));
--    } else if (!am_server && chap_passwd_hook) {
-+    } else if (chap_passwd_hook) {
-         if ( (*chap_passwd_hook)(client, secbuf) < 0) {
-             error("Unable to obtain CHAP password for %s on %s from plugin",
-                   client, server);
+If I use this script in /etc/ppp/peers/mydsl
+
+	#
+	# PPP over Ethernet options (using roaring pinguin external program)
+	#
+	plugin rp-pppoe.so
+	noauth
+	# pppoe has a lower mtu/mru
+	mtu 1492
+	mru 1492
+	# switch off all compressions (this is a must)
+	nopcomp
+	# this is recommended
+	novjccomp
+	noccp
+	debug
+
+And run
+
+	pppd call mydsl
+
+Nothing happens (pppd can't even be interrupted with ctrl-c) and
+/var/log/messages sais:
+
+	Dec 28 20:43:18 linux pppd[5324]: Plugin rp-pppoe.so loaded.
+	Dec 28 20:43:18 linux pppd[5324]: RP-PPPoE plugin version 3.3 compiled against pppd 2.4.4b1
+	Dec 28 20:43:18 linux pppd[5324]: pppd 2.4.4b1 started by root, uid 0
+	Dec 28 20:43:18 linux pppd[5324]: using channel 3
+	Dec 28 20:43:18 linux pppd[5324]: Using interface ppp0
+	Dec 28 20:43:18 linux pppd[5324]: Connect: ppp0 <--> /dev/tty6
+	Dec 28 20:43:18 linux pppd[5324]: sent [LCP ConfReq id=0x1 <mru 1492> <asyncmap 0x0> <magic 0xad6cc157> <accomp>]
+	Dec 28 20:43:50 linux last message repeated 16 times
+	Dec 28 20:44:52 linux last message repeated 31 times
+	Dec 28 20:45:16 linux last message repeated 12 times
+	Dec 28 20:45:18 linux pppd[5324]: LCP: timeout sending Config-Requests 
+	Dec 28 20:45:18 linux pppd[5324]: Connection terminated.
+	Dec 28 20:45:18 linux pppd[5324]: Receive serial link is not 8-bit clean:
+	Dec 28 20:45:18 linux pppd[5324]: Problem: all had bit 7 set to 0
+	Dec 28 20:45:18 linux pppd[5324]: Modem hangup
+	Dec 28 20:45:18 linux pppd[5324]: Exit.
+
+Please help!
+
+jerald
+
 
