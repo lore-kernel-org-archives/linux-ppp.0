@@ -1,65 +1,44 @@
-From: maimam <m_a_imam@yahoo.com>
-Date: Tue, 17 Apr 2007 04:17:17 +0000
-Subject: ppp interface
-Message-Id: <10028998.post@talk.nabble.com>
+From: James Cameron <james.cameron@hp.com>
+Date: Tue, 17 Apr 2007 04:21:40 +0000
+Subject: Re: ppp interface
+Message-Id: <20070417042140.GK5181@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <10028998.post@talk.nabble.com>
+In-Reply-To: <10028998.post@talk.nabble.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+On Mon, Apr 16, 2007 at 09:17:17PM -0700, maimam wrote:
+> I am having a hard time getting PPTP to work in a lab environemnt.
 
-Hi 
+Works for me every time.  I last checked it yesterday with the release
+of pptpd 1.3.4.
 
-I am having a hard time getting PPTP to work in a lab environemnt. I have
-two linux systems connected directly. I have installed one of them as server
-and the other one as client from the directions given at sourceforge.
+> since i dont have a modem i dont have a ppp interface. pptp tries to use
+> ppp0 as a tunnel interface. 
 
-My problem:
+This is entirely normal.  If you did have a modem interface, pppd would
+use ppp1 as the tunnel interface.
 
-since i dont have a modem i dont have a ppp interface. pptp tries to use
-ppp0 as a tunnel interface. so when i try to start a pptp connection it
-gives me something like this. 
+> [root@localhost ppp]# pppd pty 'pptp 1.1.1.101 --nolaunchpppd' call pptp1
+> Connect: ppp0 <--> /dev/pts/3
+> Child process pptp 1.1.1.101 --nolaunchpppd (pid 26619) terminated with
+> signal 15
 
-[root@localhost ppp]# pppd pty 'pptp 1.1.1.101 --nolaunchpppd' call pptp1
-debug dump logfd 2 nodetach 
-pppd options in effect:
-debug           # (from command line)
-nodetach                # (from command line)
-logfd 2         # (from command line)
-dump            # (from command line)
-noauth          # (from /etc/ppp/options.pptp)
-refuse-chap             # (from /etc/ppp/options.pptp)
-refuse-mschap           # (from /etc/ppp/options.pptp)
-refuse-eap              # (from /etc/ppp/options.pptp)
-name netscreen          # (from /etc/ppp/peers/pptp1)
-remotename PPTP         # (from /etc/ppp/peers/pptp1)
-                # (from /etc/ppp/options.pptp)
-pty pptp 1.1.1.101 --nolaunchpppd               # (from
-/etc/ppp/peers/pptp1)
-mru 1490                # (from /etc/ppp/peers/pptp1)
-mtu 1490                # (from /etc/ppp/peers/pptp1)
-ipparam pptp1           # (from /etc/ppp/peers/pptp1)
-nobsdcomp               # (from /etc/ppp/options.pptp)
-nodeflate               # (from /etc/ppp/options.pptp)
-using channel 9
-Using interface ppp0
-Connect: ppp0 <--> /dev/pts/3
-Child process pptp 1.1.1.101 --nolaunchpppd (pid 26619) terminated with
-signal 15
-Modem hangup
-Connection terminated.
+This suggests that pptp has failed with a SIGTERM.  There is no sign
+there of any pppd problem.
 
-Although i have pppd in the processes i dont have any ppp interface. pppd
-version 2.4.2. What should i do?
+> Although i have pppd in the processes i dont have any ppp interface. pppd
+> version 2.4.2. What should i do?
 
-Appreciate your help...
+Contact the PPTP Client mailing list.
+http://pptpclient.sourceforge.net/contact.phtml
 
-maimam
-
-
+Have you tried OpenVPN yet?
 
 -- 
-View this message in context: http://www.nabble.com/ppp-interface-tf3588739.html#a10028998
-Sent from the linux-ppp mailing list archive at Nabble.com.
-
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
