@@ -1,7 +1,7 @@
-From: "Gilles Espinasse" <g.esp@free.fr>
-Date: Sun, 13 May 2007 06:03:59 +0000
+From: Bill Unruh <unruh@physics.ubc.ca>
+Date: Sun, 13 May 2007 11:51:08 +0000
 Subject: Re: problem installing ppp
-Message-Id: <03d301c79524$7fb35950$f9b5a8c0@pii350>
+Message-Id: <Pine.LNX.4.64.0705130444480.21186@info.physics.ubc.ca>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <10451321.post@talk.nabble.com>
 In-Reply-To: <10451321.post@talk.nabble.com>
@@ -10,13 +10,7 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-
------ Original Message ----- 
-From: "Oliver McBride" <mcbride_oliver@yahoo.com>
-To: <linux-ppp@vger.kernel.org>
-Sent: Sunday, May 13, 2007 3:11 AM
-Subject: problem installing ppp
-
+On Sat, 12 May 2007, Oliver McBride wrote:
 
 >
 > im using kernel 2.6.9 and its configurations do not support PPP.
@@ -31,16 +25,11 @@ Subject: problem installing ppp
 > i want to know if i can solve this problem without changing  server
 > config,for example by installing a rpm,or adding other files?
 > best regards
-> -- 
->
-There is a kernel part that can't be installed independantly from your
-kernel and a userspace part compiled from ppp sources.
-Depending of your distribution, you may change the kernel package installed
-for one that support ppp or you will need to recompile that kernel version
-sources to accomodate your needs and hardware.
 
-For the kernel part, you need to set ppp support on your kernel .config,
-recompile, install the new compiled kernel and reboot.
-
-Gilles
+What distro are you running? As far as I know all distros have the ppp
+module installed. Look for ppp_generic.ko in /lib/modules/*
+find /lib/modules -name ppp_generic\*
+If it is not there, you are screwed. ppp needs that module ( and ppp_async). Without it ppp
+will not run. If it is there, install it using modprobe.
+modprobe ppp
 
