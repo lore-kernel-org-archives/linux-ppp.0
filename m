@@ -1,71 +1,45 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 06 Jun 2007 10:53:11 +0000
-Subject: Re: Help with PPPoE
-Message-Id: <18022.37399.364755.791866@gargle.gargle.HOWL>
+From: Konstantin Sharlaimov <konstantin.sharlaimov@gmail.com>
+Date: Fri, 01 Jun 2007 10:31:48 +0000
+Subject: [PATCH 2.6.21.3] ppp_mppe: account for osize too small errors in
+Message-Id: <465FF594.50901@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4593E72B.30603@freemail.gr>
-In-Reply-To: <4593E72B.30603@freemail.gr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Jerald Fitzjerald writes:
-> I'm trying to setup a PPPoE in a Linux-From-Scratch system based on an old SuSE.
-> Things seem to work, but although i use the options `usepeerdns`
-> and `defaultroute`, pppd does not update the routing table nor
-> the resolv.conf.
+Prevent mppe_decompress() from generating "osize too small" errors
+when checking for output buffer size. When receiving a packet of mru
+size the output buffer for decrypted data is 1 byte too small since
+mppe_decompress() tries to account for possible PFC, however later
+in code it is assumed no PFC.
 
-Note that pppd writes to /etc/ppp/resolv.conf, not directly to /etc.
-If you want to use pppd's DNS information, either create a symlink,
-like this:
+Adjusting the check prevented there errors from occurring.
 
-	ln -s /etc/ppp/resolv.conf /etc/resolv.conf
+Signed-off-by: Konstantin Sharlaimov <konstantin.sharlaimov@gmail.com>
+---
+--- linux-2.6.21.3/drivers/net/ppp_mppe.c.orig  2007-06-01
+20:57:04.000000000 +1100
++++ linux-2.6.21.3/drivers/net/ppp_mppe.c       2007-06-01
+21:08:03.000000000 +1100
+@@ -493,14 +493,14 @@ mppe_decompress(void *arg, unsigned char
+ 
+        /*
+         * Make sure we have enough room to decrypt the packet.
+-        * Note that for our test we only subtract 1 byte whereas in
+-        * mppe_compress() we added 2 bytes (+MPPE_OVHD);
+-        * this is to account for possible PFC.
++        * To account for possible PFC we should only subtract 1
++        * byte whereas in mppe_compress() we added 2 bytes (+MPPE_OVHD);
++        * However, we assume no PFC, thus subtracting 2 bytes.
+         */
+-       if (osize < isize - MPPE_OVHD - 1) {
++       if (osize < isize - MPPE_OVHD - 2) {
+                printk(KERN_DEBUG "mppe_decompress[%d]: osize too small! "
+                       "(have: %d need: %d)\n", state->unit,
+-                      osize, isize - MPPE_OVHD - 1);
++                      osize, isize - MPPE_OVHD - 2);
+                return DECOMP_ERROR;
+        }
+        osize = isize - MPPE_OVHD - 2;  /* assume no PFC */
 
-... or write an /etc/ppp/ip-up script to transfer data as required.
-
-> 	default         10.0.0.138      0.0.0.0         UG    0      0        0 eth0
-
-That existing default route will prevent pppd from installing its own
-default route.  Pppd tries not to disrupt the existing routing table.
-
-Either remove that route via eth0 before starting pppd, or find some
-other way (such as an active routing protocol) to compute the routes
-you need.
-
-> So I kill pppd and say:
-> 
-> 	route del default
-> 
-> and re-run pppd:
-> This time I have the routing table:
-
-Right; as above, that's intentional.
-
-> But unfortunately, the network is unreachable.  I try to connect
-> to hosts by IP address, but I'm not getting any packets.
-
-This sounds like a separate problem to debug.
-
-> 	rcvd [LCP ConfNak id=0x2 <mru 1500>]
-
-What?  That doesn't make sense with PPPoE.
-
-> 	not replacing existing default route via 10.0.0.138
-
-That explains the first default route problem.  This doesn't look like
-a log from the second failing case (after deleting the eth0 route),
-though.
-
-> How can I debug this further?
-> Any help will be vastly appreciated.
-
-More details are needed on the second failing case.  Perhaps a tcpdump
-or ethereal trace on the Ethernet interface running PPPoE (eth0?)
-would help narrow things down.
-
-Is it possible that you just have name service problems due to the
-resolv.conf confusion?  Try "ping -n".
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
