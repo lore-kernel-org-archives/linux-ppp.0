@@ -1,47 +1,28 @@
-From: Jan Just Keijser <jan.just.keijser@gmail.com>
-Date: Mon, 30 Jul 2007 11:31:53 +0000
-Subject: RE: eap/tls - smartcard ppp extension
-Message-Id: <46ADCC29.3070400@gmail.com>
+From: LeeD <ldavies@comtechm2m.com>
+Date: Mon, 23 Jul 2007 10:52:55 +0000
+Subject: Can we run a PPP server & client simultaneously???
+Message-Id: <11741524.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20070729190056.GA18150@ns.wegener-net.de>
-In-Reply-To: <20070729190056.GA18150@ns.wegener-net.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-hi Norbert,
 
-I've made a few updates to this patch, see
-  http://www.nikhef.nl/~janjust/ppp <http://www.nikhef.nl/%7Ejanjust/ppp>
-this patch
-- allow client and server support for EAP/TLS
-- supports pppd 2.4.3 and 2.4.4
+Is it possible for linux to support both a PPP server and PPP client (with
+dial on demand) simultaneously on the same serial port?
 
-this patch has also been submitted to the ppp development team.
+I have a PPP client setup to support dial on demand, however this locks the
+serial port preventing any call answering programs (such as mgetty) from
+using the same serial port and modem.
 
-cheers,
+I have seen server advertised which offer both PPP client and server, so how
+to they do it?
 
-JJK
+Regards,
 
-> Hello,
-> based on the eap/tls extension pppd 2.4.3 - eaptls 0.7
-> we found at
-> http://eaptls.spe.net/download.html 
-> <http://eaptls.spe.net/download.html> we extended ppp to be able use 
-> use smartcards for authentication.
-> We would like to contribute this code for incorporation in ppp, if 
-> there is no other extension for this available.
-> Are you interested in this patch?
-> if so: Which license should this extension have?
->
-> Regards
-> Norbert Wegener
->
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> the body of a message to majordomo@vger.kernel.org 
-> <mailto:majordomo@vger.kernel.org>
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html 
-> <http://vger.kernel.org/majordomo-info.html>
+Lee
+-- 
+View this message in context: http://www.nabble.com/Can-we-run-a-PPP-server---client-simultaneously----tf4128929.html#a11741524
+Sent from the linux-ppp mailing list archive at Nabble.com.
 
