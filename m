@@ -1,46 +1,41 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Sun, 19 Aug 2007 03:45:44 +0000
-Subject: Re: [patch 06/14] make sure that the linkpidfile is always created
-Message-Id: <18119.48360.784999.623669@cargo.ozlabs.ibm.com>
+From: "Gilles Espinasse" <g.esp@free.fr>
+Date: Tue, 14 Aug 2007 18:23:50 +0000
+Subject: ppp_async kfree patch
+Message-Id: <2fa101c7dea0$43531340$f9b5a8c0@pii350>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20070819014009.321424748@bongo.bofh.it>
-In-Reply-To: <20070819014009.321424748@bongo.bofh.it>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-Marco d'Itri writes:
+It has been reported in this thread
+https://sourceforge.net/tracker/index.php?func=DEtail&aid=1678777&group_id@=
+604&atidB8519
 
-> Subject: [patch 06/14] Bug#284382: ppp: linkpidfile is not created upon detachment
-> From: <herbert@gondor.apana.org.au>
-> 
-> Package: ppp
-> Version: 2.4.2+20040428-2
-> Severity: wishlist
-> 
-> When pppd detaches from the parent normally, that is, without nodetach
-> or updetach set, the linkpidfile is not created even when linkname is
-> set.
-> 
-> This is because the create_linkpidfile call in detach() is only made
-> if the linkpidfile is filled in.  However, linkpidfile is never filled
-> in until create_linkpidfile has been called.
-> 
-> IMHO the call should be made uncondtionally in detach() since
-> create_linkpidfile does its own check on linkname anyway.
+that a one line patch on ppp_async avoid crash and reboot
 
-There is an unconditional call to create_linkpidfile in main() at line
-475.  The call in detach is only there to rewrite the file in the case
-where it has already been created by the parent and needs to be
-updated to reflect the new process ID after detaching (since detaching
-involves a fork).
+This happen with hight speed connection and usbserial using
+http://www.junxion.com/opensource/linux_highspeed_usbserial.html patch
 
-> Please note that the version of pppd in woody always wrote the
-> linkpidfile after detaching.  It did so in main() however.  That
-> call has now been removed which is why I'm seeing this problem.
+Here is the patch against 2.4.34 a few lines after  We have finished the
+packet.
+Code is the same on 2.6.22 and look not have been changed until 2.6.23.rc3
 
-It's still there in my version.  Was it a debian-specific patch that
-removed it, perhaps?
+--- linux-2.4.34/drivers/net/ppp_async.c.old 2007-06-30 17:56:40.000000000
+-0700
++++ linux-2.4.34/drivers/net/ppp_async.c 2007-06-30 17:57:07.000000000
+-0700
+@@ -624,7 +624,7 @@
+  *buf++ =3D PPP_FLAG;
+  ap->olim =3D buf;
 
-Paul.
+- kfree_skb(ap->tpkt);
++ dev_kfree_skb_any(ap->tpkt);
+  ap->tpkt =3D 0;
+  return 1;
+ }
+
+Comment welcome.
+
+Gilles
+
