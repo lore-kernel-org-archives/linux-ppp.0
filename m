@@ -1,92 +1,35 @@
-From: "Marco d'Itri" <md@linux.it>
-Date: Sun, 19 Aug 2007 01:37:49 +0000
-Subject: [patch 09/14] disable unneeded code in the pppoatm plugin
-Message-Id: <20070819014009.631160776@bongo.bofh.it>
+From: Stephen Hemminger <shemminger@linux-foundation.org>
+Date: Sat, 18 Aug 2007 01:42:26 +0000
+Subject: [PATCH] slhc: sparse warning fix
+Message-Id: <20070817184226.66622720@freepuppy.rosehill.hemminger.net>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-This patch halves the size of the PPPoA plugin by disabling features
-which are never used with normal DSL connections (i.e. parsing of QoS
-configuration directives and DNS resolution of VP/VC addresses).
-It is especially useful for install images and embedded systems.
+Two functions are declared "static" in forward declaration, but not in
+the actual code, so sparse complains.
 
-A next step could be removing text2qos.c, text2atm.c, misc.c and ans.c
-and encourage users interested in the complete features to link the
-plugin with the real libatm. I really doubt anybody cares, anyway.
+Signed-off-by: Stephen Hemminger <shemminger@linux-foundation.org>
 
-
-diff -ruNp ppp-2.4.3.orig/pppd/plugins/pppoatm/Makefile.linux ppp-2.4.3/pppd/plugins/pppoatm/Makefile.linux
---- ppp-2.4.3.orig/pppd/plugins/pppoatm/Makefile.linux	2004-11-14 02:12:10.000000000 +0100
-+++ ppp-2.4.3/pppd/plugins/pppoatm/Makefile.linux	2005-02-25 19:19:08.022622528 +0100
-@@ -25,9 +25,13 @@ ifdef HAVE_LIBATM
- LIBS := -latm
- else
- CFLAGS += -I.
-+PLUGIN_OBJS += text2atm.o
-+ifdef USE_FULL_ATM_RESOLVER
-+CFLAGS += -DUSE_FULL_ATM_RESOLVER
- PLUGIN_OBJS += text2qos.o text2atm.o misc.o ans.o
- LIBS := -lresolv
- endif
-+endif
- 
- #*********
- all: $(PLUGIN)
-diff -ruNp ppp-2.4.3.orig/pppd/plugins/pppoatm/pppoatm.c ppp-2.4.3/pppd/plugins/pppoatm/pppoatm.c
---- ppp-2.4.3.orig/pppd/plugins/pppoatm/pppoatm.c	2005-02-25 19:19:13.859735152 +0100
-+++ ppp-2.4.3/pppd/plugins/pppoatm/pppoatm.c	2005-02-25 19:17:36.784492832 +0100
-@@ -144,8 +144,12 @@ static int connect_pppoatm(void)
- 	qos.txtp.traffic_class = qos.rxtp.traffic_class = ATM_UBR;
- 	/* TODO: support simplified QoS setting */
- 	if (qosstr != NULL)
-+#ifdef USE_FULL_ATM_RESOLVER
- 		if (text2qos(qosstr, &qos, 0))
- 			fatal("Can't parse QoS: \"%s\"");
-+#else
-+		fatal("qos support has not been compiled in");
-+#endif
- 	qos.txtp.max_sdu = lcp_allowoptions[0].mru + pppoatm_overhead();
- 	qos.rxtp.max_sdu = lcp_wantoptions[0].mru + pppoatm_overhead();
- 	qos.aal = ATM_AAL5;
-diff -ruNp ppp-2.4.3.orig/pppd/plugins/pppoatm/text2atm.c ppp-2.4.3/pppd/plugins/pppoatm/text2atm.c
---- ppp-2.4.3.orig/pppd/plugins/pppoatm/text2atm.c	2004-11-06 07:55:28.000000000 +0100
-+++ ppp-2.4.3/pppd/plugins/pppoatm/text2atm.c	2005-02-25 19:17:36.552528096 +0100
-@@ -72,6 +72,7 @@ static int try_pvc(const char *text,stru
- }
+--- a/drivers/net/slhc.c	2007-08-06 04:25:48.000000000 -0400
++++ b/drivers/net/slhc.c	2007-08-17 14:55:24.000000000 -0400
+@@ -174,7 +174,7 @@ put16(unsigned char *cp, unsigned short 
  
  
-+#ifdef USE_FULL_ATM_RESOLVER
- static int do_try_nsap(const char *text,struct sockaddr_atmsvc *addr,int flags)
+ /* Encode a number */
+-unsigned char *
++static unsigned char *
+ encode(unsigned char *cp, unsigned short n)
  {
-     const char *walk;
-@@ -221,6 +222,7 @@ static int try_name(const char *text,str
-     (void) fclose(file);
-     return result;
+ 	if(n >= 256 || n = 0){
+@@ -199,7 +199,7 @@ pull16(unsigned char **cpp)
  }
-+#endif
  
- 
- int text2atm(const char *text,struct sockaddr *addr,int length,int flags)
-@@ -234,6 +236,7 @@ int text2atm(const char *text,struct soc
- 	result = try_pvc(text,(struct sockaddr_atmpvc *) addr,flags);
- 	if (result != TRY_OTHER) return result;
-     }
-+#ifdef USE_FULL_ATM_RESOLVER
-     if ((flags & T2A_SVC) && length >= sizeof(struct sockaddr_atmsvc)) {
- 	result = try_nsap(text,(struct sockaddr_atmsvc *) addr,flags);
- 	if (result != TRY_OTHER) return result;
-@@ -245,5 +248,6 @@ int text2atm(const char *text,struct soc
-     if (result = TRY_OTHER && !(flags & T2A_LOCAL))
- 	result = ans_byname(text,(struct sockaddr_atmsvc *) addr,length,flags);
-     if (result != TRY_OTHER) return result;
-+#endif
-     return -1;
- }
-
--- 
-ciao,
-Marco
-
+ /* Decode a number */
+-long
++static long
+ decode(unsigned char **cpp)
+ {
+ 	register int x;
