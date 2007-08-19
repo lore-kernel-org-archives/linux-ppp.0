@@ -1,35 +1,49 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 31 Aug 2007 11:03:47 +0000
-Subject: Re: PPP loses compression sync when TCP transaction starts.
-Message-Id: <18135.62867.43899.989713@gargle.gargle.HOWL>
+From: "Marco d'Itri" <md@linux.it>
+Date: Sun, 19 Aug 2007 01:37:42 +0000
+Subject: [patch 02/14] always create a new process group
+Message-Id: <20070819014008.913828746@bongo.bofh.it>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <57e69ca80708212104t1fbd99f7jc3beaa4b34997ffc@mail.gmail.com>
-In-Reply-To: <57e69ca80708212104t1fbd99f7jc3beaa4b34997ffc@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Dennis Aberilla writes:
-> I dug on this a little further and noticed that in linux-2.4.18, there
-> are two files "zlib.[ch]" in drivers/net that's actually used by
-> ppp_deflate.c. Why is it not using the kernel's "inflate.c"?? I
+pppd sends signals to the whole process group, so it must always create
+a new one or it may kill the parent process and its siblings.
+Currently setsid() is not called when the updetach option is used.
+We want to make the detached and non-detached code paths as similar as
+possible.
 
-Because there are some significant behavioral differences between
-"standard" stream-oriented Deflate compression and the
-datagram-oriented variant that PPP uses.  For more information, see
-RFC 1979 and the comments in PPP's zlib.[ch].  The additions are
-Z_PACKET_FLUSH, inflateIncomp, deflateOutputPending, and support for
-discarding output.
+http://ppp.samba.org/cgi-bin/ppp-bugs/incoming?id11
+http://ppp.samba.org/cgi-bin/ppp-bugs/incoming?id89
 
-> noticed that these "zlib.[ch]" files are no longer in 2.6.20; so as an
-> experiment, I copied these two files from 2.4.18 including
-> drivers/net/ppp_deflate.c to 2.6.20 and use them instead; the result:
-> Deflate works!
-> 
-> Could there be a bug somewhere in the deflate code?
-
-Certainly could.  It's tricky stuff.
+--- a/pppd/main.c
++++ b/pppd/main.c
+@@ -433,6 +433,13 @@ main(argc, argv)
+     }
+ 
+     /*
++     * pppd sends signals to the whole process group, so it must always
++     * create a new one or it may kill the parent process and its siblings.
++     */
++    setsid();
++    chdir("/");
++
++    /*
+      * Initialize system-dependent stuff.
+      */
+     sys_init();
+@@ -775,8 +782,6 @@ detach()
+ 	create_linkpidfile(pid);
+ 	exit(0);		/* parent dies */
+     }
+-    setsid();
+-    chdir("/");
+     dup2(fd_devnull, 0);
+     dup2(fd_devnull, 1);
+     dup2(fd_devnull, 2);
 
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+ciao,
+Marco
+
