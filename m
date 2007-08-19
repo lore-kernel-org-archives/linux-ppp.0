@@ -1,34 +1,56 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Sun, 19 Aug 2007 03:35:37 +0000
-Subject: Re: [patch 03/14] be sure to close /dev/ppp when reconnecting
-Message-Id: <18119.47753.170059.765070@cargo.ozlabs.ibm.com>
+From: "Marco d'Itri" <md@linux.it>
+Date: Sun, 19 Aug 2007 01:37:46 +0000
+Subject: [patch 06/14] make sure that the linkpidfile is always created
+Message-Id: <20070819014009.321424748@bongo.bofh.it>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20070819014009.015076277@bongo.bofh.it>
-In-Reply-To: <20070819014009.015076277@bongo.bofh.it>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Marco d'Itri writes:
+Subject: [patch 06/14] Bug#284382: ppp: linkpidfile is not created upon detachment
+From: <herbert@gondor.apana.org.au>
 
-> From: Simon Peter <dn.tlp@gmx.net>
-> Subject: [patch 03/14] Bug#306261: pppd does not properly close /dev/ppp on persist
-> 
-> When using the kernel PPPoE driver, pppd never
-> closes /dev/ppp when the link has come down.
+Package: ppp
+Version: 2.4.2+20040428-2
+Severity: wishlist
 
-If that's true, I'd rather find out where it should be closing things
-but isn't.
+When pppd detaches from the parent normally, that is, without nodetach
+or updetach set, the linkpidfile is not created even when linkname is
+set.
 
-> It opens superfluous fds to the device each time it re-opens the
-> connection, with the unclosed ones falsely reported always ready for
-> data by select().
-> 
-> This makes pppd eat up 100% CPU time after the first persist because of
-> the always instantly returning select() on the unclosed fds.
+This is because the create_linkpidfile call in detach() is only made
+if the linkpidfile is filled in.  However, linkpidfile is never filled
+in until create_linkpidfile has been called.
 
-I use pppd with the kernel pppoe driver and persist mode and I have
-never seen this problem, so there must be more to it than this.
+IMHO the call should be made uncondtionally in detach() since
+create_linkpidfile does its own check on linkname anyway.
 
-Paul.
+Please note that the version of pppd in woody always wrote the
+linkpidfile after detaching.  It did so in main() however.  That
+call has now been removed which is why I'm seeing this problem.
+
+[...]
+
+--
+Index: pppd/main.c
+=================================RCS file: /var/cvs/snwb/packages/ppp/pppd/main.c,v
+retrieving revision 1.11
+diff -u -r1.11 main.c
+--- ppp/pppd/main.c	29 Nov 2004 22:49:23 -0000	1.11
++++ ppp/pppd/main.c	5 Dec 2004 23:59:58 -0000
+@@ -819,8 +819,7 @@
+ 	/* update pid files if they have been written already */
+ 	if (pidfilename[0])
+ 	    create_pidfile(pid);
+-	if (linkpidfile[0])
+-	    create_linkpidfile(pid);
++	create_linkpidfile(pid);
+ 	exit(0);		/* parent dies */
+     }
+     setsid();
+
+-- 
+ciao,
+Marco
+
