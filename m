@@ -1,35 +1,95 @@
-From: Stephen Hemminger <shemminger@linux-foundation.org>
-Date: Sat, 18 Aug 2007 01:42:26 +0000
-Subject: [PATCH] slhc: sparse warning fix
-Message-Id: <20070817184226.66622720@freepuppy.rosehill.hemminger.net>
+From: "Marco d'Itri" <md@linux.it>
+Date: Sun, 19 Aug 2007 01:37:45 +0000
+Subject: [patch 05/14] fix documentation typos
+Message-Id: <20070819014009.232167931@bongo.bofh.it>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Two functions are declared "static" in forward declaration, but not in
-the actual code, so sparse complains.
+--- a/chat/chat.8
++++ b/chat/chat.8
+@@ -51,7 +51,7 @@ keyword. When echoing is enabled, all ou
+ to \fIstderr\fR.
+ .TP
+ .B \-E
+-Enables environment variable substituion within chat scripts using the
++Enables environment variable substitution within chat scripts using the
+ standard \fI$xxx\fR syntax.
+ .TP
+ .B \-v
+@@ -78,7 +78,7 @@ SYSLOG.  The use of \-S will prevent bot
+ error messages from being sent to the SYSLOG.
+ .TP
+ .B \-T \fI<phone number>
+-Pass in an arbitary string, usually a phone number, that will be
++Pass in an arbitrary string, usually a phone number, that will be
+ substituted for the \\T substitution metacharacter in a send string.
+ .TP
+ .B \-U \fI<phone number 2>
+@@ -205,7 +205,7 @@ terminal), standard error will normally 
+ .LP
+ \fBSAY\fR strings must be enclosed in single or double quotes. If
+ carriage return and line feed are needed in the string to be output,
+-you must explicitely add them to your string.
++you must explicitly add them to your string.
+ .LP
+ The SAY strings could be used to give progress messages in sections of
+ the script where you want to have 'ECHO OFF' but still let the user
+@@ -458,7 +458,7 @@ For example, the character DC1 (17) is s
+ Environment variables are available within chat scripts, if  the \fI\-E\fR
+ option was specified in the command line. The metacharacter \fI$\fR is used
+ to introduce the name of the environment variable to substitute. If the
+-substition fails, because the requested environment variable is not set,
++substitution fails, because the requested environment variable is not set,
+ \fInothing\fR is replaced for the variable.
+ .SH TERMINATION CODES
+ The \fIchat\fR program will terminate with the following completion
+--- a/pppd/pppd.8
++++ b/pppd/pppd.8
+@@ -333,7 +333,7 @@ When this is completed, pppd will commen
+ The \fIdemand\fR option implies the \fIpersist\fR option.  If this
+ behaviour is not desired, use the \fInopersist\fR option after the
+ \fIdemand\fR option.  The \fIidle\fR and \fIholdoff\fR
+-options are also useful in conjuction with the \fIdemand\fR option.
++options are also useful in conjunction with the \fIdemand\fR option.
+ .TP
+ .B domain \fId
+ Append the domain name \fId\fR to the local host name for authentication
+@@ -928,7 +928,7 @@ pseudo-tty master/slave pair and use the
+ device.  The \fIscript\fR will be run in a child process with the
+ pseudo-tty master as its standard input and output.  An explicit
+ device name may not be given if this option is used.  (Note: if the
+-\fIrecord\fR option is used in conjuction with the \fIpty\fR option,
++\fIrecord\fR option is used in conjunction with the \fIpty\fR option,
+ the child process will have pipes on its standard input and output.)
+ .TP
+ .B receive\-all
+@@ -1036,7 +1036,7 @@ in the pseudonym.
+ .TP
+ .B srp\-use\-pseudonym
+ When operating as an EAP SRP\-SHA1 client, attempt to use the pseudonym
+-stored in ~/.ppp_psuedonym first as the identity, and save in this
++stored in ~/.ppp_pseudonym first as the identity, and save in this
+ file any pseudonym offered by the peer during authentication.
+ .TP
+ .B sync
+fix a typo in README.pppoe
 
-Signed-off-by: Stephen Hemminger <shemminger@linux-foundation.org>
+--- ppp-2.4.4.orig/README.pppoe	2006-12-16 12:56:11.000000000 +0100
++++ ppp-2.4.4/README.pppoe	2006-12-16 12:56:58.000000000 +0100
+@@ -32,7 +32,7 @@
+ 
+ With this in mind, the goal of the implementation of PPPoE support in
+ Linux is to allow users to simply specify that the device they intend
+-to use for the PPP connection is an ethernet device (i.e. "eth0") and
++to use for the PPP connection is an ethernet device (e.g. "eth0") and
+ the rest of the system should function as usual.
+ 
+ 2. Using PPPoE
 
---- a/drivers/net/slhc.c	2007-08-06 04:25:48.000000000 -0400
-+++ b/drivers/net/slhc.c	2007-08-17 14:55:24.000000000 -0400
-@@ -174,7 +174,7 @@ put16(unsigned char *cp, unsigned short 
- 
- 
- /* Encode a number */
--unsigned char *
-+static unsigned char *
- encode(unsigned char *cp, unsigned short n)
- {
- 	if(n >= 256 || n = 0){
-@@ -199,7 +199,7 @@ pull16(unsigned char **cpp)
- }
- 
- /* Decode a number */
--long
-+static long
- decode(unsigned char **cpp)
- {
- 	register int x;
+-- 
+ciao,
+Marco
+
