@@ -1,56 +1,46 @@
-From: "Marco d'Itri" <md@linux.it>
-Date: Sun, 19 Aug 2007 01:37:46 +0000
-Subject: [patch 06/14] make sure that the linkpidfile is always created
-Message-Id: <20070819014009.321424748@bongo.bofh.it>
+From: Paul Mackerras <paulus@samba.org>
+Date: Sun, 19 Aug 2007 03:45:44 +0000
+Subject: Re: [patch 06/14] make sure that the linkpidfile is always created
+Message-Id: <18119.48360.784999.623669@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20070819014009.321424748@bongo.bofh.it>
+In-Reply-To: <20070819014009.321424748@bongo.bofh.it>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Subject: [patch 06/14] Bug#284382: ppp: linkpidfile is not created upon detachment
-From: <herbert@gondor.apana.org.au>
+Marco d'Itri writes:
 
-Package: ppp
-Version: 2.4.2+20040428-2
-Severity: wishlist
+> Subject: [patch 06/14] Bug#284382: ppp: linkpidfile is not created upon detachment
+> From: <herbert@gondor.apana.org.au>
+> 
+> Package: ppp
+> Version: 2.4.2+20040428-2
+> Severity: wishlist
+> 
+> When pppd detaches from the parent normally, that is, without nodetach
+> or updetach set, the linkpidfile is not created even when linkname is
+> set.
+> 
+> This is because the create_linkpidfile call in detach() is only made
+> if the linkpidfile is filled in.  However, linkpidfile is never filled
+> in until create_linkpidfile has been called.
+> 
+> IMHO the call should be made uncondtionally in detach() since
+> create_linkpidfile does its own check on linkname anyway.
 
-When pppd detaches from the parent normally, that is, without nodetach
-or updetach set, the linkpidfile is not created even when linkname is
-set.
+There is an unconditional call to create_linkpidfile in main() at line
+475.  The call in detach is only there to rewrite the file in the case
+where it has already been created by the parent and needs to be
+updated to reflect the new process ID after detaching (since detaching
+involves a fork).
 
-This is because the create_linkpidfile call in detach() is only made
-if the linkpidfile is filled in.  However, linkpidfile is never filled
-in until create_linkpidfile has been called.
+> Please note that the version of pppd in woody always wrote the
+> linkpidfile after detaching.  It did so in main() however.  That
+> call has now been removed which is why I'm seeing this problem.
 
-IMHO the call should be made uncondtionally in detach() since
-create_linkpidfile does its own check on linkname anyway.
+It's still there in my version.  Was it a debian-specific patch that
+removed it, perhaps?
 
-Please note that the version of pppd in woody always wrote the
-linkpidfile after detaching.  It did so in main() however.  That
-call has now been removed which is why I'm seeing this problem.
-
-[...]
-
---
-Index: pppd/main.c
-=================================RCS file: /var/cvs/snwb/packages/ppp/pppd/main.c,v
-retrieving revision 1.11
-diff -u -r1.11 main.c
---- ppp/pppd/main.c	29 Nov 2004 22:49:23 -0000	1.11
-+++ ppp/pppd/main.c	5 Dec 2004 23:59:58 -0000
-@@ -819,8 +819,7 @@
- 	/* update pid files if they have been written already */
- 	if (pidfilename[0])
- 	    create_pidfile(pid);
--	if (linkpidfile[0])
--	    create_linkpidfile(pid);
-+	create_linkpidfile(pid);
- 	exit(0);		/* parent dies */
-     }
-     setsid();
-
--- 
-ciao,
-Marco
-
+Paul.
