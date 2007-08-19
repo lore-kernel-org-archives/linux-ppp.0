@@ -1,49 +1,27 @@
-From: "Marco d'Itri" <md@linux.it>
-Date: Sun, 19 Aug 2007 01:37:42 +0000
-Subject: [patch 02/14] always create a new process group
-Message-Id: <20070819014008.913828746@bongo.bofh.it>
+From: Paul Mackerras <paulus@samba.org>
+Date: Sun, 19 Aug 2007 03:26:06 +0000
+Subject: Re: [patch 02/14] always create a new process group
+Message-Id: <18119.47182.117402.860115@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20070819014008.913828746@bongo.bofh.it>
+In-Reply-To: <20070819014008.913828746@bongo.bofh.it>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-pppd sends signals to the whole process group, so it must always create
-a new one or it may kill the parent process and its siblings.
-Currently setsid() is not called when the updetach option is used.
-We want to make the detached and non-detached code paths as similar as
-possible.
+Marco d'Itri writes:
 
-http://ppp.samba.org/cgi-bin/ppp-bugs/incoming?id11
-http://ppp.samba.org/cgi-bin/ppp-bugs/incoming?id89
+> pppd sends signals to the whole process group, so it must always create
+> a new one or it may kill the parent process and its siblings.
+> Currently setsid() is not called when the updetach option is used.
+> We want to make the detached and non-detached code paths as similar as
+> possible.
 
---- a/pppd/main.c
-+++ b/pppd/main.c
-@@ -433,6 +433,13 @@ main(argc, argv)
-     }
- 
-     /*
-+     * pppd sends signals to the whole process group, so it must always
-+     * create a new one or it may kill the parent process and its siblings.
-+     */
-+    setsid();
-+    chdir("/");
-+
-+    /*
-      * Initialize system-dependent stuff.
-      */
-     sys_init();
-@@ -775,8 +782,6 @@ detach()
- 	create_linkpidfile(pid);
- 	exit(0);		/* parent dies */
-     }
--    setsid();
--    chdir("/");
-     dup2(fd_devnull, 0);
-     dup2(fd_devnull, 1);
-     dup2(fd_devnull, 2);
+I know there is a problem here but I don't think this patch is the
+right solution, because setsid fails and does nothing if the process
+is a process group leader, which it usually will be when run from a
+shell.  There is a reason why the setsid in detach() is only done
+after forking.
 
--- 
-ciao,
-Marco
-
+Paul.
