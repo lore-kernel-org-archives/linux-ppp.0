@@ -1,111 +1,34 @@
 From: "Marco d'Itri" <md@linux.it>
-Date: Sun, 19 Aug 2007 01:37:50 +0000
-Subject: [patch 10/14] cosmetic cleanup of the pppoatm plugin
-Message-Id: <20070819014009.734599985@bongo.bofh.it>
+Date: Sun, 19 Aug 2007 01:37:44 +0000
+Subject: [patch 04/14] chat(8): document the TIMEOUT directive
+Message-Id: <20070819014009.117263737@bongo.bofh.it>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Removed some debugging messages and generally cleaned up the source.
-
-diff -ruNp ppp-2.4.3.orig/pppd/plugins/pppoatm/pppoatm.c ppp-2.4.3/pppd/plugins/pppoatm/pppoatm.c
---- ppp-2.4.3.orig/pppd/plugins/pppoatm/pppoatm.c	2005-03-22 14:44:18.000000000 +0100
-+++ ppp-2.4.3/pppd/plugins/pppoatm/pppoatm.c	2005-03-22 14:44:02.000000000 +0100
-@@ -70,18 +70,20 @@ static int setdevname_pppoatm(const char
- {
- 	struct sockaddr_atmpvc addr;
- 	extern struct stat devstat;
-+
- 	if (device_got_set)
- 		return 0;
--	//info("PPPoATM setdevname_pppoatm: '%s'", cp);
-+
- 	memset(&addr, 0, sizeof addr);
- 	if (text2atm(cp, (struct sockaddr *) &addr, sizeof(addr),
--	    T2A_PVC | T2A_NAME) < 0) {
--               if(doit)
--                   info("atm does not recognize: %s", cp);
-+	    T2A_PVC | T2A_NAME | T2A_WILDCARD) < 0) {
-+		if (doit)
-+			info("cannot parse the ATM address: %s", cp);
- 		return 0;
--           }
--	if (!doit) return 1;
--	//if (!dev_set_ok()) return -1;
-+	}
-+	if (!doit)
-+		return 1;
-+
- 	memcpy(&pvcaddr, &addr, sizeof pvcaddr);
- 	strlcpy(devnam, cp, sizeof devnam);
- 	devstat.st_mode = S_IFSOCK;
-@@ -93,7 +95,6 @@ static int setdevname_pppoatm(const char
- 		lcp_allowoptions[0].neg_asyncmap = 0;
- 		lcp_wantoptions[0].neg_pcompression = 0;
- 	}
--	info("PPPoATM setdevname_pppoatm - SUCCESS:%s", cp);
- 	device_got_set = 1;
- 	return 1;
- }
-@@ -108,6 +109,7 @@ static void no_device_given_pppoatm(void
- static void set_line_discipline_pppoatm(int fd)
- {
- 	struct atm_backend_ppp be;
-+
- 	be.backend_num = ATM_BACKEND_PPP;
- 	if (!llc_encaps)
- 		be.encaps = PPPOATM_ENCAPS_VC;
-@@ -115,6 +117,7 @@ static void set_line_discipline_pppoatm(
- 		be.encaps = PPPOATM_ENCAPS_LLC;
- 	else
- 		be.encaps = PPPOATM_ENCAPS_AUTODETECT;
-+
- 	if (ioctl(fd, ATM_SETBACKEND, &be) < 0)
- 		fatal("ioctl(ATM_SETBACKEND): %m");
- }
-@@ -179,16 +182,19 @@ static void send_config_pppoa(int mtu,
- {
- 	int sock;
- 	struct ifreq ifr;
-+
- 	if (mtu > pppoatm_max_mtu)
- 		error("Couldn't increase MTU to %d", mtu);
-+
- 	sock = socket(AF_INET, SOCK_DGRAM, 0);
- 	if (sock < 0)
- 		fatal("Couldn't create IP socket: %m");
-+
- 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
- 	ifr.ifr_mtu = mtu;
- 	if (ioctl(sock, SIOCSIFMTU, (caddr_t) &ifr) < 0)
- 		fatal("ioctl(SIOCSIFMTU): %m");
--	(void) close (sock);
-+	close(sock);
- }
- 
- static void recv_config_pppoa(int mru,
-@@ -202,7 +208,7 @@ static void recv_config_pppoa(int mru,
- 
- void plugin_init(void)
- {
--#if defined(__linux__)
-+#ifdef linux
- 	extern int new_style_driver;	/* From sys-linux.c */
- 	if (!ppp_available() && !new_style_driver)
- 		fatal("Kernel doesn't support ppp_generic - "
-@@ -210,9 +216,9 @@ void plugin_init(void)
- #else
- 	fatal("No PPPoATM support on this OS");
- #endif
--	info("PPPoATM plugin_init");
- 	add_options(pppoa_options);
- }
-+
- struct channel pppoa_channel = {
-     options: pppoa_options,
-     process_extra_options: NULL,
+--- ppp-2.4.4.orig/chat/chat.8	2006-12-16 12:56:11.000000000 +0100
++++ ppp-2.4.4/chat/chat.8	2006-12-16 13:49:44.000000000 +0100
+@@ -35,7 +35,8 @@
+ is not received within the time limit then the reply string is not
+ sent. An alternate reply may be sent or the script will fail if there
+ is no alternate reply string. A failed script will cause the
+-\fIchat\fR program to terminate with a non-zero error code.
++\fIchat\fR program to terminate with a non-zero error code. You can
++also use the TIMEOUT string in order to specify the timeout.
+ .TP
+ .B \-r \fI<report file>
+ Set the file for output of the report strings. If you use the keyword
+@@ -348,7 +349,7 @@
+ .LP
+ .SH TIMEOUT
+ The initial timeout value is 45 seconds. This may be changed using the \fB\-t\fR
+-parameter.
++parameter. You can also specify "TIMEOUT 0".
+ .LP
+ To change the timeout value for the next expect string, the following
+ example may be used:
 
 -- 
 ciao,
