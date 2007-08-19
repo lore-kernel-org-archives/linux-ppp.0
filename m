@@ -1,26 +1,111 @@
 From: "Marco d'Itri" <md@linux.it>
-Date: Sun, 19 Aug 2007 01:37:53 +0000
-Subject: [patch 13/14] make _PATH_CONNERRS world readable
-Message-Id: <20070819014010.047923792@bongo.bofh.it>
+Date: Sun, 19 Aug 2007 01:37:50 +0000
+Subject: [patch 10/14] cosmetic cleanup of the pppoatm plugin
+Message-Id: <20070819014009.734599985@bongo.bofh.it>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-There is nothing security-sensitive there.
+Removed some debugging messages and generally cleaned up the source.
 
---- a/pppd/main.c
-+++ b/pppd/main.c
-@@ -1620,7 +1620,7 @@ device_script(program, in, out, dont_wai
-     if (log_to_fd >= 0)
- 	errfd = log_to_fd;
-     else
--	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0600);
-+	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0644);
+diff -ruNp ppp-2.4.3.orig/pppd/plugins/pppoatm/pppoatm.c ppp-2.4.3/pppd/plugins/pppoatm/pppoatm.c
+--- ppp-2.4.3.orig/pppd/plugins/pppoatm/pppoatm.c	2005-03-22 14:44:18.000000000 +0100
++++ ppp-2.4.3/pppd/plugins/pppoatm/pppoatm.c	2005-03-22 14:44:02.000000000 +0100
+@@ -70,18 +70,20 @@ static int setdevname_pppoatm(const char
+ {
+ 	struct sockaddr_atmpvc addr;
+ 	extern struct stat devstat;
++
+ 	if (device_got_set)
+ 		return 0;
+-	//info("PPPoATM setdevname_pppoatm: '%s'", cp);
++
+ 	memset(&addr, 0, sizeof addr);
+ 	if (text2atm(cp, (struct sockaddr *) &addr, sizeof(addr),
+-	    T2A_PVC | T2A_NAME) < 0) {
+-               if(doit)
+-                   info("atm does not recognize: %s", cp);
++	    T2A_PVC | T2A_NAME | T2A_WILDCARD) < 0) {
++		if (doit)
++			info("cannot parse the ATM address: %s", cp);
+ 		return 0;
+-           }
+-	if (!doit) return 1;
+-	//if (!dev_set_ok()) return -1;
++	}
++	if (!doit)
++		return 1;
++
+ 	memcpy(&pvcaddr, &addr, sizeof pvcaddr);
+ 	strlcpy(devnam, cp, sizeof devnam);
+ 	devstat.st_mode = S_IFSOCK;
+@@ -93,7 +95,6 @@ static int setdevname_pppoatm(const char
+ 		lcp_allowoptions[0].neg_asyncmap = 0;
+ 		lcp_wantoptions[0].neg_pcompression = 0;
+ 	}
+-	info("PPPoATM setdevname_pppoatm - SUCCESS:%s", cp);
+ 	device_got_set = 1;
+ 	return 1;
+ }
+@@ -108,6 +109,7 @@ static void no_device_given_pppoatm(void
+ static void set_line_discipline_pppoatm(int fd)
+ {
+ 	struct atm_backend_ppp be;
++
+ 	be.backend_num = ATM_BACKEND_PPP;
+ 	if (!llc_encaps)
+ 		be.encaps = PPPOATM_ENCAPS_VC;
+@@ -115,6 +117,7 @@ static void set_line_discipline_pppoatm(
+ 		be.encaps = PPPOATM_ENCAPS_LLC;
+ 	else
+ 		be.encaps = PPPOATM_ENCAPS_AUTODETECT;
++
+ 	if (ioctl(fd, ATM_SETBACKEND, &be) < 0)
+ 		fatal("ioctl(ATM_SETBACKEND): %m");
+ }
+@@ -179,16 +182,19 @@ static void send_config_pppoa(int mtu,
+ {
+ 	int sock;
+ 	struct ifreq ifr;
++
+ 	if (mtu > pppoatm_max_mtu)
+ 		error("Couldn't increase MTU to %d", mtu);
++
+ 	sock = socket(AF_INET, SOCK_DGRAM, 0);
+ 	if (sock < 0)
+ 		fatal("Couldn't create IP socket: %m");
++
+ 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+ 	ifr.ifr_mtu = mtu;
+ 	if (ioctl(sock, SIOCSIFMTU, (caddr_t) &ifr) < 0)
+ 		fatal("ioctl(SIOCSIFMTU): %m");
+-	(void) close (sock);
++	close(sock);
+ }
  
-     ++conn_running;
-     pid = safe_fork(in, out, errfd);
+ static void recv_config_pppoa(int mru,
+@@ -202,7 +208,7 @@ static void recv_config_pppoa(int mru,
+ 
+ void plugin_init(void)
+ {
+-#if defined(__linux__)
++#ifdef linux
+ 	extern int new_style_driver;	/* From sys-linux.c */
+ 	if (!ppp_available() && !new_style_driver)
+ 		fatal("Kernel doesn't support ppp_generic - "
+@@ -210,9 +216,9 @@ void plugin_init(void)
+ #else
+ 	fatal("No PPPoATM support on this OS");
+ #endif
+-	info("PPPoATM plugin_init");
+ 	add_options(pppoa_options);
+ }
++
+ struct channel pppoa_channel = {
+     options: pppoa_options,
+     process_extra_options: NULL,
 
 -- 
 ciao,
