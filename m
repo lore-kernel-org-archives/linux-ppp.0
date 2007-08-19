@@ -1,30 +1,49 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Sun, 19 Aug 2007 23:45:40 +0000
-Subject: Re: [patch 02/14] always create a new process group
-Message-Id: <18120.54820.721493.224065@cargo.ozlabs.ibm.com>
+From: "Marco d'Itri" <md@linux.it>
+Date: Sun, 19 Aug 2007 01:37:43 +0000
+Subject: [patch 03/14] be sure to close /dev/ppp when reconnecting
+Message-Id: <20070819014009.015076277@bongo.bofh.it>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20070819014008.913828746@bongo.bofh.it>
-In-Reply-To: <20070819014008.913828746@bongo.bofh.it>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Charlie Brady writes:
+From: Simon Peter <dn.tlp@gmx.net>
+Subject: [patch 03/14] Bug#306261: pppd does not properly close /dev/ppp on persist
 
-> The return value from setsid is not checked, so I don't see the problem 
-> here. After the call, the pppd process is the leader of a process group 
-> (whether it was before or not), which is what we want.
+When using the kernel PPPoE driver, pppd never
+closes /dev/ppp when the link has come down.
 
-That's true, but it also means that pppd won't get the SIGINT if the
-user types ^C, which is not what we want either.
+It opens superfluous fds to the device each time it re-opens the
+connection, with the unclosed ones falsely reported always ready for
+data by select().
 
-> > There is a reason why the setsid in detach() is only done
-> > after forking.
-> 
-> To be clear, what is that reason?
+This makes pppd eat up 100% CPU time after the first persist because of
+the always instantly returning select() on the unclosed fds.
 
-The child process won't be a process group leader, therefore the
-setsid will succeed.
+The problem also occurs with the upstream version, but does not occur
+when a pty/tty device is used for the ppp connection.
 
-Paul.
+
+diff -u -r ppp-2.4.3/pppd/sys-linux.c ppp-2.4.3/pppd/sys-linux.c
+--- ppp-2.4.3/pppd/sys-linux.c	2005-04-29 20:08:37.000000000 +0200
++++ ppp-2.4.3/pppd/sys-linux.c	2005-04-29 20:07:03.000000000 +0200
+@@ -455,6 +455,13 @@
+     if (new_style_driver) {
+ 	int flags;
+ 
++        /* if a ppp_fd is already open, close it first */
++        if(ppp_fd > 0) {
++          close(ppp_fd);
++          remove_fd(ppp_fd);
++          ppp_fd = -1;
++        }
++
+ 	/* Open an instance of /dev/ppp and connect the channel to it */
+ 	if (ioctl(fd, PPPIOCGCHAN, &chindex) = -1) {
+ 	    error("Couldn't get channel number: %m");
+
+-- 
+ciao,
+Marco
+
