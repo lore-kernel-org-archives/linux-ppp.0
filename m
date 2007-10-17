@@ -1,24 +1,30 @@
-From: "Rajkumar S" <rajkumars@gmail.com>
-Date: Fri, 26 Oct 2007 04:45:38 +0000
-Subject: Re: ppp reconnects after receiving ConfReq id=0x3 <mru 1400>
-Message-Id: <64de5c8b0710252133u58860dfch6b26905fdba1ba2a@mail.gmail.com>
+From: Patrick Fischer <patrick.fischer@4g-systems.com>
+Date: Wed, 17 Oct 2007 15:46:05 +0000
+Subject: sometimes ppp will not get the dns
+Message-Id: <13255677.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <64de5c8b0710241117t66196e80u8cc5109f5466133@mail.gmail.com>
-In-Reply-To: <64de5c8b0710241117t66196e80u8cc5109f5466133@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 10/25/07, James Cameron <james.cameron@hp.com> wrote:
-> I found that I could reliably crash the remote PPP by emitting a packet
-> that originated from one of the other IP addresses my system had before
-> the connection was established or the route was switched.  Within a
-> second or two of the packet being sent, the LCP ConfReq arrived to
-> restart PPP.
 
-Thanks James, this is exactly my problem. I have verified this and as
-soon as a packet from another ip goes via ppp connection a ConfReq
-packet arrives and connection is reset.
+attached you see two connections log(in one file). In the first you see that
+we successful get 
+addr 80.187.82.81> <ms-dns1 193.254.160.130> <ms-dns3 193.254.160.1>
 
-raj
+in the second log we only get an IP but no dns.
+<addr 80.187.54.60>
+
+DNS 10.11.12.13 and 10.11.12.14 are default values and not valid.
+
+Both logs are from pppd2.3 but the 2.4 has the same problem.
+
+Has anybody an proposal for solution or just an idear?
+With this bug we can't go online (use the dns).
+
+http://www.nabble.com/file/p13255677/ppp-log ppp-log 
+-- 
+View this message in context: http://www.nabble.com/sometimes-ppp-will-not-get-the-dns-tf4641175.html#a13255677
+Sent from the linux-ppp mailing list archive at Nabble.com.
+
