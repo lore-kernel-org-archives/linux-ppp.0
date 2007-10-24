@@ -1,29 +1,43 @@
-From: Mariusz Kozlowski <m.kozlowski@tuxland.pl>
-Date: Mon, 22 Oct 2007 21:16:22 +0000
-Subject: Re: kernel panic when running tcpdump
-Message-Id: <200710222316.22922.m.kozlowski@tuxland.pl>
+From: "Rajkumar S" <rajkumars@gmail.com>
+Date: Wed, 24 Oct 2007 18:29:09 +0000
+Subject: ppp reconnects after receiving ConfReq id=0x3 <mru 1400>
+Message-Id: <64de5c8b0710241117t66196e80u8cc5109f5466133@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20071011213126.cf92efb7.akpm@linux-foundation.org> <200710222040.19921.m.kozlowski@tuxland.pl> <20071022120359.26403bf0.akpm@linux-foundation.org>
-In-Reply-To: <20071022120359.26403bf0.akpm@linux-foundation.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Jeff Garzik <jeff@garzik.org>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-> > 	I'm seeing reproducible oops on 2.6.23-mm1 when trying to run tcpdump
-> > over ppp0 interface.
-> 
-> Can you please test the latest Linus kernel from
-> ftp://ftp.kernel.org/pub/linux/kernel/v2.6/snapshots/?
+Hi,
 
-Sure.
+I am trying to connect to net via a USB CDMA device, on a debian etch
+system. I can configure ppp with out any problem and also connect to
+net, but after I connect ppp disconnects and reconnects frequently
+after receiving this message from the peer.
 
-> Because all netwrking things which were in 2.6.23-mm1 are now in mainline.
-> So if mainline is OK then that bug presumably got fixed.
+rcvd [LCP ConfReq id=0x3 <mru 1400> <asyncmap 0x0> <auth chap MD5>
+<magic 0xfb6a0660>]
 
-You're right. 2.6.23-git17 runs fine so the bug must have been fixed.
+my ppp config is:
 
-Regards,
+hide-password
+noauth
+connect "/usr/sbin/chat -v -f /etc/chatscripts/vsnl"
+debug
+/dev/ttyACM0
+460800
+defaultroute
+replacedefaultroute
+noipdefault
+user "internet"
+ipparam vsnl
+usepeerdns
 
-	Mariusz
+This usually happens if there is a default gateway via ppp0 device.
+The  connection stays online for hours if there is no default gw. I am
+posting full logs at http://pastebin.ca/748250
+
+I am sitting behind this for couple of days with out any solution, any
+help to resolve this is much appreciated.
+
+raj
