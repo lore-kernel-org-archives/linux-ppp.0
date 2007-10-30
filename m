@@ -1,91 +1,172 @@
-From: Michal Schmidt <mschmidt@redhat.com>
-Date: Fri, 21 Sep 2007 14:47:13 +0000
-Subject: Re: [PATCH] ppp_mppe: Don't put InterimKey on the stack
-Message-Id: <46F3D971.2050107@redhat.com>
+From: Marcus Better <marcus@better.se>
+Date: Tue, 30 Oct 2007 20:00:42 +0000
+Subject: IPCP with mobile ISP sometimes gives bogus DNS address
+Message-Id: <fg82hb$nrp$1@ger.gmane.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <46F3D049.4080006@redhat.com> <20070921144053.GA28101@auslistsprd01.us.dell.com>
-In-Reply-To: <20070921144053.GA28101@auslistsprd01.us.dell.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Matt Domsch <Matt_Domsch@dell.com>
-Cc: Linux Kernel list <linux-kernel@vger.kernel.org>, Frank Cusack <fcusack@fcusack.com>, linux-ppp@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
+To: linux-ppp@vger.kernel.org
 
-Matt Domsch skrev:
-> On Fri, Sep 21, 2007 at 04:08:09PM +0200, Michal Schmidt wrote:
->   
->> Hello,
->>
->> The interrupt stack can be in the __START_KERNEL_map region in which
->> virt_to_page will not work. This caused ppp_mppe to crash on CentOS 5 on x86_64
->> (http://bugs.centos.org/view.php?id 76).
->>
->> The fix is to avoid copying the interim key. We can simply use it in its
->> original place, which is kmalloc'd.
->>     
->
-> Needs a Signed-off-by: line, but otherwise, looks good, and even saves
-> some stack space.  Thanks for tracking this down.
->
-> -Matt
->   
+Hi,
 
-Sorry about the forgotten sign-off. Here it is.
-Andrew, please apply.
+I am connecting to the Swedish mobile ISP Tele2 with PPP using a
+Huawei 3G modem. The PPP link is started, but very often (perhaps half the time or
+more) it ends up assigning bogus DNS addresses 10.11.12.13 and 
+10.11.12.14 which cannot be reached. At other times I get name servers 
+with public IPs that do work.
 
-Signed-off-by: Michal Schmidt <mschmidt@redhat.com>
+After checking logs from a number of attempts, the following pattern emerges:
+pppd on my side sends up to five (=ipcp-max-failure) IPCP ConfReqs,
+the first with blank info and the remaining like this:
 
----
- drivers/net/ppp_mppe.c |   14 ++++++--------
- 1 files changed, 6 insertions(+), 8 deletions(-)
+Oct  2 08:08:59 melech pppd[11052]: sent [IPCP ConfReq id=0x2 <addr 0.0.0.0> <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14>]
 
-diff --git a/drivers/net/ppp_mppe.c b/drivers/net/ppp_mppe.c
-index f79cf87..c0b6d19 100644
---- a/drivers/net/ppp_mppe.c
-+++ b/drivers/net/ppp_mppe.c
-@@ -136,7 +136,7 @@ struct ppp_mppe_state {
-  * Key Derivation, from RFC 3078, RFC 3079.
-  * Equivalent to Get_Key() for MS-CHAP as described in RFC 3079.
-  */
--static void get_new_key_from_sha(struct ppp_mppe_state * state, unsigned char *InterimKey)
-+static void get_new_key_from_sha(struct ppp_mppe_state * state)
- {
- 	struct hash_desc desc;
- 	struct scatterlist sg[4];
-@@ -153,8 +153,6 @@ static void get_new_key_from_sha(struct ppp_mppe_state * state, unsigned char *I
- 	desc.flags = 0;
- 
- 	crypto_hash_digest(&desc, sg, nbytes, state->sha1_digest);
--
--	memcpy(InterimKey, state->sha1_digest, state->keylen);
- }
- 
- /*
-@@ -163,21 +161,21 @@ static void get_new_key_from_sha(struct ppp_mppe_state * state, unsigned char *I
-  */
- static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
- {
--	unsigned char InterimKey[MPPE_MAX_KEY_LEN];
- 	struct scatterlist sg_in[1], sg_out[1];
- 	struct blkcipher_desc desc = { .tfm = state->arc4 };
- 
--	get_new_key_from_sha(state, InterimKey);
-+	get_new_key_from_sha(state);
- 	if (!initial_key) {
--		crypto_blkcipher_setkey(state->arc4, InterimKey, state->keylen);
--		setup_sg(sg_in, InterimKey, state->keylen);
-+		crypto_blkcipher_setkey(state->arc4, state->sha1_digest,
-+					state->keylen);
-+		setup_sg(sg_in, state->sha1_digest, state->keylen);
- 		setup_sg(sg_out, state->session_key, state->keylen);
- 		if (crypto_blkcipher_encrypt(&desc, sg_out, sg_in,
- 					     state->keylen) != 0) {
-     		    printk(KERN_WARNING "mppe_rekey: cipher_encrypt failed\n");
- 		}
- 	} else {
--		memcpy(state->session_key, InterimKey, state->keylen);
-+		memcpy(state->session_key, state->sha1_digest, state->keylen);
- 	}
- 	if (state->keylen = 8) {
- 		/* See RFC 3078 */
+If it receives a ConfReq from the other side before that point,
+everything works out correctly. If not, then pppd starts sending 
+empty ConfReqs from id=0x6 and on:
+
+Oct  2 08:09:03 melech pppd[11052]: sent [IPCP ConfReq id=0x6 <addr 0.0.0.0>]
+
+That makes the other end send only an IP address at the end:
+
+Oct  2 08:09:03 melech pppd[11052]: rcvd [IPCP ConfAck id=0x8 <addr 83.188.169.123>]
+
+In the success case, it sends both IP address and DNS settings:
+
+Oct  2 08:12:04 melech pppd[11589]: rcvd [IPCP ConfAck id=0x4 <addr 83.188.169.214> <ms-dns1 130.244.127.161> <ms-dns3 130.244.127.169>]
+
+I'm not able to make much more of the logs below, perhaps someone can tell
+what's going on?
+
+This was also reported to the Debian bug tracking system [1].
+
+Regards,
+
+Marcus
+
+[1] http://bugs.debian.org/cgi-bin/bugreport.cgi?bugD5951
+
+
+
+Log of failure case:
+
+Oct  2 08:08:57 melech pppd[11052]: Serial connection established.
+Oct  2 08:08:57 melech pppd[11052]: using channel 3
+Oct  2 08:08:57 melech pppd[11052]: Using interface ppp0
+Oct  2 08:08:57 melech pppd[11052]: Connect: ppp0 <--> /dev/3gmodem
+Oct  2 08:08:58 melech pppd[11052]: sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0x260e3aa4> <pcomp> <accomp>]
+Oct  2 08:08:58 melech pppd[11052]: rcvd [LCP ConfReq id=0x0 <asyncmap 0x0> <auth chap MD5> <magic 0x4fafaf6> <pcomp> <accomp>]
+Oct  2 08:08:58 melech pppd[11052]: sent [LCP ConfNak id=0x0 <auth pap>]
+Oct  2 08:08:58 melech pppd[11052]: rcvd [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0x260e3aa4> <pcomp> <accomp>]
+Oct  2 08:08:58 melech pppd[11052]: rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <auth pap> <magic 0x4fafaf6> <pcomp> <accomp>]
+Oct  2 08:08:58 melech pppd[11052]: sent [LCP ConfAck id=0x1 <asyncmap 0x0> <auth pap> <magic 0x4fafaf6> <pcomp> <accomp>]
+Oct  2 08:08:58 melech pppd[11052]: sent [PAP AuthReq id=0x1 user="melech" password=<hidden>]
+Oct  2 08:08:58 melech pppd[11052]: rcvd [LCP DiscReq id=0x2 magic=0x4fafaf6]
+Oct  2 08:08:58 melech pppd[11052]: rcvd [PAP AuthAck id=0x1 ""]
+Oct  2 08:08:58 melech pppd[11052]: PAP authentication succeeded
+Oct  2 08:08:58 melech pppd[11052]: sent [IPCP ConfReq id=0x1 <addr 0.0.0.0> <ms-dns1 0.0.0.0> <ms-dns3 0.0.0.0>]
+Oct  2 08:08:59 melech pppd[11052]: rcvd [IPCP ConfNak id=0x1 <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
+Oct  2 08:08:59 melech pppd[11052]: sent [IPCP ConfReq id=0x2 <addr 0.0.0.0> <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14>]
+Oct  2 08:09:00 melech pppd[11052]: rcvd [IPCP ConfNak id=0x2 <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
+Oct  2 08:09:00 melech pppd[11052]: sent [IPCP ConfReq id=0x3 <addr 0.0.0.0> <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14>]
+Oct  2 08:09:01 melech pppd[11052]: rcvd [IPCP ConfNak id=0x3 <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
+Oct  2 08:09:01 melech pppd[11052]: sent [IPCP ConfReq id=0x4 <addr 0.0.0.0> <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14>]
+Oct  2 08:09:02 melech pppd[11052]: rcvd [IPCP ConfNak id=0x4 <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
+Oct  2 08:09:02 melech pppd[11052]: sent [IPCP ConfReq id=0x5 <addr 0.0.0.0> <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14>]
+Oct  2 08:09:03 melech pppd[11052]: rcvd [IPCP ConfNak id=0x5 <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
+Oct  2 08:09:03 melech pppd[11052]: sent [IPCP ConfReq id=0x6 <addr 0.0.0.0>]
+Oct  2 08:09:03 melech pppd[11052]: rcvd [IPCP ConfReq id=0x0]
+Oct  2 08:09:03 melech pppd[11052]: sent [IPCP ConfNak id=0x0 <addr 0.0.0.0>]
+Oct  2 08:09:03 melech pppd[11052]: rcvd [IPCP ConfNak id=0x6 <addr 83.188.169.123>]
+Oct  2 08:09:03 melech pppd[11052]: sent [IPCP ConfReq id=0x7]
+Oct  2 08:09:03 melech pppd[11052]: rcvd [IPCP ConfNak id=0x7 <addr 83.188.169.123>]
+Oct  2 08:09:03 melech pppd[11052]: sent [IPCP ConfReq id=0x8 <addr 83.188.169.123>]
+Oct  2 08:09:03 melech pppd[11052]: rcvd [IPCP ConfAck id=0x8 <addr 83.188.169.123>]
+Oct  2 08:09:04 melech pppd[11052]: rcvd [IPCP ConfReq id=0x1]
+Oct  2 08:09:04 melech pppd[11052]: sent [IPCP ConfAck id=0x1]
+Oct  2 08:09:04 melech pppd[11052]: Could not determine remote IP address: defaulting to 10.64.64.64
+Oct  2 08:09:04 melech pppd[11052]: Cannot determine ethernet address for proxy ARP
+Oct  2 08:09:04 melech pppd[11052]: local  IP address 83.188.169.123
+Oct  2 08:09:04 melech pppd[11052]: remote IP address 10.64.64.64
+Oct  2 08:09:04 melech pppd[11052]: primary   DNS address 10.11.12.13
+Oct  2 08:09:04 melech pppd[11052]: secondary DNS address 10.11.12.14
+Oct  2 08:09:04 melech pppd[11052]: Script /etc/ppp/ip-up started (pid 11065)
+
+
+Log of success case:
+
+Oct  2 08:12:00 melech pppd[11589]: Serial connection established.
+Oct  2 08:12:00 melech pppd[11589]: using channel 4
+Oct  2 08:12:00 melech pppd[11589]: Using interface ppp0
+Oct  2 08:12:00 melech pppd[11589]: Connect: ppp0 <--> /dev/3gmodem
+Oct  2 08:12:01 melech pppd[11589]: sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0x8d65e535> <pcomp> <accomp>]
+Oct  2 08:12:01 melech pppd[11589]: rcvd [LCP ConfReq id=0x3 <asyncmap 0x0> <auth chap MD5> <magic 0x4fdc5be> <pcomp> <accomp>]
+Oct  2 08:12:01 melech pppd[11589]: sent [LCP ConfNak id=0x3 <auth pap>]
+Oct  2 08:12:01 melech pppd[11589]: rcvd [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0x8d65e535> <pcomp> <accomp>]
+Oct  2 08:12:01 melech pppd[11589]: rcvd [LCP ConfReq id=0x4 <asyncmap 0x0> <auth pap> <magic 0x4fdc5be> <pcomp> <accomp>]
+Oct  2 08:12:01 melech pppd[11589]: sent [LCP ConfAck id=0x4 <asyncmap 0x0> <auth pap> <magic 0x4fdc5be> <pcomp> <accomp>]
+Oct  2 08:12:01 melech pppd[11589]: sent [PAP AuthReq id=0x1 user="melech" password=<hidden>]
+Oct  2 08:12:01 melech pppd[11589]: rcvd [LCP DiscReq id=0x5 magic=0x4fdc5be]
+Oct  2 08:12:01 melech pppd[11589]: rcvd [PAP AuthAck id=0x1 ""]
+Oct  2 08:12:01 melech pppd[11589]: PAP authentication succeeded
+Oct  2 08:12:01 melech pppd[11589]: sent [IPCP ConfReq id=0x1 <addr 0.0.0.0> <ms-dns1 0.0.0.0> <ms-dns3 0.0.0.0>]
+Oct  2 08:12:02 melech pppd[11589]: rcvd [IPCP ConfNak id=0x1 <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
+Oct  2 08:12:02 melech pppd[11589]: sent [IPCP ConfReq id=0x2 <addr 0.0.0.0> <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14>]
+Oct  2 08:12:03 melech pppd[11589]: rcvd [IPCP ConfNak id=0x2 <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
+Oct  2 08:12:03 melech pppd[11589]: sent [IPCP ConfReq id=0x3 <addr 0.0.0.0> <ms-dns1 10.11.12.13> <ms-dns3 10.11.12.14>]
+Oct  2 08:12:04 melech pppd[11589]: rcvd [IPCP ConfReq id=0x2]
+Oct  2 08:12:04 melech pppd[11589]: sent [IPCP ConfNak id=0x2 <addr 0.0.0.0>]
+Oct  2 08:12:04 melech pppd[11589]: rcvd [IPCP ConfNak id=0x3 <addr 83.188.169.214> <ms-dns1 130.244.127.161> <ms-dns3 130.244.127.169>]
+Oct  2 08:12:04 melech pppd[11589]: sent [IPCP ConfReq id=0x4 <addr 83.188.169.214> <ms-dns1 130.244.127.161> <ms-dns3 130.244.127.169>]
+Oct  2 08:12:04 melech pppd[11589]: rcvd [IPCP ConfAck id=0x4 <addr 83.188.169.214> <ms-dns1 130.244.127.161> <ms-dns3 130.244.127.169>]
+Oct  2 08:12:05 melech pppd[11589]: rcvd [IPCP ConfReq id=0x3]
+Oct  2 08:12:05 melech pppd[11589]: sent [IPCP ConfAck id=0x3]
+Oct  2 08:12:05 melech pppd[11589]: Could not determine remote IP address: defaulting to 10.64.64.64
+Oct  2 08:12:05 melech pppd[11589]: Cannot determine ethernet address for proxy ARP
+Oct  2 08:12:05 melech pppd[11589]: local  IP address 83.188.169.214
+Oct  2 08:12:05 melech pppd[11589]: remote IP address 10.64.64.64
+Oct  2 08:12:05 melech pppd[11589]: primary   DNS address 130.244.127.161
+Oct  2 08:12:05 melech pppd[11589]: secondary DNS address 130.244.127.169
+
+
+/etc/ppp/peers/tele2-3g:
+-----------------------------------
+3gmodem 921600
+connect '/usr/sbin/chat -v -f /etc/ppp/tele2-3g.chat'
+noipdefault
+novj
+noccp
+noauth
+local
+defaultroute
+usepeerdns
+debug
+----------------------------------
+
+
+/etc/ppp/tele2-3g.chat:
+----------------------------------
+TIMEOUT 5
+ABORT "NO CARRIER"
+ABORT "NO DIALTONE"
+ABORT "NO ANSWER"
+ABORT "BUSY"
+"" ATZ
+OK AT+CPIN 00
+TIMEOUT 2
+OK-AT-OK AT+CGDCONT=1,"IP","internet.tele2.se"
+TIMEOUT 5
+OK ATDT*99***1#
+CONNECT
+----------------------------------
+
+/etc/ppp/options is the default, with the following appended:
+-------------
+deflate 12
+bsdcomp 12
+predictor1
+-------------
+
+
 
