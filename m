@@ -1,30 +1,20 @@
-From: Patrick Fischer <patrick.fischer@4g-systems.com>
-Date: Wed, 17 Oct 2007 15:46:05 +0000
-Subject: sometimes ppp will not get the dns
-Message-Id: <13255677.post@talk.nabble.com>
+From: Marcus Better <marcus@better.se>
+Date: Thu, 01 Nov 2007 08:33:16 +0000
+Subject: Re: IPCP with mobile ISP sometimes gives bogus DNS address
+Message-Id: <200711010933.16222.marcus@better.se>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <fg82hb$nrp$1@ger.gmane.org>
+In-Reply-To: <fg82hb$nrp$1@ger.gmane.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Bill Unruh wrote:
+> Yes, and in this case the remote side did not insist of hte ms-wins.
+> is the only difference. And the difference comes from the far side. They
+> DEMAND mswins, you do not agree and the split is certain.
 
-attached you see two connections log(in one file). In the first you see that
-we successful get 
-addr 80.187.82.81> <ms-dns1 193.254.160.130> <ms-dns3 193.254.160.1>
+So it remains to patch pppd to accept the ms-wins settings then?
 
-in the second log we only get an IP but no dns.
-<addr 80.187.54.60>
-
-DNS 10.11.12.13 and 10.11.12.14 are default values and not valid.
-
-Both logs are from pppd2.3 but the 2.4 has the same problem.
-
-Has anybody an proposal for solution or just an idear?
-With this bug we can't go online (use the dns).
-
-http://www.nabble.com/file/p13255677/ppp-log ppp-log 
--- 
-View this message in context: http://www.nabble.com/sometimes-ppp-will-not-get-the-dns-tf4641175.html#a13255677
-Sent from the linux-ppp mailing list archive at Nabble.com.
-
+Marcus
