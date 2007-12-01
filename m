@@ -1,47 +1,61 @@
-From: Matthias Kaehlcke <matthias.kaehlcke@gmail.com>
-Date: Sun, 09 Dec 2007 19:53:01 +0000
-Subject: Re: [PATCH] PPP synchronous tty: convert dead_sem to completion
-Message-Id: <20071209195301.GF15658@traven>
+From: James Carlson <carlsonj@workingcode.com>
+Date: Sat, 01 Dec 2007 18:18:19 +0000
+Subject: Re: No packets get through after a while
+Message-Id: <18257.42347.159949.914679@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20071208150954.GA8467@traven> <Pine.LNX.4.64.0712091203490.976@e-smith.charlieb.ott.istop.com>
-In-Reply-To: <Pine.LNX.4.64.0712091203490.976@e-smith.charlieb.ott.istop.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Charlie Brady <charlieb@budge.apana.org.au>
-Cc: linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-El Sun, Dec 09, 2007 at 12:04:48PM -0500 Charlie Brady ha dit:
+Robert Voigt writes:
+> I have a ppp connection from an embedded board with Fedora 7 (ppp 2.4.4,
+> stock kernel-2.6.21) over null modem cable to a FC6 PC (ppp 2.4.4,
+> kernel 2.6.18). I'm pinging from the board to the PC. After a while, it
+> can be a few minutes or several hours, no packets from ping or anything
+> else get through. It works again when I restart pppd on the board.
 
->
-> On Sat, 8 Dec 2007, Matthias Kaehlcke wrote:
->
->> PPP synchronous tty channel driver: convert the semaphore dead_sem to
->> a completion
->>
->> Signed-off-by: Matthias Kaehlcke <matthias.kaehlcke@gmail.com>
->
-> Excuse my ignorance please, but why is this a good idea? Should we not 
-> record the reason for changes?
+That sounds a lot like a flow control bug.  Have you tried running
+without flow control enabled?
 
-Semaphores can be used to signal completion of a job, but aren't the
-optimal way to do so. According to LDD3 semaphores are optimized for
-the 'available' case and performance suffers when using them as
-completion. 
+Do you have access to a serial line analyzer?
 
-It is also clearer to use each synchronization mechanism according to
-its purpose, i.e. semaphores for protection of critical sections and
-completions for signalling that a job is done.
+> The only thing I notice is when I start pppd on the commandline, when it
+> hangs and I Ctrl-C it, it does not return. On the second Ctrl-C it says:
+> tcsetattr: Interrupted system call (line 1001)
+> It returns on the third Ctrl-C.
+
+Ioctls that hang in the driver are, in my experience, typically the
+result of flow control problems.
+
+> I have tried a debug version of ppp 2.4.4. When it hangs the backtrace
+> shows the last line in ppp code is sys-linux.c:1051
+> void wait_input(struct timeval *timo)
+> {
+> ...
+>     n = select(max_in_fd + 1, &ready, NULL, &exc, timo);
+> ...
+> }
+
+That's the normal idle loop for pppd.  It _should_ be there while it's
+waiting for something to do.
+
+> But that seems to be always the place where it waits after
+> initialization. Is it in the kernel part of ppp then?
+
+I think it's either a serial driver problem or even possibly a
+hardware problem.  A badly-wired null modem cable, for example, could
+cause a system to wedge itself.
+
+It should be symmetrical if you're using hardware flow control.  RTS
+on one side should connect to CTS on the other.  If RTS were looped
+back to the local CTS, then when you get into a state where you had to
+tell the peer to stop sending (RTS deasserted), you'd end up telling
+yourself to stop transmitting instead (CTS deasserted), and you'd get
+stuck.  Just a guess, though.  There are probably quite a few
+different problems that could end up causing similar symptoms, which
+is why I'd recommend looking at it with a serial line analyzer first
+(or at _least_ a breakout box).
 
 -- 
-Matthias Kaehlcke
-Linux System Developer
-Barcelona
-
-              You can't separate peace from freedom because no
-               one can be at peace unless he has his freedom
-                              (Malcolm X)
-                                                                 .''`.
-    using free software / Debian GNU/Linux | http://debian.org  : :'  :
-                                                                `. `'`
-gpg --keyserver pgp.mit.edu --recv-keys 47D8E5D4                  `-
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
