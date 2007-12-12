@@ -1,55 +1,111 @@
-From: Robert Voigt <robert.voigt@thalesatm.com>
-Date: Fri, 30 Nov 2007 11:18:58 +0000
-Subject: No packets get through after a while
-Message-Id: <1196421538.2082.89.camel@sls6bk>
+From: ipcpblues <tsutherland@iders.ca>
+Date: Wed, 12 Dec 2007 21:15:45 +0000
+Subject: IPCP-Nak doesn't do anything
+Message-Id: <14303969.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi everybody,
 
-here is a strange problem that I can't solve:
+Hi,
 
-I have a ppp connection from an embedded board with Fedora 7 (ppp 2.4.4,
-stock kernel-2.6.21) over null modem cable to a FC6 PC (ppp 2.4.4,
-kernel 2.6.18). I'm pinging from the board to the PC. After a while, it
-can be a few minutes or several hours, no packets from ping or anything
-else get through. It works again when I restart pppd on the board.
+I'm trying to get two PPP devices to work together to setup a PPP
+connection.  I have control over one of them - meaning I can set whatever
+options I please - but I can't control the other device, it's options are
+hard-wired.
 
-I'm starting pppd on the board in /etc/inittab:
-pp:2345:respawn:/usr/sbin/pppd lock persist nodetach crtscts debug
-kdebug 7 192.168.1.2:192.168.1.1 /dev/ttyS2 38400
+I think I've almost got them working because they pass the LCP request - ack
+stage and enter the IPCP stage.  In the IPCP stage, my IPCP-Req is Ack'd, so
+I'm halfway there.  Their IPCP-Req is received by me with IP-addr=0.0.0.0
+and I respond with IPCP-Nak IP-addr2.168.20.50.  All this seems correct
+to me, but then the device doesn't accept my Nak and either re-sends its
+original IPCP-Req or goes back to the LCP-Req stage.  
 
-And on the PC:
-pp:2345:respawn:/usr/sbin/pppd lock persist nodetach crtscts
-192.168.1.1:192.168.1.2 /dev/ttyS1 38400
+Does any have ideas on why this could happen or something I can try?
 
+My log is below, Thanks for reading :)
 
-I don't get any log messages when this happens. (I have
-daemon.* /var/log/ppp-log in /etc/syslog.conf)
+# pppd file options.pppBCM nodetach
+pppd options in effect:
+debug           # (from options.pppBCM)
+nodetach                # (from command line)
+dump            # (from options.pppBCM)
+noauth          # (from options.pppBCM)
+/dev/ttyUSB1            # (from options.pppBCM)
+9600            # (from options.pppBCM)
+lock            # (from options.pppBCM)
+nocrtscts               # (from options.pppBCM)
+asyncmap ffffffff               # (from options.pppBCM)
+192.168.30.1:192.168.30.50              # (from options.pppBCM)
+nobsdcomp               # (from options.pppBCM)
+nodeflate               # (from options.pppBCM)
+using channel 21
+Using interface ppp0
+Connect: ppp0 <--> /dev/ttyUSB1
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+rcvd [LCP ConfReq id=0x25 <asyncmap 0x0> <magic 0xa5a44a5a>]
+sent [LCP ConfAck id=0x25 <asyncmap 0x0> <magic 0xa5a44a5a>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfReq id=0x27 <addr 0.0.0.0>]
+sent [IPCP ConfNak id=0x27 <addr 192.168.30.50>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfReq id=0x28 <addr 0.0.0.0>]
+sent [IPCP ConfNak id=0x28 <addr 192.168.30.50>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfReq id=0x2a <addr 0.0.0.0>]
+sent [IPCP ConfNak id=0x2a <addr 192.168.30.50>]
+sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [LCP ConfReq id=0x2c <asyncmap 0x0> <magic 0xa5a44a5a>]
+sent [LCP ConfReq id=0x2 <magic 0xae75be4b> <pcomp> <accomp>]
+sent [LCP ConfAck id=0x2c <asyncmap 0x0> <magic 0xa5a44a5a>]
+rcvd [LCP ConfAck id=0x2 <magic 0xae75be4b> <pcomp> <accomp>]
+sent [IPCP ConfReq id=0x2 <compress VJ 0f 01> <addr 192.168.30.1>]
+sent [IPCP ConfReq id=0x2 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x2 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfReq id=0x2d <addr 0.0.0.0>]
+sent [IPCP ConfNak id=0x2d <addr 192.168.30.50>]
+sent [IPCP ConfReq id=0x2 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x2 <compress VJ 0f 01> <addr 192.168.30.1>]
+sent [IPCP ConfReq id=0x2 <compress VJ 0f 01> <addr 192.168.30.1>]
+rcvd [IPCP ConfAck id=0x2 <compress VJ 0f 01> <addr 192.168.30.1>] 
 
-The only thing I notice is when I start pppd on the commandline, when it
-hangs and I Ctrl-C it, it does not return. On the second Ctrl-C it says:
-tcsetattr: Interrupted system call (line 1001)
-It returns on the third Ctrl-C.
+-- 
+View this message in context: http://www.nabble.com/IPCP-Nak-doesn%27t-do-anything-tp14303969p14303969.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
 
-When I Ctrl-C it when it does not hang, it returns correctly after
-terminating.
-
-I have tried a debug version of ppp 2.4.4. When it hangs the backtrace
-shows the last line in ppp code is sys-linux.c:1051
-void wait_input(struct timeval *timo)
-{
-...
-    n = select(max_in_fd + 1, &ready, NULL, &exc, timo);
-...
-}
-
-But that seems to be always the place where it waits after
-initialization. Is it in the kernel part of ppp then?
-
-I will be grateful for any advice.
-
-Robert
