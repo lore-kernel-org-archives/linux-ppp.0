@@ -1,56 +1,50 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 12 Dec 2007 21:36:51 +0000
-Subject: Re: IPCP-Nak doesn't do anything
-Message-Id: <18272.21619.701474.332445@gargle.gargle.HOWL>
+From: wotuzu17 <andiv@gmx.li>
+Date: Fri, 28 Dec 2007 22:32:35 +0000
+Subject: Using an NTS instead of the local serial device ?
+Message-Id: <14532384.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <14303969.post@talk.nabble.com>
-In-Reply-To: <14303969.post@talk.nabble.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-ipcpblues writes:
-> I think I've almost got them working because they pass the LCP request - ack
-> stage and enter the IPCP stage.  In the IPCP stage, my IPCP-Req is Ack'd, so
-> I'm halfway there.  Their IPCP-Req is received by me with IP-addr=0.0.0.0
-> and I respond with IPCP-Nak IP-addr2.168.20.50.  All this seems correct
-> to me, but then the device doesn't accept my Nak and either re-sends its
-> original IPCP-Req or goes back to the LCP-Req stage.  
 
-The peer is free to ignore your suggested IP address for any reason it
-wants.  You cannot make it accept an address that it doesn't want.
+Hi folks,
 
-Assuming you can't get debug logs out of the peer (in order to find
-out why it doesn't like that address), I think the only thing you
-could do would be to refuse to negotiate the addresses by adding
-"ipcp-no-address ipcp-no-addresses".
 
-> sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
-> rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
-> sent [LCP ConfReq id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
-> rcvd [LCP ConfAck id=0x1 <magic 0xec2490cf> <pcomp> <accomp>]
+I just successfully set up a basic ppp link between 2 Ubuntu 7.10 machines.
 
-This part is pretty suspicious and likely points to communications
-errors on the path ...
 
-> sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
-> rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
-> sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
-> rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
 
-... as does this.  Are you sure that the underlying link works and is
-relatively error-free?  Excessive frame loss could _easily_ be the
-cause of the kind of problem you're seeing.  It can lead to
-non-convergence.
+The commands look like this:
 
-> rcvd [IPCP ConfAck id=0x1 <compress VJ 0f 01> <addr 192.168.30.1>]
-> rcvd [LCP ConfReq id=0x2c <asyncmap 0x0> <magic 0xa5a44a5a>]
-> sent [LCP ConfReq id=0x2 <magic 0xae75be4b> <pcomp> <accomp>]
 
-Right here the peer gives up and starts over.  That likely indicates
-that it thinks IPCP isn't converging properly, which seems fairly
-likely given the very odd traffic on this link.
+me@machine1 $ pppd -detach persist lock proxyarp 192.168.10.1:192.168.10.2
+/dev/ttyS0 38400 &
 
+
+me@machine2 $ pppd -detach persist lock defaultroute
+192.168.10.2:192.168.10.1 /dev/ttyS0 38400 &
+
+
+I wonder whether it is posible to use a serial port of an NTS for
+communiction instead of the local serial device /dev/ttyS0 ? I own a
+Lantronix ETS8P, which is a 8-port Network Terminal Server.
+
+
+I tried
+
+me@machine1 $ pppd -detach persist lock proxyarp 192.168.10.1:192.168.10.2
+ip.of.nts:tcpport 38400 &
+
+
+without success. 
+
+As I am new to Linux in general, maybe somebody can give me a hint.
+
+
+Thanks
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+View this message in context: http://www.nabble.com/Using-an-NTS-instead-of-the-local-serial-device---tp14532384p14532384.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
+
