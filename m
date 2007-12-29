@@ -1,7 +1,7 @@
 From: wotuzu17 <andiv@gmx.li>
-Date: Sat, 29 Dec 2007 00:03:42 +0000
+Date: Sat, 29 Dec 2007 00:41:04 +0000
 Subject: Re: Using an NTS instead of the local serial device ?
-Message-Id: <14533230.post@talk.nabble.com>
+Message-Id: <14533478.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <14532384.post@talk.nabble.com>
 In-Reply-To: <14532384.post@talk.nabble.com>
@@ -11,28 +11,50 @@ Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
 
-After browsing the support sites of Lantronix, I think I found the software I
-need:
+If there was a -socket option, I'd like to try. But I can't find a -socket
+option neither in the man pages nor in other documentation about pppd. 
 
-The  rtelpd  daemon  process  is used to provide access to
-serial or parallel ports on a terminal  server.   A  named
-pipe  is used as the actual interface to host based appli-
-cations.  These applications  can  then  communicate  with
-equipment  attached  to  the  server  as if it was locally
-attached to the unix host.
+# pppd: unrecognized option '-socket'
 
-I can create a /dev/somepipename device with that tool.
+Here at home I have a Suse 10.1 linux with pppd version 2.4.3 installed. 
+
+The serial ports on the Lantronix are easily accessable- e.g.
+# telnet 192.168.0.1 2003
+
+will write everything that's being typed to physical port 3, and everything
+that is being receveid on that port 2 is displayed in the telnet window
 
 
-I need this rather unconventional method because we have several remote
-sites that are connected to the center via public digital lines (64k).
-Multiplexer on each end offer up to 16 transparent serial RS232 ports. Via
-the ppp link we get access to the network in the center- it's slow but
-sufficient for our application.
 
-The NTS is only needed in the center because it offers 8 ports. I find this
-more elegant than upgrading the Ubuntu- Server with additional serial ports.
+Paul Mackerras wrote:
+> 
+> wotuzu17 writes:
+> 
+>> I wonder whether it is posible to use a serial port of an NTS for
+>> communiction instead of the local serial device /dev/ttyS0 ? I own a
+>> Lantronix ETS8P, which is a 8-port Network Terminal Server.
+>> 
+>> 
+>> I tried
+>> 
+>> me@machine1 $ pppd -detach persist lock proxyarp
+>> 192.168.10.1:192.168.10.2
+>> ip.of.nts:tcpport 38400 &
+> 
+> It *might* be possible to get pppd to talk to the terminal server
+> using the -socket option, but it would depend on what protocol the
+> terminal server talks across the network.  Can you give us any details
+> on that protocol?
+> 
+> Paul.
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> 
+
 -- 
-View this message in context: http://www.nabble.com/Using-an-NTS-instead-of-the-local-serial-device---tp14532384p14533230.html
+View this message in context: http://www.nabble.com/Using-an-NTS-instead-of-the-local-serial-device---tp14532384p14533478.html
 Sent from the linux-ppp mailing list archive at Nabble.com.
 
