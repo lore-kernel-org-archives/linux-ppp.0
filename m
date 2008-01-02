@@ -1,28 +1,42 @@
 From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 21 Jan 2008 21:27:41 +0000
-Subject: Re: RSA SecureId (RFC 4793) support
-Message-Id: <18325.3661.947432.80568@gargle.gargle.HOWL>
+Date: Wed, 02 Jan 2008 17:44:35 +0000
+Subject: Re: Using an NTS instead of the local serial device ?
+Message-Id: <18299.52611.809735.4662@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <dff43e6d0801200848j5afdc8d7w9df3d1da0f701bf8@mail.gmail.com>
-In-Reply-To: <dff43e6d0801200848j5afdc8d7w9df3d1da0f701bf8@mail.gmail.com>
+References: <14532384.post@talk.nabble.com>
+In-Reply-To: <14532384.post@talk.nabble.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Bill Unruh writes:
-> Actually, pppd (2.4.4) does not seem to support TLS. Also EAP is just an
-> extention, so there need be no relation between the various ways the
-> various EAP  authentications do things.
+Paul Mackerras writes:
+> wotuzu17 writes:
+> 
+> > If there was a -socket option, I'd like to try. But I can't find a -socket
+> > option neither in the man pages nor in other documentation about pppd. 
+> > 
+> > # pppd: unrecognized option '-socket'
+> 
+> Sorry, it's "socket" (no dash) and it takes an argument which is
+> host:port.  However, if the Lantronix really does the telnet protocol
+> then it won't work properly since telnet interprets the 0xff character
+> and CR (0x0d) characters specially.
 
-Indeed.  There are some EAP methods that are simple, but others that
-have very high levels of complexity.  EAP is just a framework for
-carrying authentication methods.
+Lantronix devices support both.  You connect to 2000+n to get TELNET
+protocol (with the 0xff escapes), and 3000+n for a raw TCP connection.
 
-> Of which probably only MD5 and SRP are actually implimented in pppd it
-> looks like to me.
+So, for port 1, use this in pppd:
 
-True.
+	socket ip-address:3001
+
+(Most other terminal servers have similar features.  For example, the
+equivalent ranges on Annexes are 5000+n for TELNET and 7000+n for raw
+TCP.)
+
+I would advise the original poster to avoid reverse telnet.  It may
+work with some applications, but it's a frightening bit of hackery
+that (at least in my experience) often fails in strange ways.
 
 -- 
 James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
