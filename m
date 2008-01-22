@@ -1,33 +1,40 @@
-From: "Nestor Urquiza" <nestor.urquiza@gmail.com>
-Date: Sun, 20 Jan 2008 16:54:09 +0000
-Subject: Re: RSA SecurId (RFC 4793) support
-Message-Id: <dff43e6d0801200854m3869e9e3v42f9fcf9d7e62c05@mail.gmail.com>
+From: James Teh <james.teh@netboxblue.com>
+Date: Tue, 22 Jan 2008 00:33:00 +0000
+Subject: Problems with proxy arp with multiple addresses on the same interface
+Message-Id: <479539BC.1050303@netboxblue.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-subject typo corrected...
+Hi all,
 
-On Jan 20, 2008 11:48 AM, Nestor Urquiza <nestor.urquiza@gmail.com> wrote:
-> Hi guys,
-> I just wanted to understand if you have any plan to give support for
-> RSA SecurId (EAP-POTP) which corresponds to EAP type 15.
->
-> The specifications are publicly available as you see from IETF RFC
-> 4793 ... The EAP Protected One-Time Password Protocol (EAP-POTP).
->
-> I posted some months ago a question asking for support at pptp mailing
-> list since by that time I had no idea about PPP and EAP and I was
-> guessing RSA SecurId authentication was something related to PPTP.
->
-> After some further reading I realized that the specs are publicly
-> available and someone has patched pppd to support EAP-TLS.  I guess
-> supporting EAP-POTP shouldn't be that hard since EAP-TLS and EAP-POTP
-> are just different types from the same rfc 3748.
->
-> Thanks in advance,
->
-> -Nestor
->
+The Linux specific get_ether_addr() function in pppd uses ioctl to get 
+the netmask for an interface by interface name. Unfortunately, using the 
+ip command, multiple addresses don't receive separate interface labels, 
+which means that get_ether_addr() can only ever obtain the netmask for 
+the first address on each in terface. This causes proxy arp to fail in 
+certain cases when there are multiple addresses on the interface in 
+question; specifically, when the subnet mask of the first address on the 
+interface is smaller than the netmask of the desired address.
+
+This can be worked around by using ip with the "label" parameter to 
+label each interface separately, but this is undesirable, as it means 
+unique labels need to be generated.
+
+I have created a patch (largely borrowed from BSD) which uses 
+getifaddrs() instead of get_ether_addr() to get the netmask. This way, 
+the netmask for the specific address of the interface can be obtained.
+
+Is this the appropriate place to submit this patch? I looked through the 
+documentation, but found no mention of where patches should be submitted.
+
+--
+James Teh
+Developer
+NetBox Blue
+
+Scanned by the NetBox from NetBox Blue
+(http://netboxblue.com/)
+
