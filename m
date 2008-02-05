@@ -1,42 +1,52 @@
-From: bfc <chappaquasuite@yahoo.com>
-Date: Thu, 14 Feb 2008 02:16:53 +0000
-Subject: Re: if-up et al script relocation
-Message-Id: <15472625.post@talk.nabble.com>
+From: "Rami Rosen" <ramirose@gmail.com>
+Date: Tue, 05 Feb 2008 12:35:29 +0000
+Subject: Fwd: [PATCH] [PPPOL2TP] Label unused warning when CONFIG_PROC_FS is not set.
+Message-Id: <eb3ff54b0802050435n7cef121dk3ed1ad46ac12d273@mail.gmail.com>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="----=_Part_6632_27900867.1202214929479"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <15468731.post@talk.nabble.com>
-In-Reply-To: <15468731.post@talk.nabble.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+------=_Part_6632_27900867.1202214929479
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+---------- Forwarded message ----------
+From: Rami Rosen <ramirose@gmail.com>
+Date: Feb 5, 2008 2:15 PM
+Subject: [PATCH] [PPPOL2TP] Label unused warning when CONFIG_PROC_FS is not set.
+To: netdev@vger.kernel.org, jeff@garzik.org, linux-kernel@vger.kernel.org
 
 
-Thanks everyone.
+Hi,
 
-We've been using a custom build for some time, and wanted to get away from
-that.  Inertia being what it is, we let an
-old version linger for too long (2.4.1?) and now need to move to 2.4.4 for
-various fixes and its structureed differently enough
-to cause a bit of real work.
+When CONFIG_PROC_FS is not set and CONFIG_PPPOL2TP is set,
+we have the following warning in build:
+  drivers/net/pppol2tp.c: In function 'pppol2tp_init':
+  drivers/net/pppol2tp.c:2472: warning: label
+'out_unregister_pppox_proto' defined but not used
 
-I meant ip-up ip-down... not if-up if-down, DUH.  (I've made this mistake
-repeatedly.)
+This patch fixes this warning by adding appropriate #ifdef.
 
-The plugin is an interesting thought, though perhaps beyond the current
-scope/schedule.  At least that would let us
-continue moving forward as new pppd versions came out (we just follow RHEL
-versions).
+Regards,
+Rami Rosen
 
-So I guess it comes down to customizing any existing ip-up/ip-down/auth-up
-scripts (based on the tty), but I do like the thought of combining all of
-our logic into one script.  That would reduce the clutter, and could look
-something like a service script.
-It can be a switch on the action, doing our little things based on the
-arguments we need.
 
-Thanks again for your responses!
--- 
-View this message in context: http://www.nabble.com/if-up-et-al-script-relocation-tp15468731p15472625.html
-Sent from the linux-ppp mailing list archive at Nabble.com.
+Signed-off-by: Rami Rosen <ramirose@gmail.com>
 
+------=_Part_6632_27900867.1202214929479
+Content-Type: text/plain; name=patch.txt
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_fcaexqwq0
+Content-Disposition: attachment; filename=patch.txt
+
+ZGlmZiAtLWdpdCBhL2RyaXZlcnMvbmV0L3BwcG9sMnRwLmMgYi9kcml2ZXJzL25ldC9wcHBvbDJ0
+cC5jCmluZGV4IDFiNTFiYjYuLjVhYTBhODAgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbmV0L3BwcG9s
+MnRwLmMKKysrIGIvZHJpdmVycy9uZXQvcHBwb2wydHAuYwpAQCAtMjQ2OCw5ICsyNDY4LDEwIEBA
+IHN0YXRpYyBpbnQgX19pbml0IHBwcG9sMnRwX2luaXQodm9pZCkKIAogb3V0OgogCXJldHVybiBl
+cnI7Ci0KKyNpZmRlZiBDT05GSUdfUFJPQ19GUwogb3V0X3VucmVnaXN0ZXJfcHBwb3hfcHJvdG86
+CiAJdW5yZWdpc3Rlcl9wcHBveF9wcm90byhQWF9QUk9UT19PTDJUUCk7CisjZW5kaWYKIG91dF91
+bnJlZ2lzdGVyX3BwcG9sMnRwX3Byb3RvOgogCXByb3RvX3VucmVnaXN0ZXIoJnBwcG9sMnRwX3Nr
+X3Byb3RvKTsKIAlnb3RvIG91dDsK
+------=_Part_6632_27900867.1202214929479--
