@@ -1,7 +1,7 @@
-From: "Eugene Paskevich" <eugene@raptor.kiev.ua>
-Date: Wed, 13 Feb 2008 22:19:42 +0000
+From: James Cameron <james.cameron@hp.com>
+Date: Wed, 13 Feb 2008 22:20:41 +0000
 Subject: Re: if-up et al script relocation
-Message-Id: <op.t6hhm4jc2m4sxy@kite.raptor.kiev.ua>
+Message-Id: <20080213222041.GE3048@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <15468731.post@talk.nabble.com>
 In-Reply-To: <15468731.post@talk.nabble.com>
@@ -10,19 +10,19 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, 13 Feb 2008 23:46:28 +0200, bfc <chappaquasuite@yahoo.com> wrote:
+You can relocate them by producing a custom build of pppd with a changed
+value for the _PATH_IPUP define in pathnames.h.
 
-> If that's not possible, is it possible to have some variant of if-up and
-> friends for only particular
-> ttyname -- the Doc shows an alternate options file for a particular  
-> ttyname,
-> but not the rest
-> of the stuff.  (OR... if there was a magic option to plant the default
-> scripts elsewhere.)
+You can also write a plug-in for your application that uses the
+ip_up_hook() to call your own script using ipcp_script().  Plugins are
+selected by pppd options.
 
-Each of the scripts you mentioned is passed a tty-device as an argument,
-which means you can easily put your per-tty logic into a single script.
+Debian carries a patch to pppd that iterates through each script in
+/etc/ppp/if-up.d ... this can also be found in Ubuntu ... it is made
+more useful setting ipparam on the pppd options, and testing the value
+within the scripts.
 
 -- 
-Eugene Paskevich             |   *=)-----------   |     Plug me into
-eugene@raptor.kiev.ua        |   -----------(=*   |      The Matrix
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
