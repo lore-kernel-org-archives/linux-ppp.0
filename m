@@ -1,40 +1,29 @@
-From: James Teh <james.teh@netboxblue.com>
-Date: Tue, 22 Jan 2008 00:33:00 +0000
-Subject: Problems with proxy arp with multiple addresses on the same interface
-Message-Id: <479539BC.1050303@netboxblue.com>
+From: bfc <chappaquasuite@yahoo.com>
+Date: Wed, 13 Feb 2008 21:46:28 +0000
+Subject: if-up et al script relocation
+Message-Id: <15468731.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi all,
 
-The Linux specific get_ether_addr() function in pppd uses ioctl to get 
-the netmask for an interface by interface name. Unfortunately, using the 
-ip command, multiple addresses don't receive separate interface labels, 
-which means that get_ether_addr() can only ever obtain the netmask for 
-the first address on each in terface. This causes proxy arp to fail in 
-certain cases when there are multiple addresses on the interface in 
-question; specifically, when the subnet mask of the first address on the 
-interface is smaller than the netmask of the desired address.
+Is it possible to relocat the if-up, if-down, auth-up... scripts to somewhere
+other than
+/etc/ppp.  We'd like to use our custom scripts for our app w/o interfering
+with any
+customer use of PPP.
 
-This can be worked around by using ip with the "label" parameter to 
-label each interface separately, but this is undesirable, as it means 
-unique labels need to be generated.
+If that's not possible, is it possible to have some variant of if-up and
+friends for only particular
+ttyname -- the Doc shows an alternate options file for a particular ttyname,
+but not the rest
+of the stuff.  (OR... if there was a magic option to plant the default
+scripts elsewhere.)
 
-I have created a patch (largely borrowed from BSD) which uses 
-getifaddrs() instead of get_ether_addr() to get the netmask. This way, 
-the netmask for the specific address of the interface can be obtained.
-
-Is this the appropriate place to submit this patch? I looked through the 
-documentation, but found no mention of where patches should be submitted.
-
---
-James Teh
-Developer
-NetBox Blue
-
-Scanned by the NetBox from NetBox Blue
-(http://netboxblue.com/)
+Thanks!
+-- 
+View this message in context: http://www.nabble.com/if-up-et-al-script-relocation-tp15468731p15468731.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
 
