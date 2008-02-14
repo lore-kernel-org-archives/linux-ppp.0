@@ -1,7 +1,7 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Wed, 13 Feb 2008 22:20:41 +0000
+From: bfc <chappaquasuite@yahoo.com>
+Date: Thu, 14 Feb 2008 02:16:53 +0000
 Subject: Re: if-up et al script relocation
-Message-Id: <20080213222041.GE3048@hp.com>
+Message-Id: <15472625.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <15468731.post@talk.nabble.com>
 In-Reply-To: <15468731.post@talk.nabble.com>
@@ -10,19 +10,33 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-You can relocate them by producing a custom build of pppd with a changed
-value for the _PATH_IPUP define in pathnames.h.
 
-You can also write a plug-in for your application that uses the
-ip_up_hook() to call your own script using ipcp_script().  Plugins are
-selected by pppd options.
 
-Debian carries a patch to pppd that iterates through each script in
-/etc/ppp/if-up.d ... this can also be found in Ubuntu ... it is made
-more useful setting ipparam on the pppd options, and testing the value
-within the scripts.
+Thanks everyone.
 
+We've been using a custom build for some time, and wanted to get away from
+that.  Inertia being what it is, we let an
+old version linger for too long (2.4.1?) and now need to move to 2.4.4 for
+various fixes and its structureed differently enough
+to cause a bit of real work.
+
+I meant ip-up ip-down... not if-up if-down, DUH.  (I've made this mistake
+repeatedly.)
+
+The plugin is an interesting thought, though perhaps beyond the current
+scope/schedule.  At least that would let us
+continue moving forward as new pppd versions came out (we just follow RHEL
+versions).
+
+So I guess it comes down to customizing any existing ip-up/ip-down/auth-up
+scripts (based on the tty), but I do like the thought of combining all of
+our logic into one script.  That would reduce the clutter, and could look
+something like a service script.
+It can be a switch on the action, doing our little things based on the
+arguments we need.
+
+Thanks again for your responses!
 -- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+View this message in context: http://www.nabble.com/if-up-et-al-script-relocation-tp15468731p15472625.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
+
