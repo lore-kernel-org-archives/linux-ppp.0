@@ -1,52 +1,42 @@
-From: "Rami Rosen" <ramirose@gmail.com>
-Date: Tue, 05 Feb 2008 12:35:29 +0000
-Subject: Fwd: [PATCH] [PPPOL2TP] Label unused warning when CONFIG_PROC_FS is not set.
-Message-Id: <eb3ff54b0802050435n7cef121dk3ed1ad46ac12d273@mail.gmail.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="----=_Part_6632_27900867.1202214929479"
+From: "Robert P. J. Day" <rpjday@crashcourse.ca>
+Date: Sun, 17 Feb 2008 17:50:17 +0000
+Subject: Incorrect comment about userspace in if_pppox.h
+Message-Id: <alpine.LFD.1.00.0802171246590.8074@localhost.localdomain>
 List-Id: <linux-ppp.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-------=_Part_6632_27900867.1202214929479
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
----------- Forwarded message ----------
-From: Rami Rosen <ramirose@gmail.com>
-Date: Feb 5, 2008 2:15 PM
-Subject: [PATCH] [PPPOL2TP] Label unused warning when CONFIG_PROC_FS is not set.
-To: netdev@vger.kernel.org, jeff@garzik.org, linux-kernel@vger.kernel.org
+  from if_pppox.h:
 
+...
+#ifdef  __KERNEL__
+#include <linux/if_ether.h>
+#include <linux/if.h>
+#include <linux/netdevice.h>
+#include <asm/semaphore.h>
+#include <linux/ppp_channel.h>
+#endif /* __KERNEL__ */
+#include <linux/if_pppol2tp.h>
 
-Hi,
+/* For user-space programs to pick up these definitions
+ * which they wouldn't get otherwise without defining __KERNEL__
+ */
+...
 
-When CONFIG_PROC_FS is not set and CONFIG_PPPOL2TP is set,
-we have the following warning in build:
-  drivers/net/pppol2tp.c: In function 'pppol2tp_init':
-  drivers/net/pppol2tp.c:2472: warning: label
-'out_unregister_pppox_proto' defined but not used
+  that comment's placing in that header file is confusing, since it's
+not clear *what* definitions userspace would be missing if it didn't
+define __KERNEL__.  i'd be tempted to just toss that comment.
 
-This patch fixes this warning by adding appropriate #ifdef.
+rday
+--
 
-Regards,
-Rami Rosen
+====================================
+Robert P. J. Day
+Linux Consulting, Training and Annoying Kernel Pedantry:
+    Have classroom, will lecture.
 
-
-Signed-off-by: Rami Rosen <ramirose@gmail.com>
-
-------=_Part_6632_27900867.1202214929479
-Content-Type: text/plain; name=patch.txt
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_fcaexqwq0
-Content-Disposition: attachment; filename=patch.txt
-
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvbmV0L3BwcG9sMnRwLmMgYi9kcml2ZXJzL25ldC9wcHBvbDJ0
-cC5jCmluZGV4IDFiNTFiYjYuLjVhYTBhODAgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbmV0L3BwcG9s
-MnRwLmMKKysrIGIvZHJpdmVycy9uZXQvcHBwb2wydHAuYwpAQCAtMjQ2OCw5ICsyNDY4LDEwIEBA
-IHN0YXRpYyBpbnQgX19pbml0IHBwcG9sMnRwX2luaXQodm9pZCkKIAogb3V0OgogCXJldHVybiBl
-cnI7Ci0KKyNpZmRlZiBDT05GSUdfUFJPQ19GUwogb3V0X3VucmVnaXN0ZXJfcHBwb3hfcHJvdG86
-CiAJdW5yZWdpc3Rlcl9wcHBveF9wcm90byhQWF9QUk9UT19PTDJUUCk7CisjZW5kaWYKIG91dF91
-bnJlZ2lzdGVyX3BwcG9sMnRwX3Byb3RvOgogCXByb3RvX3VucmVnaXN0ZXIoJnBwcG9sMnRwX3Nr
-X3Byb3RvKTsKIAlnb3RvIG91dDsK
-------=_Part_6632_27900867.1202214929479--
+http://crashcourse.ca                          Waterloo, Ontario, CANADA
+====================================
