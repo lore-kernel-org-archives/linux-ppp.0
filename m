@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Wed, 05 Mar 2008 22:31:28 +0000
+From: bfc <chappaquasuite@yahoo.com>
+Date: Thu, 06 Mar 2008 01:43:18 +0000
 Subject: Re: hanging tcsetattr call
-Message-Id: <Pine.LNX.4.64.0803051429240.32362@info.physics.ubc.ca>
+Message-Id: <15864699.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <15861511.post@talk.nabble.com>
 In-Reply-To: <15861511.post@talk.nabble.com>
@@ -10,43 +10,39 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, 5 Mar 2008, bfc wrote:
 
->
-> It seems when my chat script times out, i'll get an "alarm" notification from
-> chat, then chat exits, and
-> pppd hangs for a while on a tcsetattr() call -- it's trying to restore the
-> terminal characteristics of
-> our serial port.
+Most of the time things work OK -- maybe the chat script needs work, may
+there's a resource issue on the
+far end, but I think it'd be interesting to know what the error case should
+look like.  If you reach the end of
+the time specified by a TIMEOUT chat line (or the default TIMEOUT), then I
+should think chat would exit
+with a non-zero, and pppd should promptly exit with an error, not hang on
+tcsetattr().  BTW, I'm not using
+persist or any other option to keep things going.
 
-Tell us how you set up yoru chat script. It should not be terminating while
-pppd is running. It should start pppd when it successfully opens the port. 
-So giving your details would be helpful.
+My pppd option file looks something like:
 
+noauth
+debug
+name foobar.com
+/dev/ttyS0 115200 crtscts
+connect '/usr/sbin/chat -f /var/opt/foobar/chat-file
 
->
-> Eventually it syslogs:
-> Mar  5 17:09:25 box pppd[21132]: tcsetattr: Interrupted system call (line
-> 1001)
->
-> Evidentally the pppd can no longer use the device, perhaps it's been reset
-> from having an session attempted
-> but not succeeding?  Anyone else ever see this problem?
->
-> Should there be any signal flow that causes this to go correctly, e.g. a
-> SIGCHLD going to the pppd?
-> Or does pppd just see a non-zero exit value from chat, and should gracefully
-> shut itself down?
+..and the chat-file:
 
-???? chat runs. If it successfully connects it starts up pppd an exits.
+ABORT "NO CARRIER"
+ABORT "NO DIALTONE"
+ABORT "ERROR"
+ABORT "BUSY"
+'' ATH
+OK AT&F0
+OK ATDT5555
+TIMEOUT 120
+CONNECT \d\c
 
-
->
-> Thanks!
->
 
 -- 
-William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
-Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
-UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
-Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
+View this message in context: http://www.nabble.com/hanging-tcsetattr-call-tp15861511p15864699.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
+
