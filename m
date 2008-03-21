@@ -1,40 +1,23 @@
-From: Martin Ereth <martin.ereth@arcor.de>
-Date: Sat, 22 Mar 2008 21:20:04 +0000
-Subject: Re: Connection between Draytek 2500We and Eee fails with "No auth
-Message-Id: <47E57804.7070609@arcor.de>
+From: Vladi Lemurov <fix@stekloprom.ru>
+Date: Fri, 21 Mar 2008 04:58:55 +0000
+Subject: pppd + static routes
+Message-Id: <47E3408F.1000609@stekloprom.ru>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <47E3EEA6.2010103@arcor.de>
-In-Reply-To: <47E3EEA6.2010103@arcor.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Hello!
 
-James Carlson wrote:
-| Martin Ereth writes:
-[...]
-| You don't have it configured, so you refuse.  That's the problem.  You
-| haven't set up your local credentials properly.
-|
-| You'll need to put correct entries into /etc/ppp/chap-secrets to make
-| this work.
-|
-| Note that you'll also want to use the pppd "user" option *instead* of
-| the "name" option.  The latter is designed for servers.  It may work
-| here, but it's not quite what you want.
+I have pppd installed and working fine, clients are windows xp.
+They connect to our server and use it as default gateway. This is ok,
+I do need them to use this pppd server as default gateway. But in
+this case all their connections go through the vpn server (default gw).
+There is a number of networks which I want to be routed through their 
+ISP default gw. We could solve it through .cmd file but this solution 
+seems to be lame. Is it possible to push the routes via ppp. I've heard
+that MS ISA server can do this (AFAIK via DHCP). I've googled a lot but
+found nothing yet. Please help.
+		Vladi Lemuroff.
 
-Thank you very much!
-I was able to resolve my problem with your help!
-
-Martin
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.7 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
-
-iD8DBQFH5XgEE5UqXaCvB8IRAs5gAKCWFe5P0i3lCiCrOj+dgchn8bLRpACgu6To
-38LrA1WaknFX1uftVnu/Jj8=bhTc
------END PGP SIGNATURE-----
