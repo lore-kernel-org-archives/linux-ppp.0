@@ -1,23 +1,21 @@
-From: Vladi Lemurov <fix@stekloprom.ru>
-Date: Fri, 21 Mar 2008 04:58:55 +0000
-Subject: pppd + static routes
-Message-Id: <47E3408F.1000609@stekloprom.ru>
+From: Charlie Brady <charlieb-linux-ppp@budge.apana.org.au>
+Date: Fri, 21 Mar 2008 16:17:35 +0000
+Subject: Re: pppd + static routes
+Message-Id: <Pine.LNX.4.64.0803211213100.24959@e-smith.charlieb.ott.istop.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <47E3408F.1000609@stekloprom.ru>
+In-Reply-To: <47E3408F.1000609@stekloprom.ru>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hello!
 
-I have pppd installed and working fine, clients are windows xp.
-They connect to our server and use it as default gateway. This is ok,
-I do need them to use this pppd server as default gateway. But in
-this case all their connections go through the vpn server (default gw).
-There is a number of networks which I want to be routed through their 
-ISP default gw. We could solve it through .cmd file but this solution 
-seems to be lame. Is it possible to push the routes via ppp. I've heard
-that MS ISA server can do this (AFAIK via DHCP). I've googled a lot but
-found nothing yet. Please help.
-		Vladi Lemuroff.
+On Fri, 21 Mar 2008, Vladi Lemurov wrote:
 
+> lame. Is it possible to push the routes via ppp.
+
+No. PPP's IPCP doesn't allow for that, although there was once a proposed 
+extension:
+
+http://ml.osdir.com/ietf.pppext/2003-05/msg00005.html
