@@ -1,7 +1,7 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Tue, 01 Apr 2008 21:53:55 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Tue, 01 Apr 2008 22:05:08 +0000
 Subject: Re: LCP Renegotiates After IP Connection
-Message-Id: <20080401215355.GB3275@hp.com>
+Message-Id: <18418.45460.618824.427439@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1207083431.8474.15.camel@pago>
 In-Reply-To: <1207083431.8474.15.camel@pago>
@@ -10,36 +10,40 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-G'day Tyler,
+James Cameron writes:
+> Now, looking at your log in more detail ... I'm surprised that you get
+> an LCP ConfReq and ConfAck sequence up front consisting of 10 pairs of
+> packets, each with the same id and magic number.  It is as if the
 
-I've had that situation on a Maxon MM-5100 USB CDMA modem.  An LCP
-ConfReq packet appears out of the blue.  My prior postings on that in
-early 2005 here ... determined that pppd is reacting properly, and that
-you have to find a way to prevent the packet from appearing.
+That's not a pppd problem.  We're sending Configure-Request (over and
+over on the normal restart timer), and the peer is sending
+Configure-Ack each time, but isn't bothering to send
+Configure-Request.
 
-(In my case the triggering condition was to send a packet out the
-interface that had a source IP address different to that negotiated.
-Once I added iptables rules to block such packets, the trigger was
-removed.)
+The peer is either confused or broken.  Based on the combination of
+symptoms, that's not too surprising.
 
-So for a wild guess, use tcpdump to ensure that nothing unexpected is
-being sent out your new network interface.
+> embedded device is echoing the packets back to your host.
 
-Now, looking at your log in more detail ... I'm surprised that you get
-an LCP ConfReq and ConfAck sequence up front consisting of 10 pairs of
-packets, each with the same id and magic number.  It is as if the
-embedded device is echoing the packets back to your host.  But I thought
-pppd had code to detect that, and there's no sign of that detection
-triggering.
+No, it's not.  It's sending Configure-Ack in response.  I don't see
+anything wrong here, other than the fact that we're stuck in AckRcvd
+state because the peer won't send Configure-Request.
 
-I suggest you use the record option and use pppdump or wireshark on the
-result, so as to find out what is happening.
+>  But I thought
+> pppd had code to detect that, and there's no sign of that detection
+> triggering.
 
-Other than that ... sounds like the embedded device wants something
-different.  If it works in a stable fashion with something else, a dump
-of that data stream may be handy for comparison.
+There's no loopback here, so nothing to detect.
+
+> I suggest you use the record option and use pppdump or wireshark on the
+> result, so as to find out what is happening.
+> 
+> Other than that ... sounds like the embedded device wants something
+> different.  If it works in a stable fashion with something else, a dump
+> of that data stream may be handy for comparison.
+
+I guess it depends on your tolerance level for broken devices and how
+much you value your time.  ;-}
 
 -- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
