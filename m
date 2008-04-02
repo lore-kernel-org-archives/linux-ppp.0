@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Tue, 01 Apr 2008 23:18:04 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 02 Apr 2008 11:09:49 +0000
 Subject: Re: LCP Renegotiates After IP Connection
-Message-Id: <Pine.LNX.4.64.0804011615540.29041@info.physics.ubc.ca>
+Message-Id: <18419.27005.527935.986623@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1207083431.8474.15.camel@pago>
 In-Reply-To: <1207083431.8474.15.camel@pago>
@@ -10,58 +10,74 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Tue, 1 Apr 2008, James Carlson wrote:
+Bill Unruh writes:
+> On Tue, 1 Apr 2008, James Carlson wrote:
+> 
+> > James Cameron writes:
+> >> Now, looking at your log in more detail ... I'm surprised that you get
+> >> an LCP ConfReq and ConfAck sequence up front consisting of 10 pairs of
+> >> packets, each with the same id and magic number.  It is as if the
+> >
+> > That's not a pppd problem.  We're sending Configure-Request (over and
+> 
+> Who is we? Are you part of this or is this a sort of royal we?
 
-> James Cameron writes:
->> Now, looking at your log in more detail ... I'm surprised that you get
->> an LCP ConfReq and ConfAck sequence up front consisting of 10 pairs of
->> packets, each with the same id and magic number.  It is as if the
->
-> That's not a pppd problem.  We're sending Configure-Request (over and
+"We" are the local node for which the original poster supplied logs.
+"They" are the other node -- the one that doesn't speak PPP so well
+and for which we have no logs.
 
-Who is we? Are you part of this or is this a sort of royal we?
+I can certainly use other words if those two offend you in some way.
 
-> over on the normal restart timer), and the peer is sending
-> Configure-Ack each time, but isn't bothering to send
-> Configure-Request.
+> > over on the normal restart timer), and the peer is sending
+> > Configure-Ack each time, but isn't bothering to send
+> > Configure-Request.
+> 
+> Sould not your side start to send a ConfReq with something other than
+> magic?
 
-Sould not your side start to send a ConfReq with something other than
-magic?
+No.
 
->
-> The peer is either confused or broken.  Based on the combination of
-> symptoms, that's not too surprising.
->
->> embedded device is echoing the packets back to your host.
->
-> No, it's not.  It's sending Configure-Ack in response.  I don't see
-> anything wrong here, other than the fact that we're stuck in AckRcvd
-> state because the peer won't send Configure-Request.
->
->>  But I thought
->> pppd had code to detect that, and there's no sign of that detection
->> triggering.
->
-> There's no loopback here, so nothing to detect.
->
->> I suggest you use the record option and use pppdump or wireshark on the
->> result, so as to find out what is happening.
->>
->> Other than that ... sounds like the embedded device wants something
->> different.  If it works in a stable fashion with something else, a dump
->> of that data stream may be handy for comparison.
->
-> I guess it depends on your tolerance level for broken devices and how
-> much you value your time.  ;-}
+When "we" send the very first Configure-Request, we're in Req-Sent
+state.  We then get Configure-Ack from the peer, and we enter Ack-Rcvd
+state.  The peer does nothing, and time passes.  Eventually, after 3
+seconds by default, we get TO+.  That (per the state machine) causes
+us to invoke action "scr" -- Send-Configure-Request -- and return to
+Req-Sent state, and the cycle starts over.
 
-Or the pressure to make it work by higherups.
+If you read section 5.1 ("Configure-Request") of RFC 1661, it
+discusses how the Identifier is chosen, and explains that
+implementations are permitted to leave the ID field unchanged.
+Retransmit can be exactly that: retransmit, don't generate a new one
+from scratch.  That's how pppd does it.
 
+The fail-safe here is TO-, the maximum restart count.  If we hit that,
+we fail with the familiar "LCP: timeout sending Config-Requests"
+message.
 
->
->
+In other words, the problem in the following sequence (shown by the
+original poster) is not in pppd; it's in the peer that isn't bothering
+to send Configure-Request, even though it's (inexplicably) able to
+respond with Configure-Ack.  My guess is that it has severe
+implementation flaws, and thus should not be used if the data to be
+carried or the time or health of the users are at all valuable.
+
+sent [LCP ConfReq id=0x1 <magic 0x913429f5>]
+rcvd [LCP ConfAck id=0x1 <magic 0x913429f5>]
+sent [LCP ConfReq id=0x1 <magic 0x913429f5>]
+rcvd [LCP ConfAck id=0x1 <magic 0x913429f5>]
+
+(But do feel free to press on if seeing grotesque bugs doesn't make
+you wary.)
+
+> > I guess it depends on your tolerance level for broken devices and how
+> > much you value your time.  ;-}
+> 
+> Or the pressure to make it work by higherups.
+
+"No problem.  Here's a purchase order for a different device that
+actually implements PPP rather than just claiming to ..."
+
+:-/
 
 -- 
-William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
-Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
-UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
-Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
