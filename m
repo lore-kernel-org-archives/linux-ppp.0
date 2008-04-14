@@ -1,39 +1,51 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Mon, 28 Apr 2008 01:27:45 +0000
-Subject: Re: Re: Re: how to use compress modul in ppp process
-Message-Id: <20080428012745.GD4399@hp.com>
+From: "Gerianne McC" <geriannemcc@gmail.com>
+Date: Mon, 14 Apr 2008 14:43:22 +0000
+Subject: What are the correct NETMASKs for multiple PPPoE interfaces in a StaticIP block?
+Message-Id: <b510d0250804140743o4528107dq834a63e4666f549d@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200804250001085508333@gmail.com>
-In-Reply-To: <200804250001085508333@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Sat, Apr 26, 2008 at 08:10:50PM +0800, C.J wrote:
-> Charlie wrote:
-> >Do you have a good reason for apparently ignoring my statement that MPPC 
-> >is usually not supported by the ppp modules in the kernel? Are you quite 
-> >sure that your kernel (or kernel modules) has been specifically patched to 
-> >support MPPC? If not, you cannot use MPPC, not matter how you configure 
-> >your client.
-> Really? But in my machine(which kernel is 2.6, Debian system) has
-> ppp_mppe module but no any patch.
+Hi,
 
-Debian kernels do not have MPPC support, because of (a) kernel.org
-kernel does not have MPPC support, and (b) the patent issue.
+I'm connecting via PPPoE to my ISP (SBC).
 
-The ppp_mppe module provides MPPE support, not MPPC support.
+I've a static IP /29 assigned to me (x.x.x.232 - x.x.x.239).
 
-> Also has other compress module such as bsd_comp, deflate.
+To 'get at' (for firewalling, etc, eventually) all the static IPs,
+I've setup in-kernel PPPoE to negotiate the connection through
+an ADSL mode config'd in bridge-mode.
 
-This is not relevant.
+I'm confused about assigning NETMASKs.
 
-> Does this mean that kernel support it and I can use it? 
+I'm making my primary ppp connection at interface
 
-No.
+       ppp0, IP address = x.x.x.238
 
--- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+and setting up interface aliases of,
+
+       ppp0:1, IP address = x.x.x.233
+       ppp0:2, IP address = x.x.x.234
+       ppp0:3, IP address = x.x.x.235
+       ppp0:4, IP address = x.x.x.236
+       ppp0:5, IP address = x.x.x.237
+
+using an intfc cloning range defined in
+"/etc/sysconfig/network-systems/ifcfg-ppp0-range0"
+
+I plan to handle each interface ppp0 + ppp0:1-5 separately in my firewall.
+
+Questions:
+
+What should be the NETMASK for the primary 'ppp0'? /29 or /32?
+And for each of the aliases?
+
+If the right answer if ppp0 -> /29, & ppp0:# -> /32, should I ALSO
+create an alias ppp0:6, IP address = x.x.x.238 (same as ppp0 !?) but
+with a /32?
+
+Thanks.
+
+Geri :-)
