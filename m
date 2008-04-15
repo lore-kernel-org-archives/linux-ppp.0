@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 15 Apr 2008 13:59:40 +0000
+From: "Gerianne McC" <geriannemcc@gmail.com>
+Date: Tue, 15 Apr 2008 17:51:00 +0000
 Subject: Re: What are the correct NETMASKs for multiple PPPoE interfaces in a StaticIP block?
-Message-Id: <18436.46284.383645.688340@gargle.gargle.HOWL>
+Message-Id: <b510d0250804151051n6aa8e97ai80c3599064743db3@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <b510d0250804140743o4528107dq834a63e4666f549d@mail.gmail.com>
 In-Reply-To: <b510d0250804140743o4528107dq834a63e4666f549d@mail.gmail.com>
@@ -10,29 +10,29 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Gerianne McC writes:
-> Hi James,
-> 
-> >  >        ppp0:5, IP address = x.x.x.237
-> >
-> >  That should work, though it's perhaps not how I'd handle it.
-> 
-> I'm definitely in 'learning mode' -- how *would* you handle it?
+Hi James,
 
-I'd likely route it -- I'd set up the PPP link on that one system,
-then configure a /29 on an available Ethernet interface for that
-address range, and route between the two.  To conserve addresses, I'd
-assign the same IP address as the local address on the Ethernet link.
-(Yes, that's legal.)
+>  I'd likely route it
+...
 
-Since there are only two interfaces, "routing" becomes quite trivial
--- all you need is a single default route pointing to the remote
-address on the PPP link, and that's something that pppd can provide
-with the "defaultroute" option.
+Got it!
 
-I'm not sure what use I'd have for a bunch of manually configured
-statics that only one machine can use.  (Perhaps I'm missing part of
-your planned deployment, though.)
+>  I'm not sure what use I'd have for a bunch of manually configured
+>  statics that only one machine can use.  (Perhaps I'm missing part of
+>  your planned deployment, though.)
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+Yes, there's "more to it"
+
+Each of my StaticIPs is configured with unique RDNS domains.
+
+My current approach is to expose each one of those StaticIPs as a
+separate (aliased) PPPoE intfc -- hence the ppp0:# -- as the external
+interfaces of a firewall.
+
+Then, I'll use the firewall (usual tools -- NAT, forwarding, etc) to
+map traffic t & through those interfaces to various servers/services
+on my LAN and DMZ segments.
+
+So, as you suspected -- it's not just "one machine"!
+
+Geri :-)
