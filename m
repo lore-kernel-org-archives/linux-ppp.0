@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Wed, 16 Apr 2008 18:30:06 +0000
-Subject: RE: Install ppp modules
-Message-Id: <Pine.LNX.4.64.0804161128430.8016@info.physics.ubc.ca>
+From: Sascha Kiefer <sk@intertivity.com>
+Date: Wed, 16 Apr 2008 20:18:42 +0000
+Subject: Re: Install ppp modules
+Message-Id: <48065F22.3060308@intertivity.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <00bb01c89fde$e9dadd10$9602a8c0@saschaxp1>
 In-Reply-To: <00bb01c89fde$e9dadd10$9602a8c0@saschaxp1>
@@ -10,32 +10,40 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, 16 Apr 2008, Charlie Brady wrote:
-
+Bill Unruh wrote:
+> On Wed, 16 Apr 2008, Charlie Brady wrote:
 >
-> On Wed, 16 Apr 2008, Bill Unruh wrote:
->
->>  On Wed, 16 Apr 2008, Charlie Brady wrote:
-> ...
->> >   Perhaps. Another possibility is that somebody upgraded the kernel rpm 
->> >   and
->> >   then hasn't yet rebooted.
 >>
->>  No idea how that would produce an installation with no modules.
+>> On Wed, 16 Apr 2008, Bill Unruh wrote:
+>>
+>>>  On Wed, 16 Apr 2008, Sascha Kiefer wrote:
+>>>
+>>> >   Hi,
+>>> > >   /lib/modules/2.6.9-023stab043.1-smp is totally empty.
+>>> > >   Centos 5, i believe
+>>
+>> That kernel is neither CentOS 4 nor CentOS 5 - but closer to the former.
+>>
+>>>  Something got really really screwed up in the installation.
+>>
+>> Perhaps. Another possibility is that somebody upgraded the kernel rpm 
+>> and then hasn't yet rebooted.
 >
-> That would produce an installation where the modules were in a different 
-> directory, corresponding to a different kernel than the one currently 
-> running.
-
-If he used rpm -U AND the kernels all had the same name under Centos. Or he
-did rpm -e on a running kernel ( which is bad).
-
-But I would have assumed that he told us all of the /lib/modules paths that
-he had, but maybe not. 
+> No idea how that would produce an installation with no modules. What 
+> does ls /lib/modules
+> give?
 >
+>
+ls /lib/modules/
+2.6.9-023stab043.1-smp
 
--- 
-William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
-Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
-UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
-Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
+(i created that dir; it was not there before
+
+ls /lib/modules/2.6.9-023stab043.1-smp/
+modules.alias   modules.ieee1394map  modules.ofmap     modules.symbols
+modules.ccwmap  modules.inputmap     modules.pcimap    modules.usbmap
+modules.dep     modules.isapnpmap    modules.seriomap
+
+(i made a  /sbin/depmod -ae)
+
+not root, but used su
