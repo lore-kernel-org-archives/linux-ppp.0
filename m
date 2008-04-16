@@ -1,31 +1,40 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Thu, 24 Apr 2008 03:50:28 +0000
-Subject: Re: question for ip packet
-Message-Id: <20080424035028.GE4395@hp.com>
+From: "Sascha Kiefer" <sk@intertivity.com>
+Date: Wed, 16 Apr 2008 16:28:31 +0000
+Subject: Install ppp modules
+Message-Id: <00bb01c89fde$e9dadd10$9602a8c0@saschaxp1>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200804241041005531107@fiberhome.com.cn>
-In-Reply-To: <200804241041005531107@fiberhome.com.cn>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, Apr 24, 2008 at 10:41:00AM +0800, ?????? wrote:
-> 1. after pppd has negotiated the link, what it tell information to the
-> kernel network ppp code, which make kernel transmit IP packets
-> directly?
+Hi,
 
-Briefly, in function tty_establish_ppp() in sys-linux.c, an ioctl(2)
-syscall sets the TTY into PPP discipline (N_PPP).  Once the interface is
-up, the kernel transmits network packets through the PPP link.
+I have a v-server; godaddy.com ist my provider
 
-> 2. where to receive the IP packets from ppp kernel?  how to know the
-> ip packet come from not other device but PPP?
+Linux ip-xxx-xxx-xxx-xxx.ip.secureserver.net 2.6.9-023stab043.1-smp #1 SMP
+Mon Mar 5 16:35:19 MSK 2007 i686 i686 i386 GNU/Linux
 
-I don't understand.  It is very clear the packets are from the PPP link
-because they can be captured from the new network interface.
+Ppp is not in the kernel
 
--- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+/usr/sbin/pppd says:
+
+/usr/sbin/pppd: This system lacks kernel support for PPP.  This could be
+because
+the PPP kernel module could not be loaded, or because PPP was not
+included in the kernel configuration.  If PPP was included as a
+module, try `/sbin/modprobe -v ppp'.  If that fails, check that
+ppp.o exists in /lib/modules/`uname -r`/net.
+See README.linux file in the ppp distribution for more details.
+
+/sbin/modprobe -v ppp says:
+FATAL: Module ppp not found.
+
+Ok. I guess i can not rebuild the kernel.
+What other options do i have?
+I'm not that fmiliar with linux so please be gentle! ;)
+
+Regards,
+Sascha
+
+
