@@ -1,29 +1,44 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 15 Apr 2008 18:46:59 +0000
-Subject: Re: What are the correct NETMASKs for multiple PPPoE interfaces in a StaticIP block?
-Message-Id: <18436.63523.943696.44714@gargle.gargle.HOWL>
+From: bfc <chappaquasuite@yahoo.com>
+Date: Fri, 18 Apr 2008 18:41:14 +0000
+Subject: Re: modem session behavior
+Message-Id: <16764006.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <b510d0250804140743o4528107dq834a63e4666f549d@mail.gmail.com>
-In-Reply-To: <b510d0250804140743o4528107dq834a63e4666f549d@mail.gmail.com>
+References: <16169308.post@talk.nabble.com>
+In-Reply-To: <16169308.post@talk.nabble.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Gerianne McC writes:
-> Each of my StaticIPs is configured with unique RDNS domains.
-> 
-> My current approach is to expose each one of those StaticIPs as a
-> separate (aliased) PPPoE intfc -- hence the ppp0:# -- as the external
-> interfaces of a firewall.
-> 
-> Then, I'll use the firewall (usual tools -- NAT, forwarding, etc) to
-> map traffic t & through those interfaces to various servers/services
-> on my LAN and DMZ segments.
 
-OK; that makes more sense.  I would have expected separate firewalls
-for each of those domains ... but this approach (though maybe unusual)
-ought to work.
+I should follow this up for search purposes.  This was Redhat bug 440121,
+a problem with the serial driver on SMP machines.  That explains all the
+troubles I posted about.  I'm sure it affects other distros, too, but
+I suspect not many people are using higher end machines for PPP?
+
+
+James Cameron-2 wrote:
+> 
+> ATH hangs up.  Perhaps the loss of CTS and DSR from the modem causes the
+> kernel and your terminal emulator to see nothing more.
+> 
+> Either configure the system to ignore the loss of CTS and DSR, or
+> configure the modem not to drop CTS and DSR during a hangup.  Then try
+> again.
+> 
+> I've no idea why you want to see anything more after ATH though.
+> 
+> -- 
+> James Cameron
+> http://ftp.hp.com.au/sigs/jc/
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> 
 
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+View this message in context: http://www.nabble.com/modem-session-behavior-tp16169308p16764006.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
+
