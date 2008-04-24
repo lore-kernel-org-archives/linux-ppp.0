@@ -1,29 +1,31 @@
-From: "=?gb2312?B?wbq67L78?=" <hjliang@fiberhome.com.cn>
-Date: Thu, 24 Apr 2008 02:41:00 +0000
-Subject: question for ip packet
-Message-Id: <200804241041005531107@fiberhome.com.cn>
+From: James Cameron <james.cameron@hp.com>
+Date: Thu, 24 Apr 2008 03:50:28 +0000
+Subject: Re: question for ip packet
+Message-Id: <20080424035028.GE4395@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <200804241041005531107@fiberhome.com.cn>
+In-Reply-To: <200804241041005531107@fiberhome.com.cn>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1254"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-bGludXgtcHBwo6zE+rrDo6EKICB0aGUgZm9sbG93aW5nIGlzIHRoZSBkZXNjcmlwdGlvbiBhYm91
-dCBwcHAgaW4gdGhlIFJlYWRtZSBvZiBsaW51eCBQUFBEOiAgICAgICAgICAKICAgdGhlIGtlcm5l
-bCBtb2R1bGUgYXNzZW1ibGVzL2Rpc2Fzc2VtYmxlcyBQUFAgZnJhbWVzLCBoYW5kbGVzIGVycm9y
-CmRldGVjdGlvbiwgYW5kIGZvcndhcmRzIHBhY2tldHMgYmV0d2VlbiB0aGUgc2VyaWFsIHBvcnQg
-YW5kIGVpdGhlciB0aGUKa2VybmVsIG5ldHdvcmsgY29kZSBvciB0aGUgdXNlci1sZXZlbCBwcm9n
-cmFtIHBwcGQuICBJUCBwYWNrZXRzIGdvCmRpcmVjdGx5IHRvIHRoZSBrZXJuZWwgbmV0d29yayBj
-b2RlLiAgU28gb25jZSBwcHBkIGhhcyBuZWdvdGlhdGVkIHRoZQpsaW5rLCBpdCBpbiBwcmFjdGlj
-ZSBsaWVzIGNvbXBsZXRlbHkgZG9ybWFudCB1bnRpbCB5b3Ugd2FudCB0byB0YWtlCnRoZSBsaW5r
-IGRvd24sIHdoZW4gaXQgbmVnb3RpYXRlcyBhIGdyYWNlZnVsIGRpc2Nvbm5lY3QuCiBxdWVzdGlv
-bjoKICAgICAgICAgMS5hZnRlciAgcHBwZCBoYXMgbmVnb3RpYXRlZCB0aGUgbGluayAsd2hhdCBp
-dCB0ZWxsIGluZm9ybWF0aW9uIHRvICB0aGUga2VybmVsIG5ldHdvcmsgcHBwIGNvZGUgLAogICAg
-ICAgIHdoaWNoICBtYWtlIGtlcm5lbCAgdHJhbnNtaXQgIElQIHBhY2tldHMgZGlyZWN0bHk/CiAg
-ICAgICAgIDIuICB3aGVyZSB0byByZWNlaXZlIHRoZSBJUCBwYWNrZXRzIGZyb20gcHBwIGtlcm5l
-bCA/ICBob3cgdG8ga25vdyB0aGUgaXAgcGFja2V0IGNvbWUgZnJvbSBub3Qgb3RoZXIgCiAgICAg
-ICAgZGV2aWNlIGJ1dCBQUFA/CiAKIAoKCQoKoaGhoaGhoaGhoaGhoaGhodbCCsDxo6EKIAkJCQkK
-CqGhoaGhoaGhoaGhoaGhoaHBurrsvvwKoaGhoaGhoaGhoaGhoaGhoWhqbGlhbmdAZmliZXJob21l
-LmNvbS5jbgqhoaGhoaGhoaGhoaGhoaGhoaGhoTIwMDgtMDQtMjQK//Tounsubscribefromthisl
-isv/sendthelinf/unsubscribelinux/ppp/inthebodyofamessagetomajordomr/vger/ker
-nen/orgMoremajordomoinfoathttp///vger/kernel/org/majordomo/infr/htmlCg==
+On Thu, Apr 24, 2008 at 10:41:00AM +0800, ?????? wrote:
+> 1. after pppd has negotiated the link, what it tell information to the
+> kernel network ppp code, which make kernel transmit IP packets
+> directly?
+
+Briefly, in function tty_establish_ppp() in sys-linux.c, an ioctl(2)
+syscall sets the TTY into PPP discipline (N_PPP).  Once the interface is
+up, the kernel transmits network packets through the PPP link.
+
+> 2. where to receive the IP packets from ppp kernel?  how to know the
+> ip packet come from not other device but PPP?
+
+I don't understand.  It is very clear the packets are from the PPP link
+because they can be captured from the new network interface.
+
+-- 
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
