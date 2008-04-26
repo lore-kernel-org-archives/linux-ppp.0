@@ -1,7 +1,7 @@
-From: Charlie Brady <charlieb-linux-ppp@budge.apana.org.au>
-Date: Fri, 25 Apr 2008 14:43:48 +0000
+From: "C.J" <c.james.cj@gmail.com>
+Date: Sat, 26 Apr 2008 12:10:50 +0000
 Subject: Re: Re: Re: how to use compress modul in ppp process
-Message-Id: <Pine.LNX.4.64.0804251039460.31508@e-smith.charlieb.ott.istop.com>
+Message-Id: <200804262010412562299@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200804250001085508333@gmail.com>
 In-Reply-To: <200804250001085508333@gmail.com>
@@ -10,27 +10,27 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi,
 
-On Fri, 25 Apr 2008, C.J wrote:
+>Why did you think that?
+Since I got a strange package with protocol field 0xFD(not 0x00FD). 
+I've read ppp_generic.txt and got that the upper layer should pass packages to ppp_generic driver with two octets protocol field. 
+So this should be finished on l2tp layer(channel preferably) or other kinds of channel.
+ 
+>l2tp is just an encapsulation layer which has nothing to do with MPPC.
+You are right.
 
-> Hi ,
->
->> I don't know that anything you have said indicates that MPPC is available.
->> It rarely is.
->
-> Sorry for mine behavior. I thought it maybe the pppol2tp driver's 
-> bug(have not handle this case).
+>Do you have a good reason for apparently ignoring my statement that MPPC 
+>is usually not supported by the ppp modules in the kernel? Are you quite 
+>sure that your kernel (or kernel modules) has been specifically patched to 
+>support MPPC? If not, you cannot use MPPC, not matter how you configure 
+>your client.
+Really? But in my machine(which kernel is 2.6, Debian system) has ppp_mppe module but no any patch. Also has other compress module such as bsd_comp, deflate.
+Does this mean that kernel support it and I can use it? 
 
-Why did you think that?
+Thanks so much for your kindly reply.
+Regards.
 
-> Now I'll ask l2tp user about that.
+--
+c.j
 
-I very much doubt that will be relevant.
-
-l2tp is just an encapsulation layer which has nothing to do with MPPC.
-
-Do you have a good reason for apparently ignoring my statement that MPPC 
-is usually not supported by the ppp modules in the kernel? Are you quite 
-sure that your kernel (or kernel modules) has been specifically patched to 
-support MPPC? If not, you cannot use MPPC, not matter how you configure 
-your client.
