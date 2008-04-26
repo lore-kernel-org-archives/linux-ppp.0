@@ -1,8 +1,10 @@
 From: "=?gb2312?B?stzTwNDA?=" <cyx@fiberhome.com.cn>
-Date: Fri, 25 Apr 2008 10:44:39 +0000
+Date: Sat, 26 Apr 2008 01:11:48 +0000
 Subject: pppd and syslogd can't work together properly
-Message-Id: <200804251844389980301@fiberhome.com.cn>
+Message-Id: <200804260911481141833@fiberhome.com.cn>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <200804251844389980301@fiberhome.com.cn>
+In-Reply-To: <200804251844389980301@fiberhome.com.cn>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
