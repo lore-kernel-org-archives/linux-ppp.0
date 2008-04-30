@@ -1,17 +1,14 @@
 From: "=?gb2312?B?stzTwNDA?=" <cyx@fiberhome.com.cn>
-Date: Sat, 26 Apr 2008 01:11:48 +0000
-Subject: pppd and syslogd can't work together properly
-Message-Id: <200804260911481141833@fiberhome.com.cn>
+Date: Wed, 30 Apr 2008 02:33:13 +0000
+Subject: where is the rx interrupt handler in Ppp_generic.c?
+Message-Id: <200804301033127661642@fiberhome.com.cn>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200804251844389980301@fiberhome.com.cn>
-In-Reply-To: <200804251844389980301@fiberhome.com.cn>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-the problem , pppoe client can't make a suceessful connection to pppoe-server that runs on RHEL5 with syslogd running. now I must kill syslogd to make pppoe-server work right. How to solve this ? BTW, I have this issue on my embeded device running Linux too,the kernel version is 2.6.18.
+Hi, all! 
 
-Thantks for your help!
-
+I'm confused when I read the kernel's ppp implement. in Ppp_generic.c,the function ppp_create_interface  register the net_device , but I can't find out whereis the rx interrupt handler. So how the net device interface such as ppp0 deal with received packets? 
 
