@@ -1,7 +1,7 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Mon, 05 May 2008 10:05:38 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 05 May 2008 11:39:09 +0000
 Subject: Re: about option_t
-Message-Id: <20080505100538.GA12474@fax.sno.cpqcorp.net>
+Message-Id: <18462.61917.294075.623474@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200805051534292917103@foxmail.com>
 In-Reply-To: <200805051534292917103@foxmail.com>
@@ -10,17 +10,34 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Mon, May 05, 2008 at 03:34:29PM +0800, cyx_mail@foxmail.com wrote:
-> Which piece of code call the void *addr. some plugins uses this
-> pointer to call functions when the plugin loads. BTW, what is the
-> exactly meaning of each value of enum opt_type struct? Thanks a lot!
+cyx_mail@foxmail.com writes:
+> Which piece of code call the void *addr.
 
-Not an interesting question, sorry.  Refer to the PPP source.  It is
-truly fascinating and well coded.  Explore references to the option_t
-typedef.  Take particular note of ->addr and where o_bool appears in the
-source.  It is amazing.  Truly, amazing.  Use a capable editor and cross
-referencing tool.  I use emacs with etags, but you might find something
-else more appropriate.
+'addr' is a type-dependent value.  It's not necessarily called as a
+function -- that only happens if the type is o_special,
+o_special_noarg, or o_wild.
+
+> some plugins uses this pointer to call functions when the plugin loads. BTW, what is the exactly meaning of each value of enum opt_type struct? Thanks a lot!
+
+The values should be relatively self-explanatory, if you read the code
+in options.c or examine any of the code that uses the options.
+
+  o_special_noarg - option is processed by a function call and
+  consumes no other arguments.
+
+  o_special - option processed by function call and consumes one more
+  argument.
+
+  o_bool - option address is a 'bool' to be set to the lower 8 bits of
+  'flags'.  If 'addr2' is set, use the OPT_A2{COPY,CLR,CLRB,OR) to
+  determine what is done to that value.
+
+  o_int - parse an integer, offset by low 8 bits of 'flags', and store
+  in 'addr'.
+
+  o_wild - special self-identifying option (no keyword; parsed by
+  appearance).  Used only for IPv4 addresses, device name, and tty
+  speed.
 
 -- 
-James Cameron
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
