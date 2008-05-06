@@ -1,39 +1,42 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Tue, 06 May 2008 06:50:44 +0000
-Subject: Re: about generic_establish_ppp()
-Message-Id: <20080506065044.GT5141@hp.com>
+From: "cyx_mail@foxmail.com" <cyx_mail@foxmail.com>
+Date: Tue, 06 May 2008 07:25:23 +0000
+Subject: Re: Re: about generic_establish_ppp()
+Message-Id: <200805061524533280202@foxmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200805061149289843689@foxmail.com>
 In-Reply-To: <200805061149289843689@foxmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-On Tue, May 06, 2008 at 11:49:29AM +0800, cyx_mail@foxmail.com wrote:
-> in generic_establish_ppp():
-> ioctl(fd, PPPIOCATTCHAN, &chindex)
-> 1.fd, is the parameter fd a channel's file descriptor or the file
-> descriptor for "/dev/ppp0"?
-
-In the PPPIOCATTCHAN, it is the fd opened from /dev/ppp, but in the
-PPPIOCGCHAN just prior it is the fd of the tty.  The same variable is
-re-used.
-
-> 2.chindex, is this a output parameter or input parameter? what is meaning?
-
-At that time, input.  In the previous ioctl, it is output.  This is
-obvious because of the error messages in each return status check, and
-because it is used uninitialised first.
-
-You would need to read the kernel source to be certain.
-
-Read the Documentation/networking/ppp_generic.txt file.  Focus on the
-definition of channels.
-
-Then read the ppp_generic.c source, concentrating on the PPPIOCGCHAN and
-PPPIOCATTCHAN matches.
-
--- 
-James Cameron
-http://ftp.hp.com.au/sigs/jc/
+aW4gbGlua19yZXF1aXJlZCgpOgpkZXZmZCA9IHRoZV9jaGFubmVsLT5jb25uZWN0KCk7CmZkX3Bw
+cCA9IHRoZV9jaGFubmVsLT5lc3RhYmxpc2hfcHBwKGRldmZkKTsgICAgICAgCgppZiB1c2VzIHJw
+LXBwcG9lIHBsdWdpbiAsIEkgdGhpbmsgZGV2ZmQgaXMgdGhlIHNvY2tldCBmZCBub3QgdGhlIGRl
+c2NyaXB0b3IgZm9yICIvZGV2L3BwcDAiCkhvdyB0byBleHBsYWluIHRoaXM/CjIwMDgtMDUtMDYg
+ICAgICAgCgoKt6K8/sjLo7ogSmFtZXMgQ2FtZXJvbiAKt6LLzcqxvOSjuiAyMDA4LTA1LTA2ICAx
+NDo1MToxNiAKytW8/sjLo7ogY3l4X21haWxAZm94bWFpbC5jb20gCrOty82juiBsaW51eC1wcHAg
+Ctb3zOKjuiBSZTogYWJvdXQgZ2VuZXJpY19lc3RhYmxpc2hfcHBwKCkgCiAKT24gVHVlLCBNYXkg
+MDYsIDIwMDggYXQgMTE6NDk6MjlBTSArMDgwMCwgY3l4X21haWxAZm94bWFpbC5jb20gd3JvdGU6
+Cj4gaW4gZ2VuZXJpY19lc3RhYmxpc2hfcHBwKCk6Cj4gaW9jdGwoZmQsIFBQUElPQ0FUVENIQU4s
+ICZjaGluZGV4KQo+IDEuZmQsIGlzIHRoZSBwYXJhbWV0ZXIgZmQgYSBjaGFubmVsJ3MgZmlsZSBk
+ZXNjcmlwdG9yIG9yIHRoZSBmaWxlCj4gZGVzY3JpcHRvciBmb3IgIi9kZXYvcHBwMCI/CkluIHRo
+ZSBQUFBJT0NBVFRDSEFOLCBpdCBpcyB0aGUgZmQgb3BlbmVkIGZyb20gL2Rldi9wcHAsIGJ1dCBp
+biB0aGUKUFBQSU9DR0NIQU4ganVzdCBwcmlvciBpdCBpcyB0aGUgZmQgb2YgdGhlIHR0eS4gIFRo
+ZSBzYW1lIHZhcmlhYmxlIGlzCnJlLXVzZWQuCj4gMi5jaGluZGV4LCBpcyB0aGlzIGEgb3V0cHV0
+IHBhcmFtZXRlciBvciBpbnB1dCBwYXJhbWV0ZXI/IHdoYXQgaXMgbWVhbmluZz8KQXQgdGhhdCB0
+aW1lLCBpbnB1dC4gIEluIHRoZSBwcmV2aW91cyBpb2N0bCwgaXQgaXMgb3V0cHV0LiAgVGhpcyBp
+cwpvYnZpb3VzIGJlY2F1c2Ugb2YgdGhlIGVycm9yIG1lc3NhZ2VzIGluIGVhY2ggcmV0dXJuIHN0
+YXR1cyBjaGVjaywgYW5kCmJlY2F1c2UgaXQgaXMgdXNlZCB1bmluaXRpYWxpc2VkIGZpcnN0LgpZ
+b3Ugd291bGQgbmVlZCB0byByZWFkIHRoZSBrZXJuZWwgc291cmNlIHRvIGJlIGNlcnRhaW4uClJl
+YWQgdGhlIERvY3VtZW50YXRpb24vbmV0d29ya2luZy9wcHBfZ2VuZXJpYy50eHQgZmlsZS4gIEZv
+Y3VzIG9uIHRoZQpkZWZpbml0aW9uIG9mIGNoYW5uZWxzLgpUaGVuIHJlYWQgdGhlIHBwcF9nZW5l
+cmljLmMgc291cmNlLCBjb25jZW50cmF0aW5nIG9uIHRoZSBQUFBJT0NHQ0hBTiBhbmQKUFBQSU9D
+QVRUQ0hBTiBtYXRjaGVzLgotLSAKSmFtZXMgQ2FtZXJvbgpodHRwOi8vZnRwLmhwLmNvbS5hdS9z
+aWdzL2pjLwotLQpUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAi
+dW5zdWJzY3JpYmUgbGludXgtcHBwIiBpbgp0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jk
+b21vQHZnZXIua2VybmVsLm9yZwpfX19fX19fX19fIE5PRDMyIDMwNzIgKDIwMDgwNTAzKSBJbmZv
+cm1hdGlvbiBfX19fX19fX19fClRoaXMgbWVzc2FnZSB3YXMgY2hlY2tlZCBieSBOT0QzMiBhbnRp
+dmlydXMgc3lzdGVtLgpodHRwOi8vd3d3Lm5vZDMyY24uY29tCv/06Lp7Lm7HK4m3n66JrYYrJYrL
+/7Hp3bYXpYp3/7p7Lm7HK4m3pYp7sf6aaf4p7YXm6HcqH2pnrLGoHraJmo6K3aJq/74Hq/5Hq53p
+/6K4DKK3pmo6K3aJqIp36GrYbbaf//74Hq/5Hq53pf6K4P5mo6K3aJqP4p36/4bZpQo=
