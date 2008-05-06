@@ -1,30 +1,48 @@
-From: Chris Fowler <cfowler@outpostsentinel.com>
-Date: Sun, 04 May 2008 17:12:04 +0000
-Subject: Re: Help! It seems that pppd can't work properly when syslogd
-Message-Id: <1209921124.22859.29.camel@shuttle>
+From: "Sascha Kiefer" <sk@intertivity.com>
+Date: Tue, 06 May 2008 07:25:56 +0000
+Subject: RE: [Poptop-server] Restrict user access
+Message-Id: <002a01c8af4a$6e329ab0$9602a8c0@saschaxp1>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200805042001189395244@foxmail.com>
-In-Reply-To: <200805042001189395244@foxmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Sun, 2008-05-04 at 13:00 -0400, James Carlson wrote:
-> Chris Fowler writes:
-> > On Sun, 2008-05-04 at 10:55 -0400, James Carlson wrote:
-> > > The common components seem to be Linux and rp-pppoe.  Pppd works fine
-> > > on other platforms and when PPPoE isn't in use.
-> > 
-> > I use pppd and pppoe on my system.
-> > 
-> > Linux firewall 2.4.18-3firewall #5 Sat Aug 24 20:33:10 EDT 2002 i586
-> > unknown
-> 
-> ... and it doesn't happen on _all_ systems, just _some_ of them.
-> Whatever it is, it's strange.
-> 
+Thanks for the hint.
+For what i would like to do i probably will go for radius.
+I know thats not the right list, but maybe you (or somebody else) can help
+me out:
+- installing radius server on the poptop server? Okay/Not okay?
+- accessing one radius server from different poptop servers - which means
+havin one authentication server for different vpn/physical servers? 
+- ensure that only my vpn servers can access the radius server? Probably ip
+restrictions?
+Any source that i might have to read?
 
-trace it.  Use strace and see what is going on.
+Regards,
+Sascha Kiefer
 
+
+-----Original Message-----
+From: james.cameron@hp.com [mailto:james.cameron@hp.com] 
+Sent: Dienstag, 6. Mai 2008 10:42
+To: Sascha Kiefer
+Cc: poptop-server@lists.sourceforge.net
+Subject: Re: [Poptop-server] Restrict user access
+
+
+This would be a pppd configuration issue, not pptpd.  I've heard of various
+ways to implement it ... a RADIUS server, or pppd ip-up.d scripting, or pppd
+authentication plugins.
+
+You would have to assume that an originating IP address identified a
+workstation (which isn't always true).
+
+But yes, certainly *possible*.  Just lacking in implementation
+documentation.
+
+-- 
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
 
