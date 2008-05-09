@@ -1,21 +1,19 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Mon, 05 May 2008 03:42:11 +0000
-Subject: Re: How and Where the pppd initialze its plugins?
-Message-Id: <20080505034211.GO5497@hp.com>
+From: "C.J" <c.james.cj@gmail.com>
+Date: Fri, 09 May 2008 16:16:10 +0000
+Subject: about the sock_fd
+Message-Id: <200805100016027033698@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200805051126252135973@foxmail.com>
-In-Reply-To: <200805051126252135973@foxmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Mon, May 05, 2008 at 11:26:36AM +0800, cyx_mail@foxmail.com wrote:
-> How and Where the pppd initialze its plugins?
+Hi list,
 
-pppd/options.c, the pppd plugin option loads a plugin and calls the
-plugin specific initialiser.  See loadplugin().
+In the pppd code, I read that it used sock_fd to set ip addr on a interface(ppp0). I want to know whether this sock_fd is a common udp socket or not. Do we  need some extra operations on this socket. Like unit_fd or dev_fd which both of them need ioctl on them.
 
--- 
-James Cameron
-http://ftp.hp.com.au/sigs/jc/
+Thx & Reg
+
+--
+cj
+
