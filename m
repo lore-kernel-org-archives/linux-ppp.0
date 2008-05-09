@@ -1,51 +1,193 @@
-From: "cyx_mail" <cyx_mail@foxmail.com>
-Date: Fri, 16 May 2008 00:43:46 +0000
-Subject: Re: Re: Re: from which hook , I can get the usrname that pppd used?
-Message-Id: <200805160843456429537@foxmail.com>
+From: rketcham <Rich.Ketcham@gmail.com>
+Date: Fri, 09 May 2008 17:56:12 +0000
+Subject: PPPd ioctl, please help!
+Message-Id: <17153241.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200805151619318592147@foxmail.com>
-In-Reply-To: <200805151619318592147@foxmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1254"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-b2ssIFRoYW5rcyBmb3IgeW91ciBwYXRpZW50LiBJJ20gZ29pbmcgdG8gd3JpdGUgYSBQUFBvRSBQ
-cm94eSBiYXNlIG9uIHRoZSBwcHBvZS1zZXJ2ZXIgYW5kIHBwcGQsIHRoZSBwcm94eSBhY3RzIGJv
-dGggYXMgInNlcnZlciIgYW5kICJjbGVudCIuIFNvIGl0IGFjcXVpcmUgdGhlIHVzcm5hbWUgZnJv
-bSB0aGUgcGVlciB3aGljaCBjb25uZWN0IHRvIHRoZSBwcm94eSBhbmQgZXN0YWJsaXNoIGEgY29u
-bmVjdGlvbiB0byB0aGUgcmVhbCBwcHBvZS1zZXJ2ZXIob3IgQkFTKSxzbyBJIGhhdmUgdG8gYWNx
-dWlyZSB0aGlzIHR3byBraW5kcyBvZiB1c2VyIG5hbWVzIGZyb20gcHBwZC4gYW55IHN1Z2dlc3Rp
-b25zPwoKCjIwMDgtMDUtMTYgICAgICAgICAgICAgICAgICAgCgpjeXhfbWFpbCAKCgoKt6K8/sjL
-o7ogSmFtZXMgQ2FybHNvbiAKt6LLzcqxvOSjuiAyMDA4LTA1LTE2ICAwMzoxNjoxNiAKytW8/sjL
-o7ogY3l4IAqzrcvNo7ogbGludXgtcHBwIArW98zio7ogUmU6IFJlOiBmcm9tIHdoaWNoIGhvb2sg
-LCBJIGNhbiBnZXQgdGhlIHVzcm5hbWUgdGhhdCBwcHBkIHVzZWQ/IAogCmN5eCB3cml0ZXM6Cj4g
-VGhhbmsgZm9yIHlvdXIgaGVscCEgdXNlcm5hbWUgdGhhdCAgSSB3YW50IHRvIGdldCBpcyB0aGUg
-b25lIHBwcGQgIHJlYWQgZnJvbSBjaGFwLXNlY3JldCBvciBwYXAtc2VjcmV0LCBJIHRoaW5rIHRo
-ZXkgbXkgYmUgc3RvcmUgaW4gYW4gZ2xvYmFsIHZhcj8KSSdtIGFmcmFpZCB5b3UncmUgc3RpbGwg
-bm90IGJlaW5nIHNwZWNpZmljIGVub3VnaC4KcHBwZCBjYW4gYmUgY29uZmlndXJlZCB0byBiZWhh
-dmUgYXMgYW4gYXV0aGVudGljYXRvciAoInNlcnZlciIpLCBhbgphdXRoZW50aWNhdGVlICgiY2xp
-ZW50IiksIGJvdGgsIG9yIG5laXRoZXIuCldoZW4gY29uZmlndXJlZCBhcyBhbiBhdXRoZW50aWNh
-dG9yLCBwcHBkIHdpbGwgYWNxdWlyZSBhIG5hbWUgZnJvbSB0aGUKcGVlciBhbmQgd2lsbCB2YWxp
-ZGF0ZSB0aGF0IGlkZW50aXR5LiAgVGhlIHJlc3VsdGluZyB2YWxpZGF0ZWQgcGVlcgpuYW1lIGFw
-cGVhcnMgaW4gdGhlIHBlZXJfYXV0aG5hbWVbXSBhcnJheS4KV2hlbiBjb25maWd1cmVkIGFzIGFu
-IGF1dGhlbnRpY2F0ZWUsIHRoZSBuYW1lIHBwcGQgcHJlc2VudHMgdG8gdGhlCnBlZXIgZm9yIGlk
-ZW50aWZpY2F0aW9uIGlzIGluIHRoZSBvdXJfbmFtZVtdIGFycmF5LgpUaGlzIGlzIGFsbCBpbiB0
-aGUgcHBwZC9hdXRoLmMgbW9kdWxlLCB3aGljaCBpcyBjb21tb24gdG8gYWxsCmF1dGhlbnRpY2F0
-aW9uIHNjaGVtZXMgKGluY2x1ZGluZyBQQVAgYW5kIENIQVApLiAgSWYgeW91J3JlIHRyeWluZyB0
-bwp3cml0ZSBjb2RlIHRoYXQgaW50ZWdyYXRlcyB3aXRoIHBwcGQsIEkgKnN0cm9uZ2x5KiByZWNv
-bW1lbmQgc3BlbmRpbmcKdGhlIHRpbWUgdG8gcmVhZCB0aHJvdWdoIHRoZSBwcHBkIHNvdXJjZSBj
-b2RlLiAgVGhlIGxheW91dCBvZiB0aGUgY29kZQppcyBmYWlybHkgbG9naWNhbCwgc28gaXQncyBu
-b3QgaGFyZCB0byByZWFkLCBhbmQgdGhlcmUgYXJlIHN1YnN0YW50aWFsCmFuZCBpbmZvcm1hdGl2
-ZSBjb21tZW50cyBpbiBtYW55IHBsYWNlcy4KKE5vdGUgdGhhdCBpdCdzIHJlYWxseSBub3QgcHJv
-cGVyIHRvIHRhbGsgYWJvdXQgInVzZXJzIiBoZXJlLiAgUFBQIGlzCmEgbGF5ZXIgdHdvIHRlY2hu
-b2xvZ3k7IHRoZXJlIGFyZSBubyAidXNlcnMuIiAgVGhlcmUgYXJlIG9ubHkgcGVlcnMuKQotLSAK
-SmFtZXMgQ2FybHNvbiAgICAgICAgIDQyLjcwM04gNzEuMDc2VyAgICAgICAgIDxjYXJsc29uakB3
-b3JraW5nY29kZS5jb20+Ci0tClRvIHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRo
-ZSBsaW5lICJ1bnN1YnNjcmliZSBsaW51eC1wcHAiIGluCnRoZSBib2R5IG9mIGEgbWVzc2FnZSB0
-byBtYWpvcmRvbW9Admdlci5rZXJuZWwub3JnCl9fX19fX19fX18gTk9EMzIgMzA5MCAoMjAwODA1
-MDkpIEluZm9ybWF0aW9uIF9fX19fX19fX18KVGhpcyBtZXNzYWdlIHdhcyBjaGVja2VkIGJ5IE5P
-RDMyIGFudGl2aXJ1cyBzeXN0ZW0uCmh0dHA6Ly93d3cubm9kMzJjbi5jb20K//Tounsubscribef
-romthislisv/sendthelinf/unsubscribelinux/ppp/inthebodyofamessagetomajordomr/
-vger/kernen/orgMoremajordomoinfoathttp///vger/kernel/org/majordomo/infr/html
-Cg==
+
+Hello,
+I wrote a char driver to interface with an SPI chip which will be connected
+(via UART) to a cell modem. The SPI to UART chip works pretty well so far
+with custom software (I can send SMS messages for intance) but I'm having
+trouble with pppd (version 2.4.4) on the Gumstix distro. 
+
+My question is what are the ioctl commands (including the expected
+responses) that I need to support in my driver.   I have included what I
+think are some of the ioctl commands into the driver and when they're called
+I have the driver print the variable name as defined in ioctls.h. The driver
+returns 0 unless it gets TCGETS at which point it returns the baud rate
+(B115200). 
+
+WRITE!  --  pppd is writing to the driver
+READ! -- pppd is reading from the driver
+INTERRUPT --- New data has arrived from the modem to the SPI
+
+Here's the driver and chat print out of when PPPd tries to connect to the
+internet via the SPI :
+
+Dec 31 16:18:10 gumstix user.info kernel: Inserting the spi_uart module.
+Dec 31 16:18:23 gumstix user.info kernel: PPP generic driver version 2.4.2
+Dec 31 16:18:23 gumstix daemon.notice pppd[404]: pppd 2.4.4 started by root,
+uid 0
+Dec 31 16:18:23 gumstix user.info kernel: Device Open: 1
+Dec 31 16:18:23 gumstix user.info kernel: The minor number: 0
+Dec 31 16:18:23 gumstix user.info kernel: The device has been opened.
+Dec 31 16:18:23 gumstix user.info kernel: TIOCMBIS
+Dec 31 16:18:23 gumstix user.info kernel: TCGETS
+Dec 31 16:18:23 gumstix user.info kernel: TCSETSF
+Dec 31 16:18:23 gumstix user.info kernel: TCGETS
+Dec 31 16:18:23 gumstix user.info kernel: TCGETS
+Dec 31 16:18:23 gumstix user.info kernel: TCGETS
+Dec 31 16:18:23 gumstix user.info kernel: TCGETS
+Dec 31 16:18:23 gumstix user.info kernel: TCGETS
+Dec 31 16:18:23 gumstix user.info kernel: TCSETS
+Dec 31 16:18:23 gumstix user.info kernel: TCGETS
+Dec 31 16:18:23 gumstix local2.info chat[406]: send (AT^M)
+Dec 31 16:18:23 gumstix user.info kernel: WRITE!
+Dec 31 16:18:23 gumstix user.info kernel: WRITE!
+Dec 31 16:18:23 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:23 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: Interrrupt from somewhere else.
+Dec 31 16:18:24 gumstix user.warn kernel:
+Dec 31 16:18:24 gumstix user.warn kernel: 15  14  13  12  11  10  9   8   7  
+6   5   4   3   2   1   0
+Dec 31 16:18:24 gumstix user.warn kernel: 1   1   1   1   1   1   1   1   1  
+1   0   0   0   0   0   1
+Dec 31 16:18:24 gumstix user.warn kernel:
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: Interrrupt from somewhere else.
+Dec 31 16:18:24 gumstix user.warn kernel:
+Dec 31 16:18:24 gumstix user.warn kernel: 15  14  13  12  11  10  9   8   7  
+6   5   4   3   2   1   0
+Dec 31 16:18:24 gumstix user.warn kernel: 1   1   1   1   1   1   1   1   1  
+1   0   0   0   0   0   1
+Dec 31 16:18:24 gumstix user.warn kernel:
+Dec 31 16:18:24 gumstix local2.info chat[406]: expect (OK)
+Dec 31 16:18:24 gumstix user.info kernel: READ!
+Dec 31 16:18:24 gumstix user.info kernel: READ!
+Dec 31 16:18:24 gumstix user.info kernel: READ!
+Dec 31 16:18:24 gumstix user.info kernel: READ!
+Dec 31 16:18:24 gumstix user.info kernel: READ!
+Dec 31 16:18:24 gumstix local2.info chat[406]: AT^M^M
+Dec 31 16:18:24 gumstix user.info kernel: READ!
+Dec 31 16:18:24 gumstix user.info kernel: READ!
+Dec 31 16:18:24 gumstix local2.info chat[406]: OK
+Dec 31 16:18:24 gumstix local2.info chat[406]:  -- got it
+Dec 31 16:18:24 gumstix local2.info chat[406]: send (ATD*99***1#^M)
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: Interrrupt from somewhere else.
+Dec 31 16:18:24 gumstix user.warn kernel:
+Dec 31 16:18:24 gumstix user.warn kernel: 15  14  13  12  11  10  9   8   7  
+6   5   4   3   2   1   0
+Dec 31 16:18:24 gumstix user.warn kernel: 1   1   1   1   1   1   1   1   1  
+1   0   0   0   0   0   1
+Dec 31 16:18:24 gumstix user.warn kernel:
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:24 gumstix user.info kernel: WRITE!
+Dec 31 16:18:24 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:25 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:25 gumstix user.info kernel: INTERRUPT
+Dec 31 16:18:25 gumstix user.info kernel: Interrrupt from somewhere else.
+Dec 31 16:18:25 gumstix user.warn kernel:
+Dec 31 16:18:25 gumstix user.warn kernel: 15  14  13  12  11  10  9   8   7  
+6   5   4   3   2   1   0
+Dec 31 16:18:25 gumstix user.warn kernel: 1   1   1   1   1   1   1   1   1  
+1   0   0   0   0   0   1
+Dec 31 16:18:25 gumstix user.warn kernel:
+Dec 31 16:18:24 gumstix local2.info chat[406]: expect (CONNECT)
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix local2.info chat[406]: ^M
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix local2.info chat[406]: ATD*99***1#^M^M
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix user.info kernel: READ!
+Dec 31 16:18:25 gumstix local2.info chat[406]: CONNECT
+Dec 31 16:18:25 gumstix local2.info chat[406]:  -- got it
+Dec 31 16:18:25 gumstix local2.info chat[406]: send (dc^M)
+Dec 31 16:18:25 gumstix user.info kernel: WRITE!
+Dec 31 16:18:25 gumstix user.info kernel: WRITE!
+Dec 31 16:18:25 gumstix user.info kernel: WRITE!
+Dec 31 16:18:25 gumstix user.info kernel: TCSETS
+Dec 31 16:18:25 gumstix user.info kernel: TCGETS
+Dec 31 16:18:25 gumstix daemon.info pppd[404]: Serial connection
+established.
+Dec 31 16:18:25 gumstix user.info kernel: TIOCMBIS
+Dec 31 16:18:25 gumstix user.info kernel: TCGETS
+Dec 31 16:18:25 gumstix user.info kernel: TCSETSF
+Dec 31 16:18:25 gumstix user.info kernel: TIOCEXCL
+Dec 31 16:18:25 gumstix user.info kernel: TIOCSETD
+Dec 31 16:18:25 gumstix user.info kernel: I don't know what the hell you
+just sent... 0x80047437
+Dec 31 16:18:25 gumstix daemon.err pppd[404]: Couldn't attach to channel 0:
+No such device or address
+Dec 31 16:18:25 gumstix user.info kernel: TIOCSETD
+Dec 31 16:18:25 gumstix user.info kernel: TCSETSF
+Dec 31 16:18:25 gumstix user.info kernel: The device has been closed.
+Dec 31 16:18:25 gumstix daemon.info pppd[404]: Exit.
+
+
+My pppd options are:
+usepeerdns
+defaultroute
+noauth
+local
+hide-password
+noipdefault
+lcp-echo-interval 30
+lcp-echo-failure 4
+
+Thanks for your help!
+Rich
+
+
+
+
+-- 
+View this message in context: http://www.nabble.com/PPPd-ioctl%2C-please-help%21-tp17153241p17153241.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
+
