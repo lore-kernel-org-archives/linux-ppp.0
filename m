@@ -1,34 +1,44 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 15 May 2008 13:57:57 +0000
-Subject: Re: from which hook , I can get the usrname that pppd used?
-Message-Id: <18476.16741.523405.846872@gargle.gargle.HOWL>
+From: "cyx" <cyx@fiberhome.com.cn>
+Date: Thu, 15 May 2008 14:53:26 +0000
+Subject: Re: Re: from which hook , I can get the usrname that pppd used?
+Message-Id: <200805152253262655367@fiberhome.com.cn>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200805151619318592147@foxmail.com>
 In-Reply-To: <200805151619318592147@foxmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-cyx_mail writes:
-> from which hook , I can get the usrname that pppd used? both chap or pap, is that a same hook?
-
-What "user name" do you want?  Inside of a script, pppd sets a bunch
-of environment variables, which are documented in the "SCRIPTS"
-section of the man page.  (You've read through the man page, correct?)
-
-If the peer authenticates itself, then PEERNAME will be set.  The
-variables ORIG_UID and PPPLOGNAME have the invoking user's UID and
-name.  The local 'name' value in use (the our_name[] array) isn't put
-into the environment.  Perhaps it could be.
-
-If you're not talking about a script, but are instead talking about a
-pppd plugin, then you can just reference the variables you want --
-our_name[] or peer_authname[].
-
-It's possible that you may need to provide more details about what
-you're attempting to do, what you've already tried to do, and what
-doesn't work in order to get more substantial guidance.
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+VGhhbmsgZm9yIHlvdXIgaGVscCEgdXNlcm5hbWUgdGhhdCAgSSB3YW50IHRvIGdldCBpcyB0aGUg
+b25lIHBwcGQgIHJlYWQgZnJvbSBjaGFwLXNlY3JldCBvciBwYXAtc2VjcmV0LCBJIHRoaW5rIHRo
+ZXkgbXkgYmUgc3RvcmUgaW4gYW4gZ2xvYmFsIHZhcj8KCgoKMjAwOC0wNS0xNSAKCgoKY3l4IAoK
+Cgq3orz+yMujuiBKYW1lcyBDYXJsc29uIAq3osvNyrG85KO6IDIwMDgtMDUtMTUgIDIxOjU2OjA5
+IArK1bz+yMujuiBjeXhfbWFpbCAKs63LzaO6IGxpbnV4LXBwcCAK1vfM4qO6IFJlOiBmcm9tIHdo
+aWNoIGhvb2sgLCBJIGNhbiBnZXQgdGhlIHVzcm5hbWUgdGhhdCBwcHBkIHVzZWQ/IAogCmN5eF9t
+YWlsIHdyaXRlczoKPiBmcm9tIHdoaWNoIGhvb2sgLCBJIGNhbiBnZXQgdGhlIHVzcm5hbWUgdGhh
+dCBwcHBkIHVzZWQ/IGJvdGggY2hhcCBvciBwYXAsIGlzIHRoYXQgYSBzYW1lIGhvb2s/CldoYXQg
+InVzZXIgbmFtZSIgZG8geW91IHdhbnQ/ICBJbnNpZGUgb2YgYSBzY3JpcHQsIHBwcGQgc2V0cyBh
+IGJ1bmNoCm9mIGVudmlyb25tZW50IHZhcmlhYmxlcywgd2hpY2ggYXJlIGRvY3VtZW50ZWQgaW4g
+dGhlICJTQ1JJUFRTIgpzZWN0aW9uIG9mIHRoZSBtYW4gcGFnZS4gIChZb3UndmUgcmVhZCB0aHJv
+dWdoIHRoZSBtYW4gcGFnZSwgY29ycmVjdD8pCklmIHRoZSBwZWVyIGF1dGhlbnRpY2F0ZXMgaXRz
+ZWxmLCB0aGVuIFBFRVJOQU1FIHdpbGwgYmUgc2V0LiAgVGhlCnZhcmlhYmxlcyBPUklHX1VJRCBh
+bmQgUFBQTE9HTkFNRSBoYXZlIHRoZSBpbnZva2luZyB1c2VyJ3MgVUlEIGFuZApuYW1lLiAgVGhl
+IGxvY2FsICduYW1lJyB2YWx1ZSBpbiB1c2UgKHRoZSBvdXJfbmFtZVtdIGFycmF5KSBpc24ndCBw
+dXQKaW50byB0aGUgZW52aXJvbm1lbnQuICBQZXJoYXBzIGl0IGNvdWxkIGJlLgpJZiB5b3UncmUg
+bm90IHRhbGtpbmcgYWJvdXQgYSBzY3JpcHQsIGJ1dCBhcmUgaW5zdGVhZCB0YWxraW5nIGFib3V0
+IGEKcHBwZCBwbHVnaW4sIHRoZW4geW91IGNhbiBqdXN0IHJlZmVyZW5jZSB0aGUgdmFyaWFibGVz
+IHlvdSB3YW50IC0tCm91cl9uYW1lW10gb3IgcGVlcl9hdXRobmFtZVtdLgpJdCdzIHBvc3NpYmxl
+IHRoYXQgeW91IG1heSBuZWVkIHRvIHByb3ZpZGUgbW9yZSBkZXRhaWxzIGFib3V0IHdoYXQKeW91
+J3JlIGF0dGVtcHRpbmcgdG8gZG8sIHdoYXQgeW91J3ZlIGFscmVhZHkgdHJpZWQgdG8gZG8sIGFu
+ZCB3aGF0CmRvZXNuJ3Qgd29yayBpbiBvcmRlciB0byBnZXQgbW9yZSBzdWJzdGFudGlhbCBndWlk
+YW5jZS4KLS0gCkphbWVzIENhcmxzb24gICAgICAgICA0Mi43MDNOIDcxLjA3NlcgICAgICAgICA8
+Y2FybHNvbmpAd29ya2luZ2NvZGUuY29tPgotLQpUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlz
+dDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtcHBwIiBpbgp0aGUgYm9keSBvZiBh
+IG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZwpNb3JlIG1ham9yZG9tbyBpbmZv
+IGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwKX19fX19fX19f
+XyBOT0QzMiAzMDQwICgyMDA4MDQxOSkgSW5mb3JtYXRpb24gX19fX19fX19fXwpUaGlzIG1lc3Nh
+Z2Ugd2FzIGNoZWNrZWQgYnkgTk9EMzIgYW50aXZpcnVzIHN5c3RlbS4KaHR0cDovL3d3dy5ub2Qz
+MmNuLmNvbQr/9Oi6ey5uxyuJt5+uia2GKyWKy/+x6d22F6WKd/+6ey5uxyuJt6WKe7H+mmn+Ke2F
+5uh3Kh9qZ6yxqB62iZqOit2iav++B6v+R6ud6f+iuAyit6ZqOit2iaiKd+hq2G22n//++B6v+R6u
+d6X+iuD+ZqOit2iaj+Kd+v+G2aUK
