@@ -1,28 +1,16 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Thu, 22 May 2008 00:56:10 +0000
-Subject: Re: Re: about pppd termination?
-Message-Id: <20080522005609.GI6559@hp.com>
+From: "cyx_mail" <cyx_mail@foxmail.com>
+Date: Fri, 16 May 2008 11:42:48 +0000
+Subject: my god , I have tried to solve this problem for 2 days!
+Message-Id: <200805161942479069943@foxmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200805211447103125311@foxmail.com>
-In-Reply-To: <200805211447103125311@foxmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, May 22, 2008 at 10:38:39AM +1000, Paul Mackerras wrote:
-> There does still remain the question of how pppd gets any
-> connector/disconnector processes to stop if pppd has to terminate for
-> other reasons, such as getting a SIGSEGV, though.
+I just want to know, can I use IPC in pppd and pppoe-server? 
+I put some code in both pppoe-server and pppd , let them communicate with each other. using shared memory. shmget functions etc.
 
-Yes, or SIGKILL.  I remember one user who habitually used -9 and then
-complained that the connector (pptp) wasn't terminating forthwith.
+But pppoe-server can't get the right data that  pppd has write to the shared memory. I have test my lib functions and it just work right. So , why ? is it chance that I can't use IPC in pppd? my god ,I have worked on this problem for 2 days :(
 
-Tracking each process created would be effective, and could remove the
-need for a process group kill.  I'm just not sure if that level of
-change is justified.
 
--- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
