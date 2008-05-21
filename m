@@ -1,21 +1,32 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Wed, 21 May 2008 06:56:00 +0000
-Subject: Re: about pppd termination?
-Message-Id: <20080521065600.GK4960@hp.com>
+From: "cyx_mail" <cyx_mail@foxmail.com>
+Date: Wed, 21 May 2008 07:10:31 +0000
+Subject: Re: Re: about pppd termination?
+Message-Id: <200805211510179064773@foxmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200805211447103125311@foxmail.com>
 In-Reply-To: <200805211447103125311@foxmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-Consider the ip_down_hook plugin hook if you want to catch either event.
-
-pppd can also be killed with SIGKILL, unhandled, and so kernel destroys
-interface.  No code in pppd executed.  No ip_down_hook executed.
-
--- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+VGhhbmsgeW91IQoJQlRXLHdoeSB0aGUgZnVuY3Rpb24gImtpbGxfbXlfcGcoc2lnKSIgZG8gYSBz
+eXN0ZW0gY2FsbCAia2lsbCgwLHNpZykiIHdpdGggdGhlIGZpcnN0IHBhcmFtZXRlciAiMCI/IHdo
+eSBub3QgdG8ga2lsbCBoaW1zZWxmIG9ubHkgYnV0IGEgd2hvbGUgZ3JvdXA/CgoyMDA4LTA1LTIx
+IApjeXhfbWFpbCAKCreivP7Iy6O6IEphbWVzIENhbWVyb24gCreiy83Ksbzko7ogMjAwOC0wNS0y
+MSAgMTQ6NTU6NDQgCsrVvP7Iy6O6IGN5eF9tYWlsIAqzrcvNo7ogbGludXgtcHBwIArW98zio7og
+UmU6IGFib3V0IHBwcGQgdGVybWluYXRpb24/IAogCkNvbnNpZGVyIHRoZSBpcF9kb3duX2hvb2sg
+cGx1Z2luIGhvb2sgaWYgeW91IHdhbnQgdG8gY2F0Y2ggZWl0aGVyIGV2ZW50LgpwcHBkIGNhbiBh
+bHNvIGJlIGtpbGxlZCB3aXRoIFNJR0tJTEwsIHVuaGFuZGxlZCwgYW5kIHNvIGtlcm5lbCBkZXN0
+cm95cwppbnRlcmZhY2UuICBObyBjb2RlIGluIHBwcGQgZXhlY3V0ZWQuICBObyBpcF9kb3duX2hv
+b2sgZXhlY3V0ZWQuCi0tIApKYW1lcyBDYW1lcm9uICAgICAgICAgICAgICAgICAgICAgICAgIGh0
+dHA6Ly9xdW96bC5uZXRyZWsub3JnLwpIUCBPcGVuIFNvdXJjZSwgVm9sdW50ZWVyICAgICAgICAg
+ICAgIGh0dHA6Ly9vcGVuc291cmNlLmhwLmNvbS8KUFBUUCBDbGllbnQgUHJvamVjdCwgUmVsZWFz
+ZSBFbmdpbmVlciBodHRwOi8vcHB0cGNsaWVudC5zb3VyY2Vmb3JnZS5uZXQvCi0tClRvIHVuc3Vi
+c2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBsaW51eC1w
+cHAiIGluCnRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwub3Jn
+Cl9fX19fX19fX18gTk9EMzIgMzA5MCAoMjAwODA1MDkpIEluZm9ybWF0aW9uIF9fX19fX19fX18K
+VGhpcyBtZXNzYWdlIHdhcyBjaGVja2VkIGJ5IE5PRDMyIGFudGl2aXJ1cyBzeXN0ZW0uCmh0dHA6
+Ly93d3cubm9kMzJjbi5jb20K//Tounsubscribefromthislisv/sendthelinf/unsubscribel
+inux/ppp/inthebodyofamessagetomajordomr/vger/kernen/orgMoremajordomoinfoatht
+tp///vger/kernel/org/majordomo/infr/htmlCg==
