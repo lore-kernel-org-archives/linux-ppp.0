@@ -1,29 +1,39 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Wed, 21 May 2008 23:12:08 +0000
-Subject: Re: issue about PIDs ?
-Message-Id: <20080521231208.GC6559@hp.com>
+From: "cyx_mail" <cyx_mail@foxmail.com>
+Date: Thu, 22 May 2008 01:27:32 +0000
+Subject: Re: Re: issue about PIDs ?
+Message-Id: <200805220927320004099@foxmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200805212131204066521@foxmail.com>
 In-Reply-To: <200805212131204066521@foxmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-On Wed, May 21, 2008 at 09:31:20PM +0800, cyx_mail wrote:
-> I modified the pppoe-server code ,and let pppoe-server spawn a pppd.
-> then let the server send SIGTEM to pppd(using kill(pppd 2's pid ,
-> SIGTEM)) not using the normal way(such as stopsession as the code
-> written). the pppoe-server and pppd die both, why?
-
-I guess you mean SIGTERM.  This matches my observation with pptpconfig.
-Workaround is to define a handler or ignore the SIGTERM signal in your
-pppoe-server code.
-
-NetworkManager-pptp also specifically handles SIGTERM and SIGINT,
-presumably for the same reason.
-
--- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+IAo+IFdvcmthcm91bmQgaXMgdG8gZGVmaW5lIGEgaGFuZGxlciBvciBpZ25vcmUgdGhlIFNJR1RF
+Uk0gc2lnbmFsIGluIHlvdXIgcHBwb2Utc2VydmVyIGNvZGUuCgp5b3UgbWVhbiBkZWZpbmUgYSBo
+YW5kbGVyIGluIHBwcGQgY29kZT8gd2hhdCBmdW5jdGlvbiBzaG91bGQgY2FsbCBpbiB0aGUgaGFu
+ZGxlciB0byBicmluZyB0aGUgcHBwZCBkb3duIGdyYWNlZnVsbHk/CgoyMDA4LTA1LTIyIAoKt6K8
+/sjLo7ogSmFtZXMgQ2FtZXJvbiAKt6LLzcqxvOSjuiAyMDA4LTA1LTIyICAwNzoxMTo1MSAKytW8
+/sjLo7ogY3l4X21haWwgCrOty82juiBsaW51eC1wcHAgCtb3zOKjuiBSZTogaXNzdWUgYWJvdXQg
+UElEcyA/IApPbiBXZWQsIE1heSAyMSwgMjAwOCBhdCAwOTozMToyMFBNICswODAwLCBjeXhfbWFp
+bCB3cm90ZToKPiBJIG1vZGlmaWVkIHRoZSBwcHBvZS1zZXJ2ZXIgY29kZSAsYW5kIGxldCBwcHBv
+ZS1zZXJ2ZXIgc3Bhd24gYSBwcHBkLgo+IHRoZW4gbGV0IHRoZSBzZXJ2ZXIgc2VuZCBTSUdURU0g
+dG8gcHBwZCh1c2luZyBraWxsKHBwcGQgMidzIHBpZCAsCj4gU0lHVEVNKSkgbm90IHVzaW5nIHRo
+ZSBub3JtYWwgd2F5KHN1Y2ggYXMgc3RvcHNlc3Npb24gYXMgdGhlIGNvZGUKPiB3cml0dGVuKS4g
+dGhlIHBwcG9lLXNlcnZlciBhbmQgcHBwZCBkaWUgYm90aCwgd2h5PwpJIGd1ZXNzIHlvdSBtZWFu
+IFNJR1RFUk0uICBUaGlzIG1hdGNoZXMgbXkgb2JzZXJ2YXRpb24gd2l0aCBwcHRwY29uZmlnLgpX
+b3JrYXJvdW5kIGlzIHRvIGRlZmluZSBhIGhhbmRsZXIgb3IgaWdub3JlIHRoZSBTSUdURVJNIHNp
+Z25hbCBpbiB5b3VyCnBwcG9lLXNlcnZlciBjb2RlLgpOZXR3b3JrTWFuYWdlci1wcHRwIGFsc28g
+c3BlY2lmaWNhbGx5IGhhbmRsZXMgU0lHVEVSTSBhbmQgU0lHSU5ULApwcmVzdW1hYmx5IGZvciB0
+aGUgc2FtZSByZWFzb24uCi0tIApKYW1lcyBDYW1lcm9uICAgICAgICAgICAgICAgICAgICAgICAg
+IGh0dHA6Ly9xdW96bC5uZXRyZWsub3JnLwpIUCBPcGVuIFNvdXJjZSwgVm9sdW50ZWVyICAgICAg
+ICAgICAgIGh0dHA6Ly9vcGVuc291cmNlLmhwLmNvbS8KUFBUUCBDbGllbnQgUHJvamVjdCwgUmVs
+ZWFzZSBFbmdpbmVlciBodHRwOi8vcHB0cGNsaWVudC5zb3VyY2Vmb3JnZS5uZXQvCi0tClRvIHVu
+c3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBsaW51
+eC1wcHAiIGluCnRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwu
+b3JnCl9fX19fX19fX18gTk9EMzIgMzA5MCAoMjAwODA1MDkpIEluZm9ybWF0aW9uIF9fX19fX19f
+X18KVGhpcyBtZXNzYWdlIHdhcyBjaGVja2VkIGJ5IE5PRDMyIGFudGl2aXJ1cyBzeXN0ZW0uCmh0
+dHA6Ly93d3cubm9kMzJjbi5jb20K//Tounsubscribefromthislisv/sendthelinf/unsubscr
+ibelinux/ppp/inthebodyofamessagetomajordomr/vger/kernen/orgMoremajordomoinfo
+athttp///vger/kernel/org/majordomo/infr/htmlCg==
