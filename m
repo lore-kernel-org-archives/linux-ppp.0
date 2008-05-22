@@ -1,42 +1,30 @@
-From: "cyx_mail" <cyx_mail@foxmail.com>
-Date: Thu, 22 May 2008 01:37:29 +0000
+From: James Cameron <james.cameron@hp.com>
+Date: Thu, 22 May 2008 02:37:01 +0000
 Subject: Re: Re: Re: issue about PIDs ?
-Message-Id: <200805220937284688839@foxmail.com>
+Message-Id: <20080522023701.GM6559@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200805212131204066521@foxmail.com>
 In-Reply-To: <200805212131204066521@foxmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1254"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-PiB5b3UgbWVhbiBkZWZpbmUgYSBoYW5kbGVyIGluIHBwcGQgY29kZT8KCj5ObywgaW4geW91ciBw
-cHBvZS1zZXJ2ZXIgY29kZS4gIEhhbmRsZSB0aGUgU0lHSU5UIGFzIGlmIGl0IGlzIGV4cGVjdGVk
-Cj5zaWRlLWVmZmVjdC4KCnNvIGlmIEkgZGVmaW5lIGEgaGFuZGxlciBpbiBwcHBkICxhbmQga2ls
-bCBwcHBkIGhpbXNlbGYgaW4gdGhlIGhhbmRsZXIgPyBjYW4gc29sdmUgdGhpcyBwcm9ibGVtPwoK
-Cj4gd2hhdCBmdW5jdGlvbiBzaG91bGQgY2FsbCBpbiB0aGUgaGFuZGxlciB0byBicmluZyB0aGUg
-cHBwZCBkb3duCj4gZ3JhY2VmdWxseT8KCj5Tb3JyeSwgSSBkb24ndCB1bmRlcnN0YW5kIHRoaXMg
-cXVlc3Rpb24uCmlmIEkgd2FudCB0byBraWxsIHBwcGQgaGltc2VsZiBpbiB0aGUgaGFuZGxlciB0
-aGF0IHVzZXIgZGVmaW5lZCBpbiBwcHBkLCB3aGF0IGZ1bmN0aW9uIHNob3VsZCBJIGNhbGwgdG8g
-a2lsbCBwcHBkIGhpbXNlbGYgc2FmZWx5PwoKCi0tLS0tLS0tLS0tLS0tLS0tLQkJCQkgCmN5eAoy
-MDA4LTA1LTIyCgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tCreivP7Iy6O6SmFtZXMgQ2FtZXJvbgq3osvNyNXG2qO6MjAwOC0wNS0y
-MiAwOToyNjo1MgrK1bz+yMujumN5eF9tYWlsCrOty82jumxpbnV4LXBwcEB2Z2VyLmtlcm5lbC5v
-cmc7IEphbWVzIENhbWVyb24K1vfM4qO6UmU6IFJlOiBpc3N1ZSBhYm91dCBQSURzID8KCk9uIFRo
-dSwgTWF5IDIyLCAyMDA4IGF0IDA5OjIzOjA2QU0gKzA4MDAsIGN5eF9tYWlsIHdyb3RlOgo+IHlv
-dSBtZWFuIGRlZmluZSBhIGhhbmRsZXIgaW4gcHBwZCBjb2RlPwoKTm8sIGluIHlvdXIgcHBwb2Ut
-c2VydmVyIGNvZGUuICBIYW5kbGUgdGhlIFNJR0lOVCBhcyBpZiBpdCBpcyBleHBlY3RlZApzaWRl
-LWVmZmVjdC4KCj4gd2hhdCBmdW5jdGlvbiBzaG91bGQgY2FsbCBpbiB0aGUgaGFuZGxlciB0byBi
-cmluZyB0aGUgcHBwZCBkb3duCj4gZ3JhY2VmdWxseT8KClNvcnJ5LCBJIGRvbid0IHVuZGVyc3Rh
-bmQgdGhpcyBxdWVzdGlvbi4KCi0tIApKYW1lcyBDYW1lcm9uICAgICAgICAgICAgICAgICAgICAg
-ICAgIGh0dHA6Ly9xdW96bC5uZXRyZWsub3JnLwpIUCBPcGVuIFNvdXJjZSwgVm9sdW50ZWVyICAg
-ICAgICAgICAgIGh0dHA6Ly9vcGVuc291cmNlLmhwLmNvbS8KUFBUUCBDbGllbnQgUHJvamVjdCwg
-UmVsZWFzZSBFbmdpbmVlciBodHRwOi8vcHB0cGNsaWVudC5zb3VyY2Vmb3JnZS5uZXQvCi0tClRv
-IHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBs
-aW51eC1wcHAiIGluCnRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJu
-ZWwub3JnCk1vcmUgbWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFq
-b3Jkb21vLWluZm8uaHRtbAoKX19fX19fX19fXyBOT0QzMiAzMDkwICgyMDA4MDUwOSkgSW5mb3Jt
-YXRpb24gX19fX19fX19fXwoKVGhpcyBtZXNzYWdlIHdhcyBjaGVja2VkIGJ5IE5PRDMyIGFudGl2
-aXJ1cyBzeXN0ZW0uCmh0dHA6Ly93d3cubm9kMzJjbi5jb20KCgr/9Oi6ey5uxyuJt5+uia2GKyWK
-y/+x6d22F6WKd/+6ey5uxyuJt6WKe7H+mmn+Ke2F5uh3Kh9qZ6yxqB62iZqOit2iav++B6v+R6ud
-6f+iuAyit6ZqOit2iaiKd+hq2G22n//++B6v+R6ud6X+iuD+ZqOit2iaj+Kd+v+G2aUK
+On Thu, May 22, 2008 at 09:37:29AM +0800, cyx_mail wrote:
+> so if I define a handler in pppd ,and kill pppd himself in the
+> handler?
+
+No, I said define a handler for SIGINT in the other program in the
+process group that you don't want terminated.  Perhaps you'd like to
+have another try at defining the problem?
+
+> if I want to kill pppd himself in the handler that user defined in
+> pppd, what function should I call to kill pppd himself safely?
+
+I wasn't suggesting adding a handler to pppd, so I don't need to answer
+this question.
+
+-- 
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
