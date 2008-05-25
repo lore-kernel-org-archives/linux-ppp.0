@@ -1,40 +1,64 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 09 May 2008 19:33:12 +0000
-Subject: Re: PPPd ioctl, please help!
-Message-Id: <18468.42744.650394.506210@gargle.gargle.HOWL>
+From: Toralf =?iso-8859-15?q?F=F6rster?= <toralf.foerster@gmx.de>
+Date: Sun, 25 May 2008 15:42:30 +0000
+Subject: [PATCH] net: fix 2 "unused variable(s)" warnings
+Message-Id: <200805251742.33354.toralf.foerster@gmx.de>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="nextPart1211735565.ArEv918XBx"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <17153241.post@talk.nabble.com>
-In-Reply-To: <17153241.post@talk.nabble.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-rketcham writes:
-> Yea, this SPI driver was my first adventure into linux drivers so I may need
-> you to lead me through some of this.
+--nextPart1211735565.ArEv918XBx
+Content-Type: text/plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-I just diagnosed the problem; you should find someone with much more
-Linux tty driver experience to help you out.
+Hello,
 
-> When I first started I thought that a
-> char driver would be exactly what I needed. Now it seems that I should have
-> created a tty driver instead but I would rather try to get around that if
-> it's possible and not too hard.
+this patch should fix 2 compiler warnings if CONFIG_INET is not set :
 
-I doubt that'd be very easy.  You'd have to replicate most of what
-tty_io already does, and that seems fairly pointless and fragile.  Any
-change to that subsystem will likely blow your driver's duplicate
-logic away.
+  CC      drivers/net/wan/syncppp.o
+drivers/net/wan/syncppp.c: In function 'sppp_cisco_input':
+drivers/net/wan/syncppp.c:767: warning: unused variable 'ifa'
+drivers/net/wan/syncppp.c:766: warning: unused variable 'in_dev'
 
-> Given my limited experience in driver design would you recommend rewriting
-> the driver as a tty driver (I'm guessing this would involve interfacing with
-> tty_io.c) or is there another way? I was hoping to handle the ioctl myself.
-> Would I need to include if_ppp.h?
+Signed-off-by: Toralf F=F6rster <toralf.foerster@gmx.de>
+=2D--
+diff --git a/drivers/net/wan/syncppp.c b/drivers/net/wan/syncppp.c
+index 29b4b94..c938d4c 100644
+=2D-- a/drivers/net/wan/syncppp.c
++++ b/drivers/net/wan/syncppp.c
+@@ -763,10 +763,10 @@ static void sppp_cisco_input (struct sppp *sp, struct=
+ sk_buff *skb)
+        case CISCO_ADDR_REQ:
+                /* Stolen from net/ipv4/devinet.c -- SIOCGIFADDR ioctl */
+                {
+=2D               struct in_device *in_dev;
+=2D               struct in_ifaddr *ifa;
+                __be32 addr =3D 0, mask =3D htonl(~0U); /* FIXME: is the ma=
+sk correct? */
+ #ifdef CONFIG_INET
++               struct in_device *in_dev;
++               struct in_ifaddr *ifa;
+                rcu_read_lock();
+                if ((in_dev =3D __in_dev_get_rcu(dev)) !=3D NULL)
+                {
+=2D-=20
+MfG/Sincerely
 
-If it were mine, I'd take a look at one of the existing tty hardware
-drivers (drivers/serial/21285.c looks simple enough) and use that as a
-template.
+Toralf F=F6rster
+pgp finger print: 7B1A 07F4 EC82 0F90 D4C2 8936 872A E508 7DB6 9DA3
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+--nextPart1211735565.ArEv918XBx
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+
+iEYEABECAAYFAkg5iOkACgkQhyrlCH22naOnhwCfWUuIEcmU1m0cyYGOiGF41Va2
+glkAoJxd1yohjUosYozpGQ5PuZpxZOQa
+=AxO8
+-----END PGP SIGNATURE-----
+
+--nextPart1211735565.ArEv918XBx--
