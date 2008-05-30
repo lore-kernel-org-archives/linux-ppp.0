@@ -1,39 +1,33 @@
-From: "cyx_mail@foxmail.com" <cyx_mail@foxmail.com>
-Date: Mon, 05 May 2008 12:43:02 +0000
-Subject: Re: Re: about option_t
-Message-Id: <200805052043009476581@foxmail.com>
+From: "C.J" <c.james.cj@gmail.com>
+Date: Fri, 30 May 2008 01:37:43 +0000
+Subject: howto setup a route by netlink socket
+Message-Id: <200805300937396564081@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200805051534292917103@foxmail.com>
-In-Reply-To: <200805051534292917103@foxmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1254"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-dGhhbmtzIGZvciB5b3UgaGVscCEKCgoyMDA4LTA1LTA1IAoKCgoKCgq3orz+yMujuiBKYW1lcyBD
-YXJsc29uIAq3osvNyrG85KO6IDIwMDgtMDUtMDUgIDE5OjQxOjIxIArK1bz+yMujuiBjeXhfbWFp
-bEBmb3htYWlsLmNvbSAKs63LzaO6IGxpbnV4LXBwcCAK1vfM4qO6IFJlOiBhYm91dCBvcHRpb25f
-dCAKIApjeXhfbWFpbEBmb3htYWlsLmNvbSB3cml0ZXM6Cj4gV2hpY2ggcGllY2Ugb2YgY29kZSBj
-YWxsIHRoZSB2b2lkICphZGRyLgonYWRkcicgaXMgYSB0eXBlLWRlcGVuZGVudCB2YWx1ZS4gIEl0
-J3Mgbm90IG5lY2Vzc2FyaWx5IGNhbGxlZCBhcyBhCmZ1bmN0aW9uIC0tIHRoYXQgb25seSBoYXBw
-ZW5zIGlmIHRoZSB0eXBlIGlzIG9fc3BlY2lhbCwKb19zcGVjaWFsX25vYXJnLCBvciBvX3dpbGQu
-Cj4gc29tZSBwbHVnaW5zIHVzZXMgdGhpcyBwb2ludGVyIHRvIGNhbGwgZnVuY3Rpb25zIHdoZW4g
-dGhlIHBsdWdpbiBsb2Fkcy4gQlRXLCB3aGF0IGlzIHRoZSBleGFjdGx5IG1lYW5pbmcgb2YgZWFj
-aCB2YWx1ZSBvZiBlbnVtIG9wdF90eXBlIHN0cnVjdD8gVGhhbmtzIGEgbG90IQpUaGUgdmFsdWVz
-IHNob3VsZCBiZSByZWxhdGl2ZWx5IHNlbGYtZXhwbGFuYXRvcnksIGlmIHlvdSByZWFkIHRoZSBj
-b2RlCmluIG9wdGlvbnMuYyBvciBleGFtaW5lIGFueSBvZiB0aGUgY29kZSB0aGF0IHVzZXMgdGhl
-IG9wdGlvbnMuCiAgb19zcGVjaWFsX25vYXJnIC0gb3B0aW9uIGlzIHByb2Nlc3NlZCBieSBhIGZ1
-bmN0aW9uIGNhbGwgYW5kCiAgY29uc3VtZXMgbm8gb3RoZXIgYXJndW1lbnRzLgogIG9fc3BlY2lh
-bCAtIG9wdGlvbiBwcm9jZXNzZWQgYnkgZnVuY3Rpb24gY2FsbCBhbmQgY29uc3VtZXMgb25lIG1v
-cmUKICBhcmd1bWVudC4KICBvX2Jvb2wgLSBvcHRpb24gYWRkcmVzcyBpcyBhICdib29sJyB0byBi
-ZSBzZXQgdG8gdGhlIGxvd2VyIDggYml0cyBvZgogICdmbGFncycuICBJZiAnYWRkcjInIGlzIHNl
-dCwgdXNlIHRoZSBPUFRfQTJ7Q09QWSxDTFIsQ0xSQixPUikgdG8KICBkZXRlcm1pbmUgd2hhdCBp
-cyBkb25lIHRvIHRoYXQgdmFsdWUuCiAgb19pbnQgLSBwYXJzZSBhbiBpbnRlZ2VyLCBvZmZzZXQg
-YnkgbG93IDggYml0cyBvZiAnZmxhZ3MnLCBhbmQgc3RvcmUKICBpbiAnYWRkcicuCiAgb193aWxk
-IC0gc3BlY2lhbCBzZWxmLWlkZW50aWZ5aW5nIG9wdGlvbiAobm8ga2V5d29yZDsgcGFyc2VkIGJ5
-CiAgYXBwZWFyYW5jZSkuICBVc2VkIG9ubHkgZm9yIElQdjQgYWRkcmVzc2VzLCBkZXZpY2UgbmFt
-ZSwgYW5kIHR0eQogIHNwZWVkLgotLSAKX19fX19fX19fXyBOT0QzMiAzMDcyICgyMDA4MDUwMykg
-SW5mb3JtYXRpb24gX19fX19fX19fXwpUaGlzIG1lc3NhZ2Ugd2FzIGNoZWNrZWQgYnkgTk9EMzIg
-YW50aXZpcnVzIHN5c3RlbS4KaHR0cDovL3d3dy5ub2QzMmNuLmNvbQr/9Oi6ey5uxyuJt5+uia2G
-KyWKy/+x6d22F6WKd/+6ey5uxyuJt6WKe7H+mmn+Ke2F5uh3Kh9qZ6yxqB62iZqOit2iav++B6v+
-R6ud6f+iuAyit6ZqOit2iaiKd+hq2G22n//++B6v+R6ud6X+iuD+ZqOit2iaj+Kd+v+G2aUK
+Hi list,
+
+I want to set a route by netlink socket but I've no idea how to do it clearly.
+
+Here I've make up a virtual interface that is ppp0 by ioctl, we want to it could communicate with peer side.
+We need just a route, right?  Netlink can do this. As there are many attributes , we need tell kernel what's our route.
+But I'm not sure what we should build as attributes that we will send to kernel.
+
+Now I get a simple talk, it contains 2 attrs follow 'rtmsg' structure. 
+ RTA_DST, 192.168.1.1 -- the peer IP
+ RTA_SRC, 192.168.1.2 -- our local IP
+And it cannot work, kernel return [No such Device] error.
+I think there are something I lost, pls help me and point out the errors.
+
+Reg
+
+
+--
+c.j
+  
+
+
+
