@@ -1,33 +1,24 @@
-From: "C.J" <c.james.cj@gmail.com>
-Date: Fri, 30 May 2008 01:37:43 +0000
-Subject: howto setup a route by netlink socket
-Message-Id: <200805300937396564081@gmail.com>
+From: James Cameron <james.cameron@hp.com>
+Date: Fri, 30 May 2008 03:36:17 +0000
+Subject: Re: howto setup a route by netlink socket
+Message-Id: <20080530033617.GD5572@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <200805300937396564081@gmail.com>
+In-Reply-To: <200805300937396564081@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi list,
+You could look at the ip(8) command source to find out how it is done,
+/sbin/ip or /bin/ip is part of the iproute package on Red Hat and Debian
+based Linux distributions.
 
-I want to set a route by netlink socket but I've no idea how to do it clearly.
+Latest version of pptp has a hack that uses system(3) to execute ip(8).
+If you can figure a way to do this without using system(3) then I'm
+quite interested.
 
-Here I've make up a virtual interface that is ppp0 by ioctl, we want to it could communicate with peer side.
-We need just a route, right?  Netlink can do this. As there are many attributes , we need tell kernel what's our route.
-But I'm not sure what we should build as attributes that we will send to kernel.
-
-Now I get a simple talk, it contains 2 attrs follow 'rtmsg' structure. 
- RTA_DST, 192.168.1.1 -- the peer IP
- RTA_SRC, 192.168.1.2 -- our local IP
-And it cannot work, kernel return [No such Device] error.
-I think there are something I lost, pls help me and point out the errors.
-
-Reg
-
-
---
-c.j
-  
-
-
-
+-- 
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
