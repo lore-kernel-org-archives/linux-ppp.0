@@ -1,22 +1,33 @@
-From: Charlie Brady <charlieb@budge.apana.org.au>
-Date: Mon, 09 Jun 2008 18:52:09 +0000
+From: "Gustavo Fernando Padovan" <gfpadovan@gmail.com>
+Date: Mon, 09 Jun 2008 19:06:17 +0000
 Subject: Re: possible bug on ppp_async
-Message-Id: <Pine.LNX.4.64.0806091450450.24024@e-smith.charlieb.ott.istop.com>
+Message-Id: <6b53b1990806091206k730cf986h9213b6c1a0bd5b15@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <6b53b1990806091123l74a06bebu34160ad08366d1a8@mail.gmail.com>
 In-Reply-To: <6b53b1990806091123l74a06bebu34160ad08366d1a8@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-
-On Mon, 9 Jun 2008, Gustavo Fernando Padovan wrote:
-
-> I found out a problem on drivers/net/ppp_async.c: I'm testing a modem
-> (Motorola SM56 Data Fax Modem [1057:3052] that uses the slmodem
-> driver) and I noted that it stopped to work correctly with kernel
-> 2.6.24 or greater. The modem connects once and at the second try it
-> becomes busy and I have to restart its driver to put it to work again.
-
-Why do you not suspect the slmodem driver?
+T24gTW9uLCBKdW4gOSwgMjAwOCBhdCAzOjUyIFBNLCBDaGFybGllIEJyYWR5CjxjaGFybGllYkBi
+dWRnZS5hcGFuYS5vcmcuYXU+IHdyb3RlOgo+Cj4gT24gTW9uLCA5IEp1biAyMDA4LCBHdXN0YXZv
+IEZlcm5hbmRvIFBhZG92YW4gd3JvdGU6Cj4KPj4gSSBmb3VuZCBvdXQgYSBwcm9ibGVtIG9uIGRy
+aXZlcnMvbmV0L3BwcF9hc3luYy5jOiBJJ20gdGVzdGluZyBhIG1vZGVtCj4+IChNb3Rvcm9sYSBT
+TTU2IERhdGEgRmF4IE1vZGVtIFsxMDU3OjMwNTJdIHRoYXQgdXNlcyB0aGUgc2xtb2RlbQo+PiBk
+cml2ZXIpIGFuZCBJIG5vdGVkIHRoYXQgaXQgc3RvcHBlZCB0byB3b3JrIGNvcnJlY3RseSB3aXRo
+IGtlcm5lbAo+PiAyLjYuMjQgb3IgZ3JlYXRlci4gVGhlIG1vZGVtIGNvbm5lY3RzIG9uY2UgYW5k
+IGF0IHRoZSBzZWNvbmQgdHJ5IGl0Cj4+IGJlY29tZXMgYnVzeSBhbmQgSSBoYXZlIHRvIHJlc3Rh
+cnQgaXRzIGRyaXZlciB0byBwdXQgaXQgdG8gd29yayBhZ2Fpbi4KPgo+IFdoeSBkbyB5b3Ugbm90
+IHN1c3BlY3QgdGhlIHNsbW9kZW0gZHJpdmVyPwpCZWNhdXNlIHRoZSBzbG1vZGVtIGRyaXZlciBp
+cyB0aGUgc2FtZS4gSXQgZGlkbid0IGNoYW5nZS4gQW5kIEkgdGhpbmsKdGhhdCBwcHAgZG9uJ3Qg
+bmVlZCB0byBrbm93IHdoYXQgaXMgdGhlIG1vZGVtIGRyaXZlciwgaXQgb25seSBrbm93cyBpdApo
+YXZlIGEgbW9kZW0uIEkgdGhpbmsuCgo+CgoKCi0tIAotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tCkd1c3Rhdm8gRmVybmFuZG8gUGFkb3ZhbgpFbmdlbmhhcmlh
+IGRlIENvbXB1dGHDp8OjbyAyMDA2CkxBUyAtIExhYm9yYXTDs3JpbyBkZSBBZG1pbmlzdHJhw6fD
+o28gZSBTZWd1cmFuw6dhIGRlIFNpc3RlbWFzCkluc3RpdHV0byBkZSBDb21wdXRhw6fDo28gLSBV
+TklDQU1QCgpnZnBhZG92YW5AZ21haWwuY29tCnJhMDYxMzE2QHN0dWRlbnRzLmljLnVuaWNhbXAu
+YnIKcGFvQGphYmJlci5vcmcKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLQoKU2VqYSBMaXZyZSwgdXNlIFNvZnR3YXJlIExpdnJlCv/06Lp7Lm7HK4m3n66JrYYrJYrL
+/7Hp3bYXpYp3/7p7Lm7HK4m3pYp7sf6aaf4p7YXm6HcqH2pnrLGoHraJmo6K3aJq/74Hq/5Hq53p
+/6K4DKK3pmo6K3aJqIp36GrYbbaf//74Hq/5Hq53pf6K4P5mo6K3aJqP4p36/4bZpQo=
