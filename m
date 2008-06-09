@@ -1,83 +1,51 @@
-From: James Chapman <jchapman@katalix.com>
-Date: Mon, 16 Jun 2008 15:22:14 +0000
-Subject: Re: ppp on 2.6.18
-Message-Id: <48568526.2080704@katalix.com>
+From: "Gustavo Fernando Padovan" <gfpadovan@gmail.com>
+Date: Mon, 09 Jun 2008 18:23:33 +0000
+Subject: possible bug on ppp_async
+Message-Id: <6b53b1990806091123l74a06bebu34160ad08366d1a8@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <a1d91fa0806160536r646577e2n7099431aa934a556@mail.gmail.com>	 <48566242.1080306@katalix.com>	 <18518.29942.550676.275051@gargle.gargle.HOWL>	 <a1d91fa0806160719u3dc02e20w50f7e02570cd21f3@mail.gmail.com>	 <48567AC8.3080404@katalix.com> <a1d91fa0806160810l6341cef5hd0ed5c1115d8a9b8@mail.gmail.com>
-In-Reply-To: <a1d91fa0806160810l6341cef5hd0ed5c1115d8a9b8@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: mohammed shareef <mdshareef@gmail.com>
-Cc: James Carlson <carlsonj@workingcode.com>, omap <linux-omap@vger.kernel.org>, linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
+To: linux-ppp@vger.kernel.org
 
-mohammed shareef wrote:
-> Dear James,
-> 
-> i did the following as u said:
-> 
-> ./configure --target=arm-linux --enable-arm --prefix=/root/Desktop/pppbuild
-> 
-> make CC=arm-linux-gcc LD=arm-linux-ld
-> 
-> it compiles without any error;
-> 
-> but when i do:
-> make install i get the following error:
-> 
-> install -d -m 755 /root/Desktop/pppbuild/sbin
-> install -d -m 755 /root/Desktop/pppbuild/share/man/man8
-> cd chat; make  install
-> make[1]: Entering directory `/root/Desktop/ppp-2.4.4/chat'
-> mkdir -p /root/Desktop/pppbuild/sbin /root/Desktop/pppbuild/share/man/man8
-> install -s -c chat /root/Desktop/pppbuild/sbin
-> strip: Unable to recognise the format of the input file
-
-You need to add STRIP=arm-linux-strip and possibly 
-INSTALL=arm-linux-install to the make install command line. If that 
-fails, hack the -s out of the install command in chat/Makefile and strip 
-the file by hand.
-
-> `/root/Desktop/pppbuild/sbin/chat'
-> install: strip process terminated abnormally
-> make[1]: *** [install] Error 1
-> make[1]: Leaving directory `/root/Desktop/ppp-2.4.4/chat'
-> make: *** [install-progs] Error 2
-> 
-> thank you
-> 
-> On Mon, Jun 16, 2008 at 8:08 PM, James Chapman <jchapman@katalix.com> wrote:
->> mohammed shareef wrote:
->>> I downloaded a 2.4.4 ppp package and did the following to compile it
->>> for my omap-osk:
->>>
->>> ./configure --host=arm-linux --prefix=/root/Desktop/pppbuild
->>> make
->>> make install
->> The configure script isn't one that supports cross compilation,
->> unfortunately. So it is likely that you built files for your native desktop
->> system.
->>
->> To cross compile, do
->> make CC=arm-linux-gcc LD=arm-linux-ld
->>
->> but make sure that your compiler uses its own version of the system headers,
->> not your desktop versions.
->>
->>
->> --
->> James Chapman
->> Katalix Systems Ltd
->> http://www.katalix.com
->> Catalysts for your Embedded Linux software development
->>
->>
-> 
-
-
--- 
-James Chapman
-Katalix Systems Ltd
-http://www.katalix.com
-Catalysts for your Embedded Linux software development
-
+SGVsbG8sCgpJIGZvdW5kIG91dCBhIHByb2JsZW0gb24gZHJpdmVycy9uZXQvcHBwX2FzeW5jLmM6
+IEknbSB0ZXN0aW5nIGEgbW9kZW0KKE1vdG9yb2xhIFNNNTYgRGF0YSBGYXggTW9kZW0gWzEwNTc6
+MzA1Ml0gdGhhdCB1c2VzIHRoZSBzbG1vZGVtCmRyaXZlcikgYW5kIEkgbm90ZWQgdGhhdCBpdCBz
+dG9wcGVkIHRvIHdvcmsgY29ycmVjdGx5IHdpdGgga2VybmVsCjIuNi4yNCBvciBncmVhdGVyLiBU
+aGUgbW9kZW0gY29ubmVjdHMgb25jZSBhbmQgYXQgdGhlIHNlY29uZCB0cnkgaXQKYmVjb21lcyBi
+dXN5IGFuZCBJIGhhdmUgdG8gcmVzdGFydCBpdHMgZHJpdmVyIHRvIHB1dCBpdCB0byB3b3JrIGFn
+YWluLgpJIHRlc3RlZCB0aGlzIG9ubHkgd2l0aCB0aGlzIGhhcmR3YXJlLCBidXQgSSB0aGluayB0
+aGlzIGlzIGEgaGFyZHdhcmUKaW5kZXBlbmRlbnQgaXNzdWUuCgpUaGVzZXMgY2hhbmdlcyBtYWtl
+IGl0IHN0b3AgdG8gd29yazoKCmh0dHA6Ly9sa21sLm9yZy9sa21sLzIwMDcvMTEvMi8xMDAKaHR0
+cDovL2xrbWwub3JnL2xrbWwvMjAwNy8xMS8yLzEzMQoKVGhlIHByb2JsZW0gb2NjdXJzIHdoZW4g
+dGhlIGV4ZWN1dGlvbiBlbnRlcnMgb24gc3dpdGNoJ3MgZGVmYXVsdCBjYXNlCmFuZCBjYWxsIHR0
+eV9tb2RlX2lvY3RsKCkgYW5kIHRoZSBjbWQgaXMgbm90IFRDR0VUUyBvciBjbWQgaXMgbm90ClRD
+R0VUQS4gSSBkb24ndCBrbm93IHdoeSB0aGlzIGhhcHBlbnMsIGJ1dCBoYXBwZW5zLiBPbiBrZXJu
+ZWwgMi42LjIzCnRoZSBzd2l0Y2gncyBkZWZhdWx0IGNhc2UgcmV0dXJucyBpbW1lZGlhdGVseSB3
+aXRoIGFuIGVycm9yLiBCdXQgbm93Cm9uIGtlcm5lbCAyLjYuMjQgYW5kIDIuNi4yNSBzd2l0Y2gn
+cyBkZWZhdWx0IGNhc2UgY2FsbAp0dHlfbW9kZV9pb2N0bCgpLiBUaGlzIGlzIHRoZSB1bmlxdWUg
+cmVhbCBjaGFuZ2UgYmV0d2VlbiB0aGUgdHdvCnZlcnNpb25zLCB0aGUgb3RoZXJzIGFyZSBvbmx5
+IGNvZGUgcmVzdHJ1Y3R1cmluZy4gVGhlbiBJIG1hZGUgdGhpcwpwYXRjaCB0byByZXZlcnQgcGFy
+dCBvZiBjaGFuZ2VzIGFuZCBtYWtlIG1vZGVtIHdvcmtzIGFnYWluLiBJIGRvbid0Cmtub3cgaWYg
+dGhpcyBpcyBjb3JyZWN0LiBJIGp1c3QgcHV0IHRoZSBtb2RlbSB0byB3b3JrLgoKLS0tIGEvZHJp
+dmVycy9uZXQvcHBwX2FzeW5jLmMuICAgICAyMDA4LTA2LTA5IDEzOjEyOjI1LjAwMDAwMDAwMCAt
+MDMwMAorKysgYi9kcml2ZXJzL25ldC9wcHBfYXN5bmMuYyAgICAgIDIwMDgtMDYtMDkgMTM6MTU6
+NTcuMDAwMDAwMDAwIC0wMzAwCkBAIC0zMDksNiArMzA5LDExIEBACiAgICAgICAgICAgICAgICBl
+cnIgPSAwOwogICAgICAgICAgICAgICAgYnJlYWs7CgorICAgICAgIGNhc2UgVENHRVRTOgorICAg
+ICAgIGNhc2UgVENHRVRBOgorICAgICAgICAgICAgICAgZXJyID0gdHR5X21vZGVfaW9jdGwodHR5
+LCBmaWxlLCBjbWQsIGFyZyk7CisgICAgICAgICAgICAgICBicmVhazsKKwogICAgICAgIGNhc2Ug
+VENGTFNIOgogICAgICAgICAgICAgICAgLyogZmx1c2ggb3VyIGJ1ZmZlcnMgYW5kIHRoZSBzZXJp
+YWwgcG9ydCdzIGJ1ZmZlciAqLwogICAgICAgICAgICAgICAgaWYgKGFyZyA9IFRDSU9GTFVTSCB8
+fCBhcmcgPSBUQ09GTFVTSCkKQEAgLTMyNCw4ICszMjksNyBAQAogICAgICAgICAgICAgICAgYnJl
+YWs7CgogICAgICAgIGRlZmF1bHQ6Ci0gICAgICAgICAgICAgICAvKiBUcnkgdGhlIHZhcmlvdXMg
+bW9kZSBpb2N0bHMgKi8KLSAgICAgICAgICAgICAgIGVyciA9IHR0eV9tb2RlX2lvY3RsKHR0eSwg
+ZmlsZSwgY21kLCBhcmcpOworICAgICAgICAgICAgICAgZXJyID0gLUVOT0lPQ1RMQ01EOwogICAg
+ICAgIH0KCiAgICAgICAgYXBfcHV0KGFwKTsKCgoKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLQpHdXN0YXZvIEZlcm5hbmRvIFBhZG92YW4KRW5nZW5oYXJpYSBkZSBD
+b21wdXRhw6fDo28gMjAwNgpMQVMgLSBMYWJvcmF0w7NyaW8gZGUgQWRtaW5pc3RyYcOnw6NvIGUg
+U2VndXJhbsOnYSBkZSBTaXN0ZW1hcwpJbnN0aXR1dG8gZGUgQ29tcHV0YcOnw6NvIC0gVU5JQ0FN
+UAoKZ2ZwYWRvdmFuQGdtYWlsLmNvbQpyYTA2MTMxNkBzdHVkZW50cy5pYy51bmljYW1wLmJyCnBh
+b0BqYWJiZXIub3JnCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0K
+ClNlamEgTGl2cmUsIHVzZSBTb2Z0d2FyZSBMaXZyZQr/9Oi6ey5uxyuJt5+uia2GKyWKy/+x6d22
+F6WKd/+6ey5uxyuJt6WKe7H+mmn+Ke2F5uh3Kh9qZ6yxqB62iZqOit2iav++B6v+R6ud6f+iuAyi
+t6ZqOit2iaiKd+hq2G22n//++B6v+R6ud6X+iuD+ZqOit2iaj+Kd+v+G2aUK
