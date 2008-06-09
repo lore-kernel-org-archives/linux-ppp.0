@@ -1,33 +1,58 @@
-From: "Gustavo Fernando Padovan" <gfpadovan@gmail.com>
-Date: Mon, 09 Jun 2008 19:06:17 +0000
+From: Alan Cox <alan@redhat.com>
+Date: Mon, 09 Jun 2008 21:03:11 +0000
 Subject: Re: possible bug on ppp_async
-Message-Id: <6b53b1990806091206k730cf986h9213b6c1a0bd5b15@mail.gmail.com>
+Message-Id: <20080609210311.GC4009@devserv.devel.redhat.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <6b53b1990806091123l74a06bebu34160ad08366d1a8@mail.gmail.com>
 In-Reply-To: <6b53b1990806091123l74a06bebu34160ad08366d1a8@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1254"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-T24gTW9uLCBKdW4gOSwgMjAwOCBhdCAzOjUyIFBNLCBDaGFybGllIEJyYWR5CjxjaGFybGllYkBi
-dWRnZS5hcGFuYS5vcmcuYXU+IHdyb3RlOgo+Cj4gT24gTW9uLCA5IEp1biAyMDA4LCBHdXN0YXZv
-IEZlcm5hbmRvIFBhZG92YW4gd3JvdGU6Cj4KPj4gSSBmb3VuZCBvdXQgYSBwcm9ibGVtIG9uIGRy
-aXZlcnMvbmV0L3BwcF9hc3luYy5jOiBJJ20gdGVzdGluZyBhIG1vZGVtCj4+IChNb3Rvcm9sYSBT
-TTU2IERhdGEgRmF4IE1vZGVtIFsxMDU3OjMwNTJdIHRoYXQgdXNlcyB0aGUgc2xtb2RlbQo+PiBk
-cml2ZXIpIGFuZCBJIG5vdGVkIHRoYXQgaXQgc3RvcHBlZCB0byB3b3JrIGNvcnJlY3RseSB3aXRo
-IGtlcm5lbAo+PiAyLjYuMjQgb3IgZ3JlYXRlci4gVGhlIG1vZGVtIGNvbm5lY3RzIG9uY2UgYW5k
-IGF0IHRoZSBzZWNvbmQgdHJ5IGl0Cj4+IGJlY29tZXMgYnVzeSBhbmQgSSBoYXZlIHRvIHJlc3Rh
-cnQgaXRzIGRyaXZlciB0byBwdXQgaXQgdG8gd29yayBhZ2Fpbi4KPgo+IFdoeSBkbyB5b3Ugbm90
-IHN1c3BlY3QgdGhlIHNsbW9kZW0gZHJpdmVyPwpCZWNhdXNlIHRoZSBzbG1vZGVtIGRyaXZlciBp
-cyB0aGUgc2FtZS4gSXQgZGlkbid0IGNoYW5nZS4gQW5kIEkgdGhpbmsKdGhhdCBwcHAgZG9uJ3Qg
-bmVlZCB0byBrbm93IHdoYXQgaXMgdGhlIG1vZGVtIGRyaXZlciwgaXQgb25seSBrbm93cyBpdApo
-YXZlIGEgbW9kZW0uIEkgdGhpbmsuCgo+CgoKCi0tIAotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tCkd1c3Rhdm8gRmVybmFuZG8gUGFkb3ZhbgpFbmdlbmhhcmlh
-IGRlIENvbXB1dGHDp8OjbyAyMDA2CkxBUyAtIExhYm9yYXTDs3JpbyBkZSBBZG1pbmlzdHJhw6fD
-o28gZSBTZWd1cmFuw6dhIGRlIFNpc3RlbWFzCkluc3RpdHV0byBkZSBDb21wdXRhw6fDo28gLSBV
-TklDQU1QCgpnZnBhZG92YW5AZ21haWwuY29tCnJhMDYxMzE2QHN0dWRlbnRzLmljLnVuaWNhbXAu
-YnIKcGFvQGphYmJlci5vcmcKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLQoKU2VqYSBMaXZyZSwgdXNlIFNvZnR3YXJlIExpdnJlCv/06Lp7Lm7HK4m3n66JrYYrJYrL
-/7Hp3bYXpYp3/7p7Lm7HK4m3pYp7sf6aaf4p7YXm6HcqH2pnrLGoHraJmo6K3aJq/74Hq/5Hq53p
-/6K4DKK3pmo6K3aJqIp36GrYbbaf//74Hq/5Hq53pf6K4P5mo6K3aJqP4p36/4bZpQo=
+On Mon, Jun 09, 2008 at 03:23:33PM -0300, Gustavo Fernando Padovan wrote:
+> The problem occurs when the execution enters on switch's default case
+> and call tty_mode_ioctl() and the cmd is not TCGETS or cmd is not
+> TCGETA. I don't know why this happens, but happens. On kernel 2.6.23
+
+Which ioctl is making it go silly ?
+
+> tty_mode_ioctl(). This is the unique real change between the two
+> versions, the others are only code restructuring. Then I made this
+> patch to revert part of changes and make modem works again. I don't
+> know if this is correct. I just put the modem to work.
+
+It's very useful as we now know what change has had the effect, but not
+what your pppd is doing which is breaking it (and thus where the real bug
+may lie)
+
+> --- a/drivers/net/ppp_async.c.     2008-06-09 13:12:25.000000000 -0300
+> +++ b/drivers/net/ppp_async.c      2008-06-09 13:15:57.000000000 -0300
+> @@ -309,6 +309,11 @@
+>                 err = 0;
+>                 break;
+> 
+> +       case TCGETS:
+> +       case TCGETA:
+> +               err = tty_mode_ioctl(tty, file, cmd, arg);
+> +               break;
+> +
+>         case TCFLSH:
+>                 /* flush our buffers and the serial port's buffer */
+>                 if (arg = TCIOFLUSH || arg = TCOFLUSH)
+> @@ -324,8 +329,7 @@
+>                 break;
+> 
+>         default:
+> -               /* Try the various mode ioctls */
+> -               err = tty_mode_ioctl(tty, file, cmd, arg);
+> +               err = -ENOIOCTLCMD;
+
+Can you add a printk to log which ioctl calls end up here and what they
+return (both with/without the patch). That should give the needed info to
+identify what is being done and returned which then breaks it.
+
+From that I can work out what is going on and what the right fix may be.
+
+Alan
+
