@@ -1,76 +1,162 @@
 From: "Gustavo Fernando Padovan" <gfpadovan@gmail.com>
-Date: Wed, 11 Jun 2008 20:55:35 +0000
+Date: Fri, 13 Jun 2008 18:01:52 +0000
 Subject: Re: possible bug on ppp_async
-Message-Id: <6b53b1990806111355j3f7ca31as8c0cc7a0b3a0b9ce@mail.gmail.com>
+Message-Id: <6b53b1990806131101o2c2d0845pc9acf9696a267886@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <6b53b1990806091123l74a06bebu34160ad08366d1a8@mail.gmail.com>
 In-Reply-To: <6b53b1990806091123l74a06bebu34160ad08366d1a8@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1254"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-T24gTW9uLCBKdW4gOSwgMjAwOCBhdCA2OjAzIFBNLCBBbGFuIENveCA8YWxhbkByZWRoYXQuY29t
-PiB3cm90ZToKPiBPbiBNb24sIEp1biAwOSwgMjAwOCBhdCAwMzoyMzozM1BNIC0wMzAwLCBHdXN0
-YXZvIEZlcm5hbmRvIFBhZG92YW4gd3JvdGU6Cj4+IFRoZSBwcm9ibGVtIG9jY3VycyB3aGVuIHRo
-ZSBleGVjdXRpb24gZW50ZXJzIG9uIHN3aXRjaCdzIGRlZmF1bHQgY2FzZQo+PiBhbmQgY2FsbCB0
-dHlfbW9kZV9pb2N0bCgpIGFuZCB0aGUgY21kIGlzIG5vdCBUQ0dFVFMgb3IgY21kIGlzIG5vdAo+
-PiBUQ0dFVEEuIEkgZG9uJ3Qga25vdyB3aHkgdGhpcyBoYXBwZW5zLCBidXQgaGFwcGVucy4gT24g
-a2VybmVsIDIuNi4yMwo+Cj4gV2hpY2ggaW9jdGwgaXMgbWFraW5nIGl0IGdvIHNpbGx5ID8KPgo+
-PiB0dHlfbW9kZV9pb2N0bCgpLiBUaGlzIGlzIHRoZSB1bmlxdWUgcmVhbCBjaGFuZ2UgYmV0d2Vl
-biB0aGUgdHdvCj4+IHZlcnNpb25zLCB0aGUgb3RoZXJzIGFyZSBvbmx5IGNvZGUgcmVzdHJ1Y3R1
-cmluZy4gVGhlbiBJIG1hZGUgdGhpcwo+PiBwYXRjaCB0byByZXZlcnQgcGFydCBvZiBjaGFuZ2Vz
-IGFuZCBtYWtlIG1vZGVtIHdvcmtzIGFnYWluLiBJIGRvbid0Cj4+IGtub3cgaWYgdGhpcyBpcyBj
-b3JyZWN0LiBJIGp1c3QgcHV0IHRoZSBtb2RlbSB0byB3b3JrLgo+Cj4gSXQncyB2ZXJ5IHVzZWZ1
-bCBhcyB3ZSBub3cga25vdyB3aGF0IGNoYW5nZSBoYXMgaGFkIHRoZSBlZmZlY3QsIGJ1dCBub3QK
-PiB3aGF0IHlvdXIgcHBwZCBpcyBkb2luZyB3aGljaCBpcyBicmVha2luZyBpdCAoYW5kIHRodXMg
-d2hlcmUgdGhlIHJlYWwgYnVnCj4gbWF5IGxpZSkKPgo+PiAtLS0gYS9kcml2ZXJzL25ldC9wcHBf
-YXN5bmMuYy4gICAgIDIwMDgtMDYtMDkgMTM6MTI6MjUuMDAwMDAwMDAwIC0wMzAwCj4+ICsrKyBi
-L2RyaXZlcnMvbmV0L3BwcF9hc3luYy5jICAgICAgMjAwOC0wNi0wOSAxMzoxNTo1Ny4wMDAwMDAw
-MDAgLTAzMDAKPj4gQEAgLTMwOSw2ICszMDksMTEgQEAKPj4gICAgICAgICAgICAgICAgIGVyciA9
-IDA7Cj4+ICAgICAgICAgICAgICAgICBicmVhazsKPj4KPj4gKyAgICAgICBjYXNlIFRDR0VUUzoK
-Pj4gKyAgICAgICBjYXNlIFRDR0VUQToKPj4gKyAgICAgICAgICAgICAgIGVyciA9IHR0eV9tb2Rl
-X2lvY3RsKHR0eSwgZmlsZSwgY21kLCBhcmcpOwo+PiArICAgICAgICAgICAgICAgYnJlYWs7Cj4+
-ICsKPj4gICAgICAgICBjYXNlIFRDRkxTSDoKPj4gICAgICAgICAgICAgICAgIC8qIGZsdXNoIG91
-ciBidWZmZXJzIGFuZCB0aGUgc2VyaWFsIHBvcnQncyBidWZmZXIgKi8KPj4gICAgICAgICAgICAg
-ICAgIGlmIChhcmcgPSBUQ0lPRkxVU0ggfHwgYXJnID0gVENPRkxVU0gpCj4+IEBAIC0zMjQsOCAr
-MzI5LDcgQEAKPj4gICAgICAgICAgICAgICAgIGJyZWFrOwo+Pgo+PiAgICAgICAgIGRlZmF1bHQ6
-Cj4+IC0gICAgICAgICAgICAgICAvKiBUcnkgdGhlIHZhcmlvdXMgbW9kZSBpb2N0bHMgKi8KPj4g
-LSAgICAgICAgICAgICAgIGVyciA9IHR0eV9tb2RlX2lvY3RsKHR0eSwgZmlsZSwgY21kLCBhcmcp
-Owo+PiArICAgICAgICAgICAgICAgZXJyID0gLUVOT0lPQ1RMQ01EOwo+Cj4gQ2FuIHlvdSBhZGQg
-YSBwcmludGsgdG8gbG9nIHdoaWNoIGlvY3RsIGNhbGxzIGVuZCB1cCBoZXJlIGFuZCB3aGF0IHRo
-ZXkKPiByZXR1cm4gKGJvdGggd2l0aC93aXRob3V0IHRoZSBwYXRjaCkuIFRoYXQgc2hvdWxkIGdp
-dmUgdGhlIG5lZWRlZCBpbmZvIHRvCj4gaWRlbnRpZnkgd2hhdCBpcyBiZWluZyBkb25lIGFuZCBy
-ZXR1cm5lZCB3aGljaCB0aGVuIGJyZWFrcyBpdC4KCkkgbWFkZSB0d28gdHJpZXMgdG8gY29ubmVj
-dCB3aXRoIGFuZCB3aXRob3V0IHRoZSBwYXRjaC4gVGhlIHRyaWVzIGFyZQpzZXBhcmF0ZWQgYnkg
-YSBibGFuayBsaW5lLgoKRGVidWcgd2l0aG91dCB0aGUgcGF0Y2g6CiBbIDU5NTUuNDY1MzU3XSBj
-bWQgPSAyMTUwNiAoVENTRVRTKQogWyA1OTU1LjQ2NTM2OV0gZXJyID0gMAogWyA1OTU1LjQ2NTM3
-Ml0gLS0tLS0tLS0tLQoKIFsgNTk4Ny4wNTg4NzFdIFRDR0VUUwogWyA1OTg3LjA1OTA5NF0gZXJy
-ID0gMAogWyA1OTg3LjA1OTI3Nl0gLS0tLS0tLS0tLQogWyA1OTg3LjA1OTY0NV0gVENHRVRTCiBb
-IDU5ODcuMDU5Nzg2XSBlcnIgPSAwCiBbIDU5ODcuMDU5ODYzXSAtLS0tLS0tLS0tCiBbIDU5ODcu
-MDYwMDA4XSBjbWQgPSAyMTUzNCAoVElPQ0dTRVJJQUwpCiBbIDU5ODcuMDYwMTE3XSBlcnIgPSAt
-NTE1ICAgICAoLUVOT0lPQ1RMQ01MKQogWyA1OTg3LjA2MDE5NF0gLS0tLS0tLS0tLQogWyA1OTg3
-LjA2MDI4M10gY21kID0gMjE1MDYKIFsgNTk4Ny4wNjAzNzFdIGVyciA9IDAKIFsgNTk4Ny4wNjA0
-NDRdIC0tLS0tLS0tLS0KIFsgNTk4Ny4xMTA2MTldIGNtZCA9IDIxNTA2CiBbIDU5ODcuMTEwNzYw
-XSBlcnIgPSAwCiBbIDU5ODcuMTEwODM2XSAtLS0tLS0tLS0tCiBbIDU5ODcuMTEwOTQ5XSBjbWQg
-PSAyMTUwNgogWyA1OTg3LjExMTAzN10gZXJyID0gMAogWyA1OTg3LjExMTEwOV0gLS0tLS0tLS0t
-LQogWyA1OTg3LjExMTE5Ml0gVENHRVRTCiBbIDU5ODcuMTExMjcyXSBlcnIgPSAwCiBbIDU5ODcu
-MTExMzQ1XSAtLS0tLS0tLS0tCiBbIDYwMDAuMzM0NDgzXSBjbWQgPSAyMTUwNgogWyA2MDAwLjMz
-NDQ5NF0gZXJyID0gMAogWyA2MDAwLjMzNDQ5Nl0gLS0tLS0tLS0tLQoKRGVidWcgd2l0aCB0aGUg
-cGF0Y2g6ClsgODIwNy44NjUyMDRdIGNtZCA9IDIxNTA2IChUQ1NFVFMpClsgODIwNy44NjUyMTNd
-IGVyciA9IC01MTUKWyA4MjA3Ljg2NTIxNV0gLS0tLS0tLS0tLQoKWyA4ODY2LjkzOTA3NV0gY21k
-ID0gMjE1MDYKWyA4ODY2LjkzOTA4NF0gZXJyID0gLTUxNQpbIDg4NjYuOTM5MDg2XSAtLS0tLS0t
-LS0tCgpUaGUgcHJvYmxlbSBzZWVtcyB0aGUgaW9jdGwgVENTRVRTLCB3aXRoIHRoZSBwYXRjaCAo
-YW5kIG9uIGtlcm5lbAoyLjYuMjMpIGl0IHJldHVybnMgaW1tZWRpYXRlbHksIGFuZCBvbiBrZXJu
-ZWwgMi42LjI0ICh3aXRob3V0IHRoZQpwYXRjaCkgaXQgZ29lcyB0byB0dHlfbW9kZV9pb2N0bCgp
-LgoKPgo+IEZyb20gdGhhdCBJIGNhbiB3b3JrIG91dCB3aGF0IGlzIGdvaW5nIG9uIGFuZCB3aGF0
-IHRoZSByaWdodCBmaXggbWF5IGJlLgo+Cj4gQWxhbgo+Cj4KCgoKLS0gCi0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KR3VzdGF2byBGZXJuYW5kbyBQYWRvdmFu
-CkVuZ2VuaGFyaWEgZGUgQ29tcHV0YcOnw6NvIDIwMDYKTEFTIC0gTGFib3JhdMOzcmlvIGRlIEFk
-bWluaXN0cmHDp8OjbyBlIFNlZ3VyYW7Dp2EgZGUgU2lzdGVtYXMKSW5zdGl0dXRvIGRlIENvbXB1
-dGHDp8OjbyAtIFVOSUNBTVAKCmdmcGFkb3ZhbkBnbWFpbC5jb20KcmEwNjEzMTZAc3R1ZGVudHMu
-aWMudW5pY2FtcC5icgpwYW9AamFiYmVyLm9yZwotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tCgpTZWphIExpdnJlLCB1c2UgU29mdHdhcmUgTGl2cmUK//Tounsubscr
-ibefromthislisv/sendthelinf/unsubscribelinux/ppp/inthebodyofamessagetomajord
-omr/vger/kernen/orgMoremajordomoinfoathttp///vger/kernel/org/majordomo/infr/
-htmlCg==
+On Wed, Jun 11, 2008 at 5:55 PM, Gustavo Fernando Padovan
+<gfpadovan@gmail.com> wrote:
+> On Mon, Jun 9, 2008 at 6:03 PM, Alan Cox <alan@redhat.com> wrote:
+>> On Mon, Jun 09, 2008 at 03:23:33PM -0300, Gustavo Fernando Padovan wrote:
+>>> The problem occurs when the execution enters on switch's default case
+>>> and call tty_mode_ioctl() and the cmd is not TCGETS or cmd is not
+>>> TCGETA. I don't know why this happens, but happens. On kernel 2.6.23
+>>
+>> Which ioctl is making it go silly ?
+>>
+>>> tty_mode_ioctl(). This is the unique real change between the two
+>>> versions, the others are only code restructuring. Then I made this
+>>> patch to revert part of changes and make modem works again. I don't
+>>> know if this is correct. I just put the modem to work.
+>>
+>> It's very useful as we now know what change has had the effect, but not
+>> what your pppd is doing which is breaking it (and thus where the real bug
+>> may lie)
+>>
+>>> --- a/drivers/net/ppp_async.c.     2008-06-09 13:12:25.000000000 -0300
+>>> +++ b/drivers/net/ppp_async.c      2008-06-09 13:15:57.000000000 -0300
+>>> @@ -309,6 +309,11 @@
+>>>                 err =3D 0;
+>>>                 break;
+>>>
+>>> +       case TCGETS:
+>>> +       case TCGETA:
+>>> +               err =3D tty_mode_ioctl(tty, file, cmd, arg);
+>>> +               break;
+>>> +
+>>>         case TCFLSH:
+>>>                 /* flush our buffers and the serial port's buffer */
+>>>                 if (arg =3D TCIOFLUSH || arg =3D TCOFLUSH)
+>>> @@ -324,8 +329,7 @@
+>>>                 break;
+>>>
+>>>         default:
+>>> -               /* Try the various mode ioctls */
+>>> -               err =3D tty_mode_ioctl(tty, file, cmd, arg);
+>>> +               err =3D -ENOIOCTLCMD;
+>>
+>> Can you add a printk to log which ioctl calls end up here and what they
+>> return (both with/without the patch). That should give the needed info to
+>> identify what is being done and returned which then breaks it.
+>
+> I made two tries to connect with and without the patch. The tries are
+> separated by a blank line.
+>
+> Debug without the patch:
+>  [ 5955.465357] cmd =3D 21506 (TCSETS)
+>  [ 5955.465369] err =3D 0
+>  [ 5955.465372] ----------
+>
+>  [ 5987.058871] TCGETS
+>  [ 5987.059094] err =3D 0
+>  [ 5987.059276] ----------
+>  [ 5987.059645] TCGETS
+>  [ 5987.059786] err =3D 0
+>  [ 5987.059863] ----------
+>  [ 5987.060008] cmd =3D 21534 (TIOCGSERIAL)
+>  [ 5987.060117] err =3D -515     (-ENOIOCTLCML)
+>  [ 5987.060194] ----------
+>  [ 5987.060283] cmd =3D 21506
+>  [ 5987.060371] err =3D 0
+>  [ 5987.060444] ----------
+>  [ 5987.110619] cmd =3D 21506
+>  [ 5987.110760] err =3D 0
+>  [ 5987.110836] ----------
+>  [ 5987.110949] cmd =3D 21506
+>  [ 5987.111037] err =3D 0
+>  [ 5987.111109] ----------
+>  [ 5987.111192] TCGETS
+>  [ 5987.111272] err =3D 0
+>  [ 5987.111345] ----------
+>  [ 6000.334483] cmd =3D 21506
+>  [ 6000.334494] err =3D 0
+>  [ 6000.334496] ----------
+>
+> Debug with the patch:
+> [ 8207.865204] cmd =3D 21506 (TCSETS)
+> [ 8207.865213] err =3D -515
+> [ 8207.865215] ----------
+>
+> [ 8866.939075] cmd =3D 21506
+> [ 8866.939084] err =3D -515
+> [ 8866.939086] ----------
+>
+> The problem seems the ioctl TCSETS, with the patch (and on kernel
+> 2.6.23) it returns immediately, and on kernel 2.6.24 (without the
+> patch) it goes to tty_mode_ioctl().
+
+This patch also resolves the 'bug'. It intercepts TCSETS on
+switch(cmd) and return -ENOIOCTLCMD;
+
+
+--- a/drivers/net/ppp_async.c        2008-06-13 11:59:10.000000000 -0300
++++ b/drivers/net/ppp_async.c     2008-06-13 11:58:34.000000000 -0300
+@@ -323,6 +323,10 @@
+                err =3D 0;
+                break;
+
++    case TCSETS:
++        err =3D -ENOIOCTLCMD;
++        break;
++
+        default:
+                /* Try the various mode ioctls */
+                err =3D tty_mode_ioctl(tty, file, cmd, arg);
+
+
+>
+>>
+>> From that I can work out what is going on and what the right fix may be.
+>>
+>> Alan
+>>
+>>
+>
+>
+>
+> --
+> ----------------------------------------------
+> Gustavo Fernando Padovan
+> Engenharia de Computa=E7=E3o 2006
+> LAS - Laborat=F3rio de Administra=E7=E3o e Seguran=E7a de Sistemas
+> Instituto de Computa=E7=E3o - UNICAMP
+>
+> gfpadovan@gmail.com
+> ra061316@students.ic.unicamp.br
+> pao@jabber.org
+> -------------------------------------------
+>
+> Seja Livre, use Software Livre
+>
+
+
+
+--=20
+----------------------------------------------
+Gustavo Fernando Padovan
+Engenharia de Computa=E7=E3o 2006
+LAS - Laborat=F3rio de Administra=E7=E3o e Seguran=E7a de Sistemas
+Instituto de Computa=E7=E3o - UNICAMP
+
+gfpadovan@gmail.com
+ra061316@students.ic.unicamp.br
+pao@jabber.org
+-------------------------------------------
+
+Seja Livre, use Software Livre
