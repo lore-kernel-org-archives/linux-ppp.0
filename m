@@ -1,54 +1,38 @@
-From: "mohammed shareef" <mdshareef@gmail.com>
-Date: Mon, 16 Jun 2008 14:31:35 +0000
+From: James Chapman <jchapman@katalix.com>
+Date: Mon, 16 Jun 2008 14:38:00 +0000
 Subject: Re: ppp on 2.6.18
-Message-Id: <a1d91fa0806160719u3dc02e20w50f7e02570cd21f3@mail.gmail.com>
+Message-Id: <48567AC8.3080404@katalix.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <a1d91fa0806160536r646577e2n7099431aa934a556@mail.gmail.com>
-	 <48566242.1080306@katalix.com>
-	 <18518.29942.550676.275051@gargle.gargle.HOWL>
-In-Reply-To: <18518.29942.550676.275051@gargle.gargle.HOWL>
+References: <a1d91fa0806160536r646577e2n7099431aa934a556@mail.gmail.com>	 <48566242.1080306@katalix.com>	 <18518.29942.550676.275051@gargle.gargle.HOWL> <a1d91fa0806160719u3dc02e20w50f7e02570cd21f3@mail.gmail.com>
+In-Reply-To: <a1d91fa0806160719u3dc02e20w50f7e02570cd21f3@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: James Carlson <carlsonj@workingcode.com>
-Cc: James Chapman <jchapman@katalix.com>, omap <linux-omap@vger.kernel.org>, linux-ppp@vger.kernel.org
+To: mohammed shareef <mdshareef@gmail.com>
+Cc: James Carlson <carlsonj@workingcode.com>, omap <linux-omap@vger.kernel.org>, linux-ppp@vger.kernel.org
 
-I downloaded a 2.4.4 ppp package and did the following to compile it
-for my omap-osk:
+mohammed shareef wrote:
+> I downloaded a 2.4.4 ppp package and did the following to compile it
+> for my omap-osk:
+> 
+> ./configure --host=arm-linux --prefix=/root/Desktop/pppbuild
+> make
+> make install
 
-./configure --host=arm-linux --prefix=/root/Desktop/pppbuild
-make
-make install
+The configure script isn't one that supports cross compilation, 
+unfortunately. So it is likely that you built files for your native 
+desktop system.
 
-then i copied the binaries to the filesystem of my omap. but when i
-say: "pppd -h" the system hangs. i guess this is because my filessytem
-files are not proper or i didnt compile them properly.
-please help.
-thank you,
-regards
+To cross compile, do
+make CC=arm-linux-gcc LD=arm-linux-ld
 
-On Mon, Jun 16, 2008 at 7:43 PM, James Carlson <carlsonj@workingcode.com> wrote:
-> James Chapman writes:
->> mohammed shareef wrote:
->> > Dear all,
->> >
->> > i have enabled ppp services when configuring the kernel 2.6.18.
->> >
->> > the kernel bootup  of omap5912 osk says this:
->> >
->> > PPP generic driver version 2.4.2
->> > PPP Deflate Compression module registered
->> > PPP BSD Compression module registered
->> >
->> > but when i type "pppd -h" in the osk console i get:
->> >
->> > # pppd -h
->> > -sh: pppd: not found
->>
->> You don't have the userspace pppd installed.
->
-> Or your path is such that the shell cannot find it.
->
-> --
-> James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
->
+but make sure that your compiler uses its own version of the system 
+headers, not your desktop versions.
+
+
+-- 
+James Chapman
+Katalix Systems Ltd
+http://www.katalix.com
+Catalysts for your Embedded Linux software development
+
