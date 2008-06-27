@@ -1,33 +1,27 @@
-From: "Lee Webb" <lwebb@clear2pay.com.au>
-Date: Thu, 19 Jun 2008 07:28:05 +0000
-Subject: PPPD radius plugin interim accounting question
-Message-Id: <E564CC29982232499B35D3C15964CE6802DE2D56@exchange.clear2pay.com.au>
+From: "cyx_mail" <cyx_mail@foxmail.com>
+Date: Fri, 27 Jun 2008 05:33:26 +0000
+Subject: can pppoe-server supports multicasting?
+Message-Id: <200806271333256098666@foxmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi List,
+HI,all!
 
-I notice that there are references within the pppd radius module code
-for radius interim accounting, but am unable to find any more
-information on this despite some lengthy googling.
+Can pppoe-server supports multicasting with multicast routing daemon such as pimd, igmpproxy?
 
-I have pppd working very nicely with poptop & radius for window$ vpn
-tunnels, but I would really like to be able to get radius accounting
-records out of pppd so that I can properly track a users usage during
-their connection period & properly advance ip address leases based on
-the records.
+I got a demo board ,which can access the media muticastiong server from WAN interface "eth0". pppoe-server runs from the cmd line "pppoe-server -k -I eth1 -L 192.168.1.1 -R 192.168.1.2 -N 12 ", "eth1" is the LAN interface of this demo board.
+Windows XP dials to this demo board. the ppp interface is ppp0 in demo board. Then I run igmpproxy with the configuration file:
 
-Is anyone able to point me in the right direction as to whether this is
-actually something that the radius pppd module can currently do?
+quickleave
+phyint eth0 upstream  ratelimit 0
+phyint ppp0 downstream  ratelimit 0
+ 
+But VLC media player can't play the media source.Why?
 
----
-
-Cheers 
-Lee Webb 
-E: lwebb@clear2pay.com.au 
+2008-06-27 
 
 
 
