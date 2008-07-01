@@ -1,22 +1,24 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 07 Jul 2008 11:18:28 +0000
-Subject: Re: disconnect
-Message-Id: <18545.64388.532336.790036@gargle.gargle.HOWL>
+From: "Nicholas Hickman" <nhickman@dtechlabs.com>
+Date: Tue, 01 Jul 2008 18:27:43 +0000
+Subject: Force PPP dev number
+Message-Id: <8140AAF341CC904BA92C3D6A5A190978440847@ditech-1.ditechllc.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <W6009161227901215107101@webmail35>
-In-Reply-To: <W6009161227901215107101@webmail35>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-tony.chamberlain@lemko.com writes:
-> then I killed the pptp process and watched it start up again.
-> The one problem is, the owner of the VPN said it didn't disconnect
-> correctly so I soon used up all the IP addresses in the IP pool.
+Using pppd is there a way to force which ppp interface pppd brings up
+when a new connection is started?  In my set up I want a particular peer
+configuration to be on a certain ppp interface.
 
-Killing the pppd process with SIGTERM should cause it to send a normal
-termination signal to the peer.
+For example:
+Config peer0 brings up ppp0
+Config peer1 brings up ppp1 whether or not ppp0 is already up
+ 
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+Thanks.
+
+
+-Nick
+
