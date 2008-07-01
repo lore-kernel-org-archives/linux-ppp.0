@@ -1,42 +1,51 @@
-From: Adrian Bunk <bunk@kernel.org>
-Date: Tue, 08 Jul 2008 18:30:20 +0000
-Subject: Re: [RFC 04/11] remove CONFIG_KMOD from drivers
-Message-Id: <20080708183019.GA11954@cs181140183.pp.htv.fi>
+From: tony.chamberlain@lemko.com
+Date: Tue, 01 Jul 2008 14:56:36 +0000
+Subject: PPTP VPN, PPTP CONFIG
+Message-Id: <W2416827856326101214924196@webmail30>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20080708170015.470877000@sipsolutions.net>
-	<20080708170044.262684000@sipsolutions.net>
-In-Reply-To: <20080708170044.262684000@sipsolutions.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Johannes Berg <johannes@sipsolutions.net>
-Cc: video4linux-list@redhat.com, linux-ppp@vger.kernel.org, Rusty Russell <rusty@rustcorp.com.au>, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, David Woodhouse <dwmw2@infradead.org>
+To: linux-ppp@vger.kernel.org
 
-On Tue, Jul 08, 2008 at 07:00:19PM +0200, Johannes Berg wrote:
->...
-> --- everything.orig/drivers/md/md.c	2008-07-08 18:46:21.000000000 +0200
-> +++ everything/drivers/md/md.c	2008-07-08 18:49:10.000000000 +0200
->...
-> @@ -3410,7 +3405,7 @@ static int do_md_run(mddev_t * mddev)
->  		}
->  	}
->  
-> -#ifdef CONFIG_KMOD
-> +#ifdef CONFIG_MODULES
->  	if (mddev->level != LEVEL_NONE)
->  		request_module("md-level-%d", mddev->level);
->  	else if (mddev->clevel[0])
->...
 
-You can remove the #ifdef
 
-cu
-Adrian
 
--- 
 
-       "Is there not promise of rain?" Ling Tan asked suddenly out
-        of the darkness. There had been need of rain for many days.
-       "Only a promise," Lao Er said.
-                                       Pearl S. Buck - Dragon Seed
+I installed the PPTP VPN on a client to connect via pptpvpn to a server
+which is running it. I used pptpconfig to config the network. When I
+connect, the VPN runs fine. I looked in pptpconfig and saw it does a
+
+usr sbin pppd call myserver logfd 1 updetach persist
+
+(I used "myserver" in this mail instead of the actual name). So I made a file
+etc init.d pptpvpn where under start) I do the above (along with some checking,
+etc). This also works nicely, when I but (after chkconfig on) the VPN comes
+up and I can connect.
+
+Problem is, if somehow the pptp process dies, if it is in etc init.d it won't start up
+automatically again (which I need), so instead I transfered to etc inittab:
+
+ vp:35:respawn: usr sbin pppd call myserver logfd 1 updetach persist
+
+A "kill -1 1" or reboot will start this, but a ps just shows two processes with that
+but I can't ping. A few minutes later it shows two processes again but with new
+PIDs. Then a few minutes later two new processes with the same parameters
+(there are only 2 at a time). I can't ping anything on the VPN either (and I do
+add the routes in ip-up.local so from the etc rc5.d script it starts up the route).
+
+Anyway how can I either modify my script in etc init.d (linked to etc rc*.d) to respawn
+in the (unlikely but possible) case the process dies, or modify etc inittab to work
+correctly?
+
+Thanks
+
+
+
+
+
+
+
+
+
 
