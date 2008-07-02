@@ -1,51 +1,44 @@
-From: tony.chamberlain@lemko.com
-Date: Tue, 01 Jul 2008 14:56:36 +0000
-Subject: PPTP VPN, PPTP CONFIG
-Message-Id: <W2416827856326101214924196@webmail30>
+From: James Cameron <james.cameron@hp.com>
+Date: Wed, 02 Jul 2008 03:38:29 +0000
+Subject: Re: PPTP VPN, PPTP CONFIG
+Message-Id: <20080702033828.GB5466@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <W2416827856326101214924196@webmail30>
+In-Reply-To: <W2416827856326101214924196@webmail30>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+G'day Tony,
 
+I'm the author of pptpconfig, and I am beginning to regret it.
 
+You've done some interesting things with what you've learned from it.
+You might not have known what the updetach option does ... check the
+pppd man page for that.
 
+Your final question was how to write a script to try the pppd command
+repeatedly.  This is a shell question.  One simple method is to write a
+shell loop, like this:
 
-I installed the PPTP VPN on a client to connect via pptpvpn to a server
-which is running it. I used pptpconfig to config the network. When I
-connect, the VPN runs fine. I looked in pptpconfig and saw it does a
+#!/bin/sh
+while true; do
+	pppd call myserver logfd 1 nodetach
+done
 
-usr sbin pppd call myserver logfd 1 updetach persist
+The updetach is changed to nodetach, so that the pppd process does not
+exit until the connection is closed.
 
-(I used "myserver" in this mail instead of the actual name). So I made a file
-etc init.d pptpvpn where under start) I do the above (along with some checking,
-etc). This also works nicely, when I but (after chkconfig on) the VPN comes
-up and I can connect.
+If you used updetach in an inittab referenced script, you'd get too many
+processes.  This is because init might start a new one since the process
+that started pppd had terminated.
 
-Problem is, if somehow the pptp process dies, if it is in etc init.d it won't start up
-automatically again (which I need), so instead I transfered to etc inittab:
+Have a look at my script
+http://quozl.linux.org.au/darcs/eee-maxon-bp3/usr/sbin/bp3
+where I use pppd in a similar way.
 
- vp:35:respawn: usr sbin pppd call myserver logfd 1 updetach persist
-
-A "kill -1 1" or reboot will start this, but a ps just shows two processes with that
-but I can't ping. A few minutes later it shows two processes again but with new
-PIDs. Then a few minutes later two new processes with the same parameters
-(there are only 2 at a time). I can't ping anything on the VPN either (and I do
-add the routes in ip-up.local so from the etc rc5.d script it starts up the route).
-
-Anyway how can I either modify my script in etc init.d (linked to etc rc*.d) to respawn
-in the (unlikely but possible) case the process dies, or modify etc inittab to work
-correctly?
-
-Thanks
-
-
-
-
-
-
-
-
-
-
+-- 
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
