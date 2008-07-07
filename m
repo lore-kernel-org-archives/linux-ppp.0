@@ -1,52 +1,35 @@
-From: Jochen Hayek <Jochen+gmane.linux.ppp@Hayek.name>
-Date: Tue, 01 Jul 2008 17:41:21 +0000
-Subject: pppd and IP forwarding
-Message-Id: <loom.20080701T172354-415@post.gmane.org>
+From: "Tony Indrali" <tony.indrali@gmail.com>
+Date: Mon, 07 Jul 2008 16:19:49 +0000
+Subject: Dial on demand of ISP that require opening a page
+Message-Id: <94a1de140807070919w5ab1c5dao30ade0a44202be8e@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Dear all,
+Dear subscribers,
 
-I run pppd (version 2.4.3) on a Linux with some 2.6.16 kernel (machine J).
+I want to start pppd on demand where the first thing it do is:
+1. open a page
+2. wait until the page is fully loaded, or at least wait n seconds
+3. continue whatever request that start up the link.
 
-I connect to the Internet via an UMTS modem,
-and that works fine.
+I tried to open the page in ip-up.d script but the request that start
+up the link always precede the page I need to open first. Meanwhile
+ip-pre-up doesn't allow ip packet yet.
 
-There is another Linux with some 2.6.21 kernel (machine R).
+Therefore I plan to compile my own version of pppd that can do the above.
 
-J and R are connected via ethernet,
-and the TCP/IP and all that between them works fine, too.
+Since I have minimal C knowledge, forgive me if my question is too
+silly. My question is: Can it be done elegantly, or I need to tinker
+with other package instead? If it can be done elegantly, can someone
+give me a general direction on what to do?
 
-I want to let R enjoy J's connection to the outside world.
+Thank you in advance.
 
-I read pppd's man page.
-It talks about "proxarp" and "ktune".
-Alright, I added those options,
-and I also did a "echo 1 > /proc/sys/net/ip4/ip_forward"
-before starting pppd again.
+NB: I need to do the above because my ISP require me to choose the
+surfing package before I'm connected to internet.
 
-(I made R's /etc/resolv.conf to include appropriate nameserver lines.
-Maybe I would dare to do a ping to a name instead of an IP address later on.)
-
-I tried to ping on R to an IP address outside
-and it looks on J's gkrell (a system monitor),
-as if there were some traffic on ppp0,
-but there is no visible response to R,
-at least no feedback on R.
-Other connections attempted in a firefox on R also do not succeed.
-
-I also removed proxyarp from the pppd options,
-that made no difference to me.
-
-Anybody any idea?
-
-Any help appreciated.
-
-Thanks in advance!
-
-J.
-
-
+Best regards,
+Tony Indrali
