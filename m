@@ -1,39 +1,47 @@
-From: Markus Becker <mab@comnets.uni-bremen.de>
-Date: Wed, 09 Jul 2008 09:42:49 +0000
-Subject: PPP: "Re: IPCP with mobile ISP sometimes gives bogus DNS address"
-Message-Id: <Pine.LNX.4.64.0807091111210.11494@bugs.comnets.uni-bremen.de>
+From: Marcus Better <marcus@better.se>
+Date: Wed, 09 Jul 2008 11:33:15 +0000
+Subject: Re: PPP: "Re: IPCP with mobile ISP sometimes gives bogus DNS address"
+Message-Id: <200807091333.19939.marcus@better.se>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="nextPart46775175.DmtqhM66Az"
 List-Id: <linux-ppp.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+References: <Pine.LNX.4.64.0807091111210.11494@bugs.comnets.uni-bremen.de>
+In-Reply-To: <Pine.LNX.4.64.0807091111210.11494@bugs.comnets.uni-bremen.de>
 To: linux-ppp@vger.kernel.org
 
-Hi all,
+--nextPart46775175.DmtqhM66Az
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-several 3G cards (e.g. from Option) are reporting 10.11.12.13 as DNS 
-server, when they are not yet attached to a network, as you probably know, 
-see http://marc.info/?l=linux-ppp&w=2&r=1&s=bogus+DNS&q=b
+Hi,
 
-There seem to be 2 possible solutions to this:
-1) Patch PPP to accept MS-WINS settings and use high values for 
-ipcp-max-configure, ipcp-max-failure, ipcp-max-terminate and/or 
-ipcp-restart. See 
-http://bugs.debian.org/cgi-bin/bugreport.cgi?bugD5711 .
-(I am using the mentioned patch currently. Works fine for me.)
+Markus Becker wrote:
+> Hi all,
+> a) The Debian bug report states, this has been sent upstream.
 
-2) Checking with AT command CGATT, whether the device is attached to a 
-network and only try to dial in when this is true. 
-(http://marc.info/?l=linux-ppp&m1305432406467&w=2)
+I posted it to the mailing list, but didn't request review for inclusion. I=
+=20
+have a few reports from people who use it successfully with various Huawei=
+=20
+modems.
 
-In order to get this fixed, I have several questions:
+Cheers,
 
-a) The Debian bug report states, this has been sent upstream. Has upstream 
-accepted, denied or forgotten about it? Is there an upstream bugzilla for
-linux-ppp?
+Marcus
 
-b) Marco, could this patch be part of the Debian package? Dan, how is this 
-done in Fedora?
 
-c) Dan, could solution 2 be integrated into NM?
+--nextPart46775175.DmtqhM66Az
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
 
-Markus
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQBIdKH/XjXn6TzcAQkRAkD8AKCRPHT6L46Mrzu5l9QSk194XU3rRgCfbCaC
+arSxVVLg/4Xkw0QBB4Hgr30=
+=fFe7
+-----END PGP SIGNATURE-----
+
+--nextPart46775175.DmtqhM66Az--
