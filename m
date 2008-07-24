@@ -1,24 +1,26 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Tue, 22 Jul 2008 00:04:01 +0000
-Subject: Re: PPP difficulties regarding connection establishment and bogus
-Message-Id: <20080722000401.GC5579@hp.com>
+From: Paul Mackerras <paulus@samba.org>
+Date: Thu, 24 Jul 2008 12:28:47 +0000
+Subject: PPP source now in git
+Message-Id: <18568.30079.527811.175235@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <66abdca00806060145ua700d3cydeb3e37df39b94f8@mail.gmail.com>
-In-Reply-To: <66abdca00806060145ua700d3cydeb3e37df39b94f8@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Mon, Jul 21, 2008 at 12:34:48PM +0300, Paulius Zaleckas wrote:
-> Sure. See attachment.
+I finally got sick of using CVS for the PPP source code, so I
+converted the repository to a git repository instead.  Thus, if you
+want to look at the latest development source code for PPP, you can
+either use git clone like this:
 
-Fascinating.  It is almost as if negotiating for ms-dns* should not be done
-until successful negotiation of addr.
+git clone git://ozlabs.org/~paulus/ppp.git
 
-Has some rational basis ... without having an addr, the peer could not
-possibly obtain ms-dns* from the network.
+and then browse with gitk, git log, etc., and keep it up to date by
+doing a git pull every so often.
 
--- 
-James Cameron
-http://ftp.hp.com.au/sigs/jc/
+Or, if you don't want to install git, you can browse the history with
+gitweb at
+
+http://git.ozlabs.org/?p=ppp.git;a=summary
+
+Paul.
