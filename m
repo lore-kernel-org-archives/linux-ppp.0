@@ -1,85 +1,30 @@
-From: md@Linux.IT (Marco d'Itri)
-Date: Sat, 26 Jul 2008 12:32:00 +0000
+From: Paul Mackerras <paulus@samba.org>
+Date: Mon, 28 Jul 2008 12:27:56 +0000
 Subject: Re: PPP source now in git
-Message-Id: <20080726123200.GA30716@bongo.bofh.it>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="5vNYLRcllDrimb99"
+Message-Id: <18573.47948.220411.60756@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <18568.30079.527811.175235@cargo.ozlabs.ibm.com>
 In-Reply-To: <18568.30079.527811.175235@cargo.ozlabs.ibm.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Marco d'Itri writes:
 
---5vNYLRcllDrimb99
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> Like CVS, the GIT tree too does not contain the same files of the
+> official tarball releases.
+> Can you delete them from the repository head?
 
-On Jul 24, Paul Mackerras <paulus@samba.org> wrote:
+Sure, done.
 
-> I finally got sick of using CVS for the PPP source code, so I
-> converted the repository to a git repository instead.  Thus, if you
-Like CVS, the GIT tree too does not contain the same files of the
-official tarball releases.
-Can you delete them from the repository head?
+> BTW, some files in include/linux/ have diverged from the kernel
+> versions, if they cannot be kept in sync maybe then they should be
+> removed as well.
 
-BTW, some files in include/linux/ have diverged from the kernel
-versions, if they cannot be kept in sync maybe then they should be
-removed as well.
+These days it should be possible to use the distros' versions for the
+things in include/linux and include/net, I would think.  We do have
+some definitions in those files that would need to be moved elsewhere,
+though.
 
-This is the rsync filter I use to generate snapshots for the Debian
-package:
-
-=2Ecvsignore
-/TODO
-/ppp.texi
-/aix4/
-/freebsd-2.0/
-/freebsd-2.2.8/
-/freebsd-3.0/
-/netbsd-1.1/
-/netbsd-1.2/
-/NeXT/
-/osf1/
-/sunos4/
-/svr4/
-/ultrix/
-*.aix4
-*.bsd
-*.netbsd-1.2
-*.NeXT
-*.osf
-*.sunos4
-*.svr4
-*.ultrix
-/pppd/sys-aix4.c
-/pppd/sys-bsd.c
-/pppd/sys-NeXT.c
-/pppd/sys-osf.c
-/pppd/sys-sunos4.c
-/pppd/sys-svr4.c
-/pppd/sys-ultrix.c
-+ /linux/Makefile.top
-/linux/*
-# these files are in tarballs but missing from GIT
-/include/linux/if_ether.h
-/contrib/
-
---=20
-ciao,
-Marco
-
---5vNYLRcllDrimb99
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-
-iEYEARECAAYFAkiLGUAACgkQFGfw2OHuP7GloACffWY4mpAo9yGpuYnqmVVmBQ2M
-/boAn3ab8LIxudr3dtBNzMA6tpDscC16
-=rOHP
------END PGP SIGNATURE-----
-
---5vNYLRcllDrimb99--
+Paul.
