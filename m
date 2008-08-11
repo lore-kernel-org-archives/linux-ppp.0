@@ -1,7 +1,7 @@
 From: Marshall Crocker <marshall@iconux.org>
-Date: Sun, 10 Aug 2008 23:28:46 +0000
+Date: Mon, 11 Aug 2008 00:04:11 +0000
 Subject: Re: How to fix continuous ConfReq's on celluar internet connection
-Message-Id: <489F79AE.400@iconux.org>
+Message-Id: <489F81FB.6040108@iconux.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <489F746B.3040002@123mail.org>
 In-Reply-To: <489F746B.3040002@123mail.org>
@@ -10,20 +10,24 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-James Cameron wrote:
-> Have you tried the demand option?  This keeps the network interface
-> present over a reconfiguration.
-Doh...after sending my original email I decided to add idle and demand
-options to my peers file so the connection wouldn't be up all the time
-(been meaning to that for a while anyway).  I read the man pages to see
-what arguments they needed and saw that demand keeps the network
-interface in between connections.  That appears to be working although
-the ConfReq's are still coming and the connection is averaging about 0.2
-minutes up.
+>
+> The host was multi-homed, and when the 1x RTT link came up the default
+> route was swung onto the link.  Existing connections began to emit
+> packets to the modem link with a source IP corresponding to the previous
+> default route.  It was these packets which caused the reconfiguration.
+>   
+I'm not doing any sort of multihoming so there is no default route until 
+the ppp connection comes up. No invalid packets should be making it to 
+the ISP but I'll do a capture and see what comes up...
 
-I had no idea that the demand option would keep the ppp interface.  I
-feel silly for putting up with this for over a year and the whole time a
-simple pppd option would work around it.
+> It looks like I've said all this before:
+>
+> http://osdir.com/ml/linux.ppp/2007-10/msg00011.html
+>   
+Sorry....I did a search on the Nabble archive for ConfReq but that 
+thread wasn't returned or at least I didn't see it. 
+
+Thanks for your help.
 
 Marshall
 
