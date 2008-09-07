@@ -1,32 +1,24 @@
-From: Marshall Crocker <marshall@iconux.org>
-Date: Mon, 11 Aug 2008 05:36:48 +0000
-Subject: Re: How to fix continuous ConfReq's on celluar internet connection
-Message-Id: <489FCFF0.7090402@iconux.org>
+From: Paul Mackerras <paulus@samba.org>
+Date: Sun, 07 Sep 2008 06:40:06 +0000
+Subject: ppp-2.4.5 release imminent
+Message-Id: <18627.30534.621185.729775@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <489F746B.3040002@123mail.org>
-In-Reply-To: <489F746B.3040002@123mail.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+I'm planning to release ppp-2.4.5 shortly.  What is in the release
+will be what is in the master branch of the ppp git repository at
 
-> Yes, just block the packets that aren't from the source IP that pppd
-> assigns to the link.
+git://ozlabs.org/~paulus/ppp.git
 
-I tired adding the rule to drop packets with a source of 192.168.0.X 
-destined for ppp0 but that didn't appear to work. Most likely due to 
-some of the other chains created by MonMontha's script.  I'm curious as 
-to why packets with a source from my internal LAN are getting sent out 
-over ppp in the first place.  The FORWARD chain looks like:
+(except I'll leave out the .gitignore files).
 
-Chain FORWARD (policy DROP)
-target     prot opt source               destination        
-INETIN     all  --  anywhere             anywhere           
-INETOUT    all  --  anywhere             anywhere           
-ACCEPT     all  --  192.168.0.0/24       anywhere 
+The changes are mostly bugfixes.  The new features are the ability to
+operate without an IP address for the peer under Linux, and the
+pppol2tp plugin.
 
-Is it possible the INETOUT chain gets executed first and sometimes 
-bypasses the accept for 192.168.0.0/24?   I'm sure I'll figure it out 
-sooner or later but if anyone knows iptables better than me, I'll glady 
-accept any suggestions :).
+Now would be a good time to try it out and let me know about any bugs.
+
+Paul.
