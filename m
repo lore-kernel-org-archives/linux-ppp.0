@@ -1,34 +1,43 @@
 From: Lie Arne <Arne.Lie@sintef.no>
-Date: Fri, 12 Sep 2008 14:44:21 +0000
-Subject: ppp  XMIT_WAKEUP flag: who sets it?
-Message-Id: <39417DF3286A66428FA558987839F44F064DF865@SINTEFXCH01.sintef.no>
+Date: Thu, 11 Sep 2008 07:35:20 +0000
+Subject: Packet drop with PPP and tty-driver
+Message-Id: <39417DF3286A66428FA558987839F44F064DF60D@SINTEFXCH01.sintef.no>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi,
 
- Hi,
+We are using our custom tty-driver for communicating between an embedded
+Linux processor and a DSP running modem software. 
 
-We have now found a workaround for our problems with PPP dropping
-packets:
-1. Our tty driver now returns "0" to ppp_async_push() instead og
-"-EAGAIN"
-2. We had to modify the line 
-"if (test_bit(XMIT_WAKEUP, &ap->xmit_flags) && ppp_async_push(ap)) { "
-in ppp_async_process() to become:
-"if (ppp_async_push(ap)) { "
+The pppd is started by typing "pppd /dev/our_driver0". pppd opens this
+driver in non-blocking mode. At write, when our write queue is full, we
+return -EAGAIN. With low traffic there is no problem, but when load
+increases above PPP-link capacity, the ppp subsystem begins to throw
+packets. Still the communication link is working, but this situation
+poses two problems:
 
-since apparently no process/function in our system sets the XMIT_WAKEUP.
-Can anybody tell us who is / should be responsible for setting this
-flag?
+1. If using PPP compression, packets drops inside PPP causes performance
+drop because the compression algorithm has the be resynchronized.
 
-Our workaround seems working stable though. :-) 
+2. The Linux networking code output queuing system sees the ppp0
+interface as a very fast interface (instead of a slow one), preventing
+Linux queue backlog to happen, and thus makes it impossible to have
+prioritized queuing (e.g. PRIO/TBF or HTB supporting DiffServ) in front
+of the ppp interface. 
 
-Best regards
+We want the PPP-link to be reliable, and relying on the Linux network
+code output queue to take care of traffic overload situations (with FIFO
+tail drop or QoS supported drops, e.g.).
+
+We would appreciate any help / suggestions for what could be wrong with
+our implementation: what are we doing wrong?
+
+Best regards,
  
 Arne Lie
 SINTEF ICT, Dept. of Communication Systems
-
 e-mail: arne.lie@sintef.no 
