@@ -1,38 +1,25 @@
-From: James Chapman <jchapman@katalix.com>
-Date: Sun, 07 Sep 2008 20:58:17 +0000
-Subject: Re: ppp-2.4.5 release imminent
-Message-Id: <48C44069.7060404@katalix.com>
+From: "Joakim Wennergren" <jokedst@gmail.com>
+Date: Wed, 17 Sep 2008 19:23:10 +0000
+Subject: pppd creates route without "gateway" flag
+Message-Id: <b09e96770809171223j34dd04d7k52f29677c9c7a540@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <18627.30534.621185.729775@cargo.ozlabs.ibm.com>
-In-Reply-To: <18627.30534.621185.729775@cargo.ozlabs.ibm.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Paul Mackerras wrote:
-> I'm planning to release ppp-2.4.5 shortly.  What is in the release
-> will be what is in the master branch of the ppp git repository at
-> 
-> git://ozlabs.org/~paulus/ppp.git
-> 
-> (except I'll leave out the .gitignore files).
-> 
-> The changes are mostly bugfixes.  The new features are the ability to
-> operate without an IP address for the peer under Linux, and the
-> pppol2tp plugin.
-> 
-> Now would be a good time to try it out and let me know about any bugs.
+I just looked at my routing table, and the route pppd created does not
+have the "G" flag like I'm used to, is there a reason for this?
 
-I just tested it in some L2TP test setups - looks good.
+This is output from route:
 
-> 
-> Paul.
+# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.64.64.64     0.0.0.0         255.255.255.255 UH    0      0        0 ppp0
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 br0
+0.0.0.0         0.0.0.0         0.0.0.0         U     0      0        0 ppp0
 
-
--- 
-James Chapman
-Katalix Systems Ltd
-http://www.katalix.com
-Catalysts for your Embedded Linux software development
-
+It seems to work, I'm just wondering why? And can it affect something
+in the future?
