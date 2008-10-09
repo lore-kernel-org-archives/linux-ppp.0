@@ -1,44 +1,36 @@
-From: Lie Arne <Arne.Lie@sintef.no>
-Date: Wed, 22 Oct 2008 07:11:26 +0000
-Subject: RE: ppp0 and it's txqueuelen with HSDPA gsm modems
-Message-Id: <39417DF3286A66428FA558987839F44F0685D8E0@SINTEFXCH01.sintef.no>
+From: Paul Mackerras <paulus@samba.org>
+Date: Thu, 09 Oct 2008 11:50:16 +0000
+Subject: Re: pppd creates route without "gateway" flag
+Message-Id: <18669.61432.589922.730821@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <48FE2309.3060907@pcuf.fi>
-In-Reply-To: <48FE2309.3060907@pcuf.fi>
+References: <b09e96770809171223j34dd04d7k52f29677c9c7a540@mail.gmail.com>
+In-Reply-To: <b09e96770809171223j34dd04d7k52f29677c9c7a540@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-> -----Original Message-----
-> From: linux-ppp-owner@vger.kernel.org 
-> [mailto:linux-ppp-owner@vger.kernel.org] On Behalf Of Jar
-> Sent: 21. oktober 2008 20:44
-> To: linux-ppp@vger.kernel.org
-> Subject: ppp0 and it's txqueuelen with HSDPA gsm modems
-> 
-> Hello
-> 
-> What would be "optimal" value for ppp0 device's txqueuelen, 
-> when it is used with HSDPA gsm modem for link which downlink 
-> speed is 1Mbit/s and uplink speed is 384kbit/s and ping 
-> ~80..100 ms? Is the default value 3 just OK?
-> 
-> --
-> Best Regards, Jar
-Jar,
+James Carlson writes:
 
-I would suggest using normal TCP calculation, i.e. that you dimension
-the txqueue size after the "BDP rule": bandwidth x delay product. Using
-your outbound numbers this is:
-1,000,000 x 0.1 = 100,000 bits = 12,500 bytes. Assuming 1500 byte
-packets, this is txqueue = 12,500 / 1500 = 8.3 packets. So you could try
-txqueue size in the region 8-10, this should prevent queue starvation at
-packet drop events caused by traffic overload, even if you only have one
-single TCP flow.
+> Bill Unruh writes:
+> > On Wed, 17 Sep 2008, Joakim Wennergren wrote:
+> > 
+> > > I just looked at my routing table, and the route pppd created does not
+> > > have the "G" flag like I'm used to, is there a reason for this?
+> > 
+> > PPP is Peer to Peer Protocol. Ie, it is from one peer to another. It has
+> > nothing whatsoever to do with gateways, etc. 
+> 
+> I think the original poster is talking about the default route
+> inserted by the "defaultroute" option.  As he rightly notes, it's
+> missing the "G" flag:
+> 
+> > > 0.0.0.0         0.0.0.0         0.0.0.0         U     0      0        0 ppp0
+> 
+> And that is in fact a gateway route.  The issue is whether that flag
+> actually matters on Linux.
 
-Best regards,
+Why do you say it's a gateway route?  It doesn't have a gateway
+address.  It's a route to the 0.0.0.0/0 network via the ppp0 device.
 
-Arne Lie
-SINTEF ICT, Dept. of Communication Systems
-e-mail: arne.lie@sintef.no 
+Paul.
