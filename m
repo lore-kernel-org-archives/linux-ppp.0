@@ -1,30 +1,39 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 14 Oct 2008 10:26:24 +0000
-Subject: Re: pppd creates route without "gateway" flag
-Message-Id: <18676.29648.777176.812305@gargle.gargle.HOWL>
+From: "Andrew Gaylard" <ag@computer.org>
+Date: Thu, 09 Oct 2008 07:27:47 +0000
+Subject: patch: allow COPTS to be specified to the radius plugin by the top level make
+Message-Id: <9df6f3ea0810090027x289496f3safbad4e13daa81ac@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <b09e96770809171223j34dd04d7k52f29677c9c7a540@mail.gmail.com>
-In-Reply-To: <b09e96770809171223j34dd04d7k52f29677c9c7a540@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Paul Mackerras writes:
-> > And that is in fact a gateway route.  The issue is whether that flag
-> > actually matters on Linux.
-> 
-> Why do you say it's a gateway route?  It doesn't have a gateway
-> address.  It's a route to the 0.0.0.0/0 network via the ppp0 device.
+The following little patch to the -2.4.4 tree allows the radius plugin
+to be built with the same COPTS as the other parts of ppp.
+Thus,
+    make COPTS="-pipe -Wall -g"
+at the top level will propagate down as expected.
 
-OK; fair point.  That point-to-point peer, though, still is the
-'gateway' for all packets that match that route, even though we don't
-have the (effectively useless) remote address stored in the route
-itself.
+Andrew
 
-If the flag is missing merely because the next-hop address isn't set,
-then that explains it, and there's nothing wrong at all with the
-original poster's system.
+diff -rU5 ppp-2.4.4/pppd/plugins/radius/Makefile.linux
+ppp-2.4.4-new/pppd/plugins/radius/Makefile.linux
+--- ppp-2.4.4/pppd/plugins/radius/Makefile.linux        2006-06-04
+05:04:14.000000000 +0000
++++ ppp-2.4.4-new/pppd/plugins/radius/Makefile.linux    2008-09-26
+15:07:56.000000000 +0000
+@@ -10,11 +10,12 @@
+ VERSION = $(shell awk -F '"' '/VERSION/ { print $$2; }' ../../patchlevel.h)
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+ INSTALL        = install
+
+ PLUGIN=radius.so radattr.so radrealms.so
+-CFLAGS=-I. -I../.. -I../../../include -O2 -fPIC -DRC_LOG_FACILITY=LOG_DAEMON
++COPTS=-O2
++CFLAGS=-I. -I../.. -I../../../include $(COPTS) -fPIC
+-DRC_LOG_FACILITY=LOG_DAEMON
+
+ # Uncomment the next line to include support for Microsoft's
+ # MS-CHAP authentication protocol.
+ CHAPMS=y
+ # Uncomment the next line to include support for MPPE.
