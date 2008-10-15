@@ -1,7 +1,7 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Tue, 14 Oct 2008 22:33:22 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 15 Oct 2008 12:09:02 +0000
 Subject: Re: Split dialup how to detect package loss and whats 10.64.64.64
-Message-Id: <20081014223322.GC15180@hp.com>
+Message-Id: <18677.56670.754166.88090@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <5153e02f0810140526u78d1345ct9ac28c8ada6e9656@mail.gmail.com>
 In-Reply-To: <5153e02f0810140526u78d1345ct9ac28c8ada6e9656@mail.gmail.com>
@@ -10,56 +10,47 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Detecting packet loss over one connection so that you can switch over to
-the other one ... yes, you will find that difficult.  In your situation,
-the PPP peer is the modem, and you won't get LCP Echo loss because these
-travel only between pppd and the modem firmware.  LCP will continue
-despite loss of radio traffic ... and it will take some time for the
-modem to give up and hang up.  The only way to detect loss is to use IP
-packets.
+James Cameron writes:
+> I've heard and seen that Windows systems show point to point links as if
+> they are Ethernet adaptors ... and I shake my head in confusion.  Linux
+> point to point links are different: the remote IP address has no use,
+> and I find everything works fine without it.
 
-In my experience most packet loss on GPRS modems is going to affect both
-modems in the same vicinity, since the loss is mostly caused by the
-cell, or the providers GPRS Core Network.
+I mostly agree with your rant; for the typical "simple" end-user
+connection to an ISP, the remote address is not terribly necessary or
+interesting.  But it's not quite accurate that a remote address "has
+no use."
 
-Now, on your other question ...
+The first observation is that if you have a PPP link running IP, then
+the termination point must (by definition) support IP.  Devices that
+support IP but refuse to reveal an address are fairly boring, because
+you usually can't talk directly to them, and they can't be managed.
+Rather than being deliberately ornery, those devices ought to reveal
+that address.
 
-10.64.64.64 is a common remote IP address seen with these GPRS modems.
-It comes from this line of the pppd source:
+One obvious use of a remote address is in just testing the link at the
+IP level.  If you have a remote address on the link, then you can ping
+the peer and isolate IP-level link problems versus routing-related
+problems.  If you don't have a usable remote address on the link, then
+you can't necessarily directly ping the peer (even though it obviously
+is an IP node), and anything you do contact will be at least one extra
+hop away -- meaning that isolating problems is a bit harder.
 
-ipcp.c: ho->hisaddr = htonl(0x0a404040 + ifunit);
+Another use is in routing.  If you run a routing protocol, then the
+source address on each peer's message will be local link's IP address,
+and any unicast messages demanded by the protocol (e.g., running BGP)
+will typically be to the remote address on the link.
 
-It is the address to use when the peer does not provide one.  The peer
-in your case is the modem itself.  Not the provider's network.
+Still another is in link monitoring.  Some peers will allow you to do
+simple SNMP queries to retrieve link statistics from the remote end,
+which can be extremely useful in diagnosing network faults and
+tracking usage.
 
-You don't need a remote IP address for the link.  Don't worry about it.
-
-The remainder of my post below is a rant, repeated from my earlier
-investigation into this odd IP address.  ;-)
-
-There is a common but false belief that a remote IP address for the link
-needs to be known.
-
-This stems from an assumption that the link operates with MAC
-addressing.
-
-This can be disproved with tcpdump or wireshark, the remote IP address
-is never seen on the data stream once IPCP completes.  Packets
-transmitted over the link have the target IP address.
-
-If it was operated as Ethernet, it would be quite different ... with
-shared media links the Ethernet encapsulation has to have a destination
-MAC address that corresponds to the router through which the packets are
-to be forwarded.  So a packet is Ethernet-addressed to a router, but
-IP-addressed to the target.  The router receives the packet, readdresses
-it in the Ethernet headers, and forwards it on otherwise unchanged,
-unless it has to do NAT.
-
-I've heard and seen that Windows systems show point to point links as if
-they are Ethernet adaptors ... and I shake my head in confusion.  Linux
-point to point links are different: the remote IP address has no use,
-and I find everything works fine without it.
+So, while the address isn't all that interesting to some classes of
+users, I would maintain that any IPCP deployment that refuses to
+reveal at least some address for itself is very poorly done indeed,
+reflects a lack of basic networking clue on the part of the operator,
+and ought to be repaired or replaced.
 
 -- 
-James Cameron
-http://ftp.hp.com.au/sigs/jc/
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
