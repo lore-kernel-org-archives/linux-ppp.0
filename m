@@ -1,39 +1,77 @@
-From: "Andrew Gaylard" <ag@computer.org>
-Date: Thu, 09 Oct 2008 07:27:47 +0000
-Subject: patch: allow COPTS to be specified to the radius plugin by the top level make
-Message-Id: <9df6f3ea0810090027x289496f3safbad4e13daa81ac@mail.gmail.com>
+From: Nathan Williams <nathan@traverse.com.au>
+Date: Fri, 24 Oct 2008 02:07:29 +0000
+Subject: plugin pppoatm and multilink
+Message-Id: <7at5jd$6u1m7m@ipmail04.adl2.internode.on.net>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-The following little patch to the -2.4.4 tree allows the radius plugin
-to be built with the same COPTS as the other parts of ppp.
-Thus,
-    make COPTS="-pipe -Wall -g"
-at the top level will propagate down as expected.
+Hi,
 
-Andrew
+I have been trying to use pppd 2.4.4 with multilink:
 
-diff -rU5 ppp-2.4.4/pppd/plugins/radius/Makefile.linux
-ppp-2.4.4-new/pppd/plugins/radius/Makefile.linux
---- ppp-2.4.4/pppd/plugins/radius/Makefile.linux        2006-06-04
-05:04:14.000000000 +0000
-+++ ppp-2.4.4-new/pppd/plugins/radius/Makefile.linux    2008-09-26
-15:07:56.000000000 +0000
-@@ -10,11 +10,12 @@
- VERSION = $(shell awk -F '"' '/VERSION/ { print $$2; }' ../../patchlevel.h)
+debian:~# pppd plugin pppoatm.so 0.8.35 multilink nodetach
+Plugin pppoatm.so loaded.
+using channel 8
+Starting negotiation on 0.8.35
+ioctl(SIOCSIFMTU): No such device
 
- INSTALL        = install
+I have looked in the plugin code and discovered in send_config_pppoa, 
+ioctl() fails because the interface name (ifname) isn't set.  Without 
+the multilink option, ifname is "ppp0".
+If I enclose the code in an if(!multilink), it appears to work.  It 
+looks like the MTU gets set later in mp_join_bundle() anyway, but I'm 
+not too familiar with the code.
+Any comments would be greatly appreciated.
 
- PLUGIN=radius.so radattr.so radrealms.so
--CFLAGS=-I. -I../.. -I../../../include -O2 -fPIC -DRC_LOG_FACILITY=LOG_DAEMON
-+COPTS=-O2
-+CFLAGS=-I. -I../.. -I../../../include $(COPTS) -fPIC
--DRC_LOG_FACILITY=LOG_DAEMON
+Regards,
+Nathan
 
- # Uncomment the next line to include support for Microsoft's
- # MS-CHAP authentication protocol.
- CHAPMS=y
- # Uncomment the next line to include support for MPPE.
+--- ppp-2.4.4.orig/pppd/plugins/pppoatm/pppoatm.c    2006-05-21 22:44:41
++++ ppp-2.4.4.new/pppd/plugins/pppoatm/pppoatm.c        2008-10-24 12:02:42
+@@ -173,18 +173,20 @@ static void send_config_pppoa(int mtu,
+                               int pcomp,
+                               int accomp)
+  {
+-       int sock;
+-       struct ifreq ifr;
+-       if (mtu > pppoatm_max_mtu)
+-               error("Couldn't increase MTU to %d", mtu);
+-       sock = socket(AF_INET, SOCK_DGRAM, 0);
+-       if (sock < 0)
+-               fatal("Couldn't create IP socket: %m");
+-       strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+-       ifr.ifr_mtu = mtu;
+-       if (ioctl(sock, SIOCSIFMTU, (caddr_t) &ifr) < 0)
+-               fatal("ioctl(SIOCSIFMTU): %m");
+-       (void) close (sock);
++       if(!multilink){
++               int sock;
++               struct ifreq ifr;
++               if (mtu > pppoatm_max_mtu)
++                       error("Couldn't increase MTU to %d", mtu);
++               sock = socket(AF_INET, SOCK_DGRAM, 0);
++               if (sock < 0)
++                       fatal("Couldn't create IP socket: %m");
++               strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
++               ifr.ifr_mtu = mtu;
++               if (ioctl(sock, SIOCSIFMTU, (caddr_t) &ifr) < 0)
++                       fatal("ioctl(SIOCSIFMTU): %m");
++               (void) close (sock);
++       }
+  }
+
+  static void recv_config_pppoa(int mru,
+
+
+
+------------------------------------------------------------------
+Nathan Williams
+nathan@traverse.com.au
+http://www.traverse.com.au
+Tel:  +613 9486 7775
+Fax: +613 9482 7754
+------------------------------------------------------------------ 
+
