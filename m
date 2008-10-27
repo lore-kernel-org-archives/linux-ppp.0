@@ -1,7 +1,7 @@
-From: Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
-Date: Mon, 27 Oct 2008 08:41:15 +0000
+From: James Cameron <james.cameron@hp.com>
+Date: Mon, 27 Oct 2008 22:08:36 +0000
 Subject: Re: pppd and it's baud rate setting with HSDPA gsm modems
-Message-Id: <49058B16.2000809@teltonika.lt>
+Message-Id: <20081027220836.GA10538@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <57c6377703cbf5b94675e4331c5d03c6.squirrel@netlandzone.dyndns.org>
 In-Reply-To: <57c6377703cbf5b94675e4331c5d03c6.squirrel@netlandzone.dyndns.org>
@@ -10,30 +10,23 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Jar wrote:
-> Hello
-> 
-> I am using usbserial+option kernel modules with my HSDPA gsm modem. The
-> dialer is wvdial.
-> 
-> wvdial.conf
-> 
-> [Dialer Defaults]
-> Modem = /dev/ttyUSB0
-> Baud = 3600000
-> ...
-> ...
-> 
-> When I use "Baud = 3600000" in wvdial's config file, the pppd complains
-> "pppd[12246]: speed 3600000 not supported". But still I get the 1Mbit/s
-> download speed. However if I set "Baud = 460800" the I get also 1Mbit/s
-> download speed. But 460800bit/s < 1Mbit/s ??
+Setting the speed on a HSDPA or GPRS modem is done using AT commands,
+and this is part of the negotiation between the modem firmware and the
+service provider's radio network.  The service provider may constrain
+the speed.  The received signal strength and bit error rate may
+constrain the speed.  The base station's uplink may constrain the speed.
 
-Option driver doesn't care about baudrate. It can be 9600 and you would
-still get 1Mbit/s. This is virtual serial port and it has little common
-with real UART.
+To fiddle with the Quality of Service settings to change the speed, look
+for the modem documentation.  The exact command depends on the modem,
+but I've been able to reduce the speed using one of these: +CGEQREQ
++CGEQMIN +CGQREQ +CGQMIN ... I've never got it to go faster without
+fixing the root cause of why it is slow.
 
-> Is this kind of "USB serial link" some special case, where pppd doesn't
-> use the speed setting at all?
+The speed between the modem and the host is constrained by the USB
+drivers.  Ensure you are using a USB 2.0 port.  Ensure you are using a
+USB driver that pre-queues URBs.  The current usbserial and option
+module in kernel 2.6.27 do this fine.
 
-thats driver who is not using speed setting, not pppd.
+-- 
+James Cameron
+http://ftp.hp.com.au/sigs/jc/
