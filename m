@@ -1,7 +1,7 @@
-From: "Gilles Espinasse" <g.esp@free.fr>
-Date: Sat, 15 Nov 2008 07:30:56 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Sat, 15 Nov 2008 14:35:49 +0000
 Subject: Re: pppoe config connects, but can't ping *past* gateway. something wrong with my routes?
-Message-Id: <094c01c946f4$19e0b090$f9b5a8c0@pii350>
+Message-Id: <18718.56901.462737.559729@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <7259d7020811141843i44d31119u999b70ccd717c61e@mail.gmail.com>
 In-Reply-To: <7259d7020811141843i44d31119u999b70ccd717c61e@mail.gmail.com>
@@ -10,56 +10,31 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-
------ Original Message ----- 
-From: "JC Janos" <jcjanos245@gmail.com>
-To: <linux-ppp@vger.kernel.org>
-Sent: Saturday, November 15, 2008 3:43 AM
-Subject: pppoe config connects, but can't ping *past* gateway. something
-wrong with my routes?
-
-
-> Hi,
->
-> I'm setting up my 1st linux router/firewall for my office. I'm
-> connecting to the net via ATT DSL using PPPoE.  It's connected, but
-> something's wrong with my config (routing?) as I can't seem to ping
-> past my gateway.
->
-...
-> /etc/ppp/options
-> debug
-> ktune
-> logfile  /var/log/ppp.log
->
-> noauth
-> hide-password
-> noipdefault
-> persist
-> holdoff 30
->
-> noaccomp
-> nobsdcomp
-> noccp
-> nodeflate
-> nopcomp
-> novj
-> novjccomp
-> lcp-max-configure 10
-> lcp-max-failure   10
-> lcp-max-terminate  3
-> lcp-restart        3
->
-> default-asyncmap
->
->
+JC Janos writes:
 > /etc/ppp/ip-up.local
-> echo /sbin/ip route list | awk '/^default / { print $3 }' >
-/etc/default-route
-> /sbin/route del default
-> /sbin/route add default netmask 255.255.255.248 gw x.x.x.150
->
-Why don't you use ppp defaultroute option?
+> 	echo /sbin/ip route list | awk '/^default / { print $3 }' > /etc/default-route
+> 	/sbin/route del default
+> 	/sbin/route add default netmask 255.255.255.248 gw x.x.x.150
+[...]
+> and to my gateway,
+> 
+> 	ping -c 1 99.164.169.50
+> 		PING 99.164.169.50 (99.164.169.50) 56(84) bytes of data.
+> 		64 bytes from 99.164.169.50: icmp_seq=1 ttl%5 time.9 ms
 
-Gilles
+It looks like your routes are misconfigured.  Your default route in
+this case should point to the other end of this link -- 99.164.169.50
+as you've shown -- and not to one of your own local addresses.  By
+using a local address, you've basically told the kernel to drop all
+your packets, and it's just doing what you've asked it to do.
 
+As another poster suggested, you should use the "defaultroute" option
+instead of this ip-up hackery.  If you really do need all of this
+complex manual configuration in the ip-up script, then consider using
+the $IPREMOTE environment variable or $5 in /etc/ppp/ip-up.  (I'm not
+sure how Linux handles the command line arguments for that script, but
+pppd itself passes the remote address as $5 when it invokes
+/etc/ppp/ip-up.)
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
