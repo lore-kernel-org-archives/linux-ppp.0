@@ -1,20 +1,29 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 15 Dec 2008 14:40:30 +0000
-Subject: Re:  pptpd
-Message-Id: <18758.27742.407815.512898@gargle.gargle.HOWL>
+From: GauloisID <David.Babin@dmic.fr>
+Date: Thu, 11 Dec 2008 15:48:49 +0000
+Subject: PPP Recovery
+Message-Id: <20958060.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <W9548217129274771229195924@webmail26>
-In-Reply-To: <W9548217129274771229195924@webmail26>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-tony.chamberlain@lemko.com writes:
-> pppd man page or pptpd man page?  I get them mixed up
 
-The pppd man page describes the pppd options and the PPP *-secrets
-files.
+Hi all,
+
+I Would like to setup a permanent connection with a local rs232 GPRS modem.
+I Use kernel 2.6.24 and PPP 2.4.4.
+
+My connection work fine (DNS, ICMP...), but sometimes my GPRS provider drop
+my connection due to timeout, moving....
+
+Is there any way to tell ppp that sent packet (TCP/UDP) have retransmission
+timeout to indicate that the connection is dead ? In this case it would be
+easy to re-negociate the link.
+
+Thanks for help.
 
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+View this message in context: http://www.nabble.com/PPP-Recovery-tp20958060p20958060.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
+
