@@ -1,27 +1,48 @@
 From: tony.chamberlain@lemko.com
-Date: Wed, 10 Dec 2008 17:33:11 +0000
-Subject: server config
-Message-Id: <W30205118275861228930391@webmail37>
+Date: Fri, 30 Jan 2009 16:10:00 +0000
+Subject: Routing
+Message-Id: <W3133827767292401233331800@webmail16>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+I have a machine, accessible from outside our company, running PPP.
+It's local IP address is 10.0.1.29 (the address it gets from PPP).
+I also have another machine whose IP address is 10.0.1.3 and also has
+an IP address of 192.168.5.88 connected to our local network.
 
-Hi
+I can get to the 10.0.1.29 machine through an external IP address (which
+I won't list here, for security reasons) and from there ssh to 10.0.1.3
+and from 10.0.1.3 to the 192 network.
 
-I am looking for something similar to pptpconfig but for the server.
-I can't seem to install network manager because it complains about dbus.
-Not sure that is the right program anyway for what I want to do?
+I would like to be able to get right from 10.0.1.29 to the 192 network.
+On 10.0.1.3 I set the ip_forard (I forgot exaclty what it is called) to 1
+and restarted the network.
 
-Also meanwhile I am trying to do by hand.  When I run pppd or pppd -detach
-I see all the junk characters coming to the screen.  I know you can specify
-a device for it to run on, but I can't figure out how to get it to go over
-eth0 (they will be IPing in, not dialing in).  I tried pppd eth0 and 
-pppd device eth0 but nothing seems to work.  I tried to install pppdlogger 
-but something about my mysql client has a bunch of unreferenced functions.
+On 10.0.1.29 I did an
 
-Anyone have any ideas?  pptpd does not seem to start up pppd also.
+     ip route add '192.168.5.0/24' via 10.0.1.3 dev ppp0
+and
+     ip route add '192.168.5.0/24' via 10.0.1.3 
+
+tried both.  It was entered succesfully and showed up in "route -n" but
+when I tried from 10.0.1.29 to do for example
+
+     ssh -l root 192.168.5.191
+
+it wouldn't let me and couldn't connect (though it would work from 10.0.1.3).
+
+Did I miss something, or what else do I need to do?
+
+I somehow got this to work earlier between our 192.168.5 nextwork and
+our 10.0.0.0 network where a machine (10.0.0.215/192.168.5.15) was on
+both networks, and I set its address (192.168.5.15) as default router
+for 192.168.5 networks and 10.0.0.215 for 10 networks.
+
+192.168.5 mask is 255.255.255.0 and 10 network mask is 255.0.0.0
+
+Tony
 
 
