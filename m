@@ -1,21 +1,15 @@
-From: David Miller <davem@davemloft.net>
-Date: Fri, 27 Feb 2009 07:08:03 +0000
-Subject: Re: [PATCH] ppp: remove some pointless conditionals before
-Message-Id: <20090226.230803.51086676.davem@davemloft.net>
+From: Joakim Tjernlund <Joakim.Tjernlund@transmode.se>
+Date: Mon, 02 Feb 2009 13:18:46 +0000
+Subject: IFF_RUNNING support for ppp interfaces?
+Message-Id: <OF25BF4B49.1E3AF8FD-ONC1257551.0047CFD6-C1257551.00493095@transmode.se>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <49A51A68.3000509@cn.fujitsu.com>
-In-Reply-To: <49A51A68.3000509@cn.fujitsu.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: yjwei@cn.fujitsu.com
-Cc: paulus@samba.org, jgarzik@pobox.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-From: Wei Yongjun <yjwei@cn.fujitsu.com>
-Date: Wed, 25 Feb 2009 18:16:08 +0800
+I wonder how IFF_RUNNING is managed in recent pppd version(s). I very much 
+like  to
+use IFF_RUNNING to see if the link working in both ends.
 
-> Remove some pointless conditionals before kfree_skb().
-> 
-> Signed-off-by: Wei Yongjun <yjwei@cn.fujitsu.com>
-
-Applied.
+ Jocke
