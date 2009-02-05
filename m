@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 04 Feb 2009 17:11:33 +0000
+From: James Cameron <james.cameron@hp.com>
+Date: Thu, 05 Feb 2009 00:41:27 +0000
 Subject: Re: VPN disconnect
-Message-Id: <18825.52293.434416.813281@gargle.gargle.HOWL>
+Message-Id: <20090205004127.GB3718@hp.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W66896262654641233767149@webmail29>
 In-Reply-To: <W66896262654641233767149@webmail29>
@@ -10,36 +10,18 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-tony.chamberlain@lemko.com writes:
-> This is another VPN question.
-> 
-> We have a regular IP address which we use to connect to a PPTP VPN
-> which assigns us 10.0.1.29.  If the PPTP connection goes down, we
-> will lose that address.
-> 
-> Our software relies on our IP address being 10.0.1.29.  Is there a way,
-> if the VPN temporarily goes down, to maintain the IP address of
-> 10.0.1.29 ?
+On Wed, Feb 04, 2009 at 12:11:33PM -0500, James Carlson wrote:
+> Note that this just tells pppd to request a particular address.
+> There's no telling whether the peer understands what to do with such a
+> request, or if it can or will honor it.  Some servers may refuse to
+> negotiate at all under such conditions, causing the link to fail.
+> (Bugs are unfortunately common.)
 
-You can tell pppd to request a particular address by adding it to your
-options, like this:
-
-	pppd 10.0.1.29: ipcp-accept-local
-
-(The ":" at the end means "request this local address, and don't
-insist on any particular peer address.")
-
-pppd doesn't have an automatic means to save the last-used address for
-a link and pick it up again.  Perhaps it should have one, but you
-could do this in a script by having your own /etc/ppp/ip-up that
-stores $IPREMOTE into a file, and then pull in that file's contents
-for a later invocation of pppd.
-
-Note that this just tells pppd to request a particular address.
-There's no telling whether the peer understands what to do with such a
-request, or if it can or will honor it.  Some servers may refuse to
-negotiate at all under such conditions, causing the link to fail.
-(Bugs are unfortunately common.)
+On the peer side, pptpd on Linux in the default configuration gives the
+IP address to pppd on command line, and so the IP address is usually
+non-negotiable.  I don't know about other peers.
 
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+James Cameron                         http://quozl.netrek.org/
+HP Open Source, Volunteer             http://opensource.hp.com/
+PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
