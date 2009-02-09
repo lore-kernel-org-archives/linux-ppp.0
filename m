@@ -1,7 +1,7 @@
-From: Joakim Tjernlund <Joakim.Tjernlund@transmode.se>
-Date: Mon, 09 Feb 2009 14:43:05 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 09 Feb 2009 15:17:32 +0000
 Subject: Re: IFF_RUNNING support for ppp interfaces?
-Message-Id: <OF1C512EBB.91ECD4C4-ONC1257558.004C3F36-C1257558.0050E906@transmode.se>
+Message-Id: <18832.18700.496640.25336@gargle.gargle.HOWL>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <OF25BF4B49.1E3AF8FD-ONC1257551.0047CFD6-C1257551.00493095@transmode.se>
 In-Reply-To: <OF25BF4B49.1E3AF8FD-ONC1257551.0047CFD6-C1257551.00493095@transmode.se>
@@ -10,71 +10,77 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-James Carlson <carlsonj@workingcode.com> wrote on 09/02/2009 13:10:45:
-> Joakim Tjernlund writes:
-> > James Carlson <carlsonj@workingcode.com> wrote on 04/02/2009 18:14:44:
-> > >
-> > Sorry for the late reply, I got busy and forgot ..
-> > 
-> > > Joakim Tjernlund writes:
-> > > > I wonder how IFF_RUNNING is managed in recent pppd version(s). I 
-very 
-> > much 
-> > > > like  to
-> > > > use IFF_RUNNING to see if the link working in both ends.
-> > > 
-> > > For most implementations, IFF_RUNNING cannot be controlled by 
-anything
-> > > in user space (such as pppd).  Instead, it's set/cleared by the
-> > > kernel's PPP driver.
-> > 
-> > I haven't looked into how ppp is impl. in user/kernel space but I 
-suspect
-> > that user space would have to help/inform the kernel ppp driver about
-> > RUNNING status.
+Joakim Tjernlund writes:
+> James Carlson <carlsonj@workingcode.com> wrote on 09/02/2009 13:10:45:
+> > I don't think that's a problem with the current code.  If you do see a
+> > problem here, then I think it'd be helpful to have the problem itself
+> > described in some detail, rather than focussing on what solution you'd
+> > like to see implemented.
 > 
-> The way it works today is that the daemon tears down the interface if
-> it detects that the interface has failed.
-> 
-> > > Defining "working" is difficult.  Usually, the IFF_RUNNING flag is 
-set
-> > > if the link is either a demand link waiting for activity or if 
-there's
-> > > an active serial link underneath the connection, and IFF_UP is set
-> > > when IPCP successfully negotiates addresses.
-> > 
-> > Perhaps, but one could flip RUNNING if echo replies stops or if
-> > someone pulls the cable. That would be a start
-> 
-> The interface itself is torn down if you set the "lcp-echo-failure"
-> and "lcp-echo-interval" options.
-> 
-> I don't think that's a problem with the current code.  If you do see a
-> problem here, then I think it'd be helpful to have the problem itself
-> described in some detail, rather than focussing on what solution you'd
-> like to see implemented.
+> I should have been clearer. I think it is a bit rude to tear down/delete
+> the ppp interface when it looses a link. Compare with ethernet, when the 
+> cable
+> is pulled you still see the I/F but the running status is gone so you get 
+> a clue
+> to what is wrong. For ppp the I/F is just deleted and you can only guess 
+> the cause,
+> or start looking at logs to find out what happened.
 
-I should have been clearer. I think it is a bit rude to tear down/delete
-the ppp interface when it looses a link. Compare with ethernet, when the 
-cable
-is pulled you still see the I/F but the running status is gone so you get 
-a clue
-to what is wrong. For ppp the I/F is just deleted and you can only guess 
-the cause,
-or start looking at logs to find out what happened.
+Ah, this is a much higher-level issue, and is only slightly related to
+IFF_RUNNING.
 
-Makes life a bit harder for routing daemons like Quagga too, I just
-stumbled over a bug in Quaggas zebra daemon that lost config for
-a ppp interface because the ppp I/F was deleted due to loss of link so
-zebra removed all traces of the interface too, including some config
-set by the user that was supposed to stay.
+The real issue is that (a) there are at least two different "kinds" of
+PPP links, (b) the identity of the IP-level object doesn't say
+anything about the physical entity, and (c) a bit about pppd design
+itself.
 
-Auto delete of ppp interfaces makes it harder for routers to know if
-the interface is really deleted by a user(throw away any extra config that
-the user might have added) or autodelete due to link loss(keep extra 
-config,
-should the interface return, apply that config again).
+With Ethernet, you (generally) know that a "net0" interface is
+connected to a single hardware instance, and that IFF_RUNNING
+transitions represent changes in the status of that one instance.
 
-Of course one can work around such things, but that isn't really optimal.
+With PPP, things are different.  First of all, to point (a), there are
+different kinds of PPP links that we have no good way of
+distinguishing.  One type is (as you suggest) a point-to-point
+connection between two nodes that seldom gets rewired.  This is like
+Ethernet, and it'd be nice if there were a way to leave the IP
+interface in place and toggle that bit when the link goes down.  It's
+still conceptually the "same" interface when it goes up and down.
 
- Jocke
+The other type is the dynamic kind.  The IP interface you see doesn't
+represent anything at all about the "wire" because the wire is in some
+way virtual -- either a PSTN connection, or tunneled as in L2TP or
+PPTP.  The pppd code base actually comes from this world, and the
+interface isn't at all the same when it goes up and down.  The "pppX"
+interfaces don't have administrative significance in that they don't
+identify the underlying link.
+
+To point (b), the "net0" interface is normally used as an
+administrative proxy for the wire itself -- the user has a 1-to-1
+mapping in his head for the IP interface names and the wires he sees.
+That's not so for PPP, where "ppp0" could be "tty0" in one
+incarnation, but "tty1" in another.  There's no stable mapping.  (It'd
+be nice in some ways if these were actually named "ttyN" ... but
+that's probably a bigger issue to deal with.)
+
+For point (c), the way pppd is designed is that the daemon itself is
+in charge of the interface, so when the daemon goes away, so must the
+interface.  That's unlike Ethernet, where there's no daemon at all;
+it's entirely a kernel feature.  Because that user-level bit goes
+away, and we don't typically want trash left behind on the system for
+the user to clean up, daemon death means interface destruction.
+
+There is an exception to this: on Solaris, you can plumb the
+interfaces separately (using ifconfig or /etc/hostname.*) and then use
+the "plumbed" keyword to tell pppd that it should use the _existing_
+PPP interface and leave it in place when terminating.  In this case,
+you get exactly what you've asked about: IFF_RUNNING is turned off
+when the PPP link goes down, but the IP interface itself remains in
+the list.
+
+If you're not using Solaris, then you'll probably have to check the
+documentation for your system (I'm not as familiar with the other
+systems), but I suspect there may be no way to do what you're asking
+with the design that exists today.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
