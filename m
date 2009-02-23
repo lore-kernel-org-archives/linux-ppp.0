@@ -1,21 +1,33 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 19 Feb 2009 20:52:20 +0000
-Subject: Re: Fwd: Goodbye from our Newsletter
-Message-Id: <18845.50820.629253.925975@gargle.gargle.HOWL>
+From: Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
+Date: Mon, 23 Feb 2009 14:59:43 +0000
+Subject: [PATCH] ppp_generic: Simplify tx_dropped stats
+Message-Id: <20090223145942.8588.78220.stgit@Programuotojas>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <W7483018766229701235074903@webmail33>
-In-Reply-To: <W7483018766229701235074903@webmail33>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-tony.chamberlain@lemko.com writes:
-> I assume the following is phishing or otherwise non-genuine?
+Local variable dev = ppp->dev
 
-Yep.  Looks like the ordinary sort of trash that shows up here from
-time to time.  The linux-ppp list shouldn't be subscribed to any
-"newsletters."
+Signed-off-by: Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
+---
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+ drivers/net/ppp_generic.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+
+diff --git a/drivers/net/ppp_generic.c b/drivers/net/ppp_generic.c
+index 7b2728b..78606f5 100644
+--- a/drivers/net/ppp_generic.c
++++ b/drivers/net/ppp_generic.c
+@@ -908,7 +908,7 @@ ppp_start_xmit(struct sk_buff *skb, struct net_device *dev)
+ 
+  outf:
+ 	kfree_skb(skb);
+-	++ppp->dev->stats.tx_dropped;
++	++dev->stats.tx_dropped;
+ 	return 0;
+ }
+ 
+
