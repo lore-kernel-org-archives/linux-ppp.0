@@ -1,27 +1,82 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Thu, 05 Feb 2009 00:41:27 +0000
-Subject: Re: VPN disconnect
-Message-Id: <20090205004127.GB3718@hp.com>
+From: Wei Yongjun <yjwei@cn.fujitsu.com>
+Date: Wed, 25 Feb 2009 10:16:08 +0000
+Subject: [PATCH] ppp: remove some pointless conditionals before kfree_skb()
+Message-Id: <49A51A68.3000509@cn.fujitsu.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <W66896262654641233767149@webmail29>
-In-Reply-To: <W66896262654641233767149@webmail29>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>, Jeff Garzik <jgarzik@pobox.com>
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-On Wed, Feb 04, 2009 at 12:11:33PM -0500, James Carlson wrote:
-> Note that this just tells pppd to request a particular address.
-> There's no telling whether the peer understands what to do with such a
-> request, or if it can or will honor it.  Some servers may refuse to
-> negotiate at all under such conditions, causing the link to fail.
-> (Bugs are unfortunately common.)
+Remove some pointless conditionals before kfree_skb().
 
-On the peer side, pptpd on Linux in the default configuration gives the
-IP address to pppd on command line, and so the IP address is usually
-non-negotiable.  I don't know about other peers.
+Signed-off-by: Wei Yongjun <yjwei@cn.fujitsu.com>
+---
+ drivers/net/ppp_async.c   |    6 ++----
+ drivers/net/ppp_generic.c |    6 ++----
+ drivers/net/ppp_synctty.c |    3 +--
+ 3 files changed, 5 insertions(+), 10 deletions(-)
 
+diff --git a/drivers/net/ppp_async.c b/drivers/net/ppp_async.c
+index 6567fab..5de6fed 100644
+--- a/drivers/net/ppp_async.c
++++ b/drivers/net/ppp_async.c
+@@ -233,11 +233,9 @@ ppp_asynctty_close(struct tty_struct *tty)
+ 	tasklet_kill(&ap->tsk);
+ 
+ 	ppp_unregister_channel(&ap->chan);
+-	if (ap->rpkt)
+-		kfree_skb(ap->rpkt);
++	kfree_skb(ap->rpkt);
+ 	skb_queue_purge(&ap->rqueue);
+-	if (ap->tpkt)
+-		kfree_skb(ap->tpkt);
++	kfree_skb(ap->tpkt);
+ 	kfree(ap);
+ }
+ 
+diff --git a/drivers/net/ppp_generic.c b/drivers/net/ppp_generic.c
+index 81e7fcc..4a12159 100644
+--- a/drivers/net/ppp_generic.c
++++ b/drivers/net/ppp_generic.c
+@@ -1245,8 +1245,7 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
+ 	return;
+ 
+  drop:
+-	if (skb)
+-		kfree_skb(skb);
++	kfree_skb(skb);
+ 	++ppp->dev->stats.tx_errors;
+ }
+ 
+@@ -2658,8 +2657,7 @@ static void ppp_destroy_interface(struct ppp *ppp)
+ 	ppp->active_filter = NULL;
+ #endif /* CONFIG_PPP_FILTER */
+ 
+-	if (ppp->xmit_pending)
+-		kfree_skb(ppp->xmit_pending);
++	kfree_skb(ppp->xmit_pending);
+ 
+ 	free_netdev(ppp->dev);
+ }
+diff --git a/drivers/net/ppp_synctty.c b/drivers/net/ppp_synctty.c
+index 1e892b7..3ea791d 100644
+--- a/drivers/net/ppp_synctty.c
++++ b/drivers/net/ppp_synctty.c
+@@ -281,8 +281,7 @@ ppp_sync_close(struct tty_struct *tty)
+ 
+ 	ppp_unregister_channel(&ap->chan);
+ 	skb_queue_purge(&ap->rqueue);
+-	if (ap->tpkt)
+-		kfree_skb(ap->tpkt);
++	kfree_skb(ap->tpkt);
+ 	kfree(ap);
+ }
+ 
 -- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
+1.5.3.8
+
+
+
+
