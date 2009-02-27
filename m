@@ -1,33 +1,21 @@
-From: Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
-Date: Mon, 23 Feb 2009 14:59:43 +0000
-Subject: [PATCH] ppp_generic: Simplify tx_dropped stats
-Message-Id: <20090223145942.8588.78220.stgit@Programuotojas>
+From: David Miller <davem@davemloft.net>
+Date: Fri, 27 Feb 2009 07:04:40 +0000
+Subject: Re: [PATCH] ppp_generic: Simplify tx_dropped stats
+Message-Id: <20090226.230440.223450053.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20090223145942.8588.78220.stgit@Programuotojas>
+In-Reply-To: <20090223145942.8588.78220.stgit@Programuotojas>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+To: paulius.zaleckas@teltonika.lt
+Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-Local variable dev = ppp->dev
+From: Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
+Date: Mon, 23 Feb 2009 16:59:43 +0200
 
-Signed-off-by: Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
----
+> Local variable dev = ppp->dev
+> 
+> Signed-off-by: Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
 
- drivers/net/ppp_generic.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
-
-
-diff --git a/drivers/net/ppp_generic.c b/drivers/net/ppp_generic.c
-index 7b2728b..78606f5 100644
---- a/drivers/net/ppp_generic.c
-+++ b/drivers/net/ppp_generic.c
-@@ -908,7 +908,7 @@ ppp_start_xmit(struct sk_buff *skb, struct net_device *dev)
- 
-  outf:
- 	kfree_skb(skb);
--	++ppp->dev->stats.tx_dropped;
-+	++dev->stats.tx_dropped;
- 	return 0;
- }
- 
-
+Applied.
