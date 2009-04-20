@@ -1,41 +1,62 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Thu, 05 Mar 2009 22:25:47 +0000
-Subject: [PATCH] Fix formatting, reported by Peter Lyall Easthope
-Message-Id: <20090305222547.GB3368@hp.com>
+From: littleHeart <chanemouganandam@gmail.com>
+Date: Mon, 20 Apr 2009 13:32:36 +0000
+Subject: pppd connection timeout in Mesh network
+Message-Id: <23136711.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, Mar 05, 2009 at 11:30:13AM -0500, Charlie Brady wrote:
-> Here's your chance - submit a patch.
 
-It would take longer to explain how to do it or submit the original mail
-again.  ;-)
+Hi all,
 
-Signed-off-by: james.cameron@hp.com
+I have a problem with PPP connection timeout in my 3 nodes mesh networking
+system.  Node 1 is wirelessly bridged to ADSL line and wireless mesh
+networked to Node 2 and Node 3. Node 1 always stays up connected and ppp,
+internet works fine. But node 2 and node 3 has problem with  ppp connection
+timeout. Sometimes node 2 or node 3 has ppp vpn connection but lasts for few
+minutes and then gets disconnected. Following is the log message when trying
+to connect after disconnection.
 
----
- pppd/pppd.8 |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+Jan  1 00:01:09 OpenWrt user.info : using channel 1
+Jan  1 00:01:09 OpenWrt user.info : Using interface ppp0
+Jan  1 00:01:09 OpenWrt user.info : Connect: ppp0 <--> /dev/pts/0
+Jan  1 00:01:39 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:01:42 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:01:45 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:01:48 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:01:51 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:01:54 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:01:57 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:02:00 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:02:03 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:02:06 OpenWrt user.info : sent [LCP ConfReq id=0x1 <asyncmap 0x0>
+<magic 0x8db4b242> <pcomp> <accomp>]
+Jan  1 00:02:09 OpenWrt user.info : LCP: timeout sending Config-Requests
 
-diff --git a/pppd/pppd.8 b/pppd/pppd.8
-index 8ea8200..2ab51e5 100644
---- a/pppd/pppd.8
-+++ b/pppd/pppd.8
-@@ -1713,6 +1713,7 @@ links, used for matching links to bundles in multilink operation.  May
- be examined by external programs to obtain information about running
- pppd instances, the interfaces and devices they are using, IP address
- assignments, etc.
-+.TP
- .B /etc/ppp/pap\-secrets
- Usernames, passwords and IP addresses for PAP authentication.  This
- file should be owned by root and not readable or writable by any other
+Automatic reconnection failed with timeout for most of the time. When pppd
+command is launched manually it connects (using interface ppp1) well and
+stay connected. 
+
+Can anybody precise me what exactly wrong with the ppp connection goes
+disconnected and got connected when launched manually. ? 
+
+thanks 
+
+
+
+
 -- 
-1.6.1.3
+View this message in context: http://www.nabble.com/pppd-connection-timeout-in-Mesh-network-tp23136711p23136711.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
 
--- 
-James Cameron                         http://quozl.netrek.org/
-HP Open Source, Volunteer             http://opensource.hp.com/
-PPTP Client Project, Release Engineer http://pptpclient.sourceforge.net/
