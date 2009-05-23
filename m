@@ -1,26 +1,22 @@
-From: James Cameron <james.cameron@hp.com>
-Date: Thu, 21 May 2009 23:02:45 +0000
-Subject: Re: [PATCH] Accept ms-wins settings provided by server
-Message-Id: <20090521230245.GA3138@hp.com>
+From: f15radar <allsoft@goldlink.net>
+Date: Sat, 23 May 2009 13:05:10 +0000
+Subject: Fooling PPP into thinking its connected
+Message-Id: <23684368.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1241641599-32361-1-git-send-email-marcus@better.se>
-In-Reply-To: <1241641599-32361-1-git-send-email-marcus@better.se>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, May 21, 2009 at 10:00:36PM +0200, Marcus Better wrote:
-> James Cameron wrote:
-> > What is ipcp-max-configure set to?
-> > 
-> > What is ipcp-restart set to?
-> 
-> The default values.
 
-Double them and see if the frequency of the connection failure is
-changed.
+I have 3 freewave radios (they are serial radios) that have the ethernet
+stuff disabled.  I am using PPP to connect 2 of the radios.  I want to add
+the third radio.  If I could fool PPP into thinking it was connected (its
+getting all of the data being sent between the other 2) I could add the
+third radio.  Does anyone know how I might do that?
 
+Thanks in advance.
 -- 
-James Cameron
-http://ftp.hp.com.au/sigs/jc/
+View this message in context: http://www.nabble.com/Fooling-PPP-into-thinking-its-connected-tp23684368p23684368.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
+
