@@ -1,43 +1,110 @@
-From: md@Linux.IT (Marco d'Itri)
-Date: Tue, 09 Jun 2009 14:55:30 +0000
+From: Libor Pechacek <lpechacek@suse.cz>
+Date: Thu, 09 Jul 2009 12:38:36 +0000
 Subject: Re: [PATCH] Accept ms-wins settings provided by server
-Message-Id: <20090609145530.GA11241@bongo.bofh.it>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="7AUc2qLy4jB3hD7Z"
+Message-Id: <loom.20090709T065514-445@post.gmane.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1241641599-32361-1-git-send-email-marcus@better.se>
 In-Reply-To: <1241641599-32361-1-git-send-email-marcus@better.se>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi Marcus,
 
---7AUc2qLy4jB3hD7Z
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Marcus Better <marcus <at> better.se> writes:
+> Paul Mackerras wrote:
+> > Also, have you tried the latest git version of pppd?  Since 2.4.4 I
+> > have added code to add the MS-DNS option to our IPCP conf-reqs if the
+> > modem insists.
+> 
+> I cannot reproduce the problem anymore. I have changed UMTS provider in
+> between (from Tele2 to 3 in Sweden), and modem (from Huawei E620 to E220).
+> This may explain the differences.
+> 
+> However I still have a very similar connection problem, but the patch makes
+> no difference. I tried both pppd 2.4.4 and current git, patched and
+> unpatched. In all cases it tends to fail at the first connection attempt
+> after plugging in the modem. What helps however is setting ipcp-max-failure
+> high enough, like 30.
 
-On May 20, Marco d'Itri <md@Linux.IT> wrote:
+The DNS problem you observe is unrelated to the WINS one.  Increasing
+ipcp-max-failure is IMO the right solution here.  The DNS negotiation trouble
+is caused by the 'treat as reject' behavior introduced in GIT commit ec27e674.
 
-> > # cease if modem is not attached to network yet
-> > ABORT '+CGATT: 0'
-> > '' AT+CGATT?
-> FYI, with my Nokia E51 I always get back 0.
-Because it was connected to a 3G network, this only works for GPRS.
+> I'm quite sure that the patch was needed with the old provider and hardware,
+> and a few other people have confirmed this. I'll see if I can try another
+> modem.
+> 
+> Hopefully someone else can reproduce it?
 
---=20
-ciao,
-Marco
+I have information that people in Germany (hs2300 HSDPA modem, providers
+T-Mobile and Vodafone) and Finland (no details provided) observed this failure
+too.
 
---7AUc2qLy4jB3hD7Z
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
+> Here is the log with the current git (unpatched), failure case:
+[...]
+> May 19 20:32:00 better pppd[10996]: sent [IPCP ConfReq id=0x1 <addr 0.0.0.0>
+<ms-dns1 0.0.0.0> <ms-dns2 0.0.0.0>]
+> May 19 20:32:01 better pppd[10996]: rcvd [IPCP ConfNak id=0x1 <ms-dns1
+10.11.12.13> <ms-dns2 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
+This is the first configuration request - IP address and DNS servers are
+requested, the remote end responds with NAK and provides some DNS and WINS
+server addresses.  So far so good.
 
-iEYEARECAAYFAkoud+IACgkQFGfw2OHuP7H7LQCffmSG1+OTcXG5vYBMjOhTyBRE
-TgkAmwVXIaT/MWJvypg66P+qxnd2WVer
-=tLVR
------END PGP SIGNATURE-----
+[...]
+> May 19 20:32:08 better pppd[10996]: sent [IPCP ConfReq id=0x9 <addr 0.0.0.0>
+<ms-dns1 10.11.12.13> <ms-dns2 10.11.12.14>]
+> May 19 20:32:09 better pppd[10996]: rcvd [IPCP ConfNak id=0x9 <ms-dns1
+10.11.12.13> <ms-dns2 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
 
---7AUc2qLy4jB3hD7Z--
+The previous request was the last one where the local end requested the DNS
+server addresses.  The next request does not contain the DNS options due to the
+condition at line 556 in pppd/fsm.c (treat_as_reject = (f->rnakloops >f->maxnakloops)).
+
+> May 19 20:32:09 better pppd[10996]: sent [IPCP ConfReq id=0xa <addr 0.0.0.0>]
+> May 19 20:32:10 better pppd[10996]: rcvd [IPCP ConfNak id=0xa <ms-dns1
+10.11.12.13> <ms-dns2 10.11.12.14> <ms-wins 10.11.12.13> <ms-wins 10.11.12.14>]
+
+And despite the remote end offered valid DNS server addresses, they were
+disregarded, and configuration request with id 0xe has surprisingly no options:
+
+> May 19 20:32:12 better pppd[10996]: sent [IPCP ConfReq id=0xd <addr 0.0.0.0>
+<ms-dns1 10.11.12.13> <ms-dns2 10.11.12.14>]
+> May 19 20:32:12 better pppd[10996]: rcvd [IPCP ConfReq id=0x0]
+> May 19 20:32:12 better pppd[10996]: sent [IPCP ConfNak id=0x0 <addr 0.0.0.0>]
+> May 19 20:32:12 better pppd[10996]: rcvd [IPCP ConfNak id=0xd <addr
+95.209.165.82> <ms-dns1 80.251.192.244> <ms-dns2 80.251.192.245>]
+> May 19 20:32:12 better pppd[10996]: sent [IPCP ConfReq id=0xe]
+> May 19 20:32:12 better pppd[10996]: rcvd [IPCP ConfReq id=0x1]
+> May 19 20:32:12 better pppd[10996]: sent [IPCP ConfAck id=0x1]
+> May 19 20:32:12 better pppd[10996]: rcvd [IPCP ConfNak id=0xe <addr
+95.209.165.82>]
+> May 19 20:32:12 better pppd[10996]: sent [IPCP ConfReq id=0xf <addr
+95.209.165.82>]
+> May 19 20:32:12 better pppd[10996]: rcvd [IPCP ConfAck id=0xf <addr
+95.209.165.82>]
+> May 19 20:32:12 better pppd[10996]: Could not determine remote IP address:
+defaulting to 10.64.64.64
+> May 19 20:32:12 better pppd[10996]: not replacing existing default route via
+192.168.1.1
+> May 19 20:32:12 better pppd[10996]: Cannot determine ethernet address for
+proxy ARP
+> May 19 20:32:12 better pppd[10996]: local  IP address 95.209.165.82
+> May 19 20:32:12 better pppd[10996]: remote IP address 10.64.64.64
+
+The remote end did not provide its IP address, the local end got 95.209.165.82,
+but no DNS servers as DNS option negotiation was abandoned (ipcp-max-failure AKA
+maxnakloops was exceeded).  The obvious solution is to fiddle about with 
+the configuration parameters.
+
+Yet it's hard to believe for me that the *modem* replies PPP packets, and
+establishes PPP connection *before* the physical link is up.  Does it really
+work this way?
+
+--
+Libor Pechacek
+SUSE L3 Team
+
+
