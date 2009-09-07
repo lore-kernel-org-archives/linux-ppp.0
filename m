@@ -1,18 +1,34 @@
-From: Charlie Brady <charlieb@budge.apana.org.au>
-Date: Wed, 02 Sep 2009 13:03:44 +0000
-Subject: Re: netconsole configuration problem in FC-8 and FC-10 with 2.6.28
-Message-Id: <Pine.LNX.4.64.0909020902550.29129@e-smith.charlieb.ott.istop.com>
+From: Nev <nev@watchuktv.co.uk>
+Date: Mon, 07 Sep 2009 20:53:35 +0000
+Subject: Calling-Station-Id
+Message-Id: <4AA572CF.8070900@watchuktv.co.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <97a757510909020125y52641b93sec7c1ec04b27d804@mail.gmail.com>
-In-Reply-To: <97a757510909020125y52641b93sec7c1ec04b27d804@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+This is my very first post, so apologies if I'm posting to the wrong list.
 
-On Wed, 2 Sep 2009, Madhavi Manchala wrote:
+OS CentOS 5.3
+Kernel 2.6.18-128
 
-> Please let me know if I am missing any thing
+My setup is PPTP client >> INTERNET >> pptpd (1.3.4) / PPP (2.4.4.-2) / 
+Radius (2.1.6)
 
-You are missing the fact that your question has nothing to do with PPP.
+in /etc/pptpd I have noipparam commented in order that the client's IP 
+address is pass to PPP
+
+in /var/log/messages the clients ip is passed
+
+Sep  7 21:41:32 vpn1 pppd[9945]: ipparam 78.8X.18X.XX           # (from 
+command line)
+
+But what ends in Radius is Calling-Station-Id = "8.87" and not the FULL IP.
+
+I searched google and I can see alot of people have had this problem, 
+but I've not be able to find a fix.
+
+Thx
+Nev
+
