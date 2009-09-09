@@ -1,7 +1,7 @@
-From: James Cameron <quozl@laptop.org>
-Date: Wed, 09 Sep 2009 01:12:16 +0000
-Subject: Re: several sites through router
-Message-Id: <20090909011216.GE16084@us.netrek.org>
+From: tony.chamberlain@lemko.com
+Date: Wed, 09 Sep 2009 12:51:41 +0000
+Subject: Re:  several sites through router
+Message-Id: <W60632244199201252500701@webmail44>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W286594864216051252429162@webmail32>
 In-Reply-To: <W286594864216051252429162@webmail32>
@@ -9,6 +9,18 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+Will openvpn allow you to assign IP address by user id?
+I mean its true now that when I make the pppd call I can specify
+(request) what address I want, but it would be nice if the server could
+do the assigning.  Clients do rely on receiving the same IP address.
+(I mean the same one, but each client gets a different IP).
+
+-----Original Message-----
+From: James Cameron [mailto:quozl@laptop.org]
+Sent: Tuesday, September 8, 2009 08:12 PM
+To: linux-ppp@vger.kernel.org
+Subject: Re: several sites through router
 
 This has nothing to do with pppd, but is a common problem with pptp,
 in future ask on the pptpclient-devel mailing list instead.  Or even the
@@ -27,3 +39,10 @@ You should use OpenVPN instead then.
 -- 
 James Cameron
 http://quozl.linux.org.au/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
