@@ -1,40 +1,41 @@
-From: Jaswinder Singh Rajput <jaswinder@kernel.org>
-Date: Sat, 12 Sep 2009 16:53:31 +0000
-Subject: [PATCH] ppp: ppp_generic.c initialize flen before it get used
-Message-Id: <1252773691.3687.5.camel@ht.satnam>
+From: David Miller <davem@davemloft.net>
+Date: Sun, 13 Sep 2009 06:17:26 +0000
+Subject: Re: [PATCH] ppp: ppp_generic.c initialize flen before it get used
+Message-Id: <20090912.231726.165876349.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1252773691.3687.5.camel@ht.satnam>
+In-Reply-To: <1252773691.3687.5.camel@ht.satnam>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: David Miller <davem@davemloft.net>, Gabriele Paoloni <gabriele.paoloni@intel.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev <netdev@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: jaswinder@kernel.org
+Cc: gabriele.paoloni@intel.com, paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
 
-When while loop runs first time flen is used uninitialized for nfree <= 0
+Already dealt with in net-next-2.6, please act against the
+active networking development trees when fixing warnings and
+doing cleanups.
 
-This also fixed compilation warning :
-  CC [M]  drivers/net/ppp_generic.o
-drivers/net/ppp_generic.c: In function ‘ppp_mp_explode’:
-drivers/net/ppp_generic.c:1314: warning: ‘flen’ may be used uninitialized in this function
+Thank you.
 
-Signed-off-by: Jaswinder Singh Rajput <jaswinderrajput@gmail.com>
----
- drivers/net/ppp_generic.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+commit 886f9fe68310168358f55028a03553ae154dfeb6
+Author: David S. Miller <davem@davemloft.net>
+Date:   Wed Aug 19 13:55:55 2009 -0700
 
-diff --git a/drivers/net/ppp_generic.c b/drivers/net/ppp_generic.c
-index cd37d73..b1a1a06 100644
---- a/drivers/net/ppp_generic.c
-+++ b/drivers/net/ppp_generic.c
-@@ -1311,7 +1311,7 @@ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb)
- {
- 	int	len, totlen;
- 	int	i, bits, hdrlen, mtu;
--	int	flen;
-+	int	flen = 0;
- 	int	navail,	nfree, nzero;
- 	int	nbigger;
- 	int	totspeed;
--- 
-1.6.4.2
-
+    ppp_generic: Help GCC see that 'flen' is always initialized.
+    
+    It's too stupid to see that we always set flen to something
+    before we use it in ppp_mp_explode():
+    
+    drivers/net/ppp_generic.c: In function 'ppp_push':
+    drivers/net/ppp_generic.c:1314: warning: 'flen' may be used uninitialized in this function
+    drivers/net/ppp_generic.c:1314: note: 'flen' was declared here
+    
+    This started warning after commit a53a8b56827cc429c6d9f861ad558beeb5f6103f
+    ("ppp: fix lost fragments in ppp_mp_explode() (resubmit)")
+    
+    So just put an explicit unconditional initialization there to
+    hush it up.
+    
+    Signed-off-by: David S. Miller <davem@davemloft.net>
 
