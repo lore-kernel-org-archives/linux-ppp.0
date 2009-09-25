@@ -1,7 +1,7 @@
-From: Chris Fowler <cfowler@outpostsentinel.com>
-Date: Fri, 25 Sep 2009 18:55:24 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Fri, 25 Sep 2009 18:56:14 +0000
 Subject: Re: ppp link time limit
-Message-Id: <1253904924.6726.681.camel@compaq>
+Message-Id: <4ABD124E.9090101@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <004001ca3e15$69a6b9d0$0413010a@scu.escambray.com.cu>
 In-Reply-To: <004001ca3e15$69a6b9d0$0413010a@scu.escambray.com.cu>
@@ -10,31 +10,33 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-#!/usr/bin/perl
-
-my $pid = fork();
-exit 0 if $pid;
-
-$pid = fork();
-
-if($pid = 0) {
-  exec "/usr/sbin/pppd", ("call", "isp", "nodetach");
-  exit 1;
-}
-
-sleep 1800;
-kill 15, $pid;
-
-
-On Fri, 2009-09-25 at 14:51 -0400, Charlie Brady wrote:
-> On Fri, 25 Sep 2009, Bill Unruh wrote:
+Davy Leon wrote:
+> Hi guys
 > 
-> > pppd call isp & sleep 1800; killall pppd
+> I have a link wich I stablish by running
 > 
-> The above will kill any pppd process, not just the backgrounded one from 
-> this shell script.
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> pppd call isp
+> 
+> It' launched by the cron at some scheduled times of the day. I need the
+> link doesn't stay up for more than 30 min, but doesn't know how to do
+> that. No matter the link is idle or being used I want to terminate it
+> once reached the ammount of time specified. How can I do that?
 
+I should probably port this option over from the OpenSolaris variant of
+pppd:
+
+     maxconnect n
+
+         Terminate the connection after it has been available for
+         network  traffic for n seconds (that is, n seconds after
+         the first  network  control  protocol  starts).  An  LCP
+         Time-Remaining  message  is  sent  when  the  first  NCP
+         starts, and again when 5, 2, and 0.5 minutes are remain-
+         ing.
+
+Without that option, one way of doing what you ask is to use the
+"linkname" parameter to force a reliable PID file name, and then just
+sleep and kill the process based on the contents of that file.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
