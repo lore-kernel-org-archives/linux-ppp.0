@@ -1,41 +1,25 @@
-From: David Miller <davem@davemloft.net>
-Date: Sun, 13 Sep 2009 06:17:26 +0000
-Subject: Re: [PATCH] ppp: ppp_generic.c initialize flen before it get used
-Message-Id: <20090912.231726.165876349.davem@davemloft.net>
+From: "Davy Leon" <davy@scu.escambray.com.cu>
+Date: Fri, 25 Sep 2009 18:20:12 +0000
+Subject: ppp link time limit
+Message-Id: <004001ca3e15$69a6b9d0$0413010a@scu.escambray.com.cu>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1252773691.3687.5.camel@ht.satnam>
-In-Reply-To: <1252773691.3687.5.camel@ht.satnam>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: jaswinder@kernel.org
-Cc: gabriele.paoloni@intel.com, paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
+Hi guys
 
-Already dealt with in net-next-2.6, please act against the
-active networking development trees when fixing warnings and
-doing cleanups.
+I have a link wich I stablish by running
 
-Thank you.
+pppd call isp
 
-commit 886f9fe68310168358f55028a03553ae154dfeb6
-Author: David S. Miller <davem@davemloft.net>
-Date:   Wed Aug 19 13:55:55 2009 -0700
+It' launched by the cron at some scheduled times of the day. I need the link 
+doesn't stay up for more than 30 min, but doesn't know how to do that. No 
+matter the link is idle or being used I want to terminate it once reached 
+the ammount of time specified. How can I do that?
 
-    ppp_generic: Help GCC see that 'flen' is always initialized.
-    
-    It's too stupid to see that we always set flen to something
-    before we use it in ppp_mp_explode():
-    
-    drivers/net/ppp_generic.c: In function 'ppp_push':
-    drivers/net/ppp_generic.c:1314: warning: 'flen' may be used uninitialized in this function
-    drivers/net/ppp_generic.c:1314: note: 'flen' was declared here
-    
-    This started warning after commit a53a8b56827cc429c6d9f861ad558beeb5f6103f
-    ("ppp: fix lost fragments in ppp_mp_explode() (resubmit)")
-    
-    So just put an explicit unconditional initialization there to
-    hush it up.
-    
-    Signed-off-by: David S. Miller <davem@davemloft.net>
+Cheers
+
+David 
 
