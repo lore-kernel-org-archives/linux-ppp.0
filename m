@@ -1,73 +1,57 @@
 From: Tilman Schmidt <tilman@imap.cc>
-Date: Fri, 23 Oct 2009 16:33:13 +0000
-Subject: Re: NOHZ: local_softirq_pending 08
-Message-Id: <4AE1DAC9.5040603@imap.cc>
+Date: Thu, 01 Oct 2009 14:28:44 +0000
+Subject: [PATCH] net/ppp: fix comments - ppp_{sync,asynctty}_receive() may sleep
+Message-Id: <20091001142844.C50E511186D@xenon.ts.pxnet.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4AD31213.6020006@imap.cc> <20091015114052.GA9870@ff.dom.local>	 <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>	 <4AE0ECCE.2020407@imap.cc> <1256304869.12174.20.camel@johannes.local>	 <4AE1BD3D.3020007@imap.cc> <1256308311.12174.38.camel@johannes.local>
-In-Reply-To: <1256308311.12174.38.camel@johannes.local>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: Johannes Berg <johannes@sipsolutions.net>
-Cc: Jarek Poplawski <jarkao2@gmail.com>, David Miller <davem@davemloft.net>, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, isdn4linux <isdn4linux@listserv.isdn4linux.de>, i4ldeveloper <i4ldeveloper@listserv.isdn4linux.de>, Karsten Keil <isdn@linux-pingi.de>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Alan Cox <alan@lxorguk.ukuu.org.uk>, Alan Cox <alan@linux.intel.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
+Cc: David Miller <davem@davemloft.net>, netdev@vger.kernel.org, Jarek Poplawski <jarkao2@gmail.com>, linux-kernel@vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+The receive_buf methods of the N_PPP and N_SYNC_PPP line disciplines,
+ppp_asynctty_receive() and ppp_sync_receive(), call tty_unthrottle()
+which may sleep. Fix the comments claiming otherwise.
 
-Johannes Berg schrieb:
-> On Fri, 2009-10-23 at 16:27 +0200, Tilman Schmidt wrote:
->> Johannes Berg schrieb:
->>> So you've verified that the entire i4l stack can cope with being called
->>> twice on the same CPU, from different contexts?
->> What makes you think so?
-> 
-> I thought I'd explained this in my other email. *sigh*
-[snip]
+Impact: documentation
+Signed-off-by: Tilman Schmidt <tilman@imap.cc>
+---
+ drivers/net/ppp_async.c   |    5 +----
+ drivers/net/ppp_synctty.c |    5 +----
+ 2 files changed, 2 insertions(+), 8 deletions(-)
 
-Ah, I see. You misunderstood my posting. I did not propose that
-patch as a definitive and verified solution, but rather as a
-request for comments from the people who know and maintain the
-code in question. I thought that was clear from the facts that
-- - I didn't include "[PATCH]" in the subject line
-- - I didn't add a "Signed-off-by" line
-- - I wrote "fixed the messages", not "solved the problem"
-- - I explicitly wrote "Comments?" and "Adding i4l people to CC"
+diff --git a/drivers/net/ppp_async.c b/drivers/net/ppp_async.c
+index 6de8399..30b1b33 100644
+--- a/drivers/net/ppp_async.c
++++ b/drivers/net/ppp_async.c
+@@ -337,10 +337,7 @@ ppp_asynctty_poll(struct tty_struct *tty, struct file *file, poll_table *wait)
+ 	return 0;
+ }
+ 
+-/*
+- * This can now be called from hard interrupt level as well
+- * as soft interrupt level or mainline.
+- */
++/* May sleep, don't call from interrupt level or with interrupts disabled */
+ static void
+ ppp_asynctty_receive(struct tty_struct *tty, const unsigned char *buf,
+ 		  char *cflags, int count)
+diff --git a/drivers/net/ppp_synctty.c b/drivers/net/ppp_synctty.c
+index d2fa2db..c908b08 100644
+--- a/drivers/net/ppp_synctty.c
++++ b/drivers/net/ppp_synctty.c
+@@ -378,10 +378,7 @@ ppp_sync_poll(struct tty_struct *tty, struct file *file, poll_table *wait)
+ 	return 0;
+ }
+ 
+-/*
+- * This can now be called from hard interrupt level as well
+- * as soft interrupt level or mainline.
+- */
++/* May sleep, don't call from interrupt level or with interrupts disabled */
+ static void
+ ppp_sync_receive(struct tty_struct *tty, const unsigned char *buf,
+ 		  char *cflags, int count)
+-- 
+1.6.2.1.214.ge986c
 
-Apparently all that was still not clear enough. Sorry about that.
-So let me try to make my concern as explicit as possible:
-
-- - The patch I posted had the effect that the test which reliably
-  triggered the local_softirq_pending message before did not do
-  so anymore.
-
-- - To me, this seems to indicate that the netif_rx(skb) call in
-  line 1177 of source file drivers/isdn/i4l/isdn_ppp.c is indeed
-  involved in the problem.
-
-- - Now I'm asking people who know more than myself about the
-  ramifications of that message (ie., you) and/or the code I
-  narrowed it down to (ie., the ISDN4Linux maintainers - which
-  is why I added them to the CC list) to have a look and determine
-  how to fix the problem properly.
-
-- - This would of course include, in finis, the verification you
-  mistakenly assumed I might have done already.
-
-I hope that's clear enough. If you have any questions, feel free
-to ask.
-
-Thanks,
-Tilman
-
-- --
-Tilman Schmidt                    E-Mail: tilman@imap.cc
-Bonn, Germany
-Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
-Ungeöffnet mindestens haltbar bis: (siehe Rückseite)
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.4 (MingW32)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
-
-iD8DBQFK4drJQ3+did9BuFsRAmstAJ94UF/LupINlYpjbxzz9xoiN5w34wCfflRz
-YfR/fXt3HasrxUSP29REOnE=VQ/C
------END PGP SIGNATURE-----
