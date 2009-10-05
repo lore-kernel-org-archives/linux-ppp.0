@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Mon, 05 Oct 2009 17:33:19 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 05 Oct 2009 17:38:06 +0000
 Subject: Re: ppp question
-Message-Id: <Pine.LNX.4.64.0910051031340.32187@info.physics.ubc.ca>
+Message-Id: <4ACA2EFE.9060309@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <008201ca45e2$eb8f8f60$0413010a@scu.escambray.com.cu>
 In-Reply-To: <008201ca45e2$eb8f8f60$0413010a@scu.escambray.com.cu>
@@ -10,36 +10,45 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Mon, 5 Oct 2009, Davy Leon wrote:
+Davy Leon wrote:
+> I have a question. Every time I dialup to the internet pppd executes an
+> script called ip-up. My question is, everytime someone dials in it's
+> executed too?
 
-> Hi folks
->
-> I have a question. Every time I dialup to the internet pppd executes an 
-> script called ip-up. My question is, everytime someone dials in it's executed 
-> too? If the answer is yes, how can I handle the script to execute one part 
-> when dianing out and another part when dialing in. I meant something like
+Yes.  It's executed every time an IP interface is brought up by PPP.
 
-One of the arguments given to ip-up is the IP addresses assigned to the remote
-and local systems. Since when someone calls in the IP address is assigned by
-you and is almost certainly different from the IP address assigned to you when
-you dial out. You can base the response on the IP address range
+Note that PPP itself knows nothing about dialing in or out; those are
+attributes of the lower layer -- the chat script and modems or other
+communications gear involved.  PPP is symmetric and peer-to-peer.
+There's no "client" or "server."
 
-man pppd
+> If the answer is yes, how can I handle the script to
+> execute one part when dianing out and another part when dialing in. I
+> meant something like
 
->
-> if dialing in then
->
-> ...
-> ...
->
-> if dialing out then
->
-> ...
-> ....
->
->
->
-> Thanks in advance
->
-> David 
-> --
+The man page has a number of environment variables documented that you
+could use for this task.  $PEERNAME is fairly useful -- it will be set
+only if you have an authenticated peer name.
+
+If you have different devices for dialing in and out (it's often a good
+idea to do this, but not always done), then $DEVICE might tell you what
+you want to know.
+
+If you want to get fancier, you can use $LINKNAME with the "linkname"
+option.
+
+The simple answer would be:
+
+	if [[ -n ${PEERNAME:+I_am_server} ]]; then
+		# the peer probably called me
+	else
+		# I'm probably dialing out
+	fi
+
+But note that this is making a big assumption about authentication
+configuration: that you always authenticate people calling you, and you
+never authenticate people you call.  That's how PPP is commonly used,
+but there's nothing in the standards that _requires_ it to be used that way.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
