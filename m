@@ -1,57 +1,24 @@
-From: Tilman Schmidt <tilman@imap.cc>
-Date: Thu, 01 Oct 2009 14:28:44 +0000
-Subject: [PATCH] net/ppp: fix comments - ppp_{sync,asynctty}_receive() may sleep
-Message-Id: <20091001142844.C50E511186D@xenon.ts.pxnet.com>
+From: David Miller <davem@davemloft.net>
+Date: Wed, 07 Oct 2009 08:28:21 +0000
+Subject: Re: [PATCH] net/ppp: fix comments - ppp_{sync,asynctty}_receive()
+Message-Id: <20091007.012821.184426837.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20091001142844.C50E511186D@xenon.ts.pxnet.com>
+In-Reply-To: <20091001142844.C50E511186D@xenon.ts.pxnet.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Alan Cox <alan@lxorguk.ukuu.org.uk>, Alan Cox <alan@linux.intel.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
-Cc: David Miller <davem@davemloft.net>, netdev@vger.kernel.org, Jarek Poplawski <jarkao2@gmail.com>, linux-kernel@vger.kernel.org
+To: tilman@imap.cc
+Cc: alan@lxorguk.ukuu.org.uk, alan@linux.intel.com, paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, jarkao2@gmail.com, linux-kernel@vger.kernel.org
 
-The receive_buf methods of the N_PPP and N_SYNC_PPP line disciplines,
-ppp_asynctty_receive() and ppp_sync_receive(), call tty_unthrottle()
-which may sleep. Fix the comments claiming otherwise.
+From: Tilman Schmidt <tilman@imap.cc>
+Date: Thu,  1 Oct 2009 16:28:44 +0200 (CEST)
 
-Impact: documentation
-Signed-off-by: Tilman Schmidt <tilman@imap.cc>
----
- drivers/net/ppp_async.c   |    5 +----
- drivers/net/ppp_synctty.c |    5 +----
- 2 files changed, 2 insertions(+), 8 deletions(-)
+> The receive_buf methods of the N_PPP and N_SYNC_PPP line disciplines,
+> ppp_asynctty_receive() and ppp_sync_receive(), call tty_unthrottle()
+> which may sleep. Fix the comments claiming otherwise.
+> 
+> Impact: documentation
+> Signed-off-by: Tilman Schmidt <tilman@imap.cc>
 
-diff --git a/drivers/net/ppp_async.c b/drivers/net/ppp_async.c
-index 6de8399..30b1b33 100644
---- a/drivers/net/ppp_async.c
-+++ b/drivers/net/ppp_async.c
-@@ -337,10 +337,7 @@ ppp_asynctty_poll(struct tty_struct *tty, struct file *file, poll_table *wait)
- 	return 0;
- }
- 
--/*
-- * This can now be called from hard interrupt level as well
-- * as soft interrupt level or mainline.
-- */
-+/* May sleep, don't call from interrupt level or with interrupts disabled */
- static void
- ppp_asynctty_receive(struct tty_struct *tty, const unsigned char *buf,
- 		  char *cflags, int count)
-diff --git a/drivers/net/ppp_synctty.c b/drivers/net/ppp_synctty.c
-index d2fa2db..c908b08 100644
---- a/drivers/net/ppp_synctty.c
-+++ b/drivers/net/ppp_synctty.c
-@@ -378,10 +378,7 @@ ppp_sync_poll(struct tty_struct *tty, struct file *file, poll_table *wait)
- 	return 0;
- }
- 
--/*
-- * This can now be called from hard interrupt level as well
-- * as soft interrupt level or mainline.
-- */
-+/* May sleep, don't call from interrupt level or with interrupts disabled */
- static void
- ppp_sync_receive(struct tty_struct *tty, const unsigned char *buf,
- 		  char *cflags, int count)
--- 
-1.6.2.1.214.ge986c
-
+Applied, thanks.
