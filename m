@@ -1,53 +1,58 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 12 Oct 2009 10:32:46 +0000
-Subject: Re: NOHZ: local_softirq_pending 08
-Message-Id: <20091012.033246.56701176.davem@davemloft.net>
-List-Id: <linux-ppp.vger.kernel.org>
-References: <4AD1BF06.3050103@phoenixsoftware.de>
-	<1255261251.4095.143.camel@johannes.local>
-	<4AD2E8C8.4060205@imap.cc>
-In-Reply-To: <4AD2E8C8.4060205@imap.cc>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: tilman@imap.cc
-Cc: johannes@sipsolutions.net, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org
-
 From: Tilman Schmidt <tilman@imap.cc>
-Date: Mon, 12 Oct 2009 10:28:56 +0200
+Date: Mon, 12 Oct 2009 11:25:07 +0000
+Subject: Re: NOHZ: local_softirq_pending 08
+Message-Id: <4AD31213.6020006@imap.cc>
+List-Id: <linux-ppp.vger.kernel.org>
+References: <4AD1BF06.3050103@phoenixsoftware.de>	<1255261251.4095.143.camel@johannes.local>	<4AD2E8C8.4060205@imap.cc> <20091012.033246.56701176.davem@davemloft.net>
+In-Reply-To: <20091012.033246.56701176.davem@davemloft.net>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+To: David Miller <davem@davemloft.net>
+Cc: tilman@imap.cc, johannes@sipsolutions.net, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org
 
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
-> 
-> [CCing PPP people]
-> 
-> Am 11.10.2009 13:40 schrieb Johannes Berg:
->> On Sun, 2009-10-11 at 13:18 +0200, Tilman Schmidt wrote:
->> 
->>> Can you explain a bit more what that message is about?
->>> I am encountering it in a completely different context
->>> (PPP over ISDN) [...]
->> 
->> Basically, calling netif_rx() with softirqs enabled.
-> 
-> AFAICS that would have to be the netif_rx() call in
-> ppp_receive_nonmp_frame() [drivers/net/ppp_generic.c#L1791],
-> called (via others) from the tasklet work function
-> ppp_sync_process() [drivers/net/ppp_synctty.c#L545].
-> Should that be changed to the
-> "if (in_interrupt()) netif_rx(skb) else netif_rx_ni(skb)"
-> stanza from the linux.kernel.wireless.general thread then?
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-The PPP receive paths in ppp_generic.c do a local_bh_disable()/
-local_bh_enable() around packet receiving (via ppp_recv_lock()/
-ppp_recv_unlock() in ppp_do_recv).
+On Mon, 12 Oct 2009 03:32:46 -0700 (PDT), David Miller wrote:
+> The PPP receive paths in ppp_generic.c do a local_bh_disable()/
+> local_bh_enable() around packet receiving (via ppp_recv_lock()/
+> ppp_recv_unlock() in ppp_do_recv).
+>=20
+> So at least that part is perfectly fine.
+>=20
+> ppp_input(), as called from ppp_sync_process(), also disables BH's
+> around ppp_do_recv() calls (via read_lock_bh()/read_unlock_bh()).
+>=20
+> So that's fine too.
+>=20
+> Do you have a bug report or are you just scanning around looking
+> for trouble? :-)
 
-So at least that part is perfectly fine.
+I have encountered the message in the subject during a test of
+the Gigaset CAPI driver, and would like to determine whether
+it's a bug in the driver, a bug somewhere else, or no bug at
+all. The test scenario was PPP over ISDN with pppd+capiplugin.
+In an alternative scenario, also PPP over ISDN but with
+smpppd+capidrv, the message did not occur.
 
-ppp_input(), as called from ppp_sync_process(), also disables BH's
-around ppp_do_recv() calls (via read_lock_bh()/read_unlock_bh()).
+Johannes' answer pointed me to the netif_rx() function.
+The Gigaset driver itself doesn't call that function at all.
+In the scenario where I saw the message, it was the SYNC_PPP
+line discipline that did. But from your explanation I gather
+that the cause cannot lie there.
 
-So that's fine too.
+So now I'm looking for other possible causes of that message.
 
-Do you have a bug report or are you just scanning around looking
-for trouble? :-)
+- --
+Tilman Schmidt                    E-Mail: tilman@imap.cc
+Bonn, Germany
+Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
+Unge=F6ffnet mindestens haltbar bis: (siehe R=FCckseite)
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.4 (MingW32)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
+
+iD8DBQFK0xITQ3+did9BuFsRAmXGAKCIiqJffUnuKw9rPjxHwbj9AnXOigCdGgS9
+MpxRNGs0A4GTydYJaylbjyo=3DLFxi
+-----END PGP SIGNATURE-----
