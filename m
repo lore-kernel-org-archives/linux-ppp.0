@@ -1,32 +1,50 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 28 Oct 2009 23:38:00 +0000
-Subject: Re: pty
-Message-Id: <E46E2611-B910-4CC8-88FD-5E55C734A6EA@workingcode.com>
+From: Tilman Schmidt <tilman@imap.cc>
+Date: Mon, 12 Oct 2009 08:28:56 +0000
+Subject: Re: NOHZ: local_softirq_pending 08
+Message-Id: <4AD2E8C8.4060205@imap.cc>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <W5658327625161531256756882@webmail25>
-In-Reply-To: <W5658327625161531256756882@webmail25>
+References: <20091011095217.GA2200@darkstar>	 <1255255735.4095.53.camel@johannes.local>	 <4AD1BF06.3050103@phoenixsoftware.de> <1255261251.4095.143.camel@johannes.local>
+In-Reply-To: <1255261251.4095.143.camel@johannes.local>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
+To: Johannes Berg <johannes@sipsolutions.net>
+Cc: Dave Young <hidave.darkstar@gmail.com>, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless <linux-wireless@vger.kernel.org>, "David S. Miller" <davem@davemloft.net>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Paul Mackerras <paulus@samba.org>
 
-On Oct 28, 2009, at 6:48 PM, tony.chamberlain@lemko.com wrote:
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-> It did show connect ---> /dev/pts/3 or so, but then timed out.
->
-> I really wanted just to make sure I understood correctly too that pppd
-> communicates to ppp_relay via stdin and stdout.  And I understand
-> pppd_relay talks to the phone and then sends whatever, via stdout,  
-> to pppd
-> and then ppp_relay also reads from pppd and converts and does whatever
-> and sends back to the phone:
->
->
->
-> pppd   <----->   ppp_relay  <========> phone
->
-> ??
+[CCing PPP people]
 
-Yep; that's it exactly.
+Am 11.10.2009 13:40 schrieb Johannes Berg:
+> On Sun, 2009-10-11 at 13:18 +0200, Tilman Schmidt wrote:
+>=20
+>> Can you explain a bit more what that message is about?
+>> I am encountering it in a completely different context
+>> (PPP over ISDN) [...]
+>=20
+> Basically, calling netif_rx() with softirqs enabled.
 
+AFAICS that would have to be the netif_rx() call in
+ppp_receive_nonmp_frame() [drivers/net/ppp_generic.c#L1791],
+called (via others) from the tasklet work function
+ppp_sync_process() [drivers/net/ppp_synctty.c#L545].
+Should that be changed to the
+"if (in_interrupt()) netif_rx(skb) else netif_rx_ni(skb)"
+stanza from the linux.kernel.wireless.general thread then?
 
+Thanks,
+Tilman
+
+- --
+Tilman Schmidt                    E-Mail: tilman@imap.cc
+Bonn, Germany
+Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
+Unge=C3=B6ffnet mindestens haltbar bis: (siehe R=C3=BCckseite)
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.4 (MingW32)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
+
+iD8DBQFK0ujIQ3+did9BuFsRAtGBAJ9rj2pyQZ75ZKTipLhpICqA3ZvTdQCdHQs/
+RmdeOT3TuPZykXJxcHLJCzU=87DI
+-----END PGP SIGNATURE-----
