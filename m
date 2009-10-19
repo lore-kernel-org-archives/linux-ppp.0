@@ -1,7 +1,7 @@
 From: Denys Fedoryschenko <denys@visp.net.lb>
-Date: Mon, 19 Oct 2009 11:36:36 +0000
+Date: Mon, 19 Oct 2009 12:01:14 +0000
 Subject: Re: kernel panic in latest vanilla stable, while using nameif with  "alive" pppoe interfaces
-Message-Id: <200910191436.36218.denys@visp.net.lb>
+Message-Id: <200910191501.15009.denys@visp.net.lb>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <200910190002.39937.denys@visp.net.lb> <e6d1cecd0910182034t9d24859mc6f392875b36ad17@mail.gmail.com>
 In-Reply-To: <e6d1cecd0910182034t9d24859mc6f392875b36ad17@mail.gmail.com>
@@ -11,7 +11,182 @@ Content-Transfer-Encoding: quoted-printable
 To: Michal Ostrowski <mostrows@gmail.com>
 Cc: netdev <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, mostrows@earthlink.net
 
-Can you send me patch as attachment please?
+Applied patch manually, still panic (maybe different now):
+
+[   42.596904]
+[   42.596904] Pid: 0, comm: swapper Not tainted (2.6.31.4-build-0047 #12)
+[   42.596904] EIP: 0060:[<f886865e>] EFLAGS: 00010286 CPU: 0
+[   42.596904] EIP is at pppoe_rcv+0x153/0x1be [pppoe]
+[   42.596904] EAX: 00003100 EBX: ffffffff ECX: 00000002 EDX: f74007cb
+[   42.596904] ESI: f79b4b00 EDI: f6332f00 EBP: c1806edc ESP: c1806eb8
+[   42.596904]  DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
+[   42.596904] Process swapper (pid: 0, ti=C1806000 task=C03f6de0=20
+task.ti=C03f1000)
+[   42.596904] Stack:
+[   42.596904]  f7445000
+00000004
+f6fc0028
+31000030
+f6fc0030
+f6332f40
+f79b4b00
+c0418140
+Oct 19 15:00:46 194.146.153.99
+[   42.596904] <0>
+f886a444
+c1806f14
+c029e702
+f7445000
+f79b4bb0
+f79b4bb0
+c0418160
+f7445000
+Oct 19 15:00:46 194.146.153.99
+[   42.596904] <0>
+00000000
+00000001
+64886f14
+c02ac3ce
+f79b4b00
+00000000
+f753105c
+c1806f58
+Oct 19 15:00:46 194.146.153.99
+[   42.596904] Call Trace:
+[   42.596904]  [<c029e702>] ? netif_receive_skb+0x43b/0x45a
+[   42.596904]  [<c02ac3ce>] ? eth_type_trans+0x25/0xa9
+[   42.596904]  [<f840f736>] ? rtl8169_rx_interrupt+0x343/0x3f3 [r8169]
+[   42.596904]  [<f8412191>] ? rtl8169_poll+0x2f/0x1b2 [r8169]
+[   42.596904]  [<c01413e5>] ? hrtimer_run_pending+0x2d/0xa7
+[   42.596904]  [<c029ec95>] ? net_rx_action+0x93/0x177
+[   42.596904]  [<c0131bdd>] ? __do_softirq+0xa7/0x144
+[   42.596904]  [<c0131b36>] ? __do_softirq+0x0/0x144
+[   42.596904]  <IRQ>
+Oct 19 15:00:46 194.146.153.99
+[   42.596904]  [<c0131957>] ? irq_exit+0x29/0x5c
+[   42.596904]  [<c0104393>] ? do_IRQ+0x80/0x96
+[   42.596904]  [<c0102f49>] ? common_interrupt+0x29/0x30
+[   42.596904]  [<c0108a3e>] ? mwait_idle+0x8a/0xb9
+[   42.596904]  [<c0149613>] ? tick_nohz_restart_sched_tick+0x27/0x12f
+[   42.596904]  [<c0101bf0>] ? cpu_idle+0x44/0x60
+[   42.596904]  [<c02ef8c7>] ? rest_init+0x53/0x55
+[   42.596904]  [<c04197df>] ? start_kernel+0x2b9/0x2be
+[   42.596904]  [<c041906a>] ? i386_start_kernel+0x6a/0x6f
+[   42.596904] Code:
+53
+0a
+32
+53
+0b
+31
+c2
+c1
+e8
+08
+31
+c2
+eb
+08
+0f
+b6
+c2
+c1
+f8
+04
+31
+c2
+d1
+e9
+83
+f9
+04
+74
+f1
+89
+d0
+83
+e0
+0f
+8b
+1c
+87
+eb
+35
+66
+8b
+45
+ea
+Oct 19 15:00:46 194.146.153.99
+39
+83
+98
+01
+00
+00
+75
+22
+8b
+55
+e4
+8d
+83
+9a
+01
+00
+00
+b9
+06
+00
+Oct 19 15:00:46 194.146.153.99
+[   42.596904] EIP: [<f886865e>]
+pppoe_rcv+0x153/0x1be [pppoe]
+SS:ESP 0068:c1806eb8
+[   42.596904] CR2: 0000000000000197
+[   42.606148] ---[ end trace b477ff4ee072d9b9 ]---
+[   42.606209] Kernel panic - not syncing: Fatal exception in interrupt
+[   42.606273] Pid: 0, comm: swapper Tainted: G      D    2.6.31.4-build-00=
+47=20
+#12
+[   42.606351] Call Trace:
+[   42.606413]  [<c02fc496>] ? printk+0xf/0x11
+[   42.606474]  [<c02fc3e7>] panic+0x39/0xd9
+[   42.606535]  [<c01059b7>] oops_end+0x8b/0x9a
+[   42.606597]  [<c0118f6d>] no_context+0x13d/0x147
+[   42.606658]  [<c011908a>] __bad_area_nosemaphore+0x113/0x11b
+[   42.606722]  [<c0121dc1>] ? check_preempt_wakeup+0x34/0x141
+[   42.606862]  [<c01294bb>] ? try_to_wake_up+0x1aa/0x1b4
+[   42.606930]  [<c0209541>] ? cpumask_next_and+0x26/0x37
+[   42.607003]  [<c01256f5>] ? find_busiest_group+0x291/0x885
+[   42.607067]  [<c019cf47>] ? pollwake+0x5a/0x63
+[   42.607127]  [<c011909f>] bad_area_nosemaphore+0xd/0x10
+[   42.607189]  [<c0119301>] do_page_fault+0x114/0x26f
+[   42.607251]  [<c01191ed>] ? do_page_fault+0x0/0x26f
+[   42.607313]  [<c02fe506>] error_code+0x66/0x6c
+[   42.607375]  [<c02900d8>] ? pcibios_set_master+0x89/0x8d
+[   42.607436]  [<c01191ed>] ? do_page_fault+0x0/0x26f
+[   42.607501]  [<f886865e>] ? pppoe_rcv+0x153/0x1be [pppoe]
+[   42.607564]  [<c029e702>] netif_receive_skb+0x43b/0x45a
+[   42.607625]  [<c02ac3ce>] ? eth_type_trans+0x25/0xa9
+[   42.607691]  [<f840f736>] rtl8169_rx_interrupt+0x343/0x3f3 [r8169]
+[   42.607759]  [<f8412191>] rtl8169_poll+0x2f/0x1b2 [r8169]
+[   42.607824]  [<c01413e5>] ? hrtimer_run_pending+0x2d/0xa7
+[   42.607886]  [<c029ec95>] net_rx_action+0x93/0x177
+[   42.607948]  [<c0131bdd>] __do_softirq+0xa7/0x144
+[   42.608022]  [<c0131b36>] ? __do_softirq+0x0/0x144
+[   42.608082]  <IRQ>
+[<c0131957>] ? irq_exit+0x29/0x5c
+[   42.608183]  [<c0104393>] ? do_IRQ+0x80/0x96
+[   42.608183]  [<c0104393>] ? do_IRQ+0x80/0x96
+[   42.608245]  [<c0102f49>] ? common_interrupt+0x29/0x30
+[   42.608307]  [<c0108a3e>] ? mwait_idle+0x8a/0xb9
+[   42.608369]  [<c0149613>] ? tick_nohz_restart_sched_tick+0x27/0x12f
+[   42.608431]  [<c0101bf0>] ? cpu_idle+0x44/0x60
+[   42.608493]  [<c02ef8c7>] ? rest_init+0x53/0x55
+[   42.608553]  [<c04197df>] ? start_kernel+0x2b9/0x2be
+[   42.608616]  [<c041906a>] ? i386_start_kernel+0x6a/0x6f
+[   42.608682] Rebooting in 5 seconds..
+
+
 
 On Monday 19 October 2009 06:34:06 Michal Ostrowski wrote:
 > Here's my theory on this after an inital look...
