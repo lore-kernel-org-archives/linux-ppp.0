@@ -1,28 +1,27 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Date: Tue, 20 Oct 2009 03:04:35 +0000
+From: Eric Dumazet <eric.dumazet@gmail.com>
+Date: Tue, 20 Oct 2009 03:42:26 +0000
 Subject: Re: kernel panic in latest vanilla stable, while using nameif with
-Message-Id: <aa79d98a0910192004g43de90d5p823293b888cf0c1d@mail.gmail.com>
+Message-Id: <4ADD31A2.4030702@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200910190002.39937.denys@visp.net.lb>
-	 <20091019205740.GD5233@lenovo>
-	 <e6d1cecd0910191422t2905d9bbl3355fc50cf36ff90@mail.gmail.com>
-	 <200910200308.57381.denys@visp.net.lb>
-In-Reply-To: <200910200308.57381.denys@visp.net.lb>
+References: <200910190002.39937.denys@visp.net.lb>	 <e6d1cecd0910182034t9d24859mc6f392875b36ad17@mail.gmail.com>	 <4ADC5D3B.8010006@gmail.com>	 <e6d1cecd0910190619t3e009e1by49cc8f7307eb7cdb@mail.gmail.com>	 <20091019155034.GA5233@lenovo>	 <e6d1cecd0910190905x382bfc23w2987c84aa0837609@mail.gmail.com>	 <4ADC9DE2.5010308@gmail.com>	 <e6d1cecd0910191107h899a4ffs588f2413093dfb4b@mail.gmail.com>	 <4ADCB3A4.8060408@gmail.com> <e6d1cecd0910191354o16d023d2lbe2761a97e88acea@mail.gmail.com>
+In-Reply-To: <e6d1cecd0910191354o16d023d2lbe2761a97e88acea@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Denys Fedoryschenko <denys@visp.net.lb>
-Cc: Michal Ostrowski <mostrows@gmail.com>, Eric Dumazet <eric.dumazet@gmail.com>, netdev <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, mostrows@earthlink.net
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+To: Michal Ostrowski <mostrows@gmail.com>
+Cc: Cyrill Gorcunov <gorcunov@gmail.com>, Denys Fedoryschenko <denys@visp.net.lb>, netdev <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, mostrows@earthlink.net
 
-On 10/20/09, Denys Fedoryschenko <denys@visp.net.lb> wrote:
-> On Tuesday 20 October 2009 00:22:39 Michal Ostrowski wrote:
->> I'm assuming that there was a race in us sending patches at nearly the
->> same
->> time I'm convinced now that the flush_lock can die, and the patch I sent
->> out kills it.
-> o_O
->
-> I am drowning in patches. Just let me know which one to test :-)
->
-Oh ;) Try out latest Michal's patch (and then mine). I'll continue
-digg this issue at next spare time slot. Thanks!
+Michal Ostrowski a =E9crit :
+> Access of po->pppoe_dev is guarded by sk->sk_state & PPPOX_CONNECTED,
+> and all use cases now rely on the socket lock.  Because of this, the
+> ref-count on the namespace held by the socket object suffices to hold
+> the namespace in existence and so we don't need to ref-count the
+> namespace in PPPoE. The flush_lock is gone.
+>=20
+
+Seems good !
+
+But can we use lock_sock() in __pppoe_xmit() context ?
+
+
+
