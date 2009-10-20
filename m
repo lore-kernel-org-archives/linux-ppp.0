@@ -1,38 +1,32 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Date: Tue, 20 Oct 2009 06:04:29 +0000
-Subject: Re: kernel panic in latest vanilla stable, while using nameif with
-Message-Id: <aa79d98a0910192304x162dec28o306afc18eb427125@mail.gmail.com>
+From: Denys Fedoryschenko <denys@visp.net.lb>
+Date: Tue, 20 Oct 2009 11:36:49 +0000
+Subject: Re: kernel panic in latest vanilla stable, while using nameif with  "alive" pppoe interfaces
+Message-Id: <200910201436.50249.denys@visp.net.lb>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200910190002.39937.denys@visp.net.lb>
-	 <e6d1cecd0910190905x382bfc23w2987c84aa0837609@mail.gmail.com>
-	 <4ADC9DE2.5010308@gmail.com>
-	 <e6d1cecd0910191107h899a4ffs588f2413093dfb4b@mail.gmail.com>
-	 <4ADCB3A4.8060408@gmail.com>
-	 <e6d1cecd0910191354o16d023d2lbe2761a97e88acea@mail.gmail.com>
-	 <4ADD31A2.4030702@gmail.com>
-	 <aa79d98a0910192202j4ea9f189g2ff719d57aa5a5eb@mail.gmail.com>
-	 <4ADD4518.8020909@gmail.com>
-	 <aa79d98a0910192217x2a9bb142r114ae2fa633e3bd2@mail.gmail.com>
-In-Reply-To: <aa79d98a0910192217x2a9bb142r114ae2fa633e3bd2@mail.gmail.com>
+References: <200910190002.39937.denys@visp.net.lb> <200910200308.57381.denys@visp.net.lb> <aa79d98a0910192004g43de90d5p823293b888cf0c1d@mail.gmail.com>
+In-Reply-To: <aa79d98a0910192004g43de90d5p823293b888cf0c1d@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Michal Ostrowski <mostrows@gmail.com>, Denys Fedoryschenko <denys@visp.net.lb>, netdev <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, mostrows@earthlink.net
+To: Cyrill Gorcunov <gorcunov@gmail.com>
+Cc: Michal Ostrowski <mostrows@gmail.com>, Eric Dumazet <eric.dumazet@gmail.com>, netdev <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, mostrows@earthlink.net
 
-On 10/20/09, Cyrill Gorcunov <gorcunov@gmail.com> wrote:
-> On 10/20/09, Eric Dumazet <eric.dumazet@gmail.com> wrote:
->>
->> This ultimately calls pppoe_flush_dev() and this function
->> takes care of taking appropriate sock_locks() on each sockets ?
->>
-> This hold and lock socks but set pppoe_dev to null as well. I'll back
-> later. And i need to reread the code.
+On Tuesday 20 October 2009 06:04:35 Cyrill Gorcunov wrote:
+> On 10/20/09, Denys Fedoryschenko <denys@visp.net.lb> wrote:
+> > On Tuesday 20 October 2009 00:22:39 Michal Ostrowski wrote:
+> >> I'm assuming that there was a race in us sending patches at nearly the
+> >> same
+> >> time I'm convinced now that the flush_lock can die, and the patch I sent
+> >> out kills it.
+> >
+> > o_O
+> >
+> > I am drowning in patches. Just let me know which one to test :-)
 >
-from a second glance we have a race with pppoe_connect (err_put label)
-and pppoe_flush_dev. Connect lock socket but while flushing we may
-dev_put with null device. So as Eric pointed early the error path is
-racy and should be protected with flush_lock.  Note that while
-flushing pppoe we may do dev_put without socket locked. This should be
-the corner case. Michal could you add this lock in pppoe_connect (i
-cant do this at moment).
+> Oh ;) Try out latest Michal's patch (and then mine). I'll continue
+> digg this issue at next spare time slot. Thanks!
+Tried your patch, panic almost immediately
+Here is a text of panic message over netconsole
+http://www.nuclearcat.com/files/panic_pppoe3.txt
+It is  different now, before it was pppoe_device_event, now in pppoe_rcv
+
