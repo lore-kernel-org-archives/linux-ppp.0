@@ -1,33 +1,68 @@
-From: Denys Fedoryschenko <denys@visp.net.lb>
-Date: Sun, 25 Oct 2009 18:10:24 +0000
-Subject: Re: kernel panic in latest vanilla stable, while using nameif with "alive" pppoe interfaces
-Message-Id: <200910252010.24767.denys@visp.net.lb>
+From: Jarek Poplawski <jarkao2@gmail.com>
+Date: Wed, 21 Oct 2009 21:19:06 +0000
+Subject: [PATCH] net: Adjust softirq raising in __napi_schedule
+Message-Id: <20091021211906.GA11401@ami.dom.local>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <200910190002.39937.denys@visp.net.lb> <20091020190821.GO5181@lenovo> <20091023151837.GB5394@lenovo>
-In-Reply-To: <20091023151837.GB5394@lenovo>
+References: <4AD31213.6020006@imap.cc>
+ <20091015114052.GA9870@ff.dom.local>
+ <4AD76184.6030900@gmail.com>
+ <4ADF5710.4030505@imap.cc>
+In-Reply-To: <4ADF5710.4030505@imap.cc>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Cyrill Gorcunov <gorcunov@gmail.com>
-Cc: netdev <netdev@vger.kernel.org>, Michal Ostrowski <mostrows@gmail.com>, Eric Dumazet <eric.dumazet@gmail.com>, linux-ppp@vger.kernel.org, paulus@samba.org, mostrows@earthlink.net
+To: Tilman Schmidt <tilman@imap.cc>
+Cc: David Miller <davem@davemloft.net>, johannes@sipsolutions.net, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, Michael Buesch <mb@bu3sch.de>, Oliver Hartkopp <oliver@hartkopp.net>
 
-On Friday 23 October 2009 18:18:37 Cyrill Gorcunov wrote:
-> [Cyrill Gorcunov - Tue, Oct 20, 2009 at 11:08:21PM +0400]
-> ...
->
-> | Just to update status of the issue. The key moment is that
-> | pppoe_flush_dev may be called asynchronously (especially via sysfs on dev
-> | entry, for example we retrieve mtu of device and while we at it other
-> | process may update mtu via sysfs). So I'm returning pppoe_hash_lock back
-> | which should eliminate a number of lock complains and make locking scheme
-> | easier. All-in-one: I'm working on it. Just need some more time.
-> |
-> | 	-- Cyrill
->
-> Another status update -- the patch is under testing stage. Hope we will
-> reveal proper patch soon (in a few days I guess).
->
-> 	-- Cyrill
-During normal operation till now no issues (2 days uptime, 100-150 users 
-online on this pppoe). Testing more some stress scenarios.
+On Wed, Oct 21, 2009 at 08:46:40PM +0200, Tilman Schmidt wrote:
+...
+> I have tested your patch and I can confirm that it fixes the messages.
+> I have not noticed any ill effects.
 
+OK. So, in any case, here is this next variant/proposal.
+
+Thanks,
+Jarek P.
+------------------------>
+net: Adjust softirq raising in __napi_schedule
+
+This patch changes __raise_softirq_irqoff() to raise_softirq_irqoff()
+in __napi_schedule() to enable proper softirq scheduling from process
+context. The main intent is to let use netif_rx() universally, and
+make netif_rx_ni() redundant.
+
+Currently using netif_rx() instead of netif_rx_ni() triggers:
+"NOHZ: local_softirq_pending 08" warnings, but additional cost of one
+"if" on the fast path doesn't seem to justify maintaining it
+separately.
+
+This patch is based on the analysis, suggestions and the original
+patch for mac80211 by: Michael Buesch <mb@bu3sch.de>
+
+Another patch calling netif_rx variants conditionally was done by:
+Oliver Hartkopp <oliver@hartkopp.net>
+
+Reported-by: Michael Buesch <mb@bu3sch.de>
+Reported-by: Oliver Hartkopp <oliver@hartkopp.net>
+Reported-by: Tilman Schmidt <tilman@imap.cc>
+Diagnosed-by: Michael Buesch <mb@bu3sch.de>
+Tested-by: Tilman Schmidt <tilman@imap.cc>
+Signed-off-by: Jarek Poplawski <jarkao2@gmail.com>
+---
+
+ net/core/dev.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/net/core/dev.c b/net/core/dev.c
+index 28b0b9e..7fc4009 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -2728,7 +2728,7 @@ void __napi_schedule(struct napi_struct *n)
+ 
+ 	local_irq_save(flags);
+ 	list_add_tail(&n->poll_list, &__get_cpu_var(softnet_data).poll_list);
+-	__raise_softirq_irqoff(NET_RX_SOFTIRQ);
++	raise_softirq_irqoff(NET_RX_SOFTIRQ);
+ 	local_irq_restore(flags);
+ }
+ EXPORT_SYMBOL(__napi_schedule);
