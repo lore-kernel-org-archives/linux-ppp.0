@@ -1,34 +1,35 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 26 Oct 2009 23:23:45 +0000
-Subject: Re: [PATCH] PPPoE: Fix flush/close races.
-Message-Id: <20091026.162345.237018681.davem@davemloft.net>
+From: tony.chamberlain@lemko.com
+Date: Thu, 22 Oct 2009 19:34:48 +0000
+Subject: pptp client server
+Message-Id: <W394922552633941256240088@webmail17>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <e6d1cecd0910261251w721b8258n7dfc1bac9d01af8b@mail.gmail.com>
-	<20091026195933.GC5321@lenovo>
-	<200910262205.38108.denys@visp.net.lb>
-In-Reply-To: <200910262205.38108.denys@visp.net.lb>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: denys@visp.net.lb
-Cc: gorcunov@gmail.com, mostrows@gmail.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, eric.dumazet@gmail.com
+To: linux-ppp@vger.kernel.org
 
-From: Denys Fedoryschenko <denys@visp.net.lb>
-Date: Mon, 26 Oct 2009 22:05:37 +0200
+Am I correct in assuming (and I am asking for Linux, CentOS 4.5 to be 
+exact) that when a pptp client makes a connection to a pptp servcer
+(does the call), the server actually assigns (or more like "picks") the 
+next available ip address from the ip pool you provide, even before it
+examines the login and password from the client?
 
-> On Monday 26 October 2009 21:59:33 Cyrill Gorcunov wrote:
->> [Michal Ostrowski - Mon, Oct 26, 2009 at 02:51:52PM -0500]
->>
->>
->> Thanks a lot Michal!
->>
->> I think we should add as well
->>
->> Reported-by: Denys Fedoryschenko <denys@visp.net.lb>
->> Tested-by: Denys Fedoryschenko <denys@visp.net.lb>
->>
->> 	-- Cyrill
-> 
-> Yes, till now everything working perfectly. Confirming :-)
+If so, then not only can you not specify a specific VPN IP address for a
+client, but also (assume the IP pool is 10.0.0.26-29 and 10.0.0.26 is the
+only one in use), even if the client specifies 10.0.0.29: in the 
+/etc/ppp/options.pptp file, if 27 is  the next available one, it will
+use 27 instead of 29 and fail, even though the client requested 29?
 
-Applied, thanks everyone.
+If this is true, is there any way the client can always get the same
+IP address (other than just by happenstance logging in when it is the next
+available)?
+
+I notice that pptpd on the server spawns a pppd process with like 
+10.0.0.98:10.0.0.27. This pppd is spawned by pptpd when the
+connection.  Anyway to intervene in this spawning and change the ip to
+what I wish (i.e. 10.0.0.29).  
+
+By the way I know one thing you are thinking, but I can't have an ip pool
+of just 1, because we have at least 3 or 4 clients which need to connect.
+
+
