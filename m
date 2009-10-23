@@ -1,62 +1,51 @@
-From: Jarek Poplawski <jarkao2@gmail.com>
-Date: Thu, 22 Oct 2009 12:54:15 +0000
+From: Tilman Schmidt <tilman@imap.cc>
+Date: Fri, 23 Oct 2009 14:39:07 +0000
 Subject: Re: [PATCH] net: Adjust softirq raising in __napi_schedule
-Message-Id: <20091022125415.GA21699@ff.dom.local>
+Message-Id: <4AE1C00B.5010008@imap.cc>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20091021211906.GA11401@ami.dom.local> <1256160330.12174.2.camel@johannes.local> <20091021213947.GA12202@ami.dom.local> <20091022.042939.95166154.davem@davemloft.net>
-In-Reply-To: <20091022.042939.95166154.davem@davemloft.net>
+References: <4AD31213.6020006@imap.cc> <20091015114052.GA9870@ff.dom.local>	 <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>	 <20091021211906.GA11401@ami.dom.local>	 <1256160330.12174.2.camel@johannes.local>	 <20091021213947.GA12202@ami.dom.local> <1256200021.12174.11.camel@johannes.local>
+In-Reply-To: <1256200021.12174.11.camel@johannes.local>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: David Miller <davem@davemloft.net>
-Cc: johannes@sipsolutions.net, tilman@imap.cc, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, mb@bu3sch.de, oliver@hartkopp.net
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: Johannes Berg <johannes@sipsolutions.net>
+Cc: Jarek Poplawski <jarkao2@gmail.com>, David Miller <davem@davemloft.net>, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, Michael Buesch <mb@bu3sch.de>, Oliver Hartkopp <oliver@hartkopp.net>
 
-On Thu, Oct 22, 2009 at 04:29:39AM -0700, David Miller wrote:
-> From: Jarek Poplawski <jarkao2@gmail.com>
-> Date: Wed, 21 Oct 2009 23:39:47 +0200
-> 
-> > I'm not sure I can understand your question. This patch is mainly to
-> > avoid using netif_rx()/netif_rx_ni() pair as a test of proper process
-> > context handling; IMHO there're better tools for this (lockdep,
-> > WARN_ON's).
-> 
-> Semantically I think your patch is correct, but I wonder about cost.
-> 
-> Something that is a simply per-cpu inline "or" operation is now a
-> function call and potentially mispredicted branch inside of
-> raise_softirq_irqoff().
-> 
-> And netif_rx() is indeed a fast path for tunnels and other users so
-> this does matter.
-> 
-> I like having people call things in the correct context the function
-> was built for, and thus we can avoiryd completely useless operations and
-> tests as we can now in netif_rx().
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-I like it too, but in this particular case I'm not sure netif_rx()
-functionality requires this kind of separation; it looks to me quite
-similarly to e.g. tasklet_schedule(), the same for process or softirq
-contexts.
-
+Johannes Berg schrieb:
+> On Wed, 2009-10-21 at 23:39 +0200, Jarek Poplawski wrote:
 > 
-> Makaing things general purpose costs something, and it costs too much
-> here for this critical routine, sorry.
+>> I'm not sure I can understand your question. This patch is mainly to
+>> avoid using netif_rx()/netif_rx_ni() pair as a test of proper process
+>> context handling; IMHO there're better tools for this (lockdep,
+>> WARN_ON's).
 > 
-> I was just having a talk with Nick Piggin about these kinds of issues
-> today, too few people care about these ever encrouching tiny pieces
-> of bloat that slow the kernel down gradually over time, and I simply
-> won't stand for it when I notice it :-)
+> I'm saying that it seems to me, as indicated by the API (and without
+> proof otherwise that's how it is) the networking layer needs to have
+> packets handed to it with softirqs disabled.
 
-I'm not sure we're saving in the right place. As a matter of fact,
-whenever I look into kernel/ code I can't see this kind of
-optimization. There is quite a lot of WARN_ON's and if's. These NOHZ
-warnings simply show somebody's else debugging triggers far from
-places where it all started and is quite accidental, while this
-particular "bug" should've been printed immediately long time ago, if
-we really cared.
+Strange. Then what are the two separate functions netif_rx() and
+netif_rx_ni() for?
 
-Since I understand it's a question of taste, and it's not anything
-critical, I'm quite OK with staying with the old way (except old
-bugs, I hope ;-).
+> This really should be obvious. You're fixing the warning at the source
+> of the warning, rather than the source of the problem.
 
-Jarek P.
+Good idea. So please do tell us where the source of the problem is.
+
+Thanks,
+Tilman
+
+- --
+Tilman Schmidt                    E-Mail: tilman@imap.cc
+Bonn, Germany
+Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
+Ungeöffnet mindestens haltbar bis: (siehe Rückseite)
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.4 (MingW32)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
+
+iD8DBQFK4cALQ3+did9BuFsRAnW8AKCP4ey+gT2RZBYpzx91PaXd11A/PwCgh35g
+fhEbJs++1BRIQ3encV8fIm4=SSaA
+-----END PGP SIGNATURE-----
