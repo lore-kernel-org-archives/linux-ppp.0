@@ -1,93 +1,73 @@
-From: Johannes Berg <johannes@sipsolutions.net>
-Date: Fri, 23 Oct 2009 14:31:51 +0000
+From: Tilman Schmidt <tilman@imap.cc>
+Date: Fri, 23 Oct 2009 16:33:13 +0000
 Subject: Re: NOHZ: local_softirq_pending 08
-Message-Id: <1256308311.12174.38.camel@johannes.local>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="=-KyBo9tGkm0yCRfckrJid"
+Message-Id: <4AE1DAC9.5040603@imap.cc>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4AD31213.6020006@imap.cc> <20091015114052.GA9870@ff.dom.local>
-	 <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>
-	 <4AE0ECCE.2020407@imap.cc> <1256304869.12174.20.camel@johannes.local>
-	 <4AE1BD3D.3020007@imap.cc>
-In-Reply-To: <4AE1BD3D.3020007@imap.cc>
-To: Tilman Schmidt <tilman@imap.cc>
+References: <4AD31213.6020006@imap.cc> <20091015114052.GA9870@ff.dom.local>	 <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>	 <4AE0ECCE.2020407@imap.cc> <1256304869.12174.20.camel@johannes.local>	 <4AE1BD3D.3020007@imap.cc> <1256308311.12174.38.camel@johannes.local>
+In-Reply-To: <1256308311.12174.38.camel@johannes.local>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: Johannes Berg <johannes@sipsolutions.net>
 Cc: Jarek Poplawski <jarkao2@gmail.com>, David Miller <davem@davemloft.net>, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, isdn4linux <isdn4linux@listserv.isdn4linux.de>, i4ldeveloper <i4ldeveloper@listserv.isdn4linux.de>, Karsten Keil <isdn@linux-pingi.de>
 
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
---=-KyBo9tGkm0yCRfckrJid
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Johannes Berg schrieb:
+> On Fri, 2009-10-23 at 16:27 +0200, Tilman Schmidt wrote:
+>> Johannes Berg schrieb:
+>>> So you've verified that the entire i4l stack can cope with being called
+>>> twice on the same CPU, from different contexts?
+>> What makes you think so?
+> 
+> I thought I'd explained this in my other email. *sigh*
+[snip]
 
-On Fri, 2009-10-23 at 16:27 +0200, Tilman Schmidt wrote:
+Ah, I see. You misunderstood my posting. I did not propose that
+patch as a definitive and verified solution, but rather as a
+request for comments from the people who know and maintain the
+code in question. I thought that was clear from the facts that
+- - I didn't include "[PATCH]" in the subject line
+- - I didn't add a "Signed-off-by" line
+- - I wrote "fixed the messages", not "solved the problem"
+- - I explicitly wrote "Comments?" and "Adding i4l people to CC"
 
-> >> --- a/drivers/isdn/i4l/isdn_ppp.c
-> >> +++ b/drivers/isdn/i4l/isdn_ppp.c
-> >> @@ -1174,7 +1174,10 @@ isdn_ppp_push_higher(isdn_net_dev * net_dev, is=
-dn_net_local * lp, struct sk_buff
-> >>  #endif /* CONFIG_IPPP_FILTER */
-> >>  	skb->dev =3D dev;
-> >>  	skb_reset_mac_header(skb);
-> >> -	netif_rx(skb);
-> >> +	if (in_interrupt())
-> >> +		netif_rx(skb);
-> >> +	else
-> >> +		netif_rx_ni(skb);
-> >=20
-> > So you've verified that the entire i4l stack can cope with being called
-> > twice on the same CPU, from different contexts?
->=20
-> What makes you think so?
+Apparently all that was still not clear enough. Sorry about that.
+So let me try to make my concern as explicit as possible:
 
-I thought I'd explained this in my other email. *sigh*
+- - The patch I posted had the effect that the test which reliably
+  triggered the local_softirq_pending message before did not do
+  so anymore.
 
-You're squelching a warning, which comes from the fact that you're
-calling something that calls into netif_rx() with softirqs enabled. That
-would seem to imply that potentially a softirq could at the same time
-call into that code too.
+- - To me, this seems to indicate that the netif_rx(skb) call in
+  line 1177 of source file drivers/isdn/i4l/isdn_ppp.c is indeed
+  involved in the problem.
 
-Basically, what happens now is this:
+- - Now I'm asking people who know more than myself about the
+  ramifications of that message (ie., you) and/or the code I
+  narrowed it down to (ie., the ISDN4Linux maintainers - which
+  is why I added them to the CC list) to have a look and determine
+  how to fix the problem properly.
 
-disable softirqs
-call into i4l/ppp
-i4l/ppp code
-call netif_rx()
-more code
-enable softirqs
+- - This would of course include, in finis, the verification you
+  mistakenly assumed I might have done already.
 
+I hope that's clear enough. If you have any questions, feel free
+to ask.
 
-You're changing it to
+Thanks,
+Tilman
 
-call into i4l/ppp
-i4l/ppp code
-call netif_rx_ni()
-more code
-
-so the entire chunks "i4l/ppp code" and "more code" are now no longer
-protected against being interrupted by a softirq that runs the same
-code, maybe for a different device, on the same CPU.
-
-johannes
-
---=-KyBo9tGkm0yCRfckrJid
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
+- --
+Tilman Schmidt                    E-Mail: tilman@imap.cc
+Bonn, Germany
+Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
+Ungeöffnet mindestens haltbar bis: (siehe Rückseite)
 -----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.4 (MingW32)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
 
-iQIcBAABAgAGBQJK4b5TAAoJEODzc/N7+Qma39YP/1FwLDWKmjBavzhZ/qSQAetd
-tjrZ7Eij63pD2R7VLQdUuAs26E1LvM243DeRaVQAJtqIWUE+Sd2DP744N9OG0b58
-HX9EVfI2rb8A1vJuhMV4eIAV7P05sYPsrabKwLE76NczBDwx6E3fdB8rffvC57Eb
-80DB3x7fPJoSXqMBmQH10OmGFupI/BVgbP+COhyV4Jad7QKWZ6ps+UkkJZ11hpze
-cndQQVAiVtLi4kmiyx9X1mJJI3QojTnXy3Z7baRLQYZYeSvksJxd5Vev+oaTK06p
-ySdnU9JKPjedKfgcJndI8Jc3uf4V32kffNR0XTWFuRhZEjRf08Yoqnlezlkj/3ht
-ZMX8Gm8vSkA3vmGzrUc1/dxrE303DyEtgRhU0r2EhKd9NdPPerKVyhKeNOpbRiVE
-DPoWaLV/p4y0nL8qfGLuZSinUmiAnYQyRiriVBVQIRNQZ0t8zyN3ZLkU/j65uWwS
-wciGnaSMh/2F2fE+IMxPZJsuMR5pWWDLyUN0LLnZsaFqH+WekhmhHOIfOA5xMsU1
-uDWMvmbhZEgTGGNGauMD4+d4GtGsn+p3a9GNByjdTYYqyd0wXWuIVIJU6sAqMv3T
-5ca9o6uH3BQ8+mRBmJuLBiuJBOMEoAZzGJR7ycWnE7xLonb0fnUk3yOLW74UlmjA
-qocNik5vjf5h6LM5Fgpp
-=O6iC
+iD8DBQFK4drJQ3+did9BuFsRAmstAJ94UF/LupINlYpjbxzz9xoiN5w34wCfflRz
+YfR/fXt3HasrxUSP29REOnE=VQ/C
 -----END PGP SIGNATURE-----
-
---=-KyBo9tGkm0yCRfckrJid--
-
