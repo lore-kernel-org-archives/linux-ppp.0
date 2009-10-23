@@ -1,62 +1,52 @@
-From: Johannes Berg <johannes@sipsolutions.net>
-Date: Fri, 23 Oct 2009 13:34:29 +0000
+From: Tilman Schmidt <tilman@imap.cc>
+Date: Fri, 23 Oct 2009 14:27:09 +0000
 Subject: Re: NOHZ: local_softirq_pending 08
-Message-Id: <1256304869.12174.20.camel@johannes.local>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="=-7NtKIoavohHzeLGIUrpI"
+Message-Id: <4AE1BD3D.3020007@imap.cc>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4AD31213.6020006@imap.cc> <20091015114052.GA9870@ff.dom.local>
-	 <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>
-	 <4AE0ECCE.2020407@imap.cc>
-In-Reply-To: <4AE0ECCE.2020407@imap.cc>
-To: Tilman Schmidt <tilman@imap.cc>
+References: <4AD31213.6020006@imap.cc> <20091015114052.GA9870@ff.dom.local>	 <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>	 <4AE0ECCE.2020407@imap.cc> <1256304869.12174.20.camel@johannes.local>
+In-Reply-To: <1256304869.12174.20.camel@johannes.local>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: Johannes Berg <johannes@sipsolutions.net>
 Cc: Jarek Poplawski <jarkao2@gmail.com>, David Miller <davem@davemloft.net>, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, isdn4linux <isdn4linux@listserv.isdn4linux.de>, i4ldeveloper <i4ldeveloper@listserv.isdn4linux.de>, Karsten Keil <isdn@linux-pingi.de>
 
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
---=-7NtKIoavohHzeLGIUrpI
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Johannes Berg schrieb:
+> On Fri, 2009-10-23 at 01:37 +0200, Tilman Schmidt wrote:
+> 
+>> --- a/drivers/isdn/i4l/isdn_ppp.c
+>> +++ b/drivers/isdn/i4l/isdn_ppp.c
+>> @@ -1174,7 +1174,10 @@ isdn_ppp_push_higher(isdn_net_dev * net_dev, isdn_net_local * lp, struct sk_buff
+>>  #endif /* CONFIG_IPPP_FILTER */
+>>  	skb->dev = dev;
+>>  	skb_reset_mac_header(skb);
+>> -	netif_rx(skb);
+>> +	if (in_interrupt())
+>> +		netif_rx(skb);
+>> +	else
+>> +		netif_rx_ni(skb);
+> 
+> So you've verified that the entire i4l stack can cope with being called
+> twice on the same CPU, from different contexts?
 
-On Fri, 2009-10-23 at 01:37 +0200, Tilman Schmidt wrote:
+What makes you think so?
+Better yet, what do you propose?
 
-> --- a/drivers/isdn/i4l/isdn_ppp.c
-> +++ b/drivers/isdn/i4l/isdn_ppp.c
-> @@ -1174,7 +1174,10 @@ isdn_ppp_push_higher(isdn_net_dev * net_dev, isdn_=
-net_local * lp, struct sk_buff
->  #endif /* CONFIG_IPPP_FILTER */
->  	skb->dev =3D dev;
->  	skb_reset_mac_header(skb);
-> -	netif_rx(skb);
-> +	if (in_interrupt())
-> +		netif_rx(skb);
-> +	else
-> +		netif_rx_ni(skb);
+Thanks,
+Tilman
 
-So you've verified that the entire i4l stack can cope with being called
-twice on the same CPU, from different contexts?
-
-johannes
-
---=-7NtKIoavohHzeLGIUrpI
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
+- --
+Tilman Schmidt                    E-Mail: tilman@imap.cc
+Bonn, Germany
+Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
+Ungeöffnet mindestens haltbar bis: (siehe Rückseite)
 -----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.4 (MingW32)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
 
-iQIcBAABAgAGBQJK4bDiAAoJEODzc/N7+Qmar1IQAKGLYK9REsXEg22lyNTnuO/O
-LHksLqfsQCGlCrc8mV/TBFudWTtOI8WadqlTRNtRyST2c5X+9hB7CAfaXL59liDn
-b8h5D0B9dvFoOSkPtyFC9pW9Nw8QEGNym+wv+q/FJvoA1jyAhsAhCTkR63jUhFCk
-Zf9d1xE6DtIVHyir7jYgxysVNcZdEQ25hf+s+OM31aMaafWdz83wJB0LWk7DiSjQ
-i2U/bJXsFy67cUjFapr6Pl8ZoGQt8Kjama6+ttN91PqcHxREYyC0Yov+jhYiZ3cF
-T0qDKUy7W9Jxnpnfmp5ZQ9TDsml//e0klWPKuWCl9gm3y8resgqJcxhAsjkdPcP1
-W/FZ3rUiUqdNYsvLZBT3mJcPWApncvvMsfAqd4ziFcFGkbnxkhqD+PC59jlOvJkB
-FhVp0V/m5eUawHWtVGHYyjBXEmtAA/c6AUuXvFRLMWfGdou5KOjtHgjG1bp4Umuo
-SwZiNhgzTagTGLw1C7oXhny6zm4kU6dOlcT/DFEjpIsMqG9AiWL8EOkw5TI7FQr+
-/exgN7g7myiOLL6coLO91+kX1ajPNDEay32S3SdLXdWkls6qR3qysQC6XALfGtAy
-q+yR9nLme1Q6I5Rz56USB42iG44Gyb+gqH2BqKZbiNJ3LqrN6XYIwkKmVvkx/3uh
-/jYxJWtRCmAc2HcP7gne
-=N3Jb
+iD8DBQFK4b09Q3+did9BuFsRAqBvAKCbRI0iXQEyK3ztxkGHcqpbcceqbACgkagX
+JF7nYd152ihp2uemIs/cB54=YOin
 -----END PGP SIGNATURE-----
-
---=-7NtKIoavohHzeLGIUrpI--
-
