@@ -1,51 +1,62 @@
-From: Tilman Schmidt <tilman@imap.cc>
-Date: Fri, 23 Oct 2009 14:39:07 +0000
+From: Johannes Berg <johannes@sipsolutions.net>
+Date: Fri, 23 Oct 2009 14:46:31 +0000
 Subject: Re: [PATCH] net: Adjust softirq raising in __napi_schedule
-Message-Id: <4AE1C00B.5010008@imap.cc>
+Message-Id: <1256309191.12174.51.camel@johannes.local>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="=-GtZNVJ+WCQlMSt3LTX9e"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4AD31213.6020006@imap.cc> <20091015114052.GA9870@ff.dom.local>	 <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>	 <20091021211906.GA11401@ami.dom.local>	 <1256160330.12174.2.camel@johannes.local>	 <20091021213947.GA12202@ami.dom.local> <1256200021.12174.11.camel@johannes.local>
-In-Reply-To: <1256200021.12174.11.camel@johannes.local>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: Johannes Berg <johannes@sipsolutions.net>
+References: <4AD31213.6020006@imap.cc> <20091015114052.GA9870@ff.dom.local>
+	 <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>
+	 <20091021211906.GA11401@ami.dom.local>
+	 <1256160330.12174.2.camel@johannes.local>
+	 <20091021213947.GA12202@ami.dom.local>
+	 <1256200021.12174.11.camel@johannes.local>  <4AE1C00B.5010008@imap.cc>
+In-Reply-To: <4AE1C00B.5010008@imap.cc>
+To: Tilman Schmidt <tilman@imap.cc>
 Cc: Jarek Poplawski <jarkao2@gmail.com>, David Miller <davem@davemloft.net>, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, Michael Buesch <mb@bu3sch.de>, Oliver Hartkopp <oliver@hartkopp.net>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
 
-Johannes Berg schrieb:
-> On Wed, 2009-10-21 at 23:39 +0200, Jarek Poplawski wrote:
-> 
->> I'm not sure I can understand your question. This patch is mainly to
->> avoid using netif_rx()/netif_rx_ni() pair as a test of proper process
->> context handling; IMHO there're better tools for this (lockdep,
->> WARN_ON's).
-> 
-> I'm saying that it seems to me, as indicated by the API (and without
-> proof otherwise that's how it is) the networking layer needs to have
-> packets handed to it with softirqs disabled.
+--=-GtZNVJ+WCQlMSt3LTX9e
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Strange. Then what are the two separate functions netif_rx() and
-netif_rx_ni() for?
+On Fri, 2009-10-23 at 16:39 +0200, Tilman Schmidt wrote:
 
-> This really should be obvious. You're fixing the warning at the source
-> of the warning, rather than the source of the problem.
+> Strange. Then what are the two separate functions netif_rx() and
+> netif_rx_ni() for?
 
-Good idea. So please do tell us where the source of the problem is.
+netif_rx_ni() disables preemption.
 
-Thanks,
-Tilman
+> > This really should be obvious. You're fixing the warning at the source
+> > of the warning, rather than the source of the problem.
+>=20
+> Good idea. So please do tell us where the source of the problem is.
 
-- --
-Tilman Schmidt                    E-Mail: tilman@imap.cc
-Bonn, Germany
-Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
-Ungeöffnet mindestens haltbar bis: (siehe Rückseite)
+You use netif_rx_ni() instead of netif_rx() at whatever place that
+causes this problem.
+
+johannes
+
+--=-GtZNVJ+WCQlMSt3LTX9e
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.4 (MingW32)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
 
-iD8DBQFK4cALQ3+did9BuFsRAnW8AKCP4ey+gT2RZBYpzx91PaXd11A/PwCgh35g
-fhEbJs++1BRIQ3encV8fIm4=SSaA
+iQIcBAABAgAGBQJK4cHEAAoJEODzc/N7+QmaStYQAK+3IL2OlaRETBYjrgvNL4zi
+rKCKbYSxUYdNmwIn9ldy/eXm37pYN/wNVY7CeoVzfNeS3nxXMhKd7D/hetFtK7n9
+JGjlf+6kY8el0k/6PCEVdarfvIujHJXADdVnG10LZoLb3YSM2wSeIPvPfoSb10XS
+Jf+8azFy0Arg2nqRJLflslV3y2YnD9fGDb9uLmcIP2/PPBbmkkz9j7Nm4saM0TNj
+06ugJpg8aJawsuLr3K1IlPCucTIiDxhU9e/d4zwZYJxHJpsikMYQkuA+tqTSTmBo
+bW8iNHzNWfb1SkMkkKBbvau0Nb9mANDciLVt9T9r+e9ccTB1hqfRY51NCB2lwNOF
+BFhpr1fRqZ40DouMp7umzbRvR8dyljl8Hvs1NGOJwY1xGVyOMsKMr63EbSN6BiWM
+bCPKpnFbXfOFjevctO2D3Dk058WhTGXgmW3choBpCxCZRwS89zrlkMO/evjxx3Yg
+D/jlHlHo8u4AIaGAQcDmDifXBCoihnx9+N2Sbt/OKnmexLmY7EvEpgXfNCgj+eKB
+KI0vd0Xl/ayjQ8nreS9bD4Oco9g528izVHxvUPI+OUyE0VqZee/TjvAkZ4psSaKg
+x1JzBsTZGxALQxPcQ4UbSBxkFYZLrWkToJ8aVegQnsPl4ijzke3q0S1VaHpfHawi
+8znqqSJ/No+Hf2EoXX/D
+=Xf17
 -----END PGP SIGNATURE-----
+
+--=-GtZNVJ+WCQlMSt3LTX9e--
+
