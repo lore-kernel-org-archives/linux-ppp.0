@@ -1,47 +1,34 @@
-From: Denys Fedoryschenko <denys@visp.net.lb>
-Date: Mon, 26 Oct 2009 20:05:37 +0000
+From: David Miller <davem@davemloft.net>
+Date: Mon, 26 Oct 2009 23:23:45 +0000
 Subject: Re: [PATCH] PPPoE: Fix flush/close races.
-Message-Id: <200910262205.38108.denys@visp.net.lb>
+Message-Id: <20091026.162345.237018681.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1256586498-6230-1-git-send-email-mostrows@gmail.com> <e6d1cecd0910261251w721b8258n7dfc1bac9d01af8b@mail.gmail.com> <20091026195933.GC5321@lenovo>
-In-Reply-To: <20091026195933.GC5321@lenovo>
+References: <e6d1cecd0910261251w721b8258n7dfc1bac9d01af8b@mail.gmail.com>
+	<20091026195933.GC5321@lenovo>
+	<200910262205.38108.denys@visp.net.lb>
+In-Reply-To: <200910262205.38108.denys@visp.net.lb>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Cyrill Gorcunov <gorcunov@gmail.com>
-Cc: Michal Ostrowski <mostrows@gmail.com>, linux-ppp@vger.kernel.org, netdev <netdev@vger.kernel.org>, Eric Dumazet <eric.dumazet@gmail.com>
+To: denys@visp.net.lb
+Cc: gorcunov@gmail.com, mostrows@gmail.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, eric.dumazet@gmail.com
 
-On Monday 26 October 2009 21:59:33 Cyrill Gorcunov wrote:
-> [Michal Ostrowski - Mon, Oct 26, 2009 at 02:51:52PM -0500]
->
-> | Be more careful about the state of pointers during tear-down.
-> | The "pppoe_dev" field can only be looked at safely while holding socket
-> | locks. This subsequently allows for the flush_lock to be killed.
-> |
-> | We depend on the PPPOX_CONNECTED state to tell us that that those fields
-> | are valid, so whoever clears that state (pppox_unbind_sock()) is
-> | responsible for the dev_put() call.
-> |
-> | We also have to ensure that we delete_item() on all sockets before they
-> | are cleaned up.
-> |
-> | The need for these changes has been exposed by scenarios wherein
-> | namespace bindings of ethernet devices change while there are ongoing
-> | PPPoE sessions, which resulted in oopses due to unusual socket connection
-> | termination paths, exposing these issues.
-> |
-> | Signed-off-by: Michal Ostrowski <mostrows@gmail.com>
-> | Reviewed-by: Cyril Gorcunov <gorcunov@gmail.com>
->
-> ...
->
-> Thanks a lot Michal!
->
-> I think we should add as well
->
-> Reported-by: Denys Fedoryschenko <denys@visp.net.lb>
-> Tested-by: Denys Fedoryschenko <denys@visp.net.lb>
->
-> 	-- Cyrill
+From: Denys Fedoryschenko <denys@visp.net.lb>
+Date: Mon, 26 Oct 2009 22:05:37 +0200
 
-Yes, till now everything working perfectly. Confirming :-)
+> On Monday 26 October 2009 21:59:33 Cyrill Gorcunov wrote:
+>> [Michal Ostrowski - Mon, Oct 26, 2009 at 02:51:52PM -0500]
+>>
+>>
+>> Thanks a lot Michal!
+>>
+>> I think we should add as well
+>>
+>> Reported-by: Denys Fedoryschenko <denys@visp.net.lb>
+>> Tested-by: Denys Fedoryschenko <denys@visp.net.lb>
+>>
+>> 	-- Cyrill
+> 
+> Yes, till now everything working perfectly. Confirming :-)
+
+Applied, thanks everyone.
