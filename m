@@ -1,65 +1,88 @@
-From: Tilman Schmidt <tilman@imap.cc>
-Date: Mon, 26 Oct 2009 08:47:19 +0000
+From: Johannes Berg <johannes@sipsolutions.net>
+Date: Mon, 26 Oct 2009 08:56:20 +0000
 Subject: Re: [PATCH] net: Adjust softirq raising in __napi_schedule
-Message-Id: <4AE56217.3040708@imap.cc>
+Message-Id: <1256547380.28230.17.camel@johannes.local>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="=-/VsN2AN47iITS0fIBs+L"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>	 <20091021211906.GA11401@ami.dom.local>	 <1256160330.12174.2.camel@johannes.local>	 <20091021213947.GA12202@ami.dom.local>	 <1256200021.12174.11.camel@johannes.local> <4AE1C00B.5010008@imap.cc>	 <1256309191.12174.51.camel@johannes.local>	 <20091026074126.GA6187@ff.dom.local>	 <1256543054.28230.6.camel@johannes.local>	 <20091026075438.GB6187@ff.dom.local> <1256543932.28230.9.camel@johannes.local>
-In-Reply-To: <1256543932.28230.9.camel@johannes.local>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: Johannes Berg <johannes@sipsolutions.net>
+References: <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>
+	 <20091021211906.GA11401@ami.dom.local>
+	 <1256160330.12174.2.camel@johannes.local>
+	 <20091021213947.GA12202@ami.dom.local>
+	 <1256200021.12174.11.camel@johannes.local> <4AE1C00B.5010008@imap.cc>
+	 <1256309191.12174.51.camel@johannes.local>
+	 <20091026074126.GA6187@ff.dom.local>
+	 <1256543054.28230.6.camel@johannes.local>
+	 <20091026075438.GB6187@ff.dom.local>
+	 <1256543932.28230.9.camel@johannes.local>  <4AE56217.3040708@imap.cc>
+In-Reply-To: <4AE56217.3040708@imap.cc>
+To: Tilman Schmidt <tilman@imap.cc>
 Cc: Jarek Poplawski <jarkao2@gmail.com>, David Miller <davem@davemloft.net>, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, Michael Buesch <mb@bu3sch.de>, Oliver Hartkopp <oliver@hartkopp.net>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
 
-Am 26.10.2009 09:58 schrieb Johannes Berg:
-> On Mon, 2009-10-26 at 07:54 +0000, Jarek Poplawski wrote:
-> 
->>> No, I wrote that I didn't know. I suppose now that I looked at it I do
->>> know, and only disabling preemption is required.
->> But netif_rx has preemption disabled most of the time (by hardirqs
->> disabling). So maybe disabling preemption isn't the main reason here
->> either?
-> 
-> Not for netpoll though, which may or may not be relevant (if I were to
-> venture a guess I'd say it isn't and it disables preemption to be able
-> to do the softirq thing)
-> 
-> However, I lost track now of why we're discussing this.
+--=-/VsN2AN47iITS0fIBs+L
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-The starting point were several reports of the kernel message:
+On Mon, 2009-10-26 at 10:47 +0200, Tilman Schmidt wrote:
 
-NOHZ: local_softirq_pending 08
+> > However, I lost track now of why we're discussing this.
+>=20
+> The starting point were several reports of the kernel message:
+>=20
+> NOHZ: local_softirq_pending 08
+>=20
+> Originally most if not all of them came from wireless networking,
+> but I muddied the waters by adding to the mix a case involving ISDN.
+> You stated that all the solutions proposed so far were wrong, so
+> we're naturally turning to you for guidance on what the right
+> solution might be.
 
-Originally most if not all of them came from wireless networking,
-but I muddied the waters by adding to the mix a case involving ISDN.
-You stated that all the solutions proposed so far were wrong, so
-we're naturally turning to you for guidance on what the right
-solution might be.
+Right. Sorry about getting lost here.
 
-> Basically it boils down to using netif_rx() when in (soft)irq, and
-> netif_rx_ni() when in process context. That could just be an
-> optimisation, but it's a very valid one.
+> > Basically it boils down to using netif_rx() when in (soft)irq, and
+> > netif_rx_ni() when in process context. That could just be an
+> > optimisation, but it's a very valid one.
+>=20
+> Hmmm. That seems to contradict your earlier statement to me that
+> simply replacing a call to netif_rx() by one to netif_rx_ni()
+> when not in interrupt context isn't a valid solution either.
+> What am I missing?
 
-Hmmm. That seems to contradict your earlier statement to me that
-simply replacing a call to netif_rx() by one to netif_rx_ni()
-when not in interrupt context isn't a valid solution either.
-What am I missing?
+Well, I think you misunderstood me. It would be correct to do this, if
+and only if the code that calls it doesn't need the extra guarantee.
 
-Thanks,
-Tilman
+Any code (say ISDN code) that calls netif_rx() is clearly assuming to
+always be running in (soft)irq context, otherwise it couldn't call
+netif_rx() unconditionally. Agree so far?
 
-- --
-Tilman Schmidt                    E-Mail: tilman@imap.cc
-Bonn, Germany
-Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
-Ungeöffnet mindestens haltbar bis: (siehe Rückseite)
+So now if you change the ISDN code to call netif_rx_ni(), you've changed
+the assumption that the ISDN code makes -- that it is running in
+(soft)irq context. Therefore, you need to verify that this is actually a
+correct change, which is what I tried to say.
+
+johannes
+
+--=-/VsN2AN47iITS0fIBs+L
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.4 (MingW32)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
 
-iD8DBQFK5WIXQ3+did9BuFsRAsj1AJ0e4VJ7Nsp69ROXCiT4oM/Q6lIpSwCfZvXS
-4nV4tWTIzgk4IRlCt0CCF3Y=r15I
+iQIcBAABAgAGBQJK5WQuAAoJEODzc/N7+QmaPSoP/2W5G6OYt+XcIoue2db+SlYa
+p/rw3j/+vXytXFGWslMtY6Dyg6K+YeN+BauUsFCXr/LxUprKJLH3bE1jaer2PrzP
+R2E4bLdFMVgxngmMNQ0PMUCAX8YEUNZUd9cGua6X5MyZ08smfvhvNFnoOcbQVbB7
+6f05PI1ULPACZJNZlav8cQpwHxp9cU89DQEkJiB9+hJsPBks3eRM48HIsuV5YHix
+yQ3iqMzg5/8vgKK6wCOHR6os52dcYjnaVDrjQwOHI2/5KG1B0taj+tn+sJjYTP7L
+ED2hB6yfyE3szig58estEMeNXsKp98wZRfsSA6rB61A2uf66e99RpmOVPegon6Dp
+MR+uA7wz3aHgAAcXQ3E9M2mP4MXf9WmnRxr3Q+XTsaVvHUvLk/rFvrlOHpFht4o0
+fOcRPTgg5RSpVs6aXZxLJMwAWfCFBb0+MiEhqTQYNO7T+OMtWUF3PQP65Ie1HssV
+DYQkqaAUwjTilhmZX1x80eXPN4xZeJUdi0uFIgKyvefajb/13Gs93OlTCyYmwlfM
+oXhoXgK3HwIbscbWEvOEtbaln6aGuMdaLHOoGX8kRliTIVw2MbHUtIlWIVKENb/0
+9io7gIPOsmD0ItGVLIaa4PNF8fHAJo8oEKXT6YG7pj1cJRa7YYtjOUZmK/R+Zltx
+KH35ftsf+CIV8Niafj5G
+=SbI/
 -----END PGP SIGNATURE-----
+
+--=-/VsN2AN47iITS0fIBs+L--
+
