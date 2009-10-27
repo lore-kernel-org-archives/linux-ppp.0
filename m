@@ -1,88 +1,87 @@
-From: Johannes Berg <johannes@sipsolutions.net>
-Date: Mon, 26 Oct 2009 08:56:20 +0000
+From: Tilman Schmidt <tilman@imap.cc>
+Date: Tue, 27 Oct 2009 00:52:17 +0000
 Subject: Re: [PATCH] net: Adjust softirq raising in __napi_schedule
-Message-Id: <1256547380.28230.17.camel@johannes.local>
+Message-Id: <4AE64441.7060008@imap.cc>
 MIME-Version: 1
-Content-Type: multipart/mixed; boundary="=-/VsN2AN47iITS0fIBs+L"
+Content-Type: multipart/mixed; boundary="------------enig9CB782960AE172AE34570203"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>
-	 <20091021211906.GA11401@ami.dom.local>
-	 <1256160330.12174.2.camel@johannes.local>
-	 <20091021213947.GA12202@ami.dom.local>
-	 <1256200021.12174.11.camel@johannes.local> <4AE1C00B.5010008@imap.cc>
-	 <1256309191.12174.51.camel@johannes.local>
-	 <20091026074126.GA6187@ff.dom.local>
-	 <1256543054.28230.6.camel@johannes.local>
-	 <20091026075438.GB6187@ff.dom.local>
-	 <1256543932.28230.9.camel@johannes.local>  <4AE56217.3040708@imap.cc>
-In-Reply-To: <4AE56217.3040708@imap.cc>
-To: Tilman Schmidt <tilman@imap.cc>
+References: <4AD76184.6030900@gmail.com> <4ADF5710.4030505@imap.cc>	 <20091021211906.GA11401@ami.dom.local>	 <1256160330.12174.2.camel@johannes.local>	 <20091021213947.GA12202@ami.dom.local>	 <1256200021.12174.11.camel@johannes.local> <4AE1C00B.5010008@imap.cc>	 <1256309191.12174.51.camel@johannes.local>	 <20091026074126.GA6187@ff.dom.local>	 <1256543054.28230.6.camel@johannes.local>	 <20091026075438.GB6187@ff.dom.local>	 <1256543932.28230.9.camel@johannes.local>  <4AE56217.3040708@imap.cc> <1256547380.28230.17.camel@johannes.local>
+In-Reply-To: <1256547380.28230.17.camel@johannes.local>
+To: Johannes Berg <johannes@sipsolutions.net>
 Cc: Jarek Poplawski <jarkao2@gmail.com>, David Miller <davem@davemloft.net>, hidave.darkstar@gmail.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, Michael Buesch <mb@bu3sch.de>, Oliver Hartkopp <oliver@hartkopp.net>
 
-
---=-/VsN2AN47iITS0fIBs+L
-Content-Type: text/plain; charset="UTF-8"
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enig9CB782960AE172AE34570203
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 2009-10-26 at 10:47 +0200, Tilman Schmidt wrote:
-
-> > However, I lost track now of why we're discussing this.
+Am 26.10.2009 09:56 schrieb Johannes Berg:
+> On Mon, 2009-10-26 at 10:47 +0200, Tilman Schmidt wrote:
 >=20
-> The starting point were several reports of the kernel message:
+>>> Basically it boils down to using netif_rx() when in (soft)irq, and
+>>> netif_rx_ni() when in process context. That could just be an
+>>> optimisation, but it's a very valid one.
+>> Hmmm. That seems to contradict your earlier statement to me that
+>> simply replacing a call to netif_rx() by one to netif_rx_ni()
+>> when not in interrupt context isn't a valid solution either.
+>> What am I missing?
 >=20
-> NOHZ: local_softirq_pending 08
->=20
-> Originally most if not all of them came from wireless networking,
-> but I muddied the waters by adding to the mix a case involving ISDN.
-> You stated that all the solutions proposed so far were wrong, so
-> we're naturally turning to you for guidance on what the right
-> solution might be.
+> Well, I think you misunderstood me. It would be correct to do this, if
+> and only if the code that calls it doesn't need the extra guarantee.
 
-Right. Sorry about getting lost here.
+I see. Thanks for the clarification.
 
-> > Basically it boils down to using netif_rx() when in (soft)irq, and
-> > netif_rx_ni() when in process context. That could just be an
-> > optimisation, but it's a very valid one.
->=20
-> Hmmm. That seems to contradict your earlier statement to me that
-> simply replacing a call to netif_rx() by one to netif_rx_ni()
-> when not in interrupt context isn't a valid solution either.
-> What am I missing?
+> Any code (say ISDN code) that calls netif_rx() is clearly assuming to
+> always be running in (soft)irq context, otherwise it couldn't call
+> netif_rx() unconditionally. Agree so far?
 
-Well, I think you misunderstood me. It would be correct to do this, if
-and only if the code that calls it doesn't need the extra guarantee.
+Well, in fact I'm not sure. :-) All I know is that in the ISDN case, no
+such assumption is explicitly stated anywhere. (The code in question is
+called from the rcvcallb_skb() callback method which the hardware driver
+calls when data has been received, and the description of that method in
+Documentation/isdn/INTERFACE does not say anything about the context in
+which it may be called.) The relevant code in drivers/isdn/i4l/isdn_ppp.c=
 
-Any code (say ISDN code) that calls netif_rx() is clearly assuming to
-always be running in (soft)irq context, otherwise it couldn't call
-netif_rx() unconditionally. Agree so far?
+is rather old, perhaps even older than softirqs and the netif_rx() /
+netif_rx_ni() split. (Bear in mind that we are talking about the old
+ISDN4Linux subsystem which initially didn't even make it into the 2.6
+series because it was considered obsolete.) It seems quite possible to me=
 
-So now if you change the ISDN code to call netif_rx_ni(), you've changed
-the assumption that the ISDN code makes -- that it is running in
-(soft)irq context. Therefore, you need to verify that this is actually a
-correct change, which is what I tried to say.
+that just no one ever thought about that question.
 
-johannes
+> So now if you change the ISDN code to call netif_rx_ni(), you've change=
+d
+> the assumption that the ISDN code makes -- that it is running in
+> (soft)irq context. Therefore, you need to verify that this is actually =
+a
+> correct change, which is what I tried to say.
 
---=-/VsN2AN47iITS0fIBs+L
+Understood. However, the fact that the local_softirq_pending message is
+appearing would seem to indicate that this assumption was wrong to
+begin with, wouldn't it?
+
+Thanks,
+Tilman
+
+--=20
+Tilman Schmidt                    E-Mail: tilman@imap.cc
+Bonn, Germany
+Diese Nachricht besteht zu 100% aus wiederverwerteten Bits.
+Unge=C3=B6ffnet mindestens haltbar bis: (siehe R=C3=BCckseite)
+
+
+--------------enig9CB782960AE172AE34570203
 Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.4-svn0 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
 
-iQIcBAABAgAGBQJK5WQuAAoJEODzc/N7+QmaPSoP/2W5G6OYt+XcIoue2db+SlYa
-p/rw3j/+vXytXFGWslMtY6Dyg6K+YeN+BauUsFCXr/LxUprKJLH3bE1jaer2PrzP
-R2E4bLdFMVgxngmMNQ0PMUCAX8YEUNZUd9cGua6X5MyZ08smfvhvNFnoOcbQVbB7
-6f05PI1ULPACZJNZlav8cQpwHxp9cU89DQEkJiB9+hJsPBks3eRM48HIsuV5YHix
-yQ3iqMzg5/8vgKK6wCOHR6os52dcYjnaVDrjQwOHI2/5KG1B0taj+tn+sJjYTP7L
-ED2hB6yfyE3szig58estEMeNXsKp98wZRfsSA6rB61A2uf66e99RpmOVPegon6Dp
-MR+uA7wz3aHgAAcXQ3E9M2mP4MXf9WmnRxr3Q+XTsaVvHUvLk/rFvrlOHpFht4o0
-fOcRPTgg5RSpVs6aXZxLJMwAWfCFBb0+MiEhqTQYNO7T+OMtWUF3PQP65Ie1HssV
-DYQkqaAUwjTilhmZX1x80eXPN4xZeJUdi0uFIgKyvefajb/13Gs93OlTCyYmwlfM
-oXhoXgK3HwIbscbWEvOEtbaln6aGuMdaLHOoGX8kRliTIVw2MbHUtIlWIVKENb/0
-9io7gIPOsmD0ItGVLIaa4PNF8fHAJo8oEKXT6YG7pj1cJRa7YYtjOUZmK/R+Zltx
-KH35ftsf+CIV8Niafj5G
-=SbI/
+iD8DBQFK5kRMQ3+did9BuFsRAs2XAJ9Dc41aEw1ygQMbRfDKiz8ccup6JQCfSJ8V
+ekRoH53k8F2iixXqlGU6u38=
+=ku7z
 -----END PGP SIGNATURE-----
 
---=-/VsN2AN47iITS0fIBs+L--
-
+--------------enig9CB782960AE172AE34570203--
