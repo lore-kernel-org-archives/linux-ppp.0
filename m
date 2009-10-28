@@ -1,54 +1,36 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 05 Oct 2009 17:38:06 +0000
-Subject: Re: ppp question
-Message-Id: <4ACA2EFE.9060309@workingcode.com>
+From: tony.chamberlain@lemko.com
+Date: Wed, 28 Oct 2009 19:08:02 +0000
+Subject: pty
+Message-Id: <W5658327625161531256756882@webmail25>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <008201ca45e2$eb8f8f60$0413010a@scu.escambray.com.cu>
-In-Reply-To: <008201ca45e2$eb8f8f60$0413010a@scu.escambray.com.cu>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Davy Leon wrote:
-> I have a question. Every time I dialup to the internet pppd executes an
-> script called ip-up. My question is, everytime someone dials in it's
-> executed too?
+This is somewhat different from my other question and is on a different
+system and of course the person who developed it left.
 
-Yes.  It's executed every time an IP interface is brought up by PPP.
+There is a mobile phone which connects to a CDMA BTS and then from there
+to a Linux machine.  A process called pdsn is running on the linux machine
+and detects when the mobile phone calls.  It then spawns a process with
+a bunch of parameters (port, ip, etc) like this
 
-Note that PPP itself knows nothing about dialing in or out; those are
-attributes of the lower layer -- the chat script and modems or other
-communications gear involved.  PPP is symmetric and peer-to-peer.
-There's no "client" or "server."
+   pppd pty 'ppp_relay -p port -a address ...'
 
-> If the answer is yes, how can I handle the script to
-> execute one part when dianing out and another part when dialing in. I
-> meant something like
+So pppd uses ppp_relay (which is also something he wrote) to handle the
+ppp stuff.
 
-The man page has a number of environment variables documented that you
-could use for this task.  $PEERNAME is fairly useful -- it will be set
-only if you have an authenticated peer name.
+Now this worked on Red Hat 9 but there seems to be a problem on CentOS 4.5.
+From what I can tell, ppp_relay receives a TCP port number (I guess from 
+pdsn?) and tries to communicate to the pppd process through this port.
+It sends a message but never gets a response.
 
-If you have different devices for dialing in and out (it's often a good
-idea to do this, but not always done), then $DEVICE might tell you what
-you want to know.
+I am curious how the pppd pty process (in this case ppp_relay) communicates
+to pppd?  We did a netstat and found pppd but no TCP nor UDP ports were
+associated with it.  It was just a UNIX-type process.
 
-If you want to get fancier, you can use $LINKNAME with the "linkname"
-option.
+Is ppp_relay attempting to talk through a port when it should be using
+some kind of Linux message?
 
-The simple answer would be:
 
-	if [[ -n ${PEERNAME:+I_am_server} ]]; then
-		# the peer probably called me
-	else
-		# I'm probably dialing out
-	fi
-
-But note that this is making a big assumption about authentication
-configuration: that you always authenticate people calling you, and you
-never authenticate people you call.  That's how PPP is commonly used,
-but there's nothing in the standards that _requires_ it to be used that way.
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
