@@ -1,7 +1,7 @@
-From: Bill Unruh <unruh@physics.ubc.ca>
-Date: Wed, 28 Oct 2009 20:23:20 +0000
-Subject: Re: pty
-Message-Id: <Pine.LNX.4.64.0910281316230.4393@info.physics.ubc.ca>
+From: tony.chamberlain@lemko.com
+Date: Wed, 28 Oct 2009 22:48:18 +0000
+Subject: Re:  pty
+Message-Id: <W69772290943491256770098@webmail30>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W5658327625161531256756882@webmail25>
 In-Reply-To: <W5658327625161531256756882@webmail25>
@@ -9,6 +9,27 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+It did show connect ---> /dev/pts/3 or so, but then timed out.
+
+I really wanted just to make sure I understood correctly too that pppd
+communicates to ppp_relay via stdin and stdout.  And I understand 
+pppd_relay talks to the phone and then sends whatever, via stdout, to pppd
+and then ppp_relay also reads from pppd and converts and does whatever
+and sends back to the phone:
+
+
+                             
+pppd   <----->   ppp_relay  <========> phone
+
+??
+
+-----Original Message-----
+From: Bill Unruh [mailto:unruh@physics.ubc.ca]
+Sent: Wednesday, October 28, 2009 03:23 PM
+To: tony.chamberlain@lemko.com
+Cc: 'ppp, Linux'
+Subject: Re: pty
 
 I presume that you have the program ppp_relay which you say he wrote. You will
 have to look into that to see what it does.
@@ -80,3 +101,10 @@ William G. Unruh   |  Canadian Institute for|     Tel: +1(604)822-3273
 Physics&Astronomy  |     Advanced Research  |     Fax: +1(604)822-5324
 UBC, Vancouver,BC  |   Program in Cosmology |     unruh@physics.ubc.ca
 Canada V6T 1Z1     |      and Gravity       |  www.theory.physics.ubc.ca/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
