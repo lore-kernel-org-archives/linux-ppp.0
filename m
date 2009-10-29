@@ -1,7 +1,7 @@
-From: walter harms <wharms@bfs.de>
-Date: Thu, 29 Oct 2009 16:42:00 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Thu, 29 Oct 2009 17:04:53 +0000
 Subject: Re: strange pppd error
-Message-Id: <4AE9C5D8.7060208@bfs.de>
+Message-Id: <4AE9CB35.5050603@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <4AE9B268.1090607@bfs.de>
 In-Reply-To: <4AE9B268.1090607@bfs.de>
@@ -10,101 +10,92 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+walter harms wrote:
+> These are the first entries in the log. The link between the system is
+> an ordinary    "modem <- phoneline -> modem"    connection. there is nothing
+> in between (except the telco stuff of cause).
 
+OK.  That certainly rules out a number of possibilities.  The new logs
+help even more.
 
-James Carlson schrieb:
-> I should always proof-read before sending.  :-/
-> 
-> James Carlson wrote:
->> walter harms wrote:
->>> Oct 20 13:56:12  pppd[5792]: rcvd [LCP ConfReq id=0xc8 <asyncmap 0x0> <magic 0xab132318> <pcomp> <accomp>]
->>> Oct 20 13:56:12  pppd[5792]: sent [LCP ConfReq id=0xc9 <asyncmap 0x0> <magic 0xf79dba92> <pcomp> <accomp>]
->>> Oct 20 13:56:12  pppd[5792]: sent [LCP ConfAck id=0xc8 <asyncmap 0x0> <magic 0xab132318> <pcomp> <accomp>]
->>> Oct 20 13:56:12  pppd[5792]: rcvd [LCP ConfAck id=0xc8 <asyncmap 0x0> <magic 0xd71a0c90> <pcomp> <accomp>]
->> Uh oh.  It looks like the peer is broken.  Note the ID number on that
->> message: it's 0xc8.  That's the ID on the peer's own Configure-Request,
->> which makes no sense at all.
-> 
-> One other clue I certainly should have noticed here is the magic number
-> -- it's different from what we sent.  So that is *not* merely an errant
-> response on the peer's part.
-> 
-> Why is the peer sending that last message above?  I don't know.  It's as
-> though the peer is responding to an LCP Configure-Request that we never
-> sent, at least according to the abbreviated log file presented here.
-> 
-> (You don't need to post the whole multi-megabyte log file, but posting
-> the LCP initial negotiation on the link and any LCP negotiation messages
-> seen up to the point of failure would be extremely helpful.)
-> 
-> What's the nature of the link between these two systems?  Is it possible
-> for LCP messages from one link to be replayed on another link?  Is it
-> possible for some other machine's messages to get injected on this link?
->  Could the link itself store and replay messages?
-> 
-> I think the first step would be finding out why the peer suddenly
-> thought it received an LCP Configure-Request message from us with ID
-> 0xc8 and Magic Number 0xd71a0c90, when we apparently sent no such thing.
-> 
+> btw: I have noticed that the  "ConfReq id" simply wraps at 255 would it be useful to
+> have a patch that breaks the connection instead of continue counting ?
 
-thx for your fast response.
+I can't imagine why you'd want to do that.  The ID number is _designed_
+to roll over.  (In fact, it's completely ephemeral and needn't be
+sequential at all.  All that's really needed for the protocol to work is
+that the ID for unique messages is chosen so that identical IDs are
+repeated as infrequently as possible.  It turns out that a simple
+wrap-around increment does that just fine, but *any* such sequence
+serves the purpose for the protocol requirements.)
 
-These are the first entries in the log. The link between the system is
-an ordinary    "modem <- phoneline -> modem"    connection. there is nothing
-in between (except the telco stuff of cause).
+> Oct 20 11:25:01  pppd[5792]: sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb655033a> <pcomp> <accomp>]
+> Oct 20 11:25:09  pppd[5792]: rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
+> Oct 20 11:25:09  pppd[5792]: sent [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
+> Oct 20 11:25:09  pppd[5792]: sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb655033a> <pcomp> <accomp>]
+> Oct 20 11:25:10  pppd[5792]: rcvd [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb655033a> <pcomp> <accomp>]
 
-btw: I have noticed that the  "ConfReq id" simply wraps at 255 would it be useful to
-have a patch that breaks the connection instead of continue counting ?
+That looks good.  We send Configure-Request ID 1, and he acks it, and we
+ack his request as well.
 
-re,
- wh
+> Oct 20 11:25:12  pppd[5792]: rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
 
+That doesn't look so good.  The peer is retransmitting its LCP
+Configure-Request, and it's unclear why it's doing that.  We've already
+sent an ack.
 
-Oct 20 11:24:32  pppd[5792]: pppd 2.4.2b3 started by root, uid 0
-Oct 20 11:25:00  pppd[5792]: Serial connection established.
-Oct 20 11:25:00  pppd[5792]: using channel 59
-Oct 20 11:25:00  pppd[5792]: Using interface ppp0
-Oct 20 11:25:00  pppd[5792]: Connect: ppp0 <--> /dev/modem
-Oct 20 11:25:01  pppd[5792]: sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb655033a> <pcomp> <accomp>]
-Oct 20 11:25:09  pppd[5792]: rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
-Oct 20 11:25:09  pppd[5792]: sent [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
-Oct 20 11:25:09  pppd[5792]: sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb655033a> <pcomp> <accomp>]
-Oct 20 11:25:10  pppd[5792]: rcvd [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb655033a> <pcomp> <accomp>]
-Oct 20 11:25:10  pppd[5792]: sent [LCP EchoReq id=0x0 magic=0xb655033a]
-Oct 20 11:25:10  pppd[5792]: sent [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 10.0.0.2>]
-Oct 20 11:25:12  pppd[5792]: rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
-Oct 20 11:25:12  pppd[5792]: sent [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0x908697da> <pcomp> <accomp>]
-Oct 20 11:25:12  pppd[5792]: sent [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
-Oct 20 11:25:14  pppd[5792]: sent [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0x908697da> <pcomp> <accomp>]
-Oct 20 11:25:14  pppd[5792]: rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
-Oct 20 11:25:14  pppd[5792]: sent [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
-Oct 20 11:25:14  pppd[5792]: rcvd [LCP EchoReq id=0x0 magic=0xb426be22]
-Oct 20 11:25:14  pppd[5792]: rcvd [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0x8e9f9ca2> <pcomp> <accomp>]
-Oct 20 11:25:14  pppd[5792]: sent [LCP ConfAck id=0x2 <asyncmap 0x0> <magic 0x8e9f9ca2> <pcomp> <accomp>]
-Oct 20 11:25:14  pppd[5792]: rcvd [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb655033a> <pcomp> <accomp>]
-Oct 20 11:25:14  pppd[5792]: rcvd [LCP ConfAck id=0x2 <asyncmap 0x0> <magic 0x908697da> <pcomp> <accomp>]
-Oct 20 11:25:14  pppd[5792]: sent [LCP EchoReq id=0x0 magic=0x908697da]
-Oct 20 11:25:14  pppd[5792]: sent [IPCP ConfReq id=0x2 <compress VJ 0f 01> <addr 10.0.0.2>]
-Oct 20 11:25:14  pppd[5792]: rcvd [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15>]
-Oct 20 11:25:14  pppd[5792]: sent [CCP ConfReq id=0x1]
-Oct 20 11:25:14  pppd[5792]: sent [CCP ConfRej id=0x1 <deflate 15> <deflate(old#) 15>]
-Oct 20 11:25:14  pppd[5792]: rcvd [IPCP ConfReq id=0x1 <compress VJ 0f 01> <addr 0.0.0.0>]
-Oct 20 11:25:14  pppd[5792]: sent [IPCP ConfNak id=0x1 <addr 10.0.0.1>]
-Oct 20 11:25:17  pppd[5792]: sent [IPCP ConfReq id=0x2 <compress VJ 0f 01> <addr 10.0.0.2>]
-Oct 20 11:25:17  pppd[5792]: sent [CCP ConfReq id=0x1]
-Oct 20 11:25:17  pppd[5792]: rcvd [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0x8e9f9ca2> <pcomp> <accomp>]
-Oct 20 11:25:17  pppd[5792]: sent [LCP ConfReq id=0x3 <asyncmap 0x0> <magic 0x7614dc03> <pcomp> <accomp>]
-Oct 20 11:25:17  pppd[5792]: sent [LCP ConfAck id=0x2 <asyncmap 0x0> <magic 0x8e9f9ca2> <pcomp> <accomp>]
-Oct 20 11:25:17  pppd[5792]: rcvd [LCP ConfAck id=0x2 <asyncmap 0x0> <magic 0x908697da> <pcomp> <accomp>]
-Oct 20 11:25:17  pppd[5792]: rcvd [LCP EchoReq id=0x0 magic=0x8e9f9ca2]
-Oct 20 11:25:17  pppd[5792]: rcvd [LCP EchoRep id=0x0 magic=0x8e9f9ca2]
-Oct 20 11:25:17  pppd[5792]: rcvd [CCP ConfReq id=0x2 <deflate 15> <deflate(old#) 15>]
-Oct 20 11:25:17  pppd[5792]: Discarded non-LCP packet when LCP not open
-Oct 20 11:25:17  pppd[5792]: rcvd [IPCP ConfReq id=0x2 <compress VJ 0f 01> <addr 0.0.0.0>]
-Oct 20 11:25:17  pppd[5792]: Discarded non-LCP packet when LCP not open
-Oct 20 11:25:17  pppd[5792]: rcvd [IPCP ConfAck id=0x2 <compress VJ 0f 01> <addr 10.0.0.2>]
-Oct 20 11:25:17  pppd[5792]: Discarded non-LCP packet when LCP not open
-Oct 20 11:25:17  pppd[5792]: rcvd [CCP ConfAck id=0x1]
+The standard state machine doesn't support what this peer is doing.  I
+suppose that if it somehow missed our Configure-Ack (how?), this could
+be a valid thing to do.  But the question is how it could have missed
+that message, when it just recently sent us Configure-Request.
 
+Something odd is going on here.
 
+> Oct 20 11:25:12  pppd[5792]: sent [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0x908697da> <pcomp> <accomp>]
+> Oct 20 11:25:12  pppd[5792]: sent [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
 
+We behave as the standards require; jumping back to Ack-Sent state.
+
+> Oct 20 11:25:14  pppd[5792]: sent [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0x908697da> <pcomp> <accomp>]
+
+The peer hasn't responded.  We try again by resending Configure-Request.
+ It's odd that we're retrying in just 2 seconds.  The default is 3.
+Have you tweaked your configuration?
+
+> Oct 20 11:25:14  pppd[5792]: rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
+> Oct 20 11:25:14  pppd[5792]: sent [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb426be22> <pcomp> <accomp>]
+
+The peer sends us a new Configure-Request by itself.  Why he does this
+is unclear.  It looks like his restart timer went off, but why didn't he
+respond to either of the two Configure-Requests we've sent?
+
+> Oct 20 11:25:14  pppd[5792]: rcvd [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0x8e9f9ca2> <pcomp> <accomp>]
+> Oct 20 11:25:14  pppd[5792]: sent [LCP ConfAck id=0x2 <asyncmap 0x0> <magic 0x8e9f9ca2> <pcomp> <accomp>]
+> Oct 20 11:25:14  pppd[5792]: rcvd [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xb655033a> <pcomp> <accomp>]
+> Oct 20 11:25:14  pppd[5792]: rcvd [LCP ConfAck id=0x2 <asyncmap 0x0> <magic 0x908697da> <pcomp> <accomp>]
+
+He finally responds, but there's a problem here.  Note the first of
+those two received Configure-Ack messages: it's ID 1.  He's actually
+sending a duplicate Configure-Ack.  That's not a terribly legitimate
+thing to do; he shouldn't be resending Configure-Ack at all.  The
+standards don't support it.
+
+As for the second Configure-Ack received above, it looks like there are
+occasional long delays on this link, which wouldn't be surprising with a
+modem.  I think you need to set at least "lcp-restart 3" or perhaps
+higher, if this link is subject to lengthy delays.  Having a too-short
+restart timer can cause all sorts of unwanted behavior.
+
+> Oct 20 11:25:17  pppd[5792]: rcvd [LCP ConfReq id=0x2 <asyncmap 0x0> <magic 0x8e9f9ca2> <pcomp> <accomp>]
+> Oct 20 11:25:17  pppd[5792]: sent [LCP ConfReq id=0x3 <asyncmap 0x0> <magic 0x7614dc03> <pcomp> <accomp>]
+> Oct 20 11:25:17  pppd[5792]: sent [LCP ConfAck id=0x2 <asyncmap 0x0> <magic 0x8e9f9ca2> <pcomp> <accomp>]
+> Oct 20 11:25:17  pppd[5792]: rcvd [LCP ConfAck id=0x2 <asyncmap 0x0> <magic 0x908697da> <pcomp> <accomp>]
+
+What?  We sent only two Configure-Request messages with ID 0x2.  He sent
+*THREE* Configure-Ack messages with ID 0x2!  That's not right.
+
+I'm much more convinced now that the peer is junk.  It'll likely need
+repair or replacement.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
