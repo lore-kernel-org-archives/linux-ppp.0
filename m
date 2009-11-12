@@ -1,38 +1,65 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Tue, 17 Nov 2009 10:53:43 +0000
-Subject: ppp-2.4.5 released
-Message-Id: <19202.32951.859014.67993@cargo.ozlabs.ibm.com>
+From: Libor Pechacek <lpechacek@suse.cz>
+Date: Thu, 12 Nov 2009 16:51:51 +0000
+Subject: [PATCH 2/3] man page update - meaning of *-max-failure
+Message-Id: <20091112165151.GN30818@fm.suse.cz>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I have released ppp-2.4.5.  The tarball is in the usual place:
+The *-max-failure values are used not only for the configure-NAKs sent, but
+also for NAKs received - see commit ec27e674.
 
-ftp://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz
+Signed-off-by: Libor Pechacek <lpechacek@suse.cz>
+---
+ pppd/pppd.8 |   12 ++++++++----
+ 1 files changed, 8 insertions(+), 4 deletions(-)
 
-or you can get it from git (git://ozlabs.org/~paulus/ppp.git).
+diff --git a/pppd/pppd.8 b/pppd/pppd.8
+index 47c5c40..622ce97 100644
+--- a/pppd/pppd.8
++++ b/pppd/pppd.8
+@@ -433,7 +433,8 @@ Set the maximum number of IPCP configure-request transmissions to
+ .TP
+ .B ipcp\-max\-failure \fIn
+ Set the maximum number of IPCP configure-NAKs returned before starting
+-to send configure-Rejects instead to \fIn\fR (default 10).
++to send configure-Rejects instead to \fIn\fR (default 10).  This option
++applies to configure-NAKs received as well.
+ .TP
+ .B ipcp\-max\-terminate \fIn
+ Set the maximum number of IPCP terminate-request transmissions to
+@@ -455,7 +456,8 @@ Set the maximum number of IPv6CP configure-request transmissions to
+ .TP
+ .B ipv6cp\-max\-failure \fIn
+ Set the maximum number of IPv6CP configure-NAKs returned before starting
+-to send configure-Rejects instead to \fIn\fR (default 5).
++to send configure-Rejects instead to \fIn\fR (default 5).  This option
++applies to configure-NAKs received as well.
+ .TP
+ .B ipv6cp\-max\-terminate \fIn
+ Set the maximum number of IPv6CP terminate-request transmissions to
+@@ -522,7 +524,8 @@ system will send to \fIn\fR. The default is 10.
+ .TP
+ .B ipxcp\-max\-failure \fIn
+ Set the maximum number of IPXCP NAK frames which the local system will
+-send before it rejects the options. The default value is 5.
++send before it rejects the options. The default value is 5.  This option
++applies to configure-NAKs received as well.
+ .TP
+ .B ipxcp\-max\-terminate \fIn
+ Set the maximum nuber of IPXCP terminate request frames before the
+@@ -572,7 +575,8 @@ Set the maximum number of LCP configure-request transmissions to
+ .TP
+ .B lcp\-max\-failure \fIn
+ Set the maximum number of LCP configure-NAKs returned before starting
+-to send configure-Rejects instead to \fIn\fR (default 5).
++to send configure-Rejects instead to \fIn\fR (default 5).  This option
++applies to configure-NAKs received as well.
+ .TP
+ .B lcp\-max\-terminate \fIn
+ Set the maximum number of LCP terminate-request transmissions to
+-- 
+1.6.0.2
 
-The new things in ppp-2.4.5, compared to ppp-2.4.4, are:
-
-* Under Linux, pppd can now operate in a mode where it doesn't request
-  the peer's IP address, as some peers refuse to supply an IP address.
-  Since Linux supports device routes as well as gateway routes, it's
-  possible to have no remote IP address assigned to the ppp interface
-  and still route traffic over it.
-
-* Pppd now works better with 3G modems that do strange things such as
-  sending IPCP Configure-Naks with the same values over and over again.
-
-* The PPP over L2TP plugin is included, which works with the pppol2tp
-  PPP channel code in the Linux kernel.  This allows pppd to be used
-  to set up tunnels using the Layer 2 Tunneling Protocol.
-
-* A new 'enable-session' option has been added, which enables session
-  accounting via PAM or wtwp/wtmpx, as appropriate.  See the pppd man
-  page for details.
-
-* Several bugs have been fixed.
-
-Paul.
