@@ -1,79 +1,49 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Sat, 14 Nov 2009 05:47:00 +0000
-Subject: Re: getting the device of the ppp connection
-Message-Id: <19198.17492.726818.469611@cargo.ozlabs.ibm.com>
+From: Ben McKeegan <ben@netservers.co.uk>
+Date: Thu, 12 Nov 2009 13:09:57 +0000
+Subject: [PATCH] ppp: fix BUG on non-linear SKB (multilink receive)
+Message-Id: <Pine.LNX.4.58.0911121144380.25398@benxen>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <dac45060911130554u31df1580x13d2c901372567af@mail.gmail.com>
-In-Reply-To: <dac45060911130554u31df1580x13d2c901372567af@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: davem@davemloft.net, paulus@samba.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-Mark Ryden writes:
+PPP does not correctly call pskb_may_pull() on all necessary receive paths
+before reading the PPP protocol, thus causing PPP to report seemingly
+random 'unsupported protocols' and eventually trigger BUG_ON(skb->len <
+skb->data_len) in skb_pull_rcsum() when receiving multilink protocol in
+non-linear skbs.
 
->   Is there a way from user space to know which device is the one which
-> the ppp connection uses ?
+ppp_receive_nonmp_frame() does not call pskb_may_pull() before reading the
+protocol number.  For the non-mp receive path this is not a problem, as
+this check is done in ppp_receive_frame().  For the mp receive path,
+ppp_mp_reconstruct() usually copies the data into a new linear skb.
+However, in the case where the frame is made up of a single mp fragment,
+the mp header is pulled and the existing skb used.  This skb was then
+passed to ppp_receive_nonmp_frame() without checking if the encapsulated
+protocol header can safely be read.
 
-Yes, that information is in the tdb database (/var/run/pppd2.tdb).
-As an example, here is the list of records in /var/run/pppd2.tdb for
-my gateway machine (IP addresses obscured):
+Signed-off-by: Ben McKeegan <ben@netservers.co.uk>
+---
+This a long standing bug we have observed with PPP over L2TP received on
+an e1000e interface, although it may arise with other PPP encapsulations
+or devices.
 
-DEVICE=eth0: pppd2480
-IPREMOTE=xx.xx.xx.xx: pppd2480
-IFNAME=ppp0: pppd2480
-pppd2480:  ORIG_UID=0;PPPD_PID$83;PPPLOGNAME=root;DEVICE=eth0;LINKNAME=transact;IPLOCAL=yy.yy.yy.yy;IPREMOTE=xx.xx.xx.xx;IFNAME=ppp0
-LINKNAME=transact: pppd2480
-PPPD_PID$83: pppd2480
+diff -uprN linux-2.6.31.6/drivers/net/ppp_generic.c linux-2.6.31.6-ppp-non-linear-skb/drivers/net/ppp_generic.c
+--- linux-2.6.31.6/drivers/net/ppp_generic.c	2009-11-10 00:32:31.000000000 +0000
++++ linux-2.6.31.6-ppp-non-linear-skb/drivers/net/ppp_generic.c	2009-11-12 11:58:40.000000000 +0000
+@@ -1944,7 +1944,13 @@ ppp_receive_mp_frame(struct ppp *ppp, st
 
-That is for one connection.
+ 	/* Pull completed packets off the queue and receive them. */
+ 	while ((skb = ppp_mp_reconstruct(ppp)))
+-		ppp_receive_nonmp_frame(ppp, skb);
++	  	if (pskb_may_pull(skb, 2))
++			ppp_receive_nonmp_frame(ppp, skb);
++		else {
++			++ppp->dev->stats.rx_length_errors;
++			kfree_skb(skb);
++			ppp_receive_error(ppp);
++		}
 
-Below is the source for the little "tdbdump" program that I used to
-print the above.  It needs to be linked with pppd/tdb.o and
-pppd/spinlock.o.
+ 	return;
 
-It wouldn't be hard to write a program to use the lookup routines
-in pppd/tdb.c and extract the underlying device for a given ppp
-interface.
-
-Paul.
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include "tdb.h"
-
-static int print_rec(TDB_CONTEXT *tdb, TDB_DATA key, TDB_DATA dbuf, void *p)
-{
-	printf("%*.*s: %*.*s\n", 
-	       (int)key.dsize, (int)key.dsize, key.dptr, 
-	       (int)dbuf.dsize, (int)dbuf.dsize, dbuf.dptr);
-	return 0;
-}
-
-main(int ac, char **av)
-{
-	TDB_CONTEXT *tdb;
-
-	if (ac != 2) {
-		fprintf(stderr, "Usage: %s database\n", av[0]);
-		exit(1);
-	}
-
-	tdb = tdb_open(av[1], 0, 0, O_RDONLY, 0600);
-	if (tdb = 0) {
-		perror(av[1]);
-		exit(1);
-	}
-
-	tdb_traverse(tdb, print_rec, NULL);
-
-	exit(0);
-}
