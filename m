@@ -1,7 +1,7 @@
-From: walter harms <wharms@bfs.de>
-Date: Fri, 13 Nov 2009 15:00:40 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Fri, 13 Nov 2009 16:34:40 +0000
 Subject: Re: getting the device of the ppp connection
-Message-Id: <4AFD7498.9090400@bfs.de>
+Message-Id: <4AFD8AA0.9060105@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <dac45060911130554u31df1580x13d2c901372567af@mail.gmail.com>
 In-Reply-To: <dac45060911130554u31df1580x13d2c901372567af@mail.gmail.com>
@@ -10,34 +10,39 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+walter harms wrote:
+> 
+> Charlie Brady schrieb:
+>> Have a look at daemontools or runit for mechanisms to give you good
+>> reliable control of the execution environment of long-running processes.
+>>
+>> ---
+> 
+> you can scan the output of ifconfig -a,
+> but normaly pppd setups a ppp0.
 
+I think he's actually asking about the device _underneath_ PPP that's in
+use, not the "ppp0" network interface that's visible to IP.
 
-Charlie Brady schrieb:
-> 
-> On Fri, 13 Nov 2009, Mark Ryden wrote:
-> 
->> What I mean is this: I have eth0 - eth3 on a machine, and a ppp
->> connection. I want to know by a
->> short program which device is the one which the ppp connection is
->> using (I know that usually this can
->> be deduced by running "ps" for the corresponding ppp daemon, and
->> inspecting the parameters; for example, with pppoe, I have "-I eth1"
->> parameter (-I stands for interface). But I want a more general
->> way which can be used in cases when we cannot get this info).
-> 
-> I would do this via an environment variable that you set via your start
-> script:
-> 
-> PPPOE_DEVICE=eth1 pppoe .... -I eth1
-> 
-> Have a look at daemontools or runit for mechanisms to give you good
-> reliable control of the execution environment of long-running processes.
-> 
-> ---
+For a serial link, that underlying interface is something like "tty0"
+(perhaps including information about the number dialed, if it's a modem
+or TA link), and for a PPPoE session, that's something like "eth0" plus
+access server name and server Ethernet address.  There are many other
+cases, including tunneled connections (L2TP and the like) and more
+exotic media such as PPPoA and Frame Relay where the underlying
+mechanism may have multiple forms of addressing.  In fact, it may have
+multiple layers of information to dig through.  (SNMP uses ifstack for
+this, I think.)
 
-you can scan the output of ifconfig -a,
-but normaly pppd setups a ppp0.
+This is information that's really known only to the dialer involved, and
+not to pppd, which 'sees' only a channel for PPP frames.  You can hack
+around the issue by setting an environment variable to communicate the
+information needed, but there's no native support in the current design
+for recording this medium-dependent information.
 
-re,
- wh
+There probably should be something added, and I'm sure something could
+be hacked together for a few special cases, but it's likely a
+complicated problem to solve _well_.
 
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
