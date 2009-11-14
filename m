@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 13 Nov 2009 16:54:16 +0000
+From: Paul Mackerras <paulus@samba.org>
+Date: Sat, 14 Nov 2009 05:47:00 +0000
 Subject: Re: getting the device of the ppp connection
-Message-Id: <4AFD8F38.1090108@workingcode.com>
+Message-Id: <19198.17492.726818.469611@cargo.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <dac45060911130554u31df1580x13d2c901372567af@mail.gmail.com>
 In-Reply-To: <dac45060911130554u31df1580x13d2c901372567af@mail.gmail.com>
@@ -10,40 +10,70 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Charlie Brady wrote:
-> 
-> On Fri, 13 Nov 2009, James Carlson wrote:
-> 
->> This is information that's really known only to the dialer involved, and
->> not to pppd, which 'sees' only a channel for PPP frames.  You can hack
->> around the issue by setting an environment variable to communicate the
->> information needed, but there's no native support in the current design
->> for recording this medium-dependent information.
->>
->> There probably should be something added,
-> 
-> I don't agree. The caller of pppd can provide the information in the
-> environment. Adding stuff to pppd would just be bloat, and more code
-> generally means more bugs.
-> 
-> KISS.
+Mark Ryden writes:
 
-I didn't say it would necessarily need to be something added to pppd.
-How to arrange for storing and retrieving that information sounds like a
-detailed design decision to me, and might not necessarily involve pppd.
- The high level issue is that it should be possible for the user (or the
-user's application) to know just the "ppp0" identity and end up knowing
-where that interface actually goes.
+>   Is there a way from user space to know which device is the one which
+> the ppp connection uses ?
 
-I think stuffing it into the environment is just a hack.  It sort of
-works, but there's no standard way to encode the information in a string
-format, so how it's done is going to end up varying by vendor or even by
-system administrator whim.  That's not a great answer for folks trying
-to build third party applications.  (Such as, say, an SNMP agent
-supporting interface stacking ...)
+Yes, that information is in the tdb database (/var/run/pppd2.tdb).
+As an example, here is the list of records in /var/run/pppd2.tdb for
+my gateway machine (IP addresses obscured):
 
-For what it's worth, I agree that pppd probably shouldn't care much
-about this.
+DEVICE=eth0: pppd2480
+IPREMOTE=xx.xx.xx.xx: pppd2480
+IFNAME=ppp0: pppd2480
+pppd2480:  ORIG_UID=0;PPPD_PID$83;PPPLOGNAME=root;DEVICE=eth0;LINKNAME=transact;IPLOCAL=yy.yy.yy.yy;IPREMOTE=xx.xx.xx.xx;IFNAME=ppp0
+LINKNAME=transact: pppd2480
+PPPD_PID$83: pppd2480
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+That is for one connection.
+
+Below is the source for the little "tdbdump" program that I used to
+print the above.  It needs to be linked with pppd/tdb.o and
+pppd/spinlock.o.
+
+It wouldn't be hard to write a program to use the lookup routines
+in pppd/tdb.c and extract the underlying device for a given ppp
+interface.
+
+Paul.
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include "tdb.h"
+
+static int print_rec(TDB_CONTEXT *tdb, TDB_DATA key, TDB_DATA dbuf, void *p)
+{
+	printf("%*.*s: %*.*s\n", 
+	       (int)key.dsize, (int)key.dsize, key.dptr, 
+	       (int)dbuf.dsize, (int)dbuf.dsize, dbuf.dptr);
+	return 0;
+}
+
+main(int ac, char **av)
+{
+	TDB_CONTEXT *tdb;
+
+	if (ac != 2) {
+		fprintf(stderr, "Usage: %s database\n", av[0]);
+		exit(1);
+	}
+
+	tdb = tdb_open(av[1], 0, 0, O_RDONLY, 0600);
+	if (tdb = 0) {
+		perror(av[1]);
+		exit(1);
+	}
+
+	tdb_traverse(tdb, print_rec, NULL);
+
+	exit(0);
+}
