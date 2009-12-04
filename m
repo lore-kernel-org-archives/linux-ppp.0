@@ -1,98 +1,84 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 21 Dec 2009 14:51:14 +0000
-Subject: Re: pppoe uplink goes down several times a day, what is wrong
-Message-Id: <4B2F8B62.1020204@workingcode.com>
+From: Diederik Hattingh <diederikjhattingh@gmail.com>
+Date: Fri, 04 Dec 2009 08:35:37 +0000
+Subject: Fwd: VPN to windows ISA server
+Message-Id: <d68727470912040035h4f58561ai7a8ea36df69c445@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4B2F74DC.4040204@powercraft.nl>
-In-Reply-To: <4B2F74DC.4040204@powercraft.nl>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-Jelle de Jong wrote:
->> If it happens this way every time, then I would suspect that your ISP
->> may have set a time limit on connections.  Some ISPs are known for doing
->> such things, especially those that have a dial-up background.  They view
->> their service as being "on-demand" and thus an always-connected client
->> is one that's abusing the terms of service.  (That having everyone
->> connected all the time costs no more than having them connect on demand
->> doesn't seem to factor into those calculations.  There's no technical
->> accounting for business rules ...)
-> 
-> The disconnection interval seems random, as you can see the logs
-> showed two disconnects this day.
-> 
-> # grep -i pppd /var/log/syslog | grep -i time
-> Dec 21 06:37:24 sammy pppd[2954]: Connect time 2681.4 minutes.
-> Dec 21 08:32:56 sammy pppd[2954]: Connect time 115.1 minutes.
-> 
-> The connection is a G.SHDSL 2048:2048 1:1 business connection very
-> expensive by the biggest ISP in our country (not saying the ISP is
-> good) I don't think they have a connection time limit?
+On Mon, Nov 30, 2009 at 1:10 AM, James Carlson <carlsonj@workingcode.com> w=
+rote:
+> Diederik Hattingh wrote:
+>> Nov 29 14:29:35 [pppd] sent [LCP ConfAck id=3D0x2 <asyncmap 0x0> <magic
+>> 0x15190f75> <accomp>]
+>
+> It looks like you've trimmed away the beginning of the negotiation in
+> the debug information you posted. =A0That's unfortunate, as this likely
+> includes important details that will be needed to resolve the problem.
+>
+> In the future, don't do that.
 
-OK; that certainly narrows things down.
+Oops, sorry.
 
->> If it seems to be "random" rather than a fixed interval, then that's
->> probably not the problem.  It's possible that the ISP's server is
->> crashing occasionally or that it's experiencing some sort of
->> communications problem or that the path between you and that server (the
->> ATM network) is itself unreliable.  The key information that's needed to
->> identify such a problem would be on the ISP's systems (or may need some
->> investigation and analysis).
-> 
-> I changed the Siemens 5890 provided by the ISP with a DrayTek Vigor
-> 3100. The Siemens modem did NAT and was not transparent enough. But by
-> doing this the support level provided by the ISP drops to a minimum...
+>
+>> I read online that the NT Domain part must be left blank, but the
+>> domain added as prefix, as described above, to the username. =A0Is this
+>> still valid?
+>
+> It depends on how the NT server is configured. =A0There's no way to know
+> without asking the administrator of that system.
 
-If this is a commercial application (rather than something you just hack
-around with), I'd certainly recommend staying with whatever the ISP is
-best equipped to support.
+Our system administrator =A0informed me, and from what I have read
+online, it must always be "myworkdomain\username" =A0I specified the
+domain separately, and also the username as mentioned before.
 
-I understand the appeal of getting unadulterated packets right to your
-system -- most of those stand-alone NAT devices can be downright evil --
-but when you run into a problem like this that requires the ISP's
-involvement, you're bound to run into trouble.
+>
+>> # Secrets for authentication using CHAP
+>> # client =A0 =A0 =A0 =A0server =A0secret =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+ =A0IP addresses
+>> myworkdomain\\djh =A0 =A0 =A0 myworkdomain =A0 =A0*****
+>> myworkdomain =A0 =A0myworkdomain\\djh =A0 =A0 =A0 *****
+>
+> The second of those looks bogus; you would never identify yourself to
+> the peer as though your name were just "myworkdomain". =A0I would have had
+> this for the first entry:
+>
+> myworkdomain\\djh =A0 =A0 =A0 * =A0 =A0 =A0 "my secret here"
+>
+> It shouldn't be necessary (or helpful) to specify the server's name in
+> the second column, particularly as Microsoft systems tend to refuse to
+> identify themselves.
+>
+> As for the double line seen in your configuration file, it looks to me
+> like whoever (or whatever) added it this way was confused about how that
+> file actually works.
 
-Just the same, it's well worth asking for help from them in tracking
-down the problem.
+pptp-command made that file. =A0Not sure why it wrote both lines?
+My pasword has a "#" in it. =A0So to wrap it in quotes was essential.
 
->> The bottom line, I think, is that your ISP is the only entity that can
->> investigate and solve the problem properly.  If your ISP doesn't take
->> your complaints about reliability seriously, then it's time to find a
->> new one.
-> 
-> I got a vendor locking, The current DSL is pre-fibre solution because
-> the completion of the fibre internet connection is taking longer then
-> anticipated, and the ISP is the only fibre capable provider in the
-> Netherlands for the location of the new office.
+>
+>> Notice that the connection server is called server.myworkdomain.co.za,
+>> but the domain I specified as myworkdomain (without .co.za)
+>
+> I don't believe that NT authentication domains have anything to do with
+> DNS domain names. =A0They're wholly unrelated concepts. =A0You can't just
+> lop off the trailing ".co.za" and expect it to work, unless the NT
+> authentication domain (part of Kerberos, I think) just happens to be the
+> same as that portion of the DNS name by coincidence. =A0You need to have
+> proper NT authentication credentials if you're going to use MS-CHAPv2.
+>
 
-I see.
+The domain was just called myworkdomain.
 
->> (As for PPPoE, I'd certainly recommend avoiding that if you can. It's a
->> horrible mess as a protocol. In this case, though, I don't think it's
->> to blame for your problems.)
-> 
-> Is there a way to be more sure about PPPoE not being the issue. Can
-> there be something wrong with the LCP Echo-Request messages?
+Another factor that really threw me off track was that the server I
+was trying to connect to had an open port 1723, but no VPN service was
+running on the server. =A0The real address was
+server2.myworkdomain.co.za. =A0Our IT guys help with this regard. =A0In
+retrospect, I would have saved lots of time by following
+http://pptpclient.sourceforge.net/howto-diagnosis.phtml#fault_tree to
+the letter.
 
-You could trace all of the packets on the wire with something like
-ethereal or tcpdump.  It'll likely change timing enough that the problem
-won't happen anymore, and it'll be hard to examine in any case, but
-without help from your ISP, I don't see much alternative.
-
-The information your ISP could provide would be any error messages they
-see on their servers or from their ATM gear that corresponds with the
-approximate time you're seeing the disconnect.
-
-They should be able (and willing) to do at least that without having to
-have any sort of special gear on your site.  If they're not willing to
-examine their own log files, are you sure you want to do business with them?
-
-> I know PPPoE is a horrible mess. I prefer 1483 bridged IP LLC, but I
-> can't use it in this case.
-
-I understand the pain.
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+Thanks for the help James
+Diederik
