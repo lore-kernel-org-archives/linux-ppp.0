@@ -1,84 +1,99 @@
-From: Diederik Hattingh <diederikjhattingh@gmail.com>
-Date: Fri, 04 Dec 2009 08:35:37 +0000
-Subject: Fwd: VPN to windows ISA server
-Message-Id: <d68727470912040035h4f58561ai7a8ea36df69c445@mail.gmail.com>
+From: Jelle de Jong <jelledejong@powercraft.nl>
+Date: Mon, 11 Jan 2010 10:16:08 +0000
+Subject: slow transfer speed issue between two ppp based servers
+Message-Id: <4B4AFA68.4020500@powercraft.nl>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="------------030008090405030905020009"
 List-Id: <linux-ppp.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-On Mon, Nov 30, 2009 at 1:10 AM, James Carlson <carlsonj@workingcode.com> w=
-rote:
-> Diederik Hattingh wrote:
->> Nov 29 14:29:35 [pppd] sent [LCP ConfAck id=3D0x2 <asyncmap 0x0> <magic
->> 0x15190f75> <accomp>]
->
-> It looks like you've trimmed away the beginning of the negotiation in
-> the debug information you posted. =A0That's unfortunate, as this likely
-> includes important details that will be needed to resolve the problem.
->
-> In the future, don't do that.
+This is a multi-part message in MIME format.
+--------------030008090405030905020009
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Oops, sorry.
+Hello everybody,
 
->
->> I read online that the NT Domain part must be left blank, but the
->> domain added as prefix, as described above, to the username. =A0Is this
->> still valid?
->
-> It depends on how the NT server is configured. =A0There's no way to know
-> without asking the administrator of that system.
+I am having a connection speed issue between two ppp based servers,
+and I have no idea what is going wrong and how to fix it.
 
-Our system administrator =A0informed me, and from what I have read
-online, it must always be "myworkdomain\username" =A0I specified the
-domain separately, and also the username as mentioned before.
+I would appreciated it if somebody with advanced networking skills can
+take a look at my attachments with tcpdumps and my analyse report.
 
->
->> # Secrets for authentication using CHAP
->> # client =A0 =A0 =A0 =A0server =A0secret =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0IP addresses
->> myworkdomain\\djh =A0 =A0 =A0 myworkdomain =A0 =A0*****
->> myworkdomain =A0 =A0myworkdomain\\djh =A0 =A0 =A0 *****
->
-> The second of those looks bogus; you would never identify yourself to
-> the peer as though your name were just "myworkdomain". =A0I would have had
-> this for the first entry:
->
-> myworkdomain\\djh =A0 =A0 =A0 * =A0 =A0 =A0 "my secret here"
->
-> It shouldn't be necessary (or helpful) to specify the server's name in
-> the second column, particularly as Microsoft systems tend to refuse to
-> identify themselves.
->
-> As for the double line seen in your configuration file, it looks to me
-> like whoever (or whatever) added it this way was confused about how that
-> file actually works.
+http://filebin.ca/hgnpt/tcpdumps.tar.gz
 
-pptp-command made that file. =A0Not sure why it wrote both lines?
-My pasword has a "#" in it. =A0So to wrap it in quotes was essential.
+I did not know a more suited mailing list for this issue.
 
->
->> Notice that the connection server is called server.myworkdomain.co.za,
->> but the domain I specified as myworkdomain (without .co.za)
->
-> I don't believe that NT authentication domains have anything to do with
-> DNS domain names. =A0They're wholly unrelated concepts. =A0You can't just
-> lop off the trailing ".co.za" and expect it to work, unless the NT
-> authentication domain (part of Kerberos, I think) just happens to be the
-> same as that portion of the DNS name by coincidence. =A0You need to have
-> proper NT authentication credentials if you're going to use MS-CHAPv2.
->
+Many thanks in advance,
 
-The domain was just called myworkdomain.
+Kind regards,
 
-Another factor that really threw me off track was that the server I
-was trying to connect to had an open port 1723, but no VPN service was
-running on the server. =A0The real address was
-server2.myworkdomain.co.za. =A0Our IT guys help with this regard. =A0In
-retrospect, I would have saved lots of time by following
-http://pptpclient.sourceforge.net/howto-diagnosis.phtml#fault_tree to
-the letter.
+Jelle
 
-Thanks for the help James
-Diederik
+
+--------------030008090405030905020009
+Content-Type: text/plain;
+ name="setup-sammy-uplinkspeed-debug.txt"
+Content-Transfer-Encoding: 8bit
+Content-Disposition: inline;
+ filename="setup-sammy-uplinkspeed-debug.txt"
+
+���������------------------------------------------------------------------------
+
+# this document describes my issue with a way to slow transfer speed
+# between my sammy server with pppoe g.shdsl and an alix05 server with
+# ppp hsdpa umts
+
+------------------------------------------------------------------------
+
+# two download tests, demonstrating that the alix05 server can download
+# with 250KB/s (umts hsdpa 3g)
+alix05:~# wget -cr http://ftp.nl.debian.org/debian/ls-lR.gz
+FINISHED --2010-01-10 18:26:01--
+Downloaded: 1 files, 6.4M in 26s (252 KB/s)
+FINISHED --2010-01-10 18:30:31--
+Downloaded: 1 files, 6.4M in 25s (258 KB/s)
+
+# one upload test to the sammy server, demonstrating that the alix05
+# server can upload with 60KB/s and that the sammy server can download
+# with at least 60KB's (umts hsdpa 3g)
+alix05:~# scp ftp.nl.debian.org/debian/ls-lR.gz root@sammy.somewhere.nl:/root/
+100% 6578KB  60.9KB/s   01:48
+
+# one upload from the sammy server to the ashley server, demonstrating
+# that the sammy server can upload with 274KB/s. (g.shdsl)
+sammy:~# scp /root/ls-lR.gz root@powercraft.nl:/root/
+100% 6578KB 274.1KB/s   00:24
+
+### THIS IS THE ISSUE, THE DOWNLOAD SPEED OF 17KB/s IS WAY TO LOW ###
+# one download from sammy server to alix05 server that is going to slow
+alix05:~# scp root@sammy.somewhere.nl:/root/ls-lR.gz ls-lR.gz
+100% 6578KB  17.4KB/s   06:19
+
+# control test, downloading from the ashley server to demonstrate that
+# the alix05 is capable of download at least with 97KB/s with scp
+alix05:~# scp root@powercraft.nl:/root/ls-lR.gz ls-lR.gz
+100% 6578KB  96.7KB/s   01:08
+
+------------------------------------------------------------------------
+
+root@ashley:~# tcpdump port 22 and host 62.140.137.45 -i eth1 -n -vv | tee tcpdump-ashley-eth1.txt
+    from
+alix05:~# scp root@powercraft.nl:/root/ls-lR.gz ls-lR.gz
+    100% 6578KB  96.7KB/s   01:08
+
+------------------------------------------------------------------------
+
+sammy:~# tcpdump port 22 and host 62.140.137.45 -i ppp0 -n -vv | tee tcpdump-sammy-ppp0.txt
+    from
+alix05:~# scp root@sammy.somewhere.nl:/root/ls-lR.gz ls-lR.g
+    100% 6578KB  13.9KB/s   07:52
+
+------------------------------------------------------------------------
+
+# othertests:
+# scp root@10.10.1.230:/root/ls-lR.gz ls-lR.g
+
+------------------------------------------------------------------------
+
+--------------030008090405030905020009--
