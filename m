@@ -1,7 +1,7 @@
-From: "Leslie Rhorer" <lrhorer@satx.rr.com>
-Date: Wed, 20 Jan 2010 06:10:22 +0000
-Subject: RE: pppd hangs on SIGHUP
-Message-Id: <FE.54.19307.84E965B4@cdptpa-omtalb.mail.rr.com>
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 20 Jan 2010 12:25:58 +0000
+Subject: Re: pppd hangs on SIGHUP
+Message-Id: <4B56F656.70407@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <8D.DA.01403.892965B4@cdptpa-omtalb.mail.rr.com>
 In-Reply-To: <8D.DA.01403.892965B4@cdptpa-omtalb.mail.rr.com>
@@ -10,40 +10,20 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-> -----Original Message-----
-> From: quozl@us.netrek.org [mailto:quozl@us.netrek.org] On Behalf Of James
-> Cameron
-> Sent: Tuesday, January 19, 2010 11:43 PM
-> To: Leslie Rhorer
-> Cc: linux-ppp@vger.kernel.org
-> Subject: Re: pppd hangs on SIGHUP
-> 
-> Sounds normal.
+Leslie Rhorer wrote:
+> nothing whatsoever.  The only way (of which I know) to release the terminal
+> (/cev/ttyACM0) is to send a SIGKILL.  After doing so, /dev/ttyACM0 is
+> released, and I can use a utility such as minicom to access the modem.  I
+> can dial out and get a carrier.  I can see the ppp authentication request
+> from the ISP.  What I cannot do, however, is get pppd to come back up.  If I
+> start pppd again, it opens the /dev/ttyACM0 device and creates the lockfile,
+> but it does not attempt to run chat or evidently do anything else other than
+> refresh the lockfile if it is stale.  My only option at that point is to
 
-	Normal that one cannot load and run pppd?  I see no way in which
-that could ever be construed as "normal".
+If you attach a debugger to it, can you find out where it's stuck?  (Or
+at least run "pstack `pgrep pppd`"?)
 
->  What do you have set for parameters holdoff and maxfail?
+The symptoms sound like a kernel bug, but it's hard to tell.
 
-	Both are default.  I suppose I could increase the holdoff parameter.
-
-> Perhaps you need non-default values.  Ten is the default on my Debian
-> system for maxfail, which means your method would work ten times.
-
-	From the man page (emphasis mine):
-
-maxfail n
-              Terminate after n CONSECUTIVE FAILED connection attempts.  A
-value of 0 means no limit.  The default value is 10.
-
-	First of all, it would make no sense at all for the system to
-terminate after ten successful attempts.  Secondly, it has never made it to
-ten consecutive attempts, failed or otherwise.  Finally, it isn't failing
-after even a single connection attempt.  It just hangs before even making
-the attempt after what should be a graceful disconnect.
-
-	I do wonder, though, if I set the maxconnect value to some
-moderately large value, rather than issuing an external SIGHUP, if pppd will
-like it better?  With the persist directive in place, will pppd exit
-altogether, or will it terminate the connection and redial?
-
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
