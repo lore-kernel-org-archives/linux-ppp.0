@@ -1,7 +1,7 @@
-From: James Cameron <quozl@laptop.org>
-Date: Wed, 20 Jan 2010 05:47:01 +0000
-Subject: Re: pppd hangs on SIGHUP
-Message-Id: <20100120054701.GM32704@us.netrek.org>
+From: "Leslie Rhorer" <lrhorer@satx.rr.com>
+Date: Wed, 20 Jan 2010 05:53:19 +0000
+Subject: RE: pppd hangs on SIGHUP
+Message-Id: <5F.F7.01403.94A965B4@cdptpa-omtalb.mail.rr.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <8D.DA.01403.892965B4@cdptpa-omtalb.mail.rr.com>
 In-Reply-To: <8D.DA.01403.892965B4@cdptpa-omtalb.mail.rr.com>
@@ -10,28 +10,45 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Tue, Jan 19, 2010 at 09:34:05PM -0800, Bill Unruh wrote:
-> Leslie wrote:
-> >asyncmap 0
+> > 	I call pppd with `pppd call cricket`
+> >
+> > 	Active options in the /etc/ppp/options file:
+> >
+> > asyncmap 0
 > Not needed.
 
-Agreed, the default is zero.
+	It was left as default.
 
-> >auth
+> > usehostname
+> not needed
+
+	Ditto.
+
+> > auth
 > definitely do not want.
 > You do not want them to authenticate to you.
 
-Generally true.  This might be an exception though.  And it shouldn't
-have anything to do with the reported problem of connections not
-persisting after a SIGHUP.
+	I know that, but the comment in  the default options file says:
 
-> >"" "AT"
+# Please do not disable this setting. It is expected to be standard in
+# future releases of pppd. Use the call option (see manpage) to disable
+# authentication for specific peers.
+
+	Which is why I left it enabled in the options file and set "noauth"
+in the calling file.
+
+> > 	Contents of /etc/ppp/chatfile
+> >
+> > ABORT "NO CARRIER"
+> > ABORT "NO DIALTONE"
+> > ABORT "ERROR"
+> > ABORT "NO ANSWER"
+> > ABORT "BUSY"
+> > "" "AT"
 > Try AT&F
 > instead
 
-That will have the side-effect of resetting the modem settings.  Don't
-do this if you've set them carefully prior to starting pppd.
+	AT&F doesn't seem to do anything.  OTOH, it doesn't cause any
+errors, but since pppd doesn't even spawn chat during this failure, it's
+exceedingly unlikely it would make a difference.
 
--- 
-James Cameron
-http://quozl.linux.org.au/
