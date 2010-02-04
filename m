@@ -1,39 +1,195 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 12 Feb 2010 14:32:58 +0000
-Subject: Re: Control pppd behaviour
-Message-Id: <4B75669A.8010904@workingcode.com>
+From: Iordan Neshev <ineshev@daisytechbg.com>
+Date: Thu, 04 Feb 2010 13:37:02 +0000
+Subject: Why DNS1 is rejected twice?
+Message-Id: <4B6ACD7E.9050603@daisytechbg.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <27543592.post@talk.nabble.com>
-In-Reply-To: <27543592.post@talk.nabble.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 02/12/10 09:08, Ashmath Khan wrote:
-> Thanks James.
-> 
-> I am thinking of this:
-> maxfail 1
-> persist # or demad
-> 
-> Keeping these two options will make pppd exit and my app can later
-> control starting pppd later depending on the exit code and the
-> algorithm.
-> Sometimes we also use demand instead of persist depending on the user
-> configuration from UI.
-> 
-> What do you think ?
+Hello,
 
-Do what you want, but I recommend omitting both options based on your
-previously stated goal of having pppd exit on failure.
+we had a problem with link establishment when connecting to a private 
+GPRS VPN.
+The peer rejected our request with "ipcp_rejci: received bad Reject!"
+Later it turned out that the link fails because we insist on negotiating 
+DNS,
+but the private VPN does not have one (we were not aware of that).
 
-If you do use "demand" with your current configuration, I recommend
-including "nopersist" in order to get the failure semantics desired.
+There was something strange in the peer's response: it rejected DNS1 *twice*
 
-I'm not sure I see how "demand" really fits in here, but you haven't
-revealed enough information to give better advice.  And I'm not going to
-continue playing 20 questions to get it.  :-/
+Our packet is:
+[0x7E 0xFF 0x03 0x80 0x21 0x01 0x01 0x00 0x16 0x03 0x06 0x00 0x00 0x00 0x00
+ 0x81 0x06 0x00 0x00 0x00 0x00 0x83 0x06 0x00 0x00 0x00 0x00 0x6E 0xDB 0x7E]
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+This is IPCP  Config request,
+ask for IP       0x03 0x06 0x00 0x00 0x00 0x00,    // 0.0.0.0
+ask for DNS1 0x81 0x06 0x00 0x00 0x00 0x00,    // 0.0.0.0
+and for DNS2 0x83 0x06 0x00 0x00 0x00 0x00.    // 0.0.0.0
+
+This is the peer's response:
+ [0x7E 0x80 0x21 0x04 0x01 0x00 0x10 0x81 0x06 0x00 0x00 0x00 0x00 0x81 
+0x06 0x00 0x00 0x00 0x00 0xF4 0x79 0x7E ]  
+
+Our device reported:
+pppInput[0]: IPCP len
+fsm_input(IPCP): code 4,id 1, len 16
+fsm_rconfnakrej(IPCP): Rcvd id 1 state=6 (LS_REQSENT)
+ipcp_rejci: received bad Reject!
+
+After a couple of CONFREQ retries, the peer dropped the Data Carrier 
+Detect line of the modem.
+
+We can successfully connect to another APN (of the same operator), which 
+is for the public and,
+of course, provides DNS. This is the answer in this case:
+*** Input packet: [0x7E 0x80 0x21 0x04 0x01 0x00 0x0A 0x83 0x06 0x00 
+0x00 0x00 0x00 0x74 0x5F 0x7E ] ***
+Here IP and DNS1 are accepted, DNS2 is rejected and we have no problems.
+
+The qustion is: Does somebody know why the peer rejected twice DNS1?
+The GSM operator did not reply this question, that's why I'm asking here.
+Also, does pppd behave properly in this case?
+
+We are using a slightly modified pppd 2.3.11 with some backports from 
+all releases till pppd 2.4.5
+on an embedded device if it matters.
+
+Thanks in advance.
+
+===========================This is part of the log. We added some more debug messages
+
+network_phase() called.
+network_phase(): setting lcp phase = PHASE_NETWORK;
+fsm_open() called: proto: IPCP, state: LS_CLOSED
+pppWrite[0]: len0
+
+This is what we send:
+*** PPP TX: [ 0x7E 0xFF 0x03 0x80 0x21 0x01 0x01 0x00 0x16 0x03 0x06 
+0x00 0x00 0x00 0x00 0x81 0x06 0x00 0x00 0x00 0x00 0x83 0x06 0x00 0x00 
+0x00 0x00 0x6E 0xDB 0x7E ] *** 
+
+fsm_sdata(IPCP): Sent code 1, id 1, len 22.
+IPCP: sent Configure-Request, id 1
+IPCP: open state 2 (LS_CLOSED) -> 6 (LS_REQSENT)
+pppInProc[0]: got 22 bytes
+
+This is what we get:
+*** Input packet: [0x7E 0x80 0x21 0x04 0x01 0x00 0x10 0x81 0x06 0x00 
+0x00 0x00 0x00 0x81 0x06 0x00 0x00 0x00 0x00 0xF4 0x79 0x7E ] *** 
+
+pppInProc[0]: Invalid control <0x7F>
+pppInput[0]: IPCP len
+fsm_input(IPCP): code 4,id 1, len 16
+fsm_rconfnakrej(IPCP): Rcvd id 1 state=6 (LS_REQSENT)
+ipcp_rejci: received bad Reject!<LF>
+    this happened in file ipcp.c, function ipcp_rejci(fsm *f, u_char *p, 
+int len)
+      /*
+       * If there are any remaining CIs, then this packet is bad.
+       */
+      if (len != 0) {
+        goto bad;   // this goto is reached
+      }
+    .....
+    bad:
+      IPCPDEBUG((LOG_INFO, "ipcp_rejci: received bad Reject!\n"));
+      return 0;
+    }
+
+
+IPCP: received bad reject (length 12)
+pppInProc[0]: got 16 bytes
+ 
+*** Input packet: [0x7E 0x80 0x21 0x01 0x01 0x00 0x0A 0x03 0x06 0x0A 
+0x00 0x00 0x01 0x4A 0x0B 0x7E ] *** 
+ 
+pppInProc[0]: Invalid control <0x7F>
+pppInput[0]: IPCP len
+fsm_input(IPCP): code 1,id 1, len 10
+fsm_rconfreq(IPCP): Rcvd id 1 state=6 (LS_REQSENT)
+ipcp_reqci: ADDR 10.0.0.1
+ipcp_reqci: returning Configure-ACK
+pppWrite[0]: len
+ 
+ 
+*** PPP TX: [ 0x7E 0xFF 0x03 0x80 0x21 0x02 0x01 0x00 0x0A 0x03 0x06 
+0x0A 0x00 0x00 0x01 0x5D 0x91 0x7E ] *** 
+fsm_sdata(IPCP): Sent code 2, id 1, len 10.
+fsm_timeout(): proto IPCP; state 8 (LS_ACKSENT)!
+IPCP: timeout resending Config-Request state=8 (LS_ACKSENT)
+pppWrite[0]: len0
+ 
+ 
+*** PPP TX: [ 0x7E 0xFF 0x03 0x80 0x21 0x01 0x01 0x00 0x16 0x03 0x06 
+0x00 0x00 0x00 0x00 0x81 0x06 0x00 0x00 0x00 0x00 0x83 0x06 0x00 0x00 
+0x00 0x00 0x6E 0xDB 0x7E ] *** 
+fsm_sdata(IPCP): Sent code 1, id 1, len 22.
+IPCP: sent Configure-Request, id 1
+pppInProc[0]: got 22 bytes
+ 
+*** Input packet: [0x7E 0x80 0x21 0x04 0x01 0x00 0x10 0x81 0x06 0x00 
+0x00 0x00 0x00 0x81 0x06 0x00 0x00 0x00 0x00 0xF4 0x79 0x7E ] *** 
+ 
+pppInProc[0]: Invalid control <0x7F>
+pppInput[0]: IPCP len
+fsm_input(IPCP): code 4,id 1, len 16
+fsm_rconfnakrej(IPCP): Rcvd id 1 state=8 (LS_ACKSENT)
+ipcp_rejci: received bad Reject!
+IPCP: received bad reject (length 12)
+fsm_timeout(): proto IPCP; state 8 (LS_ACKSENT)!
+IPCP: timeout resending Config-Request state=8 (LS_ACKSENT)
+pppWrite[0]: len0
+*** PPP TX: [ 0x7E 0xFF 0x03 0x80 0x21 0x01 0x01 0x00 0x16 0x03 0x06 
+0x00 0x00 0x00 0x00 0x81 0x06 0x00 0x00 0x00 0x00 0x83 0x06 0x00 0x00 
+0x00 0x00 0x6E 0xDB 0x7E ] *** 
+fsm_sdata(IPCP): Sent code 1, id 1, len 22.
+IPCP: sent Configure-Request, id 1
+pppInProc[0]: got 1 bytes
+
+*** Input packet: [0x7E ] ***
+
+pppInProc[0]: got 21 bytes
+
+*** Input packet: [0x80 0x21 0x04 0x01 0x00 0x10 0x81 0x06 0x00 0x00 
+0x00 0x00 0x81 0x06 0x00 0x00 0x00 0x00 0xF4 0x79 0x7E ] *** 
+<
+pppInProc[0]: Invalid control <0x7F>
+pppInput[0]: IPCP len
+fsm_input(IPCP): code 4,id 1, len 16
+fsm_rconfnakrej(IPCP): Rcvd id 1 state=8 (LS_ACKSENT)
+
+ipcp_rejci: received bad Reject!
+IPCP: received bad reject (length 12)
+fsm_timeout(): proto IPCP; state 8 (LS_ACKSENT)!
+IPCP: timeout resending Config-Request state=8 (LS_ACKSENT)
+pppWrite[0]: len0
+ 
+*** PPP TX: [ 0x7E 0xFF 0x03 0x80 0x21 0x01 0x01 0x00 0x16 0x03 0x06 
+0x00 0x00 0x00 0x00 0x81 0x06 0x00 0x00 0x00 0x00 0x83 0x06 0x00 0x00 
+0x00 0x00 0x6E 0xDB 0x7E ] *** 
+fsm_sdata(IPCP): Sent code 1, id 1, len 22.
+IPCP: sent Configure-Request, id 1
+pppInProc[0]: got 2 bytes
+ 
+*** Input packet: [0x7E 0x80 ] *** 
+ 
+pppInProc[0]: Invalid control <0x7F>
+pppInProc[0]: got 20 bytes
+ 
+*** Input packet: [0x21 0x04 0x01 0x00 0x10 0x81 0x06 0x00 0x00 0x00 
+0x00 0x81 0x06 0x00 0x00 0x00 0x00 0xF4 0x79 0x7E ] *** <LF>
+ 
+pppInput[0]: IPCP len
+fsm_input(IPCP): code 4,id 1, len 16
+fsm_rconfnakrej(IPCP): Rcvd id 1 state=8 (LS_ACKSENT)
+ 
+ipcp_rejci: received bad Reject!
+IPCP: received bad reject (length 12)
+ 
+DCD Line dropped.
+
+
+
+
