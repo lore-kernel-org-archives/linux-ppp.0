@@ -1,50 +1,40 @@
-From: Ashmath Khan <hashmat.email@gmail.com>
-Date: Thu, 11 Feb 2010 14:51:52 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Thu, 11 Feb 2010 14:58:53 +0000
 Subject: Re: Control pppd behaviour
-Message-Id: <b17c42311002110651o2851fb6bve7c8092f6d360d83@mail.gmail.com>
+Message-Id: <4B741B2D.1040101@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <27543592.post@talk.nabble.com>
 In-Reply-To: <27543592.post@talk.nabble.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-What would I need to do so that pppd doesn't retry for any failures? thanks.
+Ashmath Khan wrote:
+> What would I need to do so that pppd doesn't retry for any failures? thanks.
 
-On Thu, Feb 11, 2010 at 8:15 PM, James Carlson <carlsonj@workingcode.com> w=
-rote:
-> Ashmath Khan wrote:
->> James or others,
->>
->> Is there a documentation explaining what each ppp option stands for
->> options file, I do understand some but others I want to know in detail
->> eg:
->> plugin pppoe.so eth1
->> nodetach
->> nodefaultroute
->> persist
->> maxfail 0
->> noauth
->> user ashmat
->> nopcomp
->> lcp-max-failure 5
->> lcp-max-configure 10
->> lcp-max-terminate 2
->> lcp-restart 3
->> lcp-echo-failure 3
->> lcp-echo-interval 10
->> mru 1492
->
-> Have you read the man page? =A0How about RFC 1661?
->
-> What more details would you like to have? =A0Which particular options are
-> confusing? =A0(Or are they all troublesome?)
->
-> Perhaps we could offer some help here or fix the man page where it's
-> deficient, but please give us some idea what you need.
->
-> --
-> James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
-orkingcode.com>
->
+Can you define precisely what you mean by "retry" and "failure" and what
+particular cases you're concerned about?
+
+Sorry to be obtuse here, but it's just plain unclear to me what you're
+after, and I'd very much like to be helpful.
+
+The Point-to-Point Protocol includes a negotiation mechanism that
+resends messages when there's no response and sometimes when there are
+disagreements between the peers.  I *suspect* you're not really
+interested in that, though you seem to have expressed interest in
+changing it.
+
+The pppd implementation also includes ways to restart the entire
+connection after failure.  That behavior is not the default.  You must
+use options such as "demand" or "persist" in order to get the daemon to
+retry after fatal problems, such as authentication rejection or
+parameter negotiation failure.
+
+If you don't want it to do that, then just don't use those options.
+
+Please see the pppd man page for details on these options, and post a
+*precise* description of what you want it to do and under what conditions.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
