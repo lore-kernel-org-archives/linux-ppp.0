@@ -1,45 +1,40 @@
-From: Ashmath Khan <hashmat.email@gmail.com>
-Date: Thu, 11 Feb 2010 13:49:31 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Thu, 11 Feb 2010 14:41:51 +0000
 Subject: Re: Control pppd behaviour
-Message-Id: <b17c42311002110549u70b89603wc5fb85f8d1a8e1ab@mail.gmail.com>
+Message-Id: <4B74172F.8030006@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <27543592.post@talk.nabble.com>
 In-Reply-To: <27543592.post@talk.nabble.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Ok.
-Its a requirement from my customer which I need to implement !
-My customer doesn't want normal retries but want this to be tried. As
-simple as that.
-In addtion:and after m retries, I would want to switch to some default
-credentials and continue the retries.
-Does this explain ?
+Ashmath Khan wrote:
+> Ok.
+> Its a requirement from my customer which I need to implement !
+> My customer doesn't want normal retries but want this to be tried. As
+> simple as that.
+> In addtion:and after m retries, I would want to switch to some default
+> credentials and continue the retries.
+> Does this explain ?
 
-On Thu, Feb 11, 2010 at 7:09 PM, James Carlson <carlsonj@workingcode.com> w=
-rote:
-> Ashmath Khan wrote:
->> Thanks James for long explanation.
->>
->> Let me explain. I am actually looking for a different retry mechanism
->> for failures. My retry interval would vary depending on the number of
->> retries. To given an example:
->> nth retry is to be attempted at (n - 1)3 x 10 secs after previous attempt
->
-> Why? =A0You still haven't explained what you're doing.
->
-> What problem are you attempting to solve? =A0Can you give us any hints at=
- all?
->
->> So the retry interval is not constant but derived from a formula.
->>
->> Are such things possible without modifying the code ?
->
-> No. =A0See pppd/fsm.c, f->timeouttime, and the TIMEOUT() macro.
->
-> --
-> James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
-orkingcode.com>
->
+Unfortunately, no, but we're getting closer.
+
+Are you talking about PPP negotiation or about separate invocations of pppd?
+
+If it's separate invocations of pppd, then you can certainly wrap pppd
+with a script that checks the exit code (make sure you use the
+"updetach" option so you get something sensible), and use the exit code
+to determine what to do next.  See the man page for details.
+
+If you're talking about the individual PPP negotiation messages that a
+single pppd invocation sends to its peer (i.e., you want to send PAP
+Authenticate-Request using user "joe" the first two times and then "bob"
+the next two times), then you'll need to modify the source to do as
+you're asking.
+
+Fortunately, it's pretty easy to modify.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
