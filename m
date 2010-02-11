@@ -1,7 +1,7 @@
 From: James Carlson <carlsonj@workingcode.com>
-Date: Thu, 11 Feb 2010 14:41:51 +0000
+Date: Thu, 11 Feb 2010 14:45:00 +0000
 Subject: Re: Control pppd behaviour
-Message-Id: <4B74172F.8030006@workingcode.com>
+Message-Id: <4B7417EC.9000007@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <27543592.post@talk.nabble.com>
 In-Reply-To: <27543592.post@talk.nabble.com>
@@ -11,30 +11,34 @@ Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
 Ashmath Khan wrote:
-> Ok.
-> Its a requirement from my customer which I need to implement !
-> My customer doesn't want normal retries but want this to be tried. As
-> simple as that.
-> In addtion:and after m retries, I would want to switch to some default
-> credentials and continue the retries.
-> Does this explain ?
+> James or others,
+> 
+> Is there a documentation explaining what each ppp option stands for
+> options file, I do understand some but others I want to know in detail
+> eg:
+> plugin pppoe.so eth1
+> nodetach
+> nodefaultroute
+> persist
+> maxfail 0
+> noauth
+> user ashmat
+> nopcomp
+> lcp-max-failure 5
+> lcp-max-configure 10
+> lcp-max-terminate 2
+> lcp-restart 3
+> lcp-echo-failure 3
+> lcp-echo-interval 10
+> mru 1492
 
-Unfortunately, no, but we're getting closer.
+Have you read the man page?  How about RFC 1661?
 
-Are you talking about PPP negotiation or about separate invocations of pppd?
+What more details would you like to have?  Which particular options are
+confusing?  (Or are they all troublesome?)
 
-If it's separate invocations of pppd, then you can certainly wrap pppd
-with a script that checks the exit code (make sure you use the
-"updetach" option so you get something sensible), and use the exit code
-to determine what to do next.  See the man page for details.
-
-If you're talking about the individual PPP negotiation messages that a
-single pppd invocation sends to its peer (i.e., you want to send PAP
-Authenticate-Request using user "joe" the first two times and then "bob"
-the next two times), then you'll need to modify the source to do as
-you're asking.
-
-Fortunately, it's pretty easy to modify.
+Perhaps we could offer some help here or fix the man page where it's
+deficient, but please give us some idea what you need.
 
 -- 
 James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
