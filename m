@@ -1,7 +1,7 @@
 From: Ashmath Khan <hashmat.email@gmail.com>
-Date: Thu, 11 Feb 2010 14:59:18 +0000
+Date: Thu, 11 Feb 2010 15:15:37 +0000
 Subject: Re: Control pppd behaviour
-Message-Id: <b17c42311002110658h7bb351e9o2d7ce6be468f176d@mail.gmail.com>
+Message-Id: <b17c42311002110703n1ba5777boe85495c2ba0d4a19@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <27543592.post@talk.nabble.com>
 In-Reply-To: <27543592.post@talk.nabble.com>
@@ -10,52 +10,42 @@ Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-Its neither about PPP negotiation nor about separate invocation of pppd.
+I want to consider all failure cases(at lcp, at chap etc), any
+negotiation failure etc, for which pppd would retry with the server
+from scratch.
+Basically I don't pppd to retry after a failure but I want pppd to
+exit, and then the retry will be done by my program by relaunching
+pppd. is this possible ? maybe i need to keep the retries as zero ?
+thanks.
 
-As I mentioned its about retry mechanism or the algorithm or you can
-call it the strategy employed to retry if things fail.
-
-For the normal retries if the retry interval is 30 secs and max retries is =
-5 ...
-then the 1st retry is at 30 secs
-2nd at 60 secs
-3rd at 90 secs
-
-But I need it something like this:
-1st retry at 30 secs
-2nd retry at 120 secs
-3rd retry at 300 secs etc..
-
-Hope its clear. thanks.
-
-On Thu, Feb 11, 2010 at 8:11 PM, James Carlson <carlsonj@workingcode.com> w=
+On Thu, Feb 11, 2010 at 8:28 PM, James Carlson <carlsonj@workingcode.com> w=
 rote:
 > Ashmath Khan wrote:
->> Ok.
->> Its a requirement from my customer which I need to implement !
->> My customer doesn't want normal retries but want this to be tried. As
->> simple as that.
->> In addtion:and after m retries, I would want to switch to some default
->> credentials and continue the retries.
->> Does this explain ?
+>> What would I need to do so that pppd doesn't retry for any failures? tha=
+nks.
 >
-> Unfortunately, no, but we're getting closer.
+> Can you define precisely what you mean by "retry" and "failure" and what
+> particular cases you're concerned about?
 >
-> Are you talking about PPP negotiation or about separate invocations of pp=
-pd?
+> Sorry to be obtuse here, but it's just plain unclear to me what you're
+> after, and I'd very much like to be helpful.
 >
-> If it's separate invocations of pppd, then you can certainly wrap pppd
-> with a script that checks the exit code (make sure you use the
-> "updetach" option so you get something sensible), and use the exit code
-> to determine what to do next. =A0See the man page for details.
+> The Point-to-Point Protocol includes a negotiation mechanism that
+> resends messages when there's no response and sometimes when there are
+> disagreements between the peers. =A0I *suspect* you're not really
+> interested in that, though you seem to have expressed interest in
+> changing it.
 >
-> If you're talking about the individual PPP negotiation messages that a
-> single pppd invocation sends to its peer (i.e., you want to send PAP
-> Authenticate-Request using user "joe" the first two times and then "bob"
-> the next two times), then you'll need to modify the source to do as
-> you're asking.
+> The pppd implementation also includes ways to restart the entire
+> connection after failure. =A0That behavior is not the default. =A0You must
+> use options such as "demand" or "persist" in order to get the daemon to
+> retry after fatal problems, such as authentication rejection or
+> parameter negotiation failure.
 >
-> Fortunately, it's pretty easy to modify.
+> If you don't want it to do that, then just don't use those options.
+>
+> Please see the pppd man page for details on these options, and post a
+> *precise* description of what you want it to do and under what conditions.
 >
 > --
 > James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
