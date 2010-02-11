@@ -1,66 +1,38 @@
-From: Iordan Neshev <ineshev@daisytechbg.com>
-Date: Tue, 09 Feb 2010 08:54:46 +0000
-Subject: Re: Why DNS1 is rejected twice?
-Message-Id: <4B7122D6.8030208@daisytechbg.com>
+From: walter harms <wharms@bfs.de>
+Date: Thu, 11 Feb 2010 09:06:08 +0000
+Subject: wrong return code in pppd 2.4.5
+Message-Id: <4B73C880.2040100@bfs.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4B6ACD7E.9050603@daisytechbg.com>
-In-Reply-To: <4B6ACD7E.9050603@daisytechbg.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Thank you very much, James!
-I was worried that the bug is in our device.
-We can not switch to another operator but we can now live with that 
-because DNS is not really
-needed in this special VPN. We solved the problem by removing 
-usepeerdns=1 in our code.
+I found this bug in ppp 2.4.5 (Source:ftp://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz).
 
-Greetings,
-Iordan
+After idle the pppd should return with 12 (idle timeout) but does return with 16 (hang up).
+(see log below)
 
-James Carlson wrote:
-> Iordan Neshev wrote:
->   
->> This is the peer's response:
->> [0x7E 0x80 0x21 0x04 0x01 0x00 0x10 0x81 0x06 0x00 0x00 0x00 0x00 0x81
->> 0x06 0x00 0x00 0x00 0x00 0xF4 0x79 0x7E ] 
->> Our device reported:
->> pppInput[0]: IPCP len
->> fsm_input(IPCP): code 4,id 1, len 16
->> fsm_rconfnakrej(IPCP): Rcvd id 1 state=6 (LS_REQSENT)
->> ipcp_rejci: received bad Reject!
->>     
->
-> Yep; that violates the RFC.  It's a garbage message.
->
->   
->> The qustion is: Does somebody know why the peer rejected twice DNS1?
->>     
->
-> Only the designer of that peer system knows for sure.  It looks like a
-> bug in that system.
->   
->> The GSM operator did not reply this question, that's why I'm asking here.
->> Also, does pppd behave properly in this case?
->>     
->
-> I believe that it does.  It shouldn't tolerate obvious protocol
-> violations from the peer, because it's not generally possible to "guess"
-> what the peer might have meant for arbitrary nonsense.
->
-> It should be possible, though, to create an option to allow pppd to
-> ignore any unrequested (or duplicated) options in Reject messages.
-> Whether doing so, and thus continuing to make a connection with an
-> obviously malfunctioning peer, is a good idea is perhaps subject to some
-> debate.
->
->   
->> We are using a slightly modified pppd 2.3.11 with some backports from
->> all releases till pppd 2.4.5
->> on an embedded device if it matters.
->>     
->
-> My recommendation: get a peer that follows the standards.
->   
+Is this a known problem ? Is there a patch available ?
+
+re,
+ wh
+
+
+
+/var/log/messages:
+
+....
+Feb 10 11:02:51 mws3-94700737 daemon.notice pppd[1716]: Terminating connection due to lack of activity.
+Feb 10 11:02:51 mws3-94700737 daemon.info pppd[1716]: Connect time 1.4 minutes.
+Feb 10 11:02:51 mws3-94700737 daemon.info pppd[1716]: Sent 3090 bytes, received 3869 bytes.
+Feb 10 11:02:51 mws3-94700737 daemon.debug pppd[1716]: Script /etc/ppp/ip-down started (pid 1751)
+Feb 10 11:02:51 mws3-94700737 daemon.debug pppd[1716]: sent [LCP TermReq id=0x2 "Link inactive"]
+Feb 10 11:02:51 mws3-94700737 daemon.debug pppd[1716]: Script /etc/ppp/ip-down finished (pid 1751), status = 0x0
+Feb 10 11:02:54 mws3-94700737 daemon.debug pppd[1716]: sent [LCP TermReq id=0x3 "Link inactive"]
+Feb 10 11:02:57 mws3-94700737 daemon.notice pppd[1716]: Connection terminated.
+Feb 10 11:02:58 mws3-94700737 daemon.notice pppd[1716]: Modem hangup
+Feb 10 11:02:58 mws3-94700737 daemon.info pppd[1716]: Exit.
+Feb 10 11:02:58 mws3-94700737 user.notice root: pppd terminated with: 16
+
+
