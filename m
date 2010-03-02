@@ -1,7 +1,7 @@
 From: Stephen Hemminger <shemminger@vyatta.com>
-Date: Tue, 02 Mar 2010 04:40:57 +0000
+Date: Tue, 02 Mar 2010 04:42:08 +0000
 Subject: Re: [RFC] ppp: Bridge Control Protocol
-Message-Id: <20100301204057.11a7c353@s6510>
+Message-Id: <20100301204208.36f81443@s6510>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20100301145915.2ecaac89@nehalam>
 	<20100302033944.GL26848@brick.ozlabs.ibm.com>
@@ -29,4 +29,6 @@ Paul Mackerras <paulus@samba.org> wrote:
 > 
 > Paul.
 
-Yes, I am working on that
+Old starting point
+
+https://lists.linux-foundation.org/pipermail/bridge/2005-May/004523.html
