@@ -1,34 +1,23 @@
-From: Stephen Hemminger <shemminger@vyatta.com>
-Date: Tue, 02 Mar 2010 04:42:08 +0000
+From: Denys Fedorysychenko <nuclearcat@nuclearcat.com>
+Date: Wed, 03 Mar 2010 08:45:37 +0000
 Subject: Re: [RFC] ppp: Bridge Control Protocol
-Message-Id: <20100301204208.36f81443@s6510>
+Message-Id: <201003031045.37252.nuclearcat@nuclearcat.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20100301145915.2ecaac89@nehalam>
-	<20100302033944.GL26848@brick.ozlabs.ibm.com>
-In-Reply-To: <20100302033944.GL26848@brick.ozlabs.ibm.com>
+In-Reply-To: <20100301145915.2ecaac89@nehalam>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Paul Mackerras <paulus@samba.org>
-Cc: David@mail.vyatta.com, "Miller <davem"@davemloft.net, linux-ppp@vger.kernel.org, bridge@linux-foundation.org, netdev@vger.kernel.org, dane@aiinet.com
+To: Stephen Hemminger <shemminger@vyatta.com>
+Cc: David@mail.vyatta.com, David Miller <davem@davemloft.net>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, bridge@linux-foundation.org, netdev@vger.kernel.org, dane@aiinet.com
 
-On Tue, 2 Mar 2010 14:39:44 +1100
-Paul Mackerras <paulus@samba.org> wrote:
+On Tuesday 02 March 2010 00:59:15 Stephen Hemminger wrote:
+> This is a port of an old patch to provide BCP support.
+> BCP allows bridging PPP tunnels, it useful to do bridging between
+> virtualized environments. Original patch was done by
+> Dan Eble but was for 2.4.21.
+Mikrotik has, when pppd patch will be ready - i can try to test.
 
-> On Mon, Mar 01, 2010 at 02:59:15PM -0800, Stephen Hemminger wrote:
-> 
-> > This is a port of an old patch to provide BCP support.
-> > BCP allows bridging PPP tunnels, it useful to do bridging between
-> > virtualized environments. Original patch was done by
-> > Dan Eble but was for 2.4.21.
-> > 
-> > Note: still needs testing. Does anyone have hardware to make
-> > sure this interoperates with other implementations?
-> 
-> Is there a corresponding pppd patch to handle the control protocol?
-> 
-> Paul.
+P.S. They are also based on Linux, but i guess they have their own version of 
+patch.
 
-Old starting point
-
-https://lists.linux-foundation.org/pipermail/bridge/2005-May/004523.html
