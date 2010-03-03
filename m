@@ -1,44 +1,112 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Date: Mon, 22 Mar 2010 11:06:44 +0000
-Subject: Re: Performance hit with IP-tunnels
-Message-Id: <1269256004.3029.21.camel@edumazet-laptop>
+From: "Murali K. Vemuri" <murali@uczen.co.kr>
+Date: Wed, 03 Mar 2010 07:55:54 +0000
+Subject: some problem
+Message-Id: <1267602954.2112.31.camel@rs.local>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="=-WueXtuMZSC2z8RNPiY13"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <000301cac9a8$dcd53750$967fa5f0$@no>
-In-Reply-To: <000301cac9a8$dcd53750$967fa5f0$@no>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: Kristian Evensen <kristrev@simula.no>
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
-
-Le lundi 22 mars 2010 à 11:17 +0100, Kristian Evensen a écrit :
-> Hello,
-> 
-> I am currently comparing different IP-tunneling protocols/implementations,
-> and have stumbled upon something I am not able to explain. Regardless of
-> which tunneling technology I use, the latency increases with a couple of 10s
-> of ms and I see a significant degradation of throughput (compared to when no
-> tunnels are used). The only exception is IP-in-IP, where I get similar
-> performance with and without tunnels, but it does unfortunately not work in
-> my scenario.
-> 
-> First, I thought this was caused by the different tunneling software, but
-> after measuring the processing time of the applications (xl2tp and
-> pptp-client) and when the packets are seen by the different iptables chains
-> (using LOG), these delays seem to be acceptable. However, one delay sticks
-> out. After the packet has been decapsulated and fed to PPP, it takes a
-> "long" time before it is seen again. My question is, can PPP be the cause of
-> the higher latency and lower throughput? 
-> 
-> Similar observations are made at both ends of the tunnel.
-
-A soon as a round trip on a user process is requested to handle a
-packet, you can have delay because of scheduling constraints.
-
-You could try latencytop and check if something strange raises, 10 ms
-seems excessive.
-
-IP-TIP tunnels dont use a user space program, they are immune to
-scheduler latencies.
+To: linux-ppp@vger.kernel.org
 
 
+--=-WueXtuMZSC2z8RNPiY13
+Content-Type: text/plain; charset="ISO-8859-9"
+Content-Transfer-Encoding: quoted-printable
+
+Hi There,
+I am using ppp version 2.4.4 and I am using the /etc/ppp/options file
+for configuration parameters. I am also using the CHAT program for
+automating the MODEM stuff.
+
+I attached the /etc/ppp/options file and /etc/ppp/chat-sk file in this
+mail. (chat-sk is the file I use for 'chat' program)
+
+When I run the PPP, I am getting some kind of "Failed" message from Chat
+program and after few seconds, PPP sends out LCP Conf req and I am not
+getting any response.
+
+BTW, this is a wireless modem so, one side its connected to my board on
+USB and on the other side I cannot do any packet dump.
+
+please check the logs below and let me know if you have any clue:
+
+Thanks & regards
+Murali
+
+--=-WueXtuMZSC2z8RNPiY13
+Content-Disposition: attachment; filename="options"
+Content-Type: text/plain; name="options"; charset="ISO-8859-9"
+Content-Transfer-Encoding: base64
+
+ZGVidWcNCi9kZXYvbW9kZW0NCjExNTIwMA0KbW9kZW0NCmRlZmF1bHRyb3V0ZQ0KY3J0c2N0cw0K
+Y29ubmVjdCAnL3NiaW4vY2hhdCAtdiAtZiAvZXRjL3BwcC9jaGF0LXNrJw0KaXBjcC1hY2NlcHQt
+bG9jYWwNCmlwY3AtYWNjZXB0LXJlbW90ZQ0KdXNlcGVlcmRucw0KcGVyc2lzdA0K
+
+
+--=-WueXtuMZSC2z8RNPiY13
+Content-Disposition: attachment; filename="chat-sk"
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; name="chat-sk"; charset="ISO-8859-9"
+
+QUJPUlQgIk5PIERJQUxUT05FIg0KQUJPUlQgIkVSUk9SIg0KQUJPUlQgIk5PIEFOU1dFUiINCkFC
+T1JUICJCVVNZIg0KQVQrQ0dEQ09OVD0xLCJpcCIsIndlYi5za3RlbGVjb20uY29tIiwsLA0KQVRE
+VCo5OCMNCkNPTk5FQ1QNCg0K
+
+
+--=-WueXtuMZSC2z8RNPiY13
+Content-Disposition: attachment; filename="ppp-logs"
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; name="ppp-logs"; charset="ISO-8859-9"
+
+SmFuICAxIDAwOjAxOjM2IChub25lKSBkYWVtb24ubm90aWNlIHBwcGRbODhdOiBwcHBkIDIuNC40
+IHN0YXJ0ZWQgYnkgcm9vdCwgdWlkIDANCkphbiAgMSAwMDowMTozNyAobm9uZSkgbG9jYWwyLmlu
+Zm8gY2hhdFs5MV06IGFib3J0IG9uIChOTyBESUFMVE9ORSkNCkphbiAgMSAwMDowMTozNyAobm9u
+ZSkgbG9jYWwyLmluZm8gY2hhdFs5MV06IGFib3J0IG9uIChFUlJPUikNCkphbiAgMSAwMDowMToz
+NyAobm9uZSkgbG9jYWwyLmluZm8gY2hhdFs5MV06IGFib3J0IG9uIChOTyBBTlNXRVIpDQpKYW4g
+IDEgMDA6MDE6MzcgKG5vbmUpIGxvY2FsMi5pbmZvIGNoYXRbOTFdOiBhYm9ydCBvbiAoQlVTWSkN
+CkphbiAgMSAwMDowMTozNyAobm9uZSkgbG9jYWwyLmluZm8gY2hhdFs5MV06IGV4cGVjdCAoQVQr
+Q0dEQ09OVD0xLCJpcCIsIndlYi5za3RlbGVjb20uY29tIiwsLCkNCkphbiAgMSAwMDowMjoyMiAo
+bm9uZSkgbG9jYWwyLmluZm8gY2hhdFs5MV06IGFsYXJtDQpKYW4gIDEgMDA6MDI6MjIgKG5vbmUp
+IGxvY2FsMi5pbmZvIGNoYXRbOTFdOiBGYWlsZWQNCkphbiAgMSAwMDowMjoyMiAobm9uZSkgZGFl
+bW9uLmRlYnVnIHBwcGRbODhdOiBkZXZpY2Ugc2NyaXB0IHJldHVybmVkOiA3NjgNCkphbiAgMSAw
+MDowMjoyMiAobm9uZSkgZGFlbW9uLmluZm8gcHBwZFs4OF06IFNlcmlhbCBjb25uZWN0aW9uIGVz
+dGFibGlzaGVkLg0KSmFuICAxIDAwOjAyOjIyIChub25lKSBkYWVtb24uZGVidWcgcHBwZFs4OF06
+IHVzaW5nIGNoYW5uZWwgMQ0KSmFuICAxIDAwOjAyOjIyIChub25lKSBkYWVtb24uaW5mbyBwcHBk
+Wzg4XTogVXNpbmcgaW50ZXJmYWNlIHBwcDANCkphbiAgMSAwMDowMjoyMiAobm9uZSkgZGFlbW9u
+Lm5vdGljZSBwcHBkWzg4XTogQ29ubmVjdDogcHBwMCA8LS0+IC9kZXYvbW9kZW0NCkphbiAgMSAw
+MDowMjoyMyAobm9uZSkgZGFlbW9uLndhcm4gcHBwZFs4OF06IFdhcm5pbmcgLSBzZWNyZXQgZmls
+ZSAvZXRjL3BwcC9wYXAtc2VjcmV0cyBoYXMgd29ybGQgYW5kL29yIGdyb3VwIGFjY2Vzcw0KSmFu
+ICAxIDAwOjAyOjIzIChub25lKSBkYWVtb24uZGVidWcgcHBwZFs4OF06IHNlbnQgW0xDUCBDb25m
+UmVxIGlkPTB4MSA8YXN5bmNtYXAgMHgwPiA8bWFnaWMgMHgxMDk1NjFkOD4gPHBjb21wPiA8YWNj
+b21wPl0NCkphbiAgMSAwMDowMjoyNiAobm9uZSkgZGFlbW9uLmRlYnVnIHBwcGRbODhdOiBzZW50
+IFtMQ1AgQ29uZlJlcSBpZD0weDEgPGFzeW5jbWFwIDB4MD4gPG1hZ2ljIDB4MTA5NTYxZDg+IDxw
+Y29tcD4gPGFjY29tcD5dDQpKYW4gIDEgMDA6MDI6MjkgKG5vbmUpIGRhZW1vbi5kZWJ1ZyBwcHBk
+Wzg4XTogc2VudCBbTENQIENvbmZSZXEgaWQ9MHgxIDxhc3luY21hcCAweDA+IDxtYWdpYyAweDEw
+OTU2MWQ4PiA8cGNvbXA+IDxhY2NvbXA+XQ0KSmFuICAxIDAwOjAyOjMyIChub25lKSBkYWVtb24u
+ZGVidWcgcHBwZFs4OF06IHNlbnQgW0xDUCBDb25mUmVxIGlkPTB4MSA8YXN5bmNtYXAgMHgwPiA8
+bWFnaWMgMHgxMDk1NjFkOD4gPHBjb21wPiA8YWNjb21wPl0NCkphbiAgMSAwMDowMjozNSAobm9u
+ZSkgZGFlbW9uLmRlYnVnIHBwcGRbODhdOiBzZW50IFtMQ1AgQ29uZlJlcSBpZD0weDEgPGFzeW5j
+bWFwIDB4MD4gPG1hZ2ljIDB4MTA5NTYxZDg+IDxwY29tcD4gPGFjY29tcD5dDQpKYW4gIDEgMDA6
+MDI6MzggKG5vbmUpIGRhZW1vbi5kZWJ1ZyBwcHBkWzg4XTogc2VudCBbTENQIENvbmZSZXEgaWQ9
+MHgxIDxhc3luY21hcCAweDA+IDxtYWdpYyAweDEwOTU2MWQ4PiA8cGNvbXA+IDxhY2NvbXA+XQ0K
+SmFuICAxIDAwOjAyOjQxIChub25lKSBkYWVtb24uZGVidWcgcHBwZFs4OF06IHNlbnQgW0xDUCBD
+b25mUmVxIGlkPTB4MSA8YXN5bmNtYXAgMHgwPiA8bWFnaWMgMHgxMDk1NjFkOD4gPHBjb21wPiA8
+YWNjb21wPl0NCkphbiAgMSAwMDowMjo0NCAobm9uZSkgZGFlbW9uLmRlYnVnIHBwcGRbODhdOiBz
+ZW50IFtMQ1AgQ29uZlJlcSBpZD0weDEgPGFzeW5jbWFwIDB4MD4gPG1hZ2ljIDB4MTA5NTYxZDg+
+IDxwY29tcD4gPGFjY29tcD5dDQpKYW4gIDEgMDA6MDI6NDcgKG5vbmUpIGRhZW1vbi5kZWJ1ZyBw
+cHBkWzg4XTogc2VudCBbTENQIENvbmZSZXEgaWQ9MHgxIDxhc3luY21hcCAweDA+IDxtYWdpYyAw
+eDEwOTU2MWQ4PiA8cGNvbXA+IDxhY2NvbXA+XQ0KSmFuICAxIDAwOjAyOjUwIChub25lKSBkYWVt
+b24uZGVidWcgcHBwZFs4OF06IHNlbnQgW0xDUCBDb25mUmVxIGlkPTB4MSA8YXN5bmNtYXAgMHgw
+PiA8bWFnaWMgMHgxMDk1NjFkOD4gPHBjb21wPiA8YWNjb21wPl0NCkphbiAgMSAwMDowMjo1MyAo
+bm9uZSkgZGFlbW9uLndhcm4gcHBwZFs4OF06IExDUDogdGltZW91dCBzZW5kaW5nIENvbmZpZy1S
+ZXF1ZXN0cw0KSmFuICAxIDAwOjAyOjUzIChub25lKSBkYWVtb24ubm90aWNlIHBwcGRbODhdOiBD
+b25uZWN0aW9uIHRlcm1pbmF0ZWQuDQpKYW4gIDEgMDA6MDI6NTQgKG5vbmUpIGRhZW1vbi5ub3Rp
+Y2UgcHBwZFs4OF06IE1vZGVtIGhhbmd1cA0KSmFuICAxIDAwOjAzOjI1IChub25lKSBsb2NhbDIu
+aW5mbyBjaGF0WzEyNV06IGFib3J0IG9uIChOTyBESUFMVE9ORSkNCkphbiAgMSAwMDowMzoyNSAo
+bm9uZSkgbG9jYWwyLmluZm8gY2hhdFsxMjVdOiBhYm9ydCBvbiAoRVJST1IpDQpKYW4gIDEgMDA6
+MDM6MjUgKG5vbmUpIGxvY2FsMi5pbmZvIGNoYXRbMTI1XTogYWJvcnQgb24gKE5PIEFOU1dFUikN
+CkphbiAgMSAwMDowMzoyNSAobm9uZSkgbG9jYWwyLmluZm8gY2hhdFsxMjVdOiBhYm9ydCBvbiAo
+QlVTWSkNCkphbiAgMSAwMDowMzoyNSAobm9uZSkgbG9jYWwyLmluZm8gY2hhdFsxMjVdOiBleHBl
+Y3QgKEFUK0NHRENPTlQ9MSwiaXAiLCJ3ZWIuc2t0ZWxlY29tLmNvbSIsLCwpDQoNCg==
+
+
+--=-WueXtuMZSC2z8RNPiY13--
