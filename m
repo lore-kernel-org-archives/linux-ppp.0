@@ -1,39 +1,48 @@
-From: James Cameron <quozl@laptop.org>
-Date: Thu, 04 Mar 2010 02:53:21 +0000
-Subject: Re: some problem
-Message-Id: <20100304025321.GF26684@us.netrek.org>
+From: Paul Mackerras <paulus@samba.org>
+Date: Sat, 06 Mar 2010 07:08:52 +0000
+Subject: Re: wrong return code in pppd 2.4.5
+Message-Id: <20100306070852.GI27606@brick.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1267602954.2112.31.camel@rs.local>
-In-Reply-To: <1267602954.2112.31.camel@rs.local>
+References: <4B73C880.2040100@bfs.de>
+In-Reply-To: <4B73C880.2040100@bfs.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, Mar 04, 2010 at 11:31:16AM +0900, Murali K. Vemuri wrote:
-> That was perfect. I changed the device to /dev/ttyUSB0
-> from /dev/ttyUSB1, and our entire lab was on cloud nine.
-> Thanks a ton for the extraordinary help.
+On Thu, Feb 11, 2010 at 10:06:08AM +0100, walter harms wrote:
+> I found this bug in ppp 2.4.5 (Source:ftp://ftp.samba.org/pub/ppp/ppp-2.4.5.tar.gz).
+> 
+> After idle the pppd should return with 12 (idle timeout) but does
+> return with 16 (hang up).
+> (see log below)
+> 
+> Is this a known problem ? Is there a patch available ?
+> 
+> re,
+>  wh
+> 
+> 
+> 
+> /var/log/messages:
+> 
+> ....
+> Feb 10 11:02:51 mws3-94700737 daemon.notice pppd[1716]: Terminating connection due to lack of activity.
+> Feb 10 11:02:51 mws3-94700737 daemon.info pppd[1716]: Connect time 1.4 minutes.
+> Feb 10 11:02:51 mws3-94700737 daemon.info pppd[1716]: Sent 3090 bytes, received 3869 bytes.
+> Feb 10 11:02:51 mws3-94700737 daemon.debug pppd[1716]: Script /etc/ppp/ip-down started (pid 1751)
+> Feb 10 11:02:51 mws3-94700737 daemon.debug pppd[1716]: sent [LCP TermReq id=0x2 "Link inactive"]
+> Feb 10 11:02:51 mws3-94700737 daemon.debug pppd[1716]: Script /etc/ppp/ip-down finished (pid 1751), status = 0x0
+> Feb 10 11:02:54 mws3-94700737 daemon.debug pppd[1716]: sent [LCP TermReq id=0x3 "Link inactive"]
+> Feb 10 11:02:57 mws3-94700737 daemon.notice pppd[1716]: Connection terminated.
+> Feb 10 11:02:58 mws3-94700737 daemon.notice pppd[1716]: Modem hangup
+> Feb 10 11:02:58 mws3-94700737 daemon.info pppd[1716]: Exit.
+> Feb 10 11:02:58 mws3-94700737 user.notice root: pppd terminated with: 16
 
-What others were saying is still important ... you must make sure that
-the chatscript checks for an OK answer back from the modem, because that
-is the way it is supposed to work.
+Is this talking to a modem attached to a real serial port?  I'm
+wondering what might have caused pppd to see a hangup from the modem.
 
-You cannot rely on the AT+CGDCONT command always completing before you
-send the ATDT*98# command.  The OK back from the modem is an
-acknowledgement of completion of the command.
+In any case, I suppose pppd should ignore hangups once we've decided
+to terminate the link from our end.  Patches welcome. :)
 
-Doing this properly will make what you build more resilient to unusual
-environmental conditions or events.  It may work fine now, but will it
-work forever?
-
-A 3G modem is an embedded system.  It may have other more important
-things to do like answering a radio beacon than processing your command.
-The interface definition for that embedded system may require that you
-not send commands until OK is seen.
-
-I'm not trying to frighten you.
-
--- 
-James Cameron
-http://quozl.linux.org.au/
+Paul.
