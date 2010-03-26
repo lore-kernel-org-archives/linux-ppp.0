@@ -1,40 +1,27 @@
-From: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Date: Fri, 26 Mar 2010 17:04:28 +0000
+From: David Miller <davem@davemloft.net>
+Date: Fri, 26 Mar 2010 17:04:29 +0000
 Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP
-Message-Id: <20100326170428.6c1ad66c@lxorguk.ukuu.org.uk>
+Message-Id: <20100326.100429.260013324.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>
-	<20100326160226.0159ac3b@lxorguk.ukuu.org.uk>
-	<4BACE827.4070006@gmail.com>
-In-Reply-To: <4BACE827.4070006@gmail.com>
+References: <20100326160226.0159ac3b@lxorguk.ukuu.org.uk>
+	<v2v2d460de71003260939w4877df7em9e3084a315b0962f@mail.gmail.com>
+	<20100326.095929.04683456.davem@davemloft.net>
+In-Reply-To: <20100326.095929.04683456.davem@davemloft.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: "Alexander E. Patrakov" <patrakov@gmail.com>
-Cc: Richard Hartmann <richih.mailinglist@gmail.com>, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+To: richih.mailinglist@gmail.com
+Cc: alan@lxorguk.ukuu.org.uk, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-On Fri, 26 Mar 2010 22:00:23 +0500
-"Alexander E. Patrakov" <patrakov@gmail.com> wrote:
 
-> 26.03.2010 21:02, Alan Cox wrote:
-> 
-> > You can then do this
-> >
-> > static int ml_explode = 1;
-> > module_param(ml_explode, int, 0600);
-> > MODULE_PARM_DESC(ml_expode, "Set this to zero to disabling multilink \
-> > 	fragmentation when talking to cisco devices");
-> >
-> > which will let you load the module with the option ml_explode = 0 if you
-> > want that property.
-> >
-> > Making it runtime per link selectable would be nicer but thats a bit more
-> > work.
-> 
-> Doesn't it work already via echoing values to 
-> /sys/module/ppp/generic/parameters/ml_explode in the above code?
+BTW, it seems your email client very thoroughly corrupted your
+original patch submission.
 
-Thats runtime (and why I set 0600 in the permissions for the example) but
-not per link.
+This is a common problem with gmail, please read:
 
-Alan
+	linux/Documentation/email-clients.txt
+
+so that you can learn how to adjust your email client settings such
+that your outgoing patches are usable by us.
+
+Thanks.
