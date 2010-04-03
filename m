@@ -1,24 +1,52 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Date: Mon, 05 Apr 2010 08:42:09 +0000
-Subject: Re: [PATCH 2/7] crypto: add blkcipher implementation of ARC4
-Message-Id: <20100405084209.GA16788@gondor.apana.org.au>
+From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Date: Sat, 03 Apr 2010 07:49:23 +0000
+Subject: [PATCH 1/7] crypto: rename arc4
+Message-Id: <1270280969-11357-2-git-send-email-sebastian@breakpoint.cc>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc> <1270280969-11357-3-git-send-email-sebastian@breakpoint.cc>
-In-Reply-To: <1270280969-11357-3-git-send-email-sebastian@breakpoint.cc>
+References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc>
+In-Reply-To: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="hz-gb-2312"
-Content-Transfer-Encoding: base64
-To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Cc: linux-crypto@vger.kernel.org, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: linux-crypto@vger.kernel.org, linux-wireless@vger.kernel.org, Sebastian Andrzej Siewior <sebastian@breakpoint.cc>, linux-ppp@vger.kernel.org
 
-T24gU2F0LCBBcHIgMDMsIDIwMTAgYXQgMDk6NDk6MjRBTSArMDIwMCwgU2ViYXN0aWFuIEFuZHJ6
-ZWogU2lld2lvciB3cm90ZToKPgo+ICsjaW5jbHVkZSA8Y3J5cHRvL2FyYzQuaD4KClRoaXMgZmls
-ZSBkb2Vzbid0IHNlZW0gdG8gZXhpc3QgaW4gdGhlIGtlcm5lbCB0cmVlIG9yIHlvdXIgcGF0Y2gt
-c2V0PwoKQ2hlZXJzLAotLSAKVmlzaXQgT3BlbnN3YW4gYXQgaHR0cDovL3d3dy5vcGVuc3dhbi5v
-cmcvCkVtYWlsOiBIZXJiZXJ0IFh1IH57UG1WPkhJfn0gPGhlcmJlcnRAZ29uZG9yLmFwYW5hLm9y
-Zy5hdT4KSG9tZSBQYWdlOiBodHRwOi8vZ29uZG9yLmFwYW5hLm9yZy5hdS9+aGVyYmVydC8KUEdQ
-IEtleTogaHR0cDovL2dvbmRvci5hcGFuYS5vcmcuYXUvfmhlcmJlcnQvcHVia2V5LnR4dAotLQpU
-byB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUg
-bGludXgtcHBwIiBpbgp0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2Vy
-bmVsLm9yZwpNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21h
-am9yZG9tby1pbmZvLmh0bWw=
+The blk version of arc4 is comming. The rename ensures that the request
+for arc4 loads both modules: this one and the new blk edition.
+
+Cc: <linux-ppp@vger.kernel.org>
+Signed-off-by: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+---
+ crypto/Makefile              |    2 +-
+ crypto/{arc4.c => arc4cip.c} |    1 +
+ 2 files changed, 2 insertions(+), 1 deletions(-)
+ rename crypto/{arc4.c => arc4cip.c} (98%)
+
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 9e8f619..1f15112 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -67,7 +67,7 @@ obj-$(CONFIG_CRYPTO_AES) += aes_generic.o
+ obj-$(CONFIG_CRYPTO_CAMELLIA) += camellia.o
+ obj-$(CONFIG_CRYPTO_CAST5) += cast5.o
+ obj-$(CONFIG_CRYPTO_CAST6) += cast6.o
+-obj-$(CONFIG_CRYPTO_ARC4) += arc4.o
++obj-$(CONFIG_CRYPTO_ARC4) += arc4cip.o
+ obj-$(CONFIG_CRYPTO_TEA) += tea.o
+ obj-$(CONFIG_CRYPTO_KHAZAD) += khazad.o
+ obj-$(CONFIG_CRYPTO_ANUBIS) += anubis.o
+diff --git a/crypto/arc4.c b/crypto/arc4cip.c
+similarity index 98%
+rename from crypto/arc4.c
+rename to crypto/arc4cip.c
+index 8be47e1..bf04659 100644
+--- a/crypto/arc4.c
++++ b/crypto/arc4cip.c
+@@ -102,3 +102,4 @@ module_exit(arc4_exit);
+ MODULE_LICENSE("GPL");
+ MODULE_DESCRIPTION("ARC4 Cipher Algorithm");
+ MODULE_AUTHOR("Jon Oberheide <jon@oberheide.org>");
++MODULE_ALIAS("arc4");
+-- 
+1.6.6
+
