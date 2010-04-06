@@ -1,63 +1,69 @@
-From: walter harms <wharms@bfs.de>
-Date: Thu, 11 Mar 2010 17:08:19 +0000
-Subject: fix compiler warning in 2.4.5
-Message-Id: <4B992383.1060101@bfs.de>
+From: Sonia Martinez <xonia10@yahoo.es>
+Date: Tue, 06 Apr 2010 14:08:03 +0000
+Subject: pppd fails when init connection with kernel 2-6-28.10
+Message-Id: <28152335.post@talk.nabble.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
 
+Hi all, 
 
-cc -O2 -pipe -Wall -g -DHAVE_PATHS_H -DIPX_CHANGE -DHAVE_MMAP -I../include =
-'-DDESTDIR=3D"/usr/local"' -DCHAPMS=3D1 -DMPPE=3D1 -DHAS_SHADOW -DHAVE
-_CRYPT_H=3D1 -DUSE_CRYPT=3D1 -DHAVE_MULTILINK -DUSE_TDB=3D1 -DPLUGIN -DMAXO=
-CTETS   -c -o sys-linux.o sys-linux.c
-sys-linux.c: In function =91logwtmp=92:
-sys-linux.c:2185: warning: passing argument 1 of =91time=92 from incompatib=
-le pointer type
+I was using linux kernel 2.6.22 with pppd 2.4.4 in an embedded hardware
+(powerpc architecture) with a GPRS serial module. I was able to make a GPRS
+connection, but now I've upgraded kernel version to 2-6-28.10 and pppd to
+2.4.5 and it doesn't work. These are the log messages after sending the
+ATD*99***1# command, when pppd is started:
 
-on 64bit time_t is 64bit
+2000/03/21,18:51:26  daemon.warn pppd[772]: Warning: couldn't open ppp
+database /var/run/ppp/pppd2.tdb
+2000/03/21,18:51:26 daemon.notice pppd[772]: pppd 2.4.5 started by root, uid
+0
+2000/03/21,18:51:26 daemon.err pppd[773]: Fatal signal 11
+2000/03/21,18:51:26 daemon.info pppd[773]: Exit.
+2000/03/21,18:51:26 daemon.err pppd[772]: Couldn't get channe: Input/output
+error
+2000/03/21,18:51:26 daemon.debug pppd[772]: Script pppd (charshunt) finished
+(pid 773), status = 0x7f
+2000/03/21,18:51:26 daemon.info pppd[772]: Exit.
+2000/03/21,18:51:26 user.err iod: process: The process 772 returned an
+error: 1
 
-re,
- wh
+The configuration file is:
+
+notty
+local
+lock
+debug
+ipcp-accept-local
+ipcp-accept-remote
+noipdefault
+novj
+noccp
+nopcomp
+default-asyncmap
+receive-all
+ifname cell0
+child-timeout 0
+user "JOHN"
+usepeerdns
+defaultroute
+lcp-echo-interval 30
+lcp-echo-failure 2
 
 
+Has somebody the same problem with this kernel? I've tested the 2.4.4 and
+has the same problem, so I guess is the kernel version. 
 
---- sys-linux.c.org     2010-03-11 17:58:44.000000000 +0100
-+++ sys-linux.c 2010-03-11 18:04:37.000000000 +0100
-@@ -2160,7 +2160,7 @@
- #if __GLIBC__ < 2
-     int    wtmp;
- #endif
--
-+       time_t zeit;
- /*
-  * Update the signon database for users.
-  * Christoph Lameter: Copied from poeigl-1.36 Jan 3, 1996
-@@ -2182,7 +2182,21 @@
-     strncpy(ut.ut_user, name, sizeof(ut.ut_user));
-     strncpy(ut.ut_line, line, sizeof(ut.ut_line));
+Thank you very much in advanced, 
 
--    time(&ut.ut_time);
-+/*
-+       ut_time is not what is seems to be:
-+       # define ut_time        ut_tv.tv_sec
-+
-+       struct
-+       {
-+       int32_t tv_sec;             // Seconds.
-+       int32_t tv_usec;            // Microseconds.
-+       } ut_tv;                    // Time entry was made.
-+
-+       this will silence the compiler until 2036 when then earth stops
-+*/
-+
-+    time(&zeit);
-+    ut.ut_time=3D(int32_t)zeit;
+Best regards, 
 
-     ut.ut_type =3D USER_PROCESS;
-     ut.ut_pid  =3D mypid;
+Sonia
 
+-- 
+View this message in context: http://old.nabble.com/pppd-fails-when-init-connection-with-kernel-2-6-28.10-tp28152335p28152335.html
+Sent from the linux-ppp mailing list archive at Nabble.com.
 
