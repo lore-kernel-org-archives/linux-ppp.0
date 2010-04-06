@@ -1,7 +1,7 @@
 From: tony.chamberlain@lemko.com
-Date: Tue, 06 Apr 2010 14:30:59 +0000
+Date: Tue, 06 Apr 2010 20:12:08 +0000
 Subject: Re:  CentOS 5.4 repositories
-Message-Id: <W6133515943121151270564259@webmail4>
+Message-Id: <W847036155170141270584728@webmail28>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W7592413235268421270476700@webmail34>
 In-Reply-To: <W7592413235268421270476700@webmail34>
@@ -10,9 +10,9 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Yes but I don't believe we block 3 and 4 ICMP packets or the problem would
-manifest itself elsewhere too.  Maybe the 5.4 is doing it somehow?
-I do not believe our router is.
+I even made sure that /proc/sys/net/ipv4/ip_no_pmtu_disc was 0
+(which it was).  Tried it as 1 anyway and still same problem.
+
 
 -----Original Message-----
 From: Charlie Brady [mailto:charlieb-linux-ppp@budge.apana.org.au]
