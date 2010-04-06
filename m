@@ -1,35 +1,68 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Date: Tue, 06 Apr 2010 12:44:12 +0000
+From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Date: Tue, 06 Apr 2010 20:30:02 +0000
 Subject: Re: [PATCH v2] crypto: add blkcipher implementation of ARC4
-Message-Id: <20100406124412.GA24488@gondor.apana.org.au>
+Message-Id: <20100406203002.GA1842@Chamillionaire.breakpoint.cc>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc> <1270280969-11357-3-git-send-email-sebastian@breakpoint.cc> <20100405084209.GA16788@gondor.apana.org.au> <20100405170406.GA24215@Chamillionaire.breakpoint.cc>
-In-Reply-To: <20100405170406.GA24215@Chamillionaire.breakpoint.cc>
+References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc>
+ <1270280969-11357-3-git-send-email-sebastian@breakpoint.cc>
+ <20100405084209.GA16788@gondor.apana.org.au>
+ <20100405170406.GA24215@Chamillionaire.breakpoint.cc>
+ <20100406124412.GA24488@gondor.apana.org.au>
+In-Reply-To: <20100406124412.GA24488@gondor.apana.org.au>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="hz-gb-2312"
-Content-Transfer-Encoding: base64
-To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: linux-crypto@vger.kernel.org, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org
 
-T24gTW9uLCBBcHIgMDUsIDIwMTAgYXQgMDc6MDQ6MDZQTSArMDIwMCwgU2ViYXN0aWFuIEFuZHJ6
-ZWogU2lld2lvciB3cm90ZToKPgo+ICtzdGF0aWMgdm9pZCBhcmM0X2tleV90b19pdihjb25zdCB1
-OCAqaW5fa2V5LCB1MzIga2V5X2xlbiwgc3RydWN0IGFyYzRfaXYgKml2KQo+ICt7Cj4gKwlpbnQg
-aSwgaiA9IDAsIGsgPSAwOwo+ICsKPiArCWl2LT5pdi54ID0gMTsKPiArCWl2LT5pdi55ID0gMDsK
-PiArCj4gKwlmb3IgKGkgPSAwOyBpIDwgMjU2OyBpKyspCj4gKwkJaXYtPml2LlNbaV0gPSBpOwo+
-ICsKPiArCWZvciAoaSA9IDA7IGkgPCAyNTY7IGkrKykKPiArCXsKPiArCQl1OCBhID0gaXYtPml2
-LlNbaV07Cj4gKwkJaiA9IChqICsgaW5fa2V5W2tdICsgYSkgJiAweGZmOwo+ICsJCWl2LT5pdi5T
-W2ldID0gaXYtPml2LlNbal07Cj4gKwkJaXYtPml2LlNbal0gPSBhOwo+ICsJCWlmICgrK2sgPj0g
-a2V5X2xlbikKPiArCQkJayA9IDA7Cj4gKwl9Cj4gK30KPiArCj4gK3N0YXRpYyB2b2lkIGFyYzRf
-aXZzZXR1cChzdHJ1Y3QgYXJjNF9pdiAqaXYpCj4gK3sKPiArCXN0cnVjdCBhcmM0X2l2IHRtcF9p
-djsKPiArCj4gKwlpZiAoaXYtPnR5cGUgPSBBUkM0X1RZUEVfSVYpCj4gKwkJcmV0dXJuOwo+ICsK
-PiArCW1lbWNweSgmdG1wX2l2LCBpdiwgc2l6ZW9mKHRtcF9pdikpOwo+ICsJYXJjNF9rZXlfdG9f
-aXYodG1wX2l2LmtleS5rZXksIHRtcF9pdi5rZXkua2V5X2xlbiwgaXYpOwo+ICsJaXYtPnR5cGUg
-PSBBUkM0X1RZUEVfSVY7Cj4gK30KCldlIG5lZWQgdG8gdmVyaWZ5IHRoYXQgMSA8PSBrZXlfbGVu
-IDw9IDI1Ni4KCkNoZWVycywKLS0gClZpc2l0IE9wZW5zd2FuIGF0IGh0dHA6Ly93d3cub3BlbnN3
-YW4ub3JnLwpFbWFpbDogSGVyYmVydCBYdSB+e1BtVj5ISX59IDxoZXJiZXJ0QGdvbmRvci5hcGFu
-YS5vcmcuYXU+CkhvbWUgUGFnZTogaHR0cDovL2dvbmRvci5hcGFuYS5vcmcuYXUvfmhlcmJlcnQv
-ClBHUCBLZXk6IGh0dHA6Ly9nb25kb3IuYXBhbmEub3JnLmF1L35oZXJiZXJ0L3B1YmtleS50eHQK
-LS0KVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2Ny
-aWJlIGxpbnV4LXBwcCIgaW4KdGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tb0B2Z2Vy
-Lmtlcm5lbC5vcmcKTW9yZSBtYWpvcmRvbW8gaW5mbyBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9y
-Zy9tYWpvcmRvbW8taW5mby5odG1s
+* Herbert Xu | 2010-04-06 20:44:12 [+0800]:
+
+>On Mon, Apr 05, 2010 at 07:04:06PM +0200, Sebastian Andrzej Siewior wrote:
+>>
+>> +static void arc4_key_to_iv(const u8 *in_key, u32 key_len, struct arc4_iv *iv)
+>> +{
+>> +	int i, j = 0, k = 0;
+>> +
+>> +	iv->iv.x = 1;
+>> +	iv->iv.y = 0;
+>> +
+>> +	for (i = 0; i < 256; i++)
+>> +		iv->iv.S[i] = i;
+>> +
+>> +	for (i = 0; i < 256; i++)
+>> +	{
+>> +		u8 a = iv->iv.S[i];
+>> +		j = (j + in_key[k] + a) & 0xff;
+>> +		iv->iv.S[i] = iv->iv.S[j];
+>> +		iv->iv.S[j] = a;
+>> +		if (++k >= key_len)
+>> +			k = 0;
+>> +	}
+>> +}
+>> +
+>> +static void arc4_ivsetup(struct arc4_iv *iv)
+>> +{
+>> +	struct arc4_iv tmp_iv;
+>> +
+>> +	if (iv->type = ARC4_TYPE_IV)
+>> +		return;
+>> +
+>> +	memcpy(&tmp_iv, iv, sizeof(tmp_iv));
+>> +	arc4_key_to_iv(tmp_iv.key.key, tmp_iv.key.key_len, iv);
+>> +	iv->type = ARC4_TYPE_IV;
+>> +}
+>
+>We need to verify that 1 <= key_len <= 256.
+Good point. All arc4 users don't care about return value of setkey so I
+think that I just change void to int add the check for the valid key
+length.
+
+While we are here, the .setkey() callback could be removed, couldn't it?
+It returns 0 even it is doing nothing what looks kinda wrong. However it
+shouldn't be called at all since min/max key is 0. Any objections on
+that?
+
+>
+>Cheers,
+
+Sebastian
