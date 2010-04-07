@@ -1,39 +1,41 @@
-From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Date: Wed, 07 Apr 2010 08:29:59 +0000
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Wed, 07 Apr 2010 09:25:01 +0000
 Subject: Re: [PATCH v2] crypto: add blkcipher implementation of ARC4
-Message-Id: <20100407082959.GC6619@Chamillionaire.breakpoint.cc>
+Message-Id: <20100407092501.GA29993@gondor.apana.org.au>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc>
- <1270280969-11357-3-git-send-email-sebastian@breakpoint.cc>
- <20100405084209.GA16788@gondor.apana.org.au>
- <20100405170406.GA24215@Chamillionaire.breakpoint.cc>
- <1270621195.31184.45.camel@mj>
-In-Reply-To: <1270621195.31184.45.camel@mj>
+References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc> <1270280969-11357-3-git-send-email-sebastian@breakpoint.cc> <20100405084209.GA16788@gondor.apana.org.au> <20100405170406.GA24215@Chamillionaire.breakpoint.cc> <20100406124412.GA24488@gondor.apana.org.au> <20100406203002.GA1842@Chamillionaire.breakpoint.cc> <20100407003109.GA27617@gondor.apana.org.au> <20100407082300.GB6619@Chamillionaire.breakpoint.cc>
+In-Reply-To: <20100407082300.GB6619@Chamillionaire.breakpoint.cc>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Pavel Roskin <proski@gnu.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="hz-gb-2312"
+Content-Transfer-Encoding: base64
+To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Cc: linux-crypto@vger.kernel.org, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org
 
-* Pavel Roskin | 2010-04-07 02:19:55 [-0400]:
-
->On Mon, 2010-04-05 at 19:04 +0200, Sebastian Andrzej Siewior wrote:
->
->> +module_init(arc4_init);
->> +module_exit(arc4_exit);
->
->I'm feelings uneasy about using the same module init/exit functions
->names in arc4blk.c and arc4cip.c.
->
->Even though it doesn't break for me on x86_64 (whether I'm compiling
->modules or a solid kernel), and even though the potential name conflict
-Take a look at
-- sd_mod_init
-- via_init
-- watchdog_init
-
-just to name a few. There is no conflict because those functions are not
-global. The only problem you have is in the backtrace since you can't
-distinguish them.
-
-Sebastian
+T24gV2VkLCBBcHIgMDcsIDIwMTAgYXQgMTA6MjM6MDBBTSArMDIwMCwgU2ViYXN0aWFuIEFuZHJ6
+ZWogU2lld2lvciB3cm90ZToKPgo+IFNvIGFyYzRfc2V0dXBfaXYoKSBzaG91bGQgZG8gd2hhdCB0
+aGUgaW50ZXJuYWwgYXJjNF9pdnNldHVwKCkgZG9lcyBhbmQKPiB3ZSBjaGFuZ2Ugdm9pZCB0byBp
+bnQgYW5kIGNoZWNrIHRoZSBrZXlzaXplIGluIHRoZXJlIHJpZ2h0PyBUaGUgcHJvYmxlbQo+IGhl
+cmUgaXMgdGhhdCB3ZSBhcmUgYm91bmRlZCB0byAqdGhpcyogaW1wbGVtZW50YXRpb24gb2YgdGhl
+IGFsZ29yaXRobQo+IGFuZCBhcmUgbm90IGFibGUgdG8gcmVwbGFjZSBpdCB3aXRoIGEgZGlmZmVy
+ZW50IGltcGxlbWVudGF0aW9uLiBOb3QgdGhhdAo+IHRoaXMgaXMgbGlrZWx5IHRvIGhhcHBlbiBm
+b3IgUkM0IGJ1dCBpdCBtYXkgYmUgdHJ1ZSBmb3Igb3RoZXIgc3RyZWFtCj4gY2lwaGVycy4KCkJ5
+IHNldHRpbmcgYW4gSVYgd2UncmUgYWxyZWFkeSByZXF1aXJpbmcgdGhlIG90aGVyIGltcGxlbWVu
+dGF0aW9ucwp1c2UgdGhlIElWIGZvcm1hdCB1c2VkIGJ5IG91ciBhcmM0LiAgU28gdGhleSB3b3Vs
+ZCBhbHdheXMgd29yayB3aXRoCnRoaXMgYXJjNF9pdnNldHVwIGFueXdheS4KCklmIGFuZCB3aGVu
+IHdlIGRvIGhhdmUgYSBwaWVjZSBvZiBoYXJkd2FyZSB0aGF0IGNhbm5vdCBkbyB0aGlzCih3aGlj
+aCBJIGRvdWJ0IHdvdWxkIGV2ZXIgaGFwcGVuLCBjb25zaWRlcmluZyBob3cgZmFzdCBhcmM0IGlz
+CmFscmVhZHkpLCB0aGVuIHdlIGNhbiB0YWxrIGFib3V0IGNoYW5naW5nIHRoaXMuCgo+ID5JJ20g
+cHJldHR5IHN1cmUgdGVzdG1nciB3aWxsIGNhbGwgc2V0a2V5IGV2ZW4gZm9yIGtleWxlbiA9IDAs
+IG5vPwo+IFByaW9yIHBhdGNoICMzIGl0IGhhcyBubyB0ZXN0IGNhc2Ugc28gaXQgc2hvdWxkIG5v
+dCB0ZXN0IGl0IGF0IGFsbC4KPiBQYXRjaCAjMyBhZGRzIGEgZmxhZyBpbiBvcmRlciB0byBkaXN0
+aW5ndWlzaCBpdC4gWW91IHdhbnQgdG8gbG9vayBhdAo+IHBhdGNoICMzIG5vdyA6KQoKSSBzZWUu
+CgpCdXQgc3RpbGwgd2Ugc2hvdWxkIGF0IGxlYXN0IG5vdCBjcmFzaCB3aGVuIGNyeXB0b19ibGtj
+aXBoZXJfc2V0a2V5CmlzIGNhbGxlZC4gIFRoaXMgbWlnaHQgaGFwcGVuIGluIGZ1dHVyZSB3aGVu
+IHdlIGdldCBhIHVzZXItc3BhY2UKQVBJLgoKQ2hlZXJzLAotLSAKVmlzaXQgT3BlbnN3YW4gYXQg
+aHR0cDovL3d3dy5vcGVuc3dhbi5vcmcvCkVtYWlsOiBIZXJiZXJ0IFh1IH57UG1WPkhJfn0gPGhl
+cmJlcnRAZ29uZG9yLmFwYW5hLm9yZy5hdT4KSG9tZSBQYWdlOiBodHRwOi8vZ29uZG9yLmFwYW5h
+Lm9yZy5hdS9+aGVyYmVydC8KUEdQIEtleTogaHR0cDovL2dvbmRvci5hcGFuYS5vcmcuYXUvfmhl
+cmJlcnQvcHVia2V5LnR4dAotLQpUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0
+aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtcHBwIiBpbgp0aGUgYm9keSBvZiBhIG1lc3NhZ2Ug
+dG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZwpNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRw
+Oi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWw=
