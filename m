@@ -1,32 +1,34 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Date: Wed, 07 Apr 2010 00:31:09 +0000
+From: Pavel Roskin <proski@gnu.org>
+Date: Wed, 07 Apr 2010 06:19:55 +0000
 Subject: Re: [PATCH v2] crypto: add blkcipher implementation of ARC4
-Message-Id: <20100407003109.GA27617@gondor.apana.org.au>
+Message-Id: <1270621195.31184.45.camel@mj>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc> <1270280969-11357-3-git-send-email-sebastian@breakpoint.cc> <20100405084209.GA16788@gondor.apana.org.au> <20100405170406.GA24215@Chamillionaire.breakpoint.cc> <20100406124412.GA24488@gondor.apana.org.au> <20100406203002.GA1842@Chamillionaire.breakpoint.cc>
-In-Reply-To: <20100406203002.GA1842@Chamillionaire.breakpoint.cc>
+References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc>
+	 <1270280969-11357-3-git-send-email-sebastian@breakpoint.cc>
+	 <20100405084209.GA16788@gondor.apana.org.au>
+	 <20100405170406.GA24215@Chamillionaire.breakpoint.cc>
+In-Reply-To: <20100405170406.GA24215@Chamillionaire.breakpoint.cc>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="hz-gb-2312"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Cc: linux-crypto@vger.kernel.org, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org, linux-wireless@vger.kernel.org, linux-ppp@vger.kernel.org
 
-T24gVHVlLCBBcHIgMDYsIDIwMTAgYXQgMTA6MzA6MDJQTSArMDIwMCwgU2ViYXN0aWFuIEFuZHJ6
-ZWogU2lld2lvciB3cm90ZToKPgo+IEdvb2QgcG9pbnQuIEFsbCBhcmM0IHVzZXJzIGRvbid0IGNh
-cmUgYWJvdXQgcmV0dXJuIHZhbHVlIG9mIHNldGtleSBzbyBJCj4gdGhpbmsgdGhhdCBJIGp1c3Qg
-Y2hhbmdlIHZvaWQgdG8gaW50IGFkZCB0aGUgY2hlY2sgZm9yIHRoZSB2YWxpZCBrZXkKPiBsZW5n
-dGguCgpBY3R1YWxseSwgaG93IGFib3V0IGdldHRpbmcgYXJjNF9zZXR1cF9pdiB0byBkbyBhbGwg
-dGhlIGxlZ3dvcmsKYW5kIHR1cm4gaXQgaW50byBhIHJlYWwgSVY/IFRoZW4gd2UgZG9uJ3QgbmVl
-ZCBhbnkgY2hlY2tzIG9uIHRoZQpkYXRhIHBhdGguCgo+IFdoaWxlIHdlIGFyZSBoZXJlLCB0aGUg
-LnNldGtleSgpIGNhbGxiYWNrIGNvdWxkIGJlIHJlbW92ZWQsIGNvdWxkbid0IGl0Pwo+IEl0IHJl
-dHVybnMgMCBldmVuIGl0IGlzIGRvaW5nIG5vdGhpbmcgd2hhdCBsb29rcyBraW5kYSB3cm9uZy4g
-SG93ZXZlciBpdAo+IHNob3VsZG4ndCBiZSBjYWxsZWQgYXQgYWxsIHNpbmNlIG1pbi9tYXgga2V5
-IGlzIDAuIEFueSBvYmplY3Rpb25zIG9uCj4gdGhhdD8KCkknbSBwcmV0dHkgc3VyZSB0ZXN0bWdy
-IHdpbGwgY2FsbCBzZXRrZXkgZXZlbiBmb3Iga2V5bGVuID0gMCwgbm8/CgpUaGFua3MsCi0tIApW
-aXNpdCBPcGVuc3dhbiBhdCBodHRwOi8vd3d3Lm9wZW5zd2FuLm9yZy8KRW1haWw6IEhlcmJlcnQg
-WHUgfntQbVY+SEl+fSA8aGVyYmVydEBnb25kb3IuYXBhbmEub3JnLmF1PgpIb21lIFBhZ2U6IGh0
-dHA6Ly9nb25kb3IuYXBhbmEub3JnLmF1L35oZXJiZXJ0LwpQR1AgS2V5OiBodHRwOi8vZ29uZG9y
-LmFwYW5hLm9yZy5hdS9+aGVyYmVydC9wdWJrZXkudHh0Ci0tClRvIHVuc3Vic2NyaWJlIGZyb20g
-dGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBsaW51eC1wcHAiIGluCnRoZSBi
-b2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwub3JnCk1vcmUgbWFqb3Jk
-b21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbA==
+On Mon, 2010-04-05 at 19:04 +0200, Sebastian Andrzej Siewior wrote:
+
+> +module_init(arc4_init);
+> +module_exit(arc4_exit);
+
+I'm feelings uneasy about using the same module init/exit functions
+names in arc4blk.c and arc4cip.c.
+
+Even though it doesn't break for me on x86_64 (whether I'm compiling
+modules or a solid kernel), and even though the potential name conflict
+is temporary until arc4cip.c is removed, it could break on some other
+architecture or maybe with another linker.
+
+Let's use arc4blk_init and arc4blk_exit.
+
+-- 
+Regards,
+Pavel Roskin
