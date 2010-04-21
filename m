@@ -1,7 +1,7 @@
 From: "Milan P. Stanic" <mps@arvanta.net>
-Date: Wed, 21 Apr 2010 09:08:35 +0000
+Date: Wed, 21 Apr 2010 09:17:19 +0000
 Subject: Re: CRC-16 or CRC-32
-Message-Id: <20100421090835.GA1768@arvanta.net>
+Message-Id: <20100421091719.GB1768@arvanta.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <291B2C7721AC7B49AD11449A2883992E2C4A9BDC3C@SINTEFEXMBX01.sintef.no>
 In-Reply-To: <291B2C7721AC7B49AD11449A2883992E2C4A9BDC3C@SINTEFEXMBX01.sintef.no>
@@ -10,61 +10,24 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, 2010-04-21 at 08:56, Arne Lie wrote:
-> > -----Original Message-----
-> > From: linux-ppp-owner@vger.kernel.org [mailto:linux-ppp-
-> > owner@vger.kernel.org] On Behalf Of Milan P. Stanic
-> > Sent: 20. april 2010 17:10
-> > To: linux-ppp@vger.kernel.org
-> > Subject: Re: CRC-16 or CRC-32
-> > 
-> > On Tue, 2010-04-20 at 16:49, Jan Just Keijser wrote:
-> > > Arne Lie wrote:
-> > > >Hm, my observations are that if there are bit errors introduced in
-> > the PPP frame, the "ifconfig ppp0" will count such packets in the
-> > "error" tab. From this I anticipated that the PPP stack included CRC
-> > checking of its payload. By CRC-16 I mean 2 byte CRC, CRC-32 4 byte.
-> > Our customer wants 4 byte CRC. From RFC2823 I see both are mentioned.
-> > The question is, how does one select either? Perhaps it is not
-> > configurable via pppd?
-> > > >
-> > > RFC2823 is about PPP SDL on SONET/SDH ; AFAIK the pppd code does not
-> > > support this *at all* so I am not surprised that I did not find any
-> > > references to CRCs in the headers...
-> > >
-> > > So the short answer to your question would be: no, PPP v2.4.5 does
-> > > not support CRC-16 or CRC-32.
-> > 
-> > In Linu CRC is done in kernel ppp driver not the ppp daemon.
-> > ZLIB compression uses crc-32, AFAIR.
+On Wed, 2010-04-21 at 10:10, Jan Just Keijser wrote:
+> ppp_async includes some CRC support BUT it only supports
+> 'crc_ccitt_byte' which is a 16bit CRC. The problem now is, which
+> CRC32 needs to be suppported? according to
 
-> [Arne::] Milan, thanks for your information. Yes, the CRC is done in
-> the kernel part of PPP. My question was how, of possible, one could
-> select CRC-16 or CRC-32 to be activated using options when starting
-> pppd (in a similar manner as one is able to select compression
-> algorithm). In http://fixunix.com/ppp/62264-hdlc-like-framing.html
-> James Carson says that the Solaris implementation of pppd make it
-> possible to negotiate to CRC-32.
+CCITT versions according to the RFC1570.
 
-CRC is just mathematical method to calculate some number. It would be
-better to use term FCS (Frame Check Sequence) to avoid ambiguities.
-FCS can be null, 16 and 32 bit. Default is 16 bit and if peers cannot
-negotiate other values this is default.
+>  http://en.wikipedia.org/wiki/Cyclic_redundancy_check
+> 
+> "there are three polynomials reported for CRC-12, thirteen
+> conflicting definitions of CRC-16, and six of CRC-32"
+> 
+> the second problem is: if you want to add CRC32 support then you'd
+> have to get it into the linux kernel . that will take *quite* some
+> time (unless you can live with patched linux kernels).
 
-To have 32bit FCS in Linux kernel and ppp daemon you (or someone who
-could be paid or volunteer) should add it to the kernel driver and add
-configuration option to the ppp daemon to signal kernel driver that it
-wants/prefer 32/16/null FCS.
-
-There are RFCs which describes what CRC and LCP should/must be used for
-all that stuff.
-
-> I read your answer this way: by choosing the deflate compression
-> algorithm, which I believe is using ZLIB, then we *are* using the
-> CRC-32 since it defaults to this.
-
-No. ZLIB is used in data compression and not in link layer, but I
-could be wrong.
+It wouldn't be so hard to push it to the kernel because Paul Mackerras
+is/was on this list and he is the ppp driver maintainer, I hope ;)
 
 -- 
 Kind regards,  Milan
