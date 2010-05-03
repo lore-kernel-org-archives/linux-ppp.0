@@ -1,66 +1,100 @@
-From: Erik L <erik_list@caneris.com>
-Date: Fri, 21 May 2010 15:37:43 +0000
-Subject: Re: Multilink packet loss 2.6.32
-Message-Id: <29943195.48.1274456263763.JavaMail.root@zimbra.caneris.com>
+From: Simon Arlott <simon@fire.lp0.eu>
+Date: Mon, 03 May 2010 20:19:33 +0000
+Subject: [PATCH v2 1/2] ppp_generic: pull 2 bytes so that PPP_PROTO(skb) is
+Message-Id: <4BDF2FD5.2030509@simon.arlott.org.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20084927.34.1274296640775.JavaMail.root@zimbra.caneris.com>
-In-Reply-To: <20084927.34.1274296640775.JavaMail.root@zimbra.caneris.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: netdev <netdev@vger.kernel.org>, paulus@samba.org, linux-ppp@vger.kernel.org
 
-Hi John,
+In ppp_input(), PPP_PROTO(skb) may refer to invalid data in the skb.
 
-We applied this patch on a test CPE and LNS against 2.6.32 and the issues appear to be resolved! We're still conducting more extensive testing, but so far it's looking good.
+If this happens and (proto >= 0xc000 || proto = PPP_CCPFRAG) then
+the packet is passed directly to pppd.
 
-Thanks
-Erik
+This occurs frequently when using PPPoE with an interface MTU
+greater than 1500 because the skb is more likely to be non-linear.
 
+The next 2 bytes need to be pulled in ppp_input(). The pull of 2
+bytes in ppp_receive_frame() has been removed as it is no longer
+required.
 
------ Original Message -----
-From: "Johannes Jakob" <jj@globalways.net>
-To: "Erik L" <erik_list@caneris.com>
-Cc: linux-ppp@vger.kernel.org
-Sent: Thursday, May 20, 2010 4:35:54 AM
-Subject: Re: Multilink packet loss 2.6.32
+Signed-off-by: Simon Arlott <simon@fire.lp0.eu>
+---
+ drivers/net/ppp_generic.c |   29 ++++++++++++++++++-----------
+ 1 files changed, 18 insertions(+), 11 deletions(-)
 
-Hi Erik,
+diff --git a/drivers/net/ppp_generic.c b/drivers/net/ppp_generic.c
+index 6e281bc..75e8903 100644
+--- a/drivers/net/ppp_generic.c
++++ b/drivers/net/ppp_generic.c
+@@ -1567,13 +1567,22 @@ ppp_input(struct ppp_channel *chan, struct sk_buff *skb)
+ 	struct channel *pch = chan->ppp;
+ 	int proto;
+ 
+-	if (!pch || skb->len = 0) {
++	if (!pch) {
+ 		kfree_skb(skb);
+ 		return;
+ 	}
+ 
+-	proto = PPP_PROTO(skb);
+ 	read_lock_bh(&pch->upl);
++	if (!pskb_may_pull(skb, 2)) {
++		kfree_skb(skb);
++		if (pch->ppp) {
++			++pch->ppp->dev->stats.rx_length_errors;
++			ppp_receive_error(pch->ppp);
++		}
++		goto done;
++	}
++
++	proto = PPP_PROTO(skb);
+ 	if (!pch->ppp || proto >= 0xc000 || proto = PPP_CCPFRAG) {
+ 		/* put it on the channel queue */
+ 		skb_queue_tail(&pch->file.rq, skb);
+@@ -1585,6 +1594,8 @@ ppp_input(struct ppp_channel *chan, struct sk_buff *skb)
+ 	} else {
+ 		ppp_do_recv(pch->ppp, skb, pch);
+ 	}
++
++done:
+ 	read_unlock_bh(&pch->upl);
+ }
+ 
+@@ -1617,7 +1628,8 @@ ppp_input_error(struct ppp_channel *chan, int code)
+ static void
+ ppp_receive_frame(struct ppp *ppp, struct sk_buff *skb, struct channel *pch)
+ {
+-	if (pskb_may_pull(skb, 2)) {
++	/* note: a 0-length skb is used as an error indication */
++	if (skb->len > 0) {
+ #ifdef CONFIG_PPP_MULTILINK
+ 		/* XXX do channel-level decompression here */
+ 		if (PPP_PROTO(skb) = PPP_MP)
+@@ -1625,15 +1637,10 @@ ppp_receive_frame(struct ppp *ppp, struct sk_buff *skb, struct channel *pch)
+ 		else
+ #endif /* CONFIG_PPP_MULTILINK */
+ 			ppp_receive_nonmp_frame(ppp, skb);
+-		return;
++	} else {
++		kfree_skb(skb);
++		ppp_receive_error(ppp);
+ 	}
+-
+-	if (skb->len > 0)
+-		/* note: a 0-length skb is used as an error indication */
+-		++ppp->dev->stats.rx_length_errors;
+-
+-	kfree_skb(skb);
+-	ppp_receive_error(ppp);
+ }
+ 
+ static void
+-- 
+1.7.0.4
 
-we are experiencing similar problems with linux based CPEs and cisco
-based LNS systems.
-We did some testing with a self-made patch experimenting with
-ppp_mp_explode:
-
-http://lkml.org/lkml/2010/3/26/170
-
-I should mention that we are working with 2.6.31 systems and the patch
-should be applied against the corresponding sources.
-Are your problems related to 2.6.32 specifically?
-
-We are not that familiar with ppp- or kernel development, so this can't
-be considered a final solution for the problem, but our results with
-this workaround look promising. It would be great if any of the more
-experienced developers on this list could have a look at this problem
-and solve it the "right" way.
-
-Greetings,
-
-John
-
-
-On 19.05.2010, at 21:17, Erik L wrote:
-
-> Hi,
->
-> We're using ppp both on our ADSL LNSs and on customer CPEs. Both ends
-> are running 2.6.32 kernels. We've been trying to resolve a packet loss
-> issue which occurs with multilink for over a week with no success. We
-> suspect the issue has to do with fragmentation, possibly something
-> wrong with ppp_mp_explode in ppp_generic.c, but we're not sure what.
->
-> I don't want to overwhelm the list with all the data we've gathered so
-> far just yet, but if anyone has any ideas, they'd be most appreciated.
->
-> Thanks
-> Erik
+-- 
+Simon Arlott
