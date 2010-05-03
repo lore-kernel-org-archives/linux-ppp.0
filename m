@@ -1,100 +1,54 @@
-From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Date: Sat, 03 Apr 2010 07:49:29 +0000
-Subject: [PATCH 7/7] net/ppp_mppe: convert from arc4 to arc4blk
-Message-Id: <1270280969-11357-8-git-send-email-sebastian@breakpoint.cc>
+From: Simon Arlott <simon@fire.lp0.eu>
+Date: Mon, 03 May 2010 20:20:27 +0000
+Subject: [PATCH v2 2/2] ppp_generic: handle non-linear skbs when passing them
+Message-Id: <4BDF300B.1040103@simon.arlott.org.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc>
-In-Reply-To: <1270280969-11357-1-git-send-email-sebastian@breakpoint.cc>
+References: <4BDF2FD5.2030509@simon.arlott.org.uk>
+In-Reply-To: <4BDF2FD5.2030509@simon.arlott.org.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: linux-crypto@vger.kernel.org, linux-wireless@vger.kernel.org, Sebastian Andrzej Siewior <sebastian@breakpoint.cc>, linux-ppp@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: netdev <netdev@vger.kernel.org>, paulus@samba.org, linux-ppp@vger.kernel.org
 
-ecb(arc4) is getting replaced by arc4 which is a blkcipher by itself
+Frequently when using PPPoE with an interface MTU greater than 1500,
+the skb is likely to be non-linear. If the skb needs to be passed to
+pppd then the skb data must be read correctly.
 
-Cc: <linux-ppp@vger.kernel.org>
-Signed-off-by: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+The previous commit fixes an issue with accidentally sending skbs
+to pppd based on an invalid read of the protocol type. When that
+error occurred pppd was reading invalid skb data too.
+
+Signed-off-by: Simon Arlott <simon@fire.lp0.eu>
 ---
- drivers/net/Kconfig    |    3 +--
- drivers/net/ppp_mppe.c |   12 ++++++------
- 2 files changed, 7 insertions(+), 8 deletions(-)
+ drivers/net/ppp_generic.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/net/Kconfig b/drivers/net/Kconfig
-index dd9a09c..4b5dd86 100644
---- a/drivers/net/Kconfig
-+++ b/drivers/net/Kconfig
-@@ -3075,8 +3075,7 @@ config PPP_MPPE
-        depends on PPP && EXPERIMENTAL
-        select CRYPTO
-        select CRYPTO_SHA1
--       select CRYPTO_ARC4
--       select CRYPTO_ECB
-+       select CRYPTO_ARC4BLK
-        ---help---
-          Support for the MPPE Encryption protocol, as employed by the
- 	 Microsoft Point-to-Point Tunneling Protocol.
-diff --git a/drivers/net/ppp_mppe.c b/drivers/net/ppp_mppe.c
-index 6d1a1b8..4deaf70 100644
---- a/drivers/net/ppp_mppe.c
-+++ b/drivers/net/ppp_mppe.c
-@@ -42,7 +42,6 @@
-  *                    MOD_DEC_USAGE_COUNT/MOD_INC_USAGE_COUNT which are
-  *                    deprecated in 2.6
-  */
--
- #include <linux/err.h>
- #include <linux/module.h>
- #include <linux/kernel.h>
-@@ -55,6 +54,7 @@
- #include <linux/ppp_defs.h>
- #include <linux/ppp-comp.h>
- #include <linux/scatterlist.h>
-+#include <crypto/arc4.h>
+diff --git a/drivers/net/ppp_generic.c b/drivers/net/ppp_generic.c
+index 75e8903..8518a2e 100644
+--- a/drivers/net/ppp_generic.c
++++ b/drivers/net/ppp_generic.c
+@@ -405,6 +405,7 @@ static ssize_t ppp_read(struct file *file, char __user *buf,
+ 	DECLARE_WAITQUEUE(wait, current);
+ 	ssize_t ret;
+ 	struct sk_buff *skb = NULL;
++	struct iovec iov;
  
- #include "ppp_mppe.h"
+ 	ret = count;
  
-@@ -162,11 +162,11 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
- {
- 	struct scatterlist sg_in[1], sg_out[1];
- 	struct blkcipher_desc desc = { .tfm = state->arc4 };
-+	struct arc4_iv *iv = crypto_blkcipher_crt(state->arc4)->iv;
- 
- 	get_new_key_from_sha(state);
- 	if (!initial_key) {
--		crypto_blkcipher_setkey(state->arc4, state->sha1_digest,
--					state->keylen);
-+		arc4_setup_iv(iv, state->sha1_digest, state->keylen);
- 		sg_init_table(sg_in, 1);
- 		sg_init_table(sg_out, 1);
- 		setup_sg(sg_in, state->sha1_digest, state->keylen);
-@@ -184,7 +184,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
- 		state->session_key[1] = 0x26;
- 		state->session_key[2] = 0x9e;
- 	}
--	crypto_blkcipher_setkey(state->arc4, state->session_key, state->keylen);
-+	arc4_setup_iv(iv, state->session_key, state->keylen);
- }
- 
- /*
-@@ -204,7 +204,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
- 		goto out;
- 
- 
--	state->arc4 = crypto_alloc_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC);
-+	state->arc4 = crypto_alloc_blkcipher("arc4", 0, CRYPTO_ALG_ASYNC);
- 	if (IS_ERR(state->arc4)) {
- 		state->arc4 = NULL;
- 		goto out_free;
-@@ -712,7 +712,7 @@ static struct compressor ppp_mppe = {
- static int __init ppp_mppe_init(void)
- {
- 	int answer;
--	if (!(crypto_has_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC) &&
-+	if (!(crypto_has_blkcipher("arc4", 0, CRYPTO_ALG_ASYNC) &&
- 	      crypto_has_hash("sha1", 0, CRYPTO_ALG_ASYNC)))
- 		return -ENODEV;
+@@ -448,7 +449,9 @@ static ssize_t ppp_read(struct file *file, char __user *buf,
+ 	if (skb->len > count)
+ 		goto outf;
+ 	ret = -EFAULT;
+-	if (copy_to_user(buf, skb->data, skb->len))
++	iov.iov_base = buf;
++	iov.iov_len = count;
++	if (skb_copy_datagram_iovec(skb, 0, &iov, skb->len))
+ 		goto outf;
+ 	ret = skb->len;
  
 -- 
-1.6.6
+1.7.0.4
 
+-- 
+Simon Arlott
