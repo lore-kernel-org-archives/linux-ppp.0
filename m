@@ -1,33 +1,72 @@
-From: PierrotLafouine <pierrotlafouine@gmail.com>
-Date: Fri, 28 May 2010 15:06:48 +0000
-Subject: Question on pppd / =?ISO-8859-1?Q?reset=3F?=
-Message-Id: <4BFFDC08.9070103@gmail.com>
+From: Simon Arlott <simon@fire.lp0.eu>
+Date: Mon, 03 May 2010 16:51:18 +0000
+Subject: [PATCH 2/2] ppp_generic: handle non-linear skbs when passing them
+Message-Id: <4BDEFF06.1070304@simon.arlott.org.uk>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <4BDB244D.40800@simon.arlott.org.uk>	<4BDB2469.6020105@simon.arlott.org.uk> <20100502.232711.256856995.davem@davemloft.net>
+In-Reply-To: <20100502.232711.256856995.davem@davemloft.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: netdev@vger.kernel.org, paulus@samba.org, linux-ppp@vger.kernel.org
 
-Hi
-If I'm not on the good forum, or too specific with my questions, please
-provide me the address of the good mailing list/forum.
+Frequently when using PPPoE with an interface MTU greater than 1500,
+the skb is likely to be non-linear. If the skb needs to be passed to
+pppd then the skb data must be read correctly.
 
-We have an application using ppp with a GPRS modem.  The system is
-actually in the field and working 24/7 for several months.
+The previous commit fixes an issue with accidentally sending skbs
+to pppd based on an invalid read of the protocol type. When that
+error occurred pppd was reading invalid skb data too.
 
-Carrier disconnected modem often  (IP renewal, maintenance etc.) and
-modem alway reconnected correctly, except last time.  I went onsite for
-debugging and try different commands to make modem reconnect
-(ifdown/ifdown, poff/pon, shutdown -r etc...) All commands failed to
-reconnect the modem.  I had to pull the plug to make it connect.
+Signed-off-by: Simon Arlott <simon@fire.lp0.eu>
+---
+On 03/05/10 07:27, David Miller wrote:
+> From: Simon Arlott <simon@fire.lp0.eu>
+> Date: Fri, 30 Apr 2010 19:41:45 +0100
+> 
+>> Frequently when using PPPoE with an interface MTU greater than 1500,
+>> the skb is likely to be non-linear. If the skb needs to be passed to
+>> pppd then the skb must be linearised first.
+> 
+> Don't propagate stupidity.
+> 
+> The real problem is that ppp_read() can't handle non-linear SKBs, so
+> fix that instead.  The easiest way to do that is to put a "struct
+> iovec iov;" on ppp_read()'s stack, fill it in with ther user buffer
+> pointer and length, then use that to call
+> skb_copy_datagram_const_iovec().
 
-My question is about reset.  I would like to understand more the stack
-of the system, and why it failed to reconnect.  The GPRS modem is
-connected trought full RS-232 signals, and RS-232 chips is on an ISA
-bus.  How does ppp deal with this kind of hadware configuration ?  I
-read ppp deal with modem reset, but how ?  Any idea what I should look
-at to understand more the root cause of this failure ?
+I've updated it to use skb_copy_datagram_iovec():
 
-Thanks,
+ drivers/net/ppp_generic.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
 
-Pierre
+diff --git a/drivers/net/ppp_generic.c b/drivers/net/ppp_generic.c
+index 75e8903..8518a2e 100644
+--- a/drivers/net/ppp_generic.c
++++ b/drivers/net/ppp_generic.c
+@@ -405,6 +405,7 @@ static ssize_t ppp_read(struct file *file, char __user *buf,
+ 	DECLARE_WAITQUEUE(wait, current);
+ 	ssize_t ret;
+ 	struct sk_buff *skb = NULL;
++	struct iovec iov;
+ 
+ 	ret = count;
+ 
+@@ -448,7 +449,9 @@ static ssize_t ppp_read(struct file *file, char __user *buf,
+ 	if (skb->len > count)
+ 		goto outf;
+ 	ret = -EFAULT;
+-	if (copy_to_user(buf, skb->data, skb->len))
++	iov.iov_base = buf;
++	iov.iov_len = count;
++	if (skb_copy_datagram_iovec(skb, 0, &iov, skb->len))
+ 		goto outf;
+ 	ret = skb->len;
+ 
+-- 
+1.7.0.4
+
+-- 
+Simon Arlott
