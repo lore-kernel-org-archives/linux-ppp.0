@@ -1,31 +1,38 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 03 May 2010 20:27:09 +0000
-Subject: Re: [PATCH v2 1/2] ppp_generic: pull 2 bytes so that
-Message-Id: <20100503.132709.266105694.davem@davemloft.net>
+From: rajendra boppana <rajendra.boppana@gmail.com>
+Date: Thu, 06 May 2010 13:41:51 +0000
+Subject: Re: How do I track the bytes across the /dev/pppx interface?
+Message-Id: <loom.20100506T153531-549@post.gmane.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4BDF2FD5.2030509@simon.arlott.org.uk>
-In-Reply-To: <4BDF2FD5.2030509@simon.arlott.org.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: simon@fire.lp0.eu
-Cc: netdev@vger.kernel.org, paulus@samba.org, linux-ppp@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-From: Simon Arlott <simon@fire.lp0.eu>
-Date: Mon, 03 May 2010 21:19:33 +0100
+hi paul 
 
-> In ppp_input(), PPP_PROTO(skb) may refer to invalid data in the skb.
-> 
-> If this happens and (proto >= 0xc000 || proto = PPP_CCPFRAG) then
-> the packet is passed directly to pppd.
-> 
-> This occurs frequently when using PPPoE with an interface MTU
-> greater than 1500 because the skb is more likely to be non-linear.
-> 
-> The next 2 bytes need to be pulled in ppp_input(). The pull of 2
-> bytes in ppp_receive_frame() has been removed as it is no longer
-> required.
-> 
-> Signed-off-by: Simon Arlott <simon@fire.lp0.eu>
+I am new building images for devices but am learning to use that and i like to
+know whether you have implemented PPP and were successfull in filtering the
+traffic which is not useful and always resets idle timer in demand dial mode .
+did you use active filters or the precompiled filter ? if so can you please
+share your knowledge.
 
-Applied.
+problem description:
+
+ the bellow expression doesn't filter any traffic and keeps the link up 
+
+active-filter 'outbound and  not (icmp[0] = 0)'
+
+and where as 
+
+active-filter 'outbound and (icmp[0] != 0)'
+
+doesn't allow any traffic to make the link up....
+
+thanks in advance for much needed help.
+
+regards,
+rajendra
+ 
+
+
+
