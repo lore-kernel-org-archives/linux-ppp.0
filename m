@@ -1,45 +1,71 @@
-From: Ben McKeegan <ben@netservers.co.uk>
-Date: Mon, 31 May 2010 16:20:29 +0000
-Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP multi-link
-Message-Id: <4C03E1CD.4000809@netservers.co.uk>
+From: Julia Lawall <julia@diku.dk>
+Date: Sat, 22 May 2010 08:18:59 +0000
+Subject: [PATCH 2/27] drivers/net: Use memdup_user
+Message-Id: <Pine.LNX.4.64.1005221018350.13021@ask.diku.dk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com> <20100326160226.0159ac3b@lxorguk.ukuu.org.uk> <4BACE827.4070006@gmail.com> <20100326170428.6c1ad66c@lxorguk.ukuu.org.uk> <4BB31E00.8060204@netservers.co.uk> <20100529021624.GA2538@brick.ozlabs.ibm.com>
-In-Reply-To: <20100529021624.GA2538@brick.ozlabs.ibm.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Paul Mackerras <paulus@samba.org>
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, "Alexander E. Patrakov" <patrakov@gmail.com>, Richard Hartmann <richih.mailinglist@gmail.com>, linux-kernel@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
 
-Paul Mackerras wrote:
+From: Julia Lawall <julia@diku.dk>
 
->> I needed to do something similar a while back and I took a very
->> different approach, which I think is more flexible.   Rather than
->> implement a new round-robin scheduler I simply introduced a target
->> minimum fragment size into the fragment size calculation, as a per
->> bundle parameter that can be configured via a new ioctl.  This
->> modifies the algorithm so that it tries to limit the number of
->> fragments such that each fragment is at least the minimum size.  If
->> the minimum size is greater than the packet size it will not be
->> fragmented all but will instead just get sent down the next
->> available channel.
->>
->> A pppd plugin generates the ioctl call allowing this to be tweaked
->> per connection.  It is more flexible in that you can still have the
->> larger packets fragmented if you wish.
-> 
-> I like this a lot better than the other proposed patch.  It adds less
-> code because it uses the fact that ppp_mp_explode() already has a
-> round-robin capability using the ppp->nxchan field, plus it provides a
-> way to control it per bundle via pppd.
-> 
-> If you fix up the indentation issues (2-space indent in some of the
-> added code -- if you're using emacs, set c-basic-offset to 8), I'll
-> ack it and hopefully DaveM will pick it up.
+Use memdup_user when user data is immediately copied into the
+allocated region.
 
-Okay, I'll fix it up when I'm back at work Tuesday and submit (today is 
-a UK public holiday) and also dig out and fix up the userspace code to 
-go with it.
+The semantic patch that makes this change is as follows:
+(http://coccinelle.lip6.fr/)
 
-Ben.
+// <smpl>
+@@
+expression from,to,size,flag;
+position p;
+identifier l1,l2;
+@@
 
+-  to = \(kmalloc@p\|kzalloc@p\)(size,flag);
++  to = memdup_user(from,size);
+   if (
+-      to=NULL
++      IS_ERR(to)
+                 || ...) {
+   <+... when != goto l1;
+-  -ENOMEM
++  PTR_ERR(to)
+   ...+>
+   }
+-  if (copy_from_user(to, from, size) != 0) {
+-    <+... when != goto l2;
+-    -EFAULT
+-    ...+>
+-  }
+// </smpl>
+
+Signed-off-by: Julia Lawall <julia@diku.dk>
+
+---
+ drivers/net/ppp_generic.c |   11 +++--------
+ 1 file changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/net/ppp_generic.c b/drivers/net/ppp_generic.c
+index 5441688..da7943d 100644
+--- a/drivers/net/ppp_generic.c
++++ b/drivers/net/ppp_generic.c
+@@ -539,14 +539,9 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ 	}
+ 
+ 	len = uprog.len * sizeof(struct sock_filter);
+-	code = kmalloc(len, GFP_KERNEL);
+-	if (code = NULL)
+-		return -ENOMEM;
+-
+-	if (copy_from_user(code, uprog.filter, len)) {
+-		kfree(code);
+-		return -EFAULT;
+-	}
++	code = memdup_user(uprog.filter, len);
++	if (IS_ERR(code))
++		return PTR_ERR(code);
+ 
+ 	err = sk_chk_filter(code, uprog.len);
+ 	if (err) {
