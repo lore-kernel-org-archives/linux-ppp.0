@@ -1,34 +1,30 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 03 May 2010 19:49:02 +0000
-Subject: Re: [PATCH 1/2] ppp_generic: pull 2 bytes so that PPP_PROTO(skb)
-Message-Id: <20100503.124902.51283117.davem@davemloft.net>
+From: Richard Hartmann <richih.mailinglist@gmail.com>
+Date: Tue, 25 May 2010 09:52:12 +0000
+Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP
+Message-Id: <AANLkTik_QdZN_nFoOVD3-1JTGN5oxRySCdV5_eDqvQve@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4BDB244D.40800@simon.arlott.org.uk>
-	<20100502.232520.146109082.davem@davemloft.net>
-	<e85216b167313bb2bd46f5990ed468f5b67a1ad8@8b5064a13e22126c1b9329f0dc35b8915774b7c3.invalid>
-In-Reply-To: <e85216b167313bb2bd46f5990ed468f5b67a1ad8@8b5064a13e22126c1b9329f0dc35b8915774b7c3.invalid>
+References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>
+In-Reply-To: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: simon@fire.lp0.eu
-Cc: netdev@vger.kernel.org, paulus@samba.org, linux-ppp@vger.kernel.org
+To: linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, erik_list@caneris.com
 
-From: "Simon Arlott" <simon@fire.lp0.eu>
-Date: Mon, 3 May 2010 12:50:04 +0100
+Hi all,
 
-> Updated patch attached.
+unfortunately, I lack the thread [1] in which John and Erik so I am
+replying in my initial thread.
 
-Two things:
+Unfortunately, our own patch is still in its initial state even though
+we tried to clean it up to the Kernel's standard.
 
-1) Please don't post patches as binary attachments, it doesn't get
-   queued up properly into patchwork if you post it that way.
+As you can see in [1], there is a real problem with multilink ppp. Thus,
+I wanted to take the opportunity to ask for someone who is more familiar
+with both C and the Linux Kernel than we are to have a go at getting
+this code cleaned up and into mainline.
 
-2) Always make a fresh email posting for new versions of your patch
-   when possible, as this way what to include in the commit log
-   message is clear and always applies to the patch posted rather
-   than bits and pieces of quoted material from previous postings
-   that may or may not apply to the current version of the patch.
 
-So please repost this, and your new 2/2 patch, as clean new submissions.
+Any and all feedback appreciated,
+Richard
 
-Thanks.
+[1] http://marc.info/?l=linux-ppp&m7429724125841&w=2
