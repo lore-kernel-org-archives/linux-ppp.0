@@ -1,161 +1,134 @@
 From: Alexey Mahotkin <squadette@gmail.com>
-Date: Thu, 27 May 2010 18:21:34 +0000
-Subject: [PATCH 1/6] Remove unused code, fix compilation warnings
-Message-Id: <1274984499-9633-1-git-send-email-squadette@gmail.com>
+Date: Thu, 27 May 2010 18:21:35 +0000
+Subject: [PATCH 2/6] Fix typos, add hints from Debian to README.pppoe
+Message-Id: <1274984499-9633-2-git-send-email-squadette@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Partially taken from ppp-2.4.3-fix.patch in Fedora RPM
+This patch is composed from:
 
-pppd/utils.c: Fedora even patches this code in ppp-2.4.1-varargs.patch,
-even though it is not used
+1. Debian patch zzz_man_typos to fix some typos in man pages. By A. Costa.
+(Closes Debian bugs: #301928, #302674)
+
+2. Configuration hints (taken from Debian patch pppoe_readme)
+
+3. Fix formatting reported by Peter Lyall Easthope
 ---
- pppd/ipv6cp.c      |    5 ++++-
- pppd/utils.c       |   13 -------------
- pppdump/bsd-comp.c |    8 ++++----
- pppdump/deflate.c  |    5 +++--
- pppdump/pppdump.c  |    5 +++--
- 5 files changed, 14 insertions(+), 22 deletions(-)
+ README.pppoe |   13 ++++++++++++-
+ chat/chat.8  |    8 ++++----
+ pppd/pppd.8  |    7 ++++---
+ 3 files changed, 20 insertions(+), 8 deletions(-)
 
-diff --git a/pppd/ipv6cp.c b/pppd/ipv6cp.c
-index 4a09c9a..2f9232d 100644
---- a/pppd/ipv6cp.c
-+++ b/pppd/ipv6cp.c
-@@ -151,6 +151,7 @@
-  */
+diff --git a/README.pppoe b/README.pppoe
+index 5284e4d..90c9bd5 100644
+--- a/README.pppoe
++++ b/README.pppoe
+@@ -33,7 +33,7 @@ received from the PPPoE layer just as if the link was a serial line
  
- #include <stdio.h>
-+#include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include <netdb.h>
-@@ -1064,7 +1065,9 @@ endswitch:
-     return (rc);			/* Return final code */
- }
+ With this in mind, the goal of the implementation of PPPoE support in
+ Linux is to allow users to simply specify that the device they intend
+-to use for the PPP connection is an ethernet device (i.e. "eth0") and
++to use for the PPP connection is an ethernet device (e.g. "eth0") and
+ the rest of the system should function as usual.
  
--
-+#if defined(SOL2) || defined(__linux__)
-+int ether_to_eui64(eui64_t *p_eui64);
-+#endif
- /*
-  * ipv6_check_options - check that any IP-related options are OK,
-  * and assign appropriate defaults.
-diff --git a/pppd/utils.c b/pppd/utils.c
-index 062b17e..cf30f69 100644
---- a/pppd/utils.c
-+++ b/pppd/utils.c
-@@ -287,19 +287,6 @@ vslprintf(buf, buflen, fmt, args)
- 		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
- 	    str = num;
- 	    break;
--#if 0	/* not used, and breaks on S/390, apparently */
--	case 'r':
--	    f = va_arg(args, char *);
--#ifndef __powerpc__
--	    n = vslprintf(buf, buflen + 1, f, va_arg(args, va_list));
--#else
--	    /* On the powerpc, a va_list is an array of 1 structure */
--	    n = vslprintf(buf, buflen + 1, f, va_arg(args, void *));
--#endif
--	    buf += n;
--	    buflen -= n;
--	    continue;
--#endif
- 	case 't':
- 	    time(&t);
- 	    str = ctime(&t);
-diff --git a/pppdump/bsd-comp.c b/pppdump/bsd-comp.c
-index 1413326..4c504a4 100644
---- a/pppdump/bsd-comp.c
-+++ b/pppdump/bsd-comp.c
-@@ -383,7 +383,7 @@ bsd_init(db, options, opt_len, unit, hdrlen, mru, debug, decomp)
- 	|| options[0] != CI_BSD_COMPRESS || options[1] != CILEN_BSD_COMPRESS
- 	|| BSD_VERSION(options[2]) != BSD_CURRENT_VERSION
- 	|| BSD_NBITS(options[2]) != db->maxbits
--	|| decomp && db->lens = NULL)
-+	|| (decomp && db->lens = NULL))
- 	return 0;
+ 2. Using PPPoE
+@@ -91,3 +91,14 @@ The PPPoE plugin included in this package is a component of the
+ Roaring Penguin PPPoE package, included in this package courtesy of
+ Roaring Penguin Software. (http://www.roaringpenguin.com).
  
-     if (decomp) {
-@@ -556,11 +556,11 @@ bsd_decompress(state, cmsg, inlen, dmp, outlenp)
-     u_int n_bits = db->n_bits;
-     u_int tgtbitno = 32-n_bits;	/* bitno when we have a code */
-     struct bsd_dict *dictp;
--    int explen, i, seq, len;
-+    int explen, seq, len;
-     u_int incode, oldcode, finchar;
-     u_char *p, *rptr, *wptr;
-     int ilen;
--    int dlen, space, codelen, extra;
-+    int dlen=0, codelen, extra;
- 
-     rptr = cmsg;
-     if (*rptr = 0)
-@@ -616,7 +616,7 @@ bsd_decompress(state, cmsg, inlen, dmp, outlenp)
- 	}
- 
- 	if (incode > max_ent + 2 || incode > db->maxmaxcode
--	    || incode > max_ent && oldcode = CLEAR) {
-+	    || (incode > max_ent && oldcode = CLEAR)) {
- 	    if (db->debug) {
- 		printf("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
- 		       db->unit, incode, oldcode);
-diff --git a/pppdump/deflate.c b/pppdump/deflate.c
-index 0136966..32c7528 100644
---- a/pppdump/deflate.c
-+++ b/pppdump/deflate.c
-@@ -39,6 +39,7 @@
- #include <sys/types.h>
- #include <stdio.h>
- #include <stddef.h>
-+#include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include "ppp_defs.h"
-@@ -237,8 +238,8 @@ z_decompress(arg, mi, inlen, mo, outlenp)
- {
-     struct deflate_state *state = (struct deflate_state *) arg;
-     u_char *rptr, *wptr;
--    int rlen, olen, ospace;
--    int seq, i, flush, r, decode_proto;
-+    int rlen, olen;
-+    int seq, r;
- 
-     rptr = mi;
-     if (*rptr = 0)
-diff --git a/pppdump/pppdump.c b/pppdump/pppdump.c
-index 95e692c..901a937 100644
---- a/pppdump/pppdump.c
-+++ b/pppdump/pppdump.c
-@@ -34,6 +34,7 @@
-  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-  */
- #include <stdio.h>
-+#include <stdlib.h>
- #include <unistd.h>
- #include <stdlib.h>
- #include <time.h>
-@@ -191,7 +192,7 @@ dumplog(f)
- 	    show_time(f, c);
- 	    break;
- 	default:
--	    printf("?%.2x\n");
-+	    printf("?%.2x\n", c);
- 	}
-     }
- }
-@@ -421,7 +422,7 @@ dumpppp(f)
- 	    show_time(f, c);
- 	    break;
- 	default:
--	    printf("?%.2x\n");
-+	    printf("?%.2x\n", c);
- 	}
-     }
- }
++5. Hints
++--------
++
++- For setting up the connection and debugging problems if it does not
++  work at once, the userspace PPPoE implementation is more useful, as
++  the kernel module does not help with access concentrator problems.
++
++- If your machine acts as a gateway for other machines, a line like 
++  iptables -A FORWARD -o ppp0 -p tcp -m tcp --tcp-flags SYN,RST SYN -j
++  TCPMSS --clamp-mss-to-pmtu in your firewall configuration and reading
++  the iptables man-page might help.
+diff --git a/chat/chat.8 b/chat/chat.8
+index b532292..1ed9df3 100644
+--- a/chat/chat.8
++++ b/chat/chat.8
+@@ -50,7 +50,7 @@ keyword. When echoing is enabled, all output from the modem is echoed
+ to \fIstderr\fR.
+ .TP
+ .B \-E
+-Enables environment variable substituion within chat scripts using the
++Enables environment variable substitution within chat scripts using the
+ standard \fI$xxx\fR syntax.
+ .TP
+ .B \-v
+@@ -77,7 +77,7 @@ SYSLOG.  The use of \-S will prevent both log messages from '\-v' and
+ error messages from being sent to the SYSLOG.
+ .TP
+ .B \-T \fI<phone number>
+-Pass in an arbitary string, usually a phone number, that will be
++Pass in an arbitrary string, usually a phone number, that will be
+ substituted for the \\T substitution metacharacter in a send string.
+ .TP
+ .B \-U \fI<phone number 2>
+@@ -204,7 +204,7 @@ terminal), standard error will normally be redirected to the file
+ .LP
+ \fBSAY\fR strings must be enclosed in single or double quotes. If
+ carriage return and line feed are needed in the string to be output,
+-you must explicitely add them to your string.
++you must explicitly add them to your string.
+ .LP
+ The SAY strings could be used to give progress messages in sections of
+ the script where you want to have 'ECHO OFF' but still let the user
+@@ -457,7 +457,7 @@ For example, the character DC1 (17) is shown as \^^Q.
+ Environment variables are available within chat scripts, if  the \fI\-E\fR
+ option was specified in the command line. The metacharacter \fI$\fR is used
+ to introduce the name of the environment variable to substitute. If the
+-substition fails, because the requested environment variable is not set,
++substitution fails, because the requested environment variable is not set,
+ \fInothing\fR is replaced for the variable.
+ .SH TERMINATION CODES
+ The \fIchat\fR program will terminate with the following completion
+diff --git a/pppd/pppd.8 b/pppd/pppd.8
+index b7adc77..e75d2dd 100644
+--- a/pppd/pppd.8
++++ b/pppd/pppd.8
+@@ -331,7 +331,7 @@ When this is completed, pppd will commence passing data packets
+ The \fIdemand\fR option implies the \fIpersist\fR option.  If this
+ behaviour is not desired, use the \fInopersist\fR option after the
+ \fIdemand\fR option.  The \fIidle\fR and \fIholdoff\fR
+-options are also useful in conjuction with the \fIdemand\fR option.
++options are also useful in conjunction with the \fIdemand\fR option.
+ .TP
+ .B domain \fId
+ Append the domain name \fId\fR to the local host name for authentication
+@@ -937,7 +937,7 @@ pseudo-tty master/slave pair and use the slave as its terminal
+ device.  The \fIscript\fR will be run in a child process with the
+ pseudo-tty master as its standard input and output.  An explicit
+ device name may not be given if this option is used.  (Note: if the
+-\fIrecord\fR option is used in conjuction with the \fIpty\fR option,
++\fIrecord\fR option is used in conjunction with the \fIpty\fR option,
+ the child process will have pipes on its standard input and output.)
+ .TP
+ .B receive\-all
+@@ -1045,7 +1045,7 @@ in the pseudonym.
+ .TP
+ .B srp\-use\-pseudonym
+ When operating as an EAP SRP\-SHA1 client, attempt to use the pseudonym
+-stored in ~/.ppp_psuedonym first as the identity, and save in this
++stored in ~/.ppp_pseudonym first as the identity, and save in this
+ file any pseudonym offered by the peer during authentication.
+ .TP
+ .B sync
+@@ -1721,6 +1721,7 @@ links, used for matching links to bundles in multilink operation.  May
+ be examined by external programs to obtain information about running
+ pppd instances, the interfaces and devices they are using, IP address
+ assignments, etc.
++.TP
+ .B /etc/ppp/pap\-secrets
+ Usernames, passwords and IP addresses for PAP authentication.  This
+ file should be owned by root and not readable or writable by any other
 -- 
 1.6.2.5
 
