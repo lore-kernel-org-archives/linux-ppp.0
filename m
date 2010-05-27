@@ -1,34 +1,41 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 03 May 2010 06:27:11 +0000
-Subject: Re: [PATCH 2/2] ppp_generic: linearise skbs before passing them to
-Message-Id: <20100502.232711.256856995.davem@davemloft.net>
+From: Alexey Mahotkin <squadette@gmail.com>
+Date: Thu, 27 May 2010 18:21:37 +0000
+Subject: [PATCH 4/6] Subject: Bug#308136: Debian bug 308136 (SEGV in pppd)
+Message-Id: <1274984499-9633-4-git-send-email-squadette@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <4BDB244D.40800@simon.arlott.org.uk>
-	<4BDB2469.6020105@simon.arlott.org.uk>
-In-Reply-To: <4BDB2469.6020105@simon.arlott.org.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: simon@fire.lp0.eu
-Cc: netdev@vger.kernel.org, paulus@samba.org, linux-ppp@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-From: Simon Arlott <simon@fire.lp0.eu>
-Date: Fri, 30 Apr 2010 19:41:45 +0100
+From: Martin Lottermoser <Martin.Lottermoser@t-online.de>
 
-> Frequently when using PPPoE with an interface MTU greater than 1500,
-> the skb is likely to be non-linear. If the skb needs to be passed to
-> pppd then the skb must be linearised first.
-> 
-> The previous commit fixes an issue with accidentally sending skbs
-> to pppd based on an invalid read of the protocol type. When that
-> error occurred pppd was reading invalid skb data too.
-> 
-> Signed-off-by: Simon Arlott <simon@fire.lp0.eu>
+The function update_db_entry() may only be called if pppdb is not NULL;
+unfortunately in this situation it is. Other calls to update_db_entry()
+are protected against this, see, e.g., the end of script_setenv().
+---
+ pppd/main.c |    8 +++++---
+ 1 files changed, 5 insertions(+), 3 deletions(-)
 
-Don't propagate stupidity.
+diff --git a/pppd/main.c b/pppd/main.c
+index 014d614..3cc2624 100644
+--- a/pppd/main.c
++++ b/pppd/main.c
+@@ -1957,9 +1957,11 @@ script_setenv(var, value, iskey)
+ 		free(p-1);
+ 		script_env[i] = newstring;
+ #ifdef USE_TDB
+-		if (iskey && pppdb != NULL)
+-		    add_db_key(newstring);
+-		update_db_entry();
++		if (pppdb != NULL) {
++		    if (iskey)
++			add_db_key(newstring);
++		    update_db_entry();
++		}
+ #endif
+ 		return;
+ 	    }
+-- 
+1.6.2.5
 
-The real problem is that ppp_read() can't handle non-linear SKBs, so
-fix that instead.  The easiest way to do that is to put a "struct
-iovec iov;" on ppp_read()'s stack, fill it in with ther user buffer
-pointer and length, then use that to call
-skb_copy_datagram_const_iovec().
