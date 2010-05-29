@@ -1,80 +1,44 @@
-From: walter harms <wharms@bfs.de>
-Date: Fri, 28 May 2010 07:28:29 +0000
-Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP 	multi-link
-Message-Id: <4BFF709D.5040005@bfs.de>
+From: Paul Mackerras <paulus@samba.org>
+Date: Sat, 29 May 2010 02:16:24 +0000
+Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP
+Message-Id: <20100529021624.GA2538@brick.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>	<AANLkTik_QdZN_nFoOVD3-1JTGN5oxRySCdV5_eDqvQve@mail.gmail.com>	<4BFBA3F2.2000301@bfs.de>	<AANLkTilnueP5HIfX03soMCYE93jubL000rpiOCN1xB2-@mail.gmail.com>	<4BFC0942.2030103@bfs.de> <AANLkTikeld4fbr9r1Sq0jhfkWxf0ZlwOsufUIRvb1rFH@mail.gmail.com>
-In-Reply-To: <AANLkTikeld4fbr9r1Sq0jhfkWxf0ZlwOsufUIRvb1rFH@mail.gmail.com>
+References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>
+ <20100326160226.0159ac3b@lxorguk.ukuu.org.uk>
+ <4BACE827.4070006@gmail.com>
+ <20100326170428.6c1ad66c@lxorguk.ukuu.org.uk>
+ <4BB31E00.8060204@netservers.co.uk>
+In-Reply-To: <4BB31E00.8060204@netservers.co.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Richard Hartmann <richih.mailinglist@gmail.com>
-Cc: linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, erik_list@caneris.com
+To: Ben McKeegan <ben@netservers.co.uk>
+Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, "Alexander E. Patrakov" <patrakov@gmail.com>, Richard Hartmann <richih.mailinglist@gmail.com>, linux-kernel@vger.kernel.org
 
+On Wed, Mar 31, 2010 at 11:03:44AM +0100, Ben McKeegan wrote:
 
-
-Richard Hartmann schrieb:
-> =It seems LKML & netdev were dropped from the To list, re-adding=
+> I needed to do something similar a while back and I took a very
+> different approach, which I think is more flexible.   Rather than
+> implement a new round-robin scheduler I simply introduced a target
+> minimum fragment size into the fragment size calculation, as a per
+> bundle parameter that can be configured via a new ioctl.  This
+> modifies the algorithm so that it tries to limit the number of
+> fragments such that each fragment is at least the minimum size.  If
+> the minimum size is greater than the packet size it will not be
+> fragmented all but will instead just get sent down the next
+> available channel.
 > 
-> Hi Walter,
-> 
-> 
->>  if (ppp->rrsched % ppp->n_channels = i)
->>
->> since both do not change in that while() loop you can calculate in advance
->> perhaps ppp->rrsched %= ppp->n_channels before the while ?
->> (that would reduce my bad feels about variables that only increments also :)
-> 
-> rrsched and i do change when appropriate. As they are used as a cheap
-> way to get round robin, rrsched is not even initialized. One can argue
-> that this should be done, but as it literally does not matter where the
-> value starts counting....
-> 
+> A pppd plugin generates the ioctl call allowing this to be tweaked
+> per connection.  It is more flexible in that you can still have the
+> larger packets fragmented if you wish.
 
-yep,
-the problem is that you will trigger a warning "variable uninitialised".
-And as programmer you are trained to spot such kind of code.
-in short you violated "the rule of least surprise", simply set it to 99
-and add a comment that the value does not matter because it is actualy a
-random seed.
-Basicly the same reason for the ppp->rrsched %= ppp->n_channels outside
-the loop. 1. people/compiler are happy because they see the variable
-is used. 2. no need to recalculate the if in a loop (never trust optimisers).
+I like this a lot better than the other proposed patch.  It adds less
+code because it uses the fact that ppp_mp_explode() already has a
+round-robin capability using the ppp->nxchan field, plus it provides a
+way to control it per bundle via pppd.
 
-/*
-perhaps rr_chanel is a better name ? round robin channel
-that would requiere the changes but explain what it actualy is
-*/
+If you fix up the indentation issues (2-space indent in some of the
+added code -- if you're using emacs, set c-basic-offset to 8), I'll
+ack it and hopefully DaveM will pick it up.
 
-
-
-> 
->> btw: you are doing  after loop() if(pch->chan = NULL) continue;
->> that means the else in the if below  if (pch->chan) should never be reached.
->> Or is it likely that some channel will be dropped (?) ?
-> 
-> Channels could be dropped and we need to guard against that.
-> 
-
-please add a comment about that. i can garantee you someone will spot it
-and remove either the pch->chan = NULL or the else.
-
-
-
-just my 2 cents,
-wh
-
-
-> 
->> btw: this is intentional ? looks strange
->>
->>        if(ppp_ml_noexplode) {
->> +       }
->> +       else {
-> 
-> Leftover from various printks for debugging reasons.
-> 
-> 
-> Thanks for your feedback,
-> Richard
-> 
+Paul.
