@@ -1,31 +1,45 @@
-From: Richard Hartmann <richih.mailinglist@gmail.com>
-Date: Mon, 31 May 2010 13:39:49 +0000
-Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP
-Message-Id: <AANLkTikXBEEWbi6LiC9fjeDfCK3VVePlyx1_Wtkf-wQg@mail.gmail.com>
+From: Ben McKeegan <ben@netservers.co.uk>
+Date: Mon, 31 May 2010 16:20:29 +0000
+Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP multi-link
+Message-Id: <4C03E1CD.4000809@netservers.co.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>
-	<20100326160226.0159ac3b@lxorguk.ukuu.org.uk>
-	<4BACE827.4070006@gmail.com>
-	<20100326170428.6c1ad66c@lxorguk.ukuu.org.uk>
-	<4BB31E00.8060204@netservers.co.uk>
-	<20100529021624.GA2538@brick.ozlabs.ibm.com>
+References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com> <20100326160226.0159ac3b@lxorguk.ukuu.org.uk> <4BACE827.4070006@gmail.com> <20100326170428.6c1ad66c@lxorguk.ukuu.org.uk> <4BB31E00.8060204@netservers.co.uk> <20100529021624.GA2538@brick.ozlabs.ibm.com>
 In-Reply-To: <20100529021624.GA2538@brick.ozlabs.ibm.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Paul Mackerras <paulus@samba.org>
-Cc: Ben McKeegan <ben@netservers.co.uk>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, "Alexander E. Patrakov" <patrakov@gmail.com>, linux-kernel@vger.kernel.org
+Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, "Alexander E. Patrakov" <patrakov@gmail.com>, Richard Hartmann <richih.mailinglist@gmail.com>, linux-kernel@vger.kernel.org
 
-On Sat, May 29, 2010 at 04:16, Paul Mackerras <paulus@samba.org> wrote:
+Paul Mackerras wrote:
 
+>> I needed to do something similar a while back and I took a very
+>> different approach, which I think is more flexible.   Rather than
+>> implement a new round-robin scheduler I simply introduced a target
+>> minimum fragment size into the fragment size calculation, as a per
+>> bundle parameter that can be configured via a new ioctl.  This
+>> modifies the algorithm so that it tries to limit the number of
+>> fragments such that each fragment is at least the minimum size.  If
+>> the minimum size is greater than the packet size it will not be
+>> fragmented all but will instead just get sent down the next
+>> available channel.
+>>
+>> A pppd plugin generates the ioctl call allowing this to be tweaked
+>> per connection.  It is more flexible in that you can still have the
+>> larger packets fragmented if you wish.
+> 
+> I like this a lot better than the other proposed patch.  It adds less
+> code because it uses the fact that ppp_mp_explode() already has a
+> round-robin capability using the ppp->nxchan field, plus it provides a
+> way to control it per bundle via pppd.
+> 
 > If you fix up the indentation issues (2-space indent in some of the
 > added code -- if you're using emacs, set c-basic-offset to 8), I'll
 > ack it and hopefully DaveM will pick it up.
 
-If no one submits it by tonight, I will probably send a cleaned-up
-version of the alternative patch. Not that I want to steal anyone's
-laurels, mind. But having it in mainline is better than not having
-it in mainline.
+Okay, I'll fix it up when I'm back at work Tuesday and submit (today is 
+a UK public holiday) and also dig out and fix up the userspace code to 
+go with it.
 
+Ben.
 
-Richard
