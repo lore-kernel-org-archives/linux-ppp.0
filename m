@@ -1,7 +1,7 @@
 From: Richard Hartmann <richih.mailinglist@gmail.com>
-Date: Sat, 29 May 2010 09:06:59 +0000
+Date: Mon, 31 May 2010 13:39:49 +0000
 Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP
-Message-Id: <AANLkTimOxMHpysLR6fQn0fhLkvMZbEd0gcIwQlINq49J@mail.gmail.com>
+Message-Id: <AANLkTikXBEEWbi6LiC9fjeDfCK3VVePlyx1_Wtkf-wQg@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>
 	<20100326160226.0159ac3b@lxorguk.ukuu.org.uk>
@@ -18,10 +18,14 @@ Cc: Ben McKeegan <ben@netservers.co.uk>, netdev@vger.kernel.org, linux-ppp@vger.
 
 On Sat, May 29, 2010 at 04:16, Paul Mackerras <paulus@samba.org> wrote:
 
-> I like this a lot better than the other proposed patch.
+> If you fix up the indentation issues (2-space indent in some of the
+> added code -- if you're using emacs, set c-basic-offset to 8), I'll
+> ack it and hopefully DaveM will pick it up.
 
-Not that it really matters, but we would be happy with either patch
-as long as we can stop patching mainline :)
+If no one submits it by tonight, I will probably send a cleaned-up
+version of the alternative patch. Not that I want to steal anyone's
+laurels, mind. But having it in mainline is better than not having
+it in mainline.
 
 
 Richard
