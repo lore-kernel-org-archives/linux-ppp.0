@@ -1,47 +1,34 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Sat, 12 Jun 2010 21:28:11 +0000
-Subject: Re: PPPoE mutiple session issue.
-Message-Id: <4C13FBEB.103@workingcode.com>
+From: Richard Hartmann <richih.mailinglist@gmail.com>
+Date: Tue, 01 Jun 2010 10:20:51 +0000
+Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP
+Message-Id: <AANLkTil7fk_ikrSPiZnqcJSLGCrzcCrCwbeuUMY5Yu5v@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <AANLkTik_K8aDmuoNjCkKNWoS5bx6kokZCagmzzw5pxcW@mail.gmail.com>
-In-Reply-To: <AANLkTik_K8aDmuoNjCkKNWoS5bx6kokZCagmzzw5pxcW@mail.gmail.com>
+References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>
+	<20100326160226.0159ac3b@lxorguk.ukuu.org.uk>
+	<4BACE827.4070006@gmail.com>
+	<20100326170428.6c1ad66c@lxorguk.ukuu.org.uk>
+	<4BB31E00.8060204@netservers.co.uk>
+	<20100529021624.GA2538@brick.ozlabs.ibm.com>
+In-Reply-To: <20100529021624.GA2538@brick.ozlabs.ibm.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>
+Cc: Ben McKeegan <ben@netservers.co.uk>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, "Alexander E. Patrakov" <patrakov@gmail.com>, linux-kernel@vger.kernel.org
 
-On 6/12/2010 1:15 AM, arun b wrote:
-> Thank you for the detaild response....
-> as I mentioned before..
-> I want to run multiple pppd sessions which results in interface (ppp0,
-> ppp1, ppp2......).
-> well the connectivity is... as below
-> the hardware I am using is connected to pc with ethernet crosscable.
-> on pc i run  - pppoe-server
->        sudo pppoe-server -I eth0:0 -R 10.0.0.2
-> 
-> on my hardware, which is a client,  pppd is executed.
->   pppd eth0 user xxxx passwordd dddd
-> 
-> though i am able to create mutlipel interfaces . i am not be able to
-> commuicte over all insted..
-> 
-> 
-> I guess these is due to same server -IP :(
+On Sat, May 29, 2010 at 04:16, Paul Mackerras <paulus@samba.org> wrote:
 
-If you can't give us detailed information, there's likely to be little
-that anyone can do to help you.  Any details you care to share would be
-appreciated -- "netstat -nr" output, packet traces (as I requested last
-time), debug output, et cetera.
 
-My understanding is that pppoe-server will not hand out the same IP
-address to each connection, so that shouldn't be the problem you're
-having.  But, yes, if you did have conflicting addresses on the links,
-then you'd have a problem.
+> I'll
+> ack it and hopefully DaveM will pick it up.
 
-However, it's impossible to determine what sort of problem you might be
-having if you won't provide details.  We just can't see your computer
-from here.
+As 2.6.35-rc1 is out, does this mean that we are looking at 2.6.36 at the
+earliest? Or could this make it in as it is
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+a) a bug fix
+b) tested in the field
+c) a small change
+
+
+Thanks,
+Richard
