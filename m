@@ -1,33 +1,56 @@
-From: David Miller <davem@davemloft.net>
-Date: Tue, 01 Jun 2010 22:15:10 +0000
-Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP
-Message-Id: <20100601.151510.137832050.davem@davemloft.net>
+From: Ben McKeegan <ben@netservers.co.uk>
+Date: Wed, 02 Jun 2010 14:55:30 +0000
+Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP multi-link
+Message-Id: <4C0670E2.1090708@netservers.co.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <AANLkTil7fk_ikrSPiZnqcJSLGCrzcCrCwbeuUMY5Yu5v@mail.gmail.com>
-	<4C04ECA3.1080905@netservers.co.uk>
-	<AANLkTinpsIs7qMSpQ78fWCTHh03iLBIwRlsU7sqJau08@mail.gmail.com>
-In-Reply-To: <AANLkTinpsIs7qMSpQ78fWCTHh03iLBIwRlsU7sqJau08@mail.gmail.com>
+References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com> <20100326160226.0159ac3b@lxorguk.ukuu.org.uk> <4BACE827.4070006@gmail.com> <20100326170428.6c1ad66c@lxorguk.ukuu.org.uk> <4BB31E00.8060204@netservers.co.uk> <20100529021624.GA2538@brick.ozlabs.ibm.com> <4C03E1CD.4000809@netservers.co.uk>
+In-Reply-To: <4C03E1CD.4000809@netservers.co.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: richih.mailinglist@gmail.com
-Cc: ben@netservers.co.uk, paulus@samba.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, alan@lxorguk.ukuu.org.uk, patrakov@gmail.com, linux-kernel@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>
+Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, "Alexander E. Patrakov" <patrakov@gmail.com>, Richard Hartmann <richih.mailinglist@gmail.com>, linux-kernel@vger.kernel.org, gabriele.paoloni@intel.com
 
-From: Richard Hartmann <richih.mailinglist@gmail.com>
-Date: Tue, 1 Jun 2010 13:28:59 +0200
+Ben McKeegan wrote:
+> Paul Mackerras wrote:
+> 
+>>> I needed to do something similar a while back and I took a very
+>>> different approach, which I think is more flexible.   Rather than
+>>> implement a new round-robin scheduler I simply introduced a target
+>>> minimum fragment size into the fragment size calculation, as a per
+>>> bundle parameter that can be configured via a new ioctl.  This
+>>> modifies the algorithm so that it tries to limit the number of
+>>> fragments such that each fragment is at least the minimum size.  If
+>>> the minimum size is greater than the packet size it will not be
+>>> fragmented all but will instead just get sent down the next
+>>> available channel.
+>>>
+>>> A pppd plugin generates the ioctl call allowing this to be tweaked
+>>> per connection.  It is more flexible in that you can still have the
+>>> larger packets fragmented if you wish.
+>>
+>> I like this a lot better than the other proposed patch.  It adds less
+>> code because it uses the fact that ppp_mp_explode() already has a
+>> round-robin capability using the ppp->nxchan field, plus it provides a
+>> way to control it per bundle via pppd.
+>>
+>> If you fix up the indentation issues (2-space indent in some of the
+>> added code -- if you're using emacs, set c-basic-offset to 8), I'll
+>> ack it and hopefully DaveM will pick it up.
+> 
+> Okay, I'll fix it up when I'm back at work Tuesday and submit (today is 
+> a UK public holiday) and also dig out and fix up the userspace code to 
+> go with it.
 
-> Maybe not a bug in the Linux kernel itself, but certainly in the real world
-> that exists around Linux. Similar to how a change to a device driver that
-> is needed to work around broken hardware is a bug fix, imo.
+Still working on this, updating the patch wasn't as trivial as I thought 
+as it clashed with Gabriele Paoloni's ppp_mp_explode redesign.  However, 
+while looking at this code I believe I have found a bug which might have 
+been contributing to the poor performance the OP was experiencing.   For 
+the case where channel speeds are unknown and there are more than 2 
+channels it would miscalculate the fragment sizes so they are not 
+balanced on the channels.
 
-It's not the same situation at all.
+Patch for the bug to follow immediately.
 
-It is easier to fix misconfigured products that exist because of
-software and configurations than it is to fix a physical piece of
-hardware.
-
-So you could work around it if you wanted to.
-
-I definitely don't see this as -stable material, as a result.  We will
-push it to net-next-2.6 and it will thus hit 2.6.36 as previously
-mentioned.
+Regards,
+Ben.
