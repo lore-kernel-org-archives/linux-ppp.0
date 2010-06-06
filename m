@@ -1,42 +1,29 @@
-From: arun b <arun.s.bailur@gmail.com>
-Date: Sat, 05 Jun 2010 07:46:25 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Sun, 06 Jun 2010 21:17:51 +0000
 Subject: Re: PPPoA server setup how to?
-Message-Id: <AANLkTilpLoFOC-pWCO2dP9cq9OA6NEaFOumEcCZ4b6AY@mail.gmail.com>
+Message-Id: <4C0C107F.3040901@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <AANLkTikV_j1ajMThiB8B6DoaZpZ4fhlIRVVk2jK30-h8@mail.gmail.com>
 In-Reply-To: <AANLkTikV_j1ajMThiB8B6DoaZpZ4fhlIRVVk2jK30-h8@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Yes let me see the possiblities, However Currnelty i am parking PPPoA test.
-Now I  wnated to try PPPoSerial..if any one awere  of setup please responsd.
+On 06/05/10 03:34, arun b wrote:
+> Yes let me see the possiblities, However Currnelty i am parking PPPoA test.
+> Now I  wnated to try PPPoSerial..if any one awere  of setup please responsd.
 
--Arun
+For a plain PPP connection over serial (both async and sync), all you
+should really need is a proper null-modem connection.
 
-On Thu, Jun 3, 2010 at 7:29 PM, James Carlson <carlsonj@workingcode.com> wr=
-ote:
-> arun b wrote:
->> Yes, it is a modem =A0device with DSL-connection. and as I mentioned
->> erlier, am exploring the PPPoX configuration in it. =A0It has
->> RJ11connector..
->
-> OK. =A0It's a little unclear how that device works or what sort of access
-> you have to it, but I'll assume that it looks like an ATM driver to the
-> rest of your system.
->
->> and the link you provide =A0is not be useful. its just a pin-connection =
-details.
->
-> You had asked about other hardware you could use for testing PPPoA.
->
-> It'd be useful if you had a plain ATM NIC, as I referenced in my
-> previous message. =A0As the other James pointed out, you need a lot more
-> gear to make a DSL connection work, as a simple back-to-back connection
-> won't work with it.
->
-> --
-> James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
-orkingcode.com>
->
+(With async, you can get by with as few as three wires -- TXD, RXD, and
+GND.  With sync, you'll likely need slightly more and will have to set
+up one side to do clock generation.  But if you have the right resources
+for your serial interfaces, it shouldn't be hard.)
+
+It should work quite simply.  Did you even try it ... ?  If so, what
+problems are you now facing?
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
