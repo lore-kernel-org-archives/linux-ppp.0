@@ -1,41 +1,27 @@
-From: Alexey Mahotkin <squadette@gmail.com>
-Date: Thu, 27 May 2010 18:21:37 +0000
-Subject: [PATCH 4/6] Subject: Bug#308136: Debian bug 308136 (SEGV in pppd)
-Message-Id: <1274984499-9633-4-git-send-email-squadette@gmail.com>
+From: Mark Ryden <markryde@gmail.com>
+Date: Sat, 12 Jun 2010 10:29:11 +0000
+Subject: Question about range of addresses in pppd (invoked against a pppoe
+Message-Id: <AANLkTinVWfrKYsL2XZNGyNXdo_AFv8KYLWURJDB6O830@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-From: Martin Lottermoser <Martin.Lottermoser@t-online.de>
+Hello,
+ I had this following problem:
+On one machine I have a PPPoE server, which is running by issuing:
+pppoe-server -I eth0 -R 10.0.0.10.  -L 10.0.0.20
 
-The function update_db_entry() may only be called if pppdb is not NULL;
-unfortunately in this situation it is. Other calls to update_db_entry()
-are protected against this, see, e.g., the end of script_setenv().
----
- pppd/main.c |    8 +++++---
- 1 files changed, 5 insertions(+), 3 deletions(-)
+Now, I an creating ppp connections to this server from a different
+remote machine.
+This connections are short while connections.
 
-diff --git a/pppd/main.c b/pppd/main.c
-index 014d614..3cc2624 100644
---- a/pppd/main.c
-+++ b/pppd/main.c
-@@ -1957,9 +1957,11 @@ script_setenv(var, value, iskey)
- 		free(p-1);
- 		script_env[i] = newstring;
- #ifdef USE_TDB
--		if (iskey && pppdb != NULL)
--		    add_db_key(newstring);
--		update_db_entry();
-+		if (pppdb != NULL) {
-+		    if (iskey)
-+			add_db_key(newstring);
-+		    update_db_entry();
-+		}
- #endif
- 		return;
- 	    }
--- 
-1.6.2.5
+The first connection gets 10.0.0.10, the second gets 10.0.0.11, and so on.
+The thing is that after  10.0.0.19 it **does** gets 10.0.0.20 !!
+and afterwards it gets 10.0.0.21, 10.0.0.22, and so on.
+Is there a way to prevent if and cause it not to get IP addresses
+beyond 10.0.0.19 ?
 
+rgs,
+Mark
