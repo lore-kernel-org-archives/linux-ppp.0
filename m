@@ -1,57 +1,55 @@
-From: arun b <arun.s.bailur@gmail.com>
-Date: Wed, 23 Jun 2010 17:59:09 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 23 Jun 2010 18:17:11 +0000
 Subject: Re: PPP comression and extension info required...
-Message-Id: <AANLkTilcZ-1phHlHn5aZuU00NhagSOqmCkLsX4j_kmRg@mail.gmail.com>
+Message-Id: <4C224FA7.7050908@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <4C2246C1.2000206@workingcode.com>
 In-Reply-To: <4C2246C1.2000206@workingcode.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hi James.,
+arun b wrote:
+> Hi James.,
+> 
+> Thank you as usual to respond me quick..!
+> Well  I wanted to validate rfc-1662.
+> I see in ppp source  deflate, bsd, compression  are these covers
+> rfc-1662 if so please provide me further info on this
 
-Thank you as usual to respond me quick..!
-Well  I wanted to validate rfc-1662.
-I see in ppp source  deflate, bsd, compression  are these covers
-rfc-1662 if so please provide me further info on this
+I'm afraid I still don't really understand.
 
-Regs,
-Arun
+RFC 1662 describes AHDLC, which is the low-level framing on async lines,
+as well as the other mappings of PPP to octet-synchronous HDLC (read:
+SONET/SDH) and bit-stuffed HDLC (read: ISDN and other telecom).  It
+doesn't really describe much about "compression" except a few header
+compression bits.
 
+Are you really asking about PPP header compression?  If so, why?  What
+could you be testing that would require a specific test for this?
 
-On Wed, Jun 23, 2010 at 11:09 PM, James Carlson
-<carlsonj@workingcode.com> wrote:
-> arun b wrote:
->> HI,
->> I wanted to know PPP -extension =A0support , compression ...
->> does it available in the ppp-2.4.4. ? =A0if so how do we test it.?
->> Any =A0info you know =A0to share would be appreciated..
->
-> Yes, it supports data compression, and it's enabled by default. =A0See the
-> pppd(1M) man page for details. =A0Note that compression schemes need to be
-> built into your kernel, so what's _actually_ supported depends on what
-> kernel modules you have.
->
-> The debug log messages will be helpful here as well, as they indicate
-> which compression algorithms are being negotiated.
->
-> I'm not sure what sort of testing you want to do with it, though, so
-> you'll need to be more specific. =A0For what it's worth, I find that
-> passing large amounts of highly-compressible data (such as the letter
-> "A" repeated a few million times in a file) is one good stress test, and
-> passing incompressible data (such as a large bzip2'd file) is another.
-> Each explores a different end in the usual string-based data compression
-> algorithm. =A0The Canterbury Corpus is another fairly well-known test, and
-> is probably a good middle-of-the-road test for passing compressible data.
->
-> But there are other forms of "testing" that are possible here, including
-> performance and interoperability, and those may require other sorts of
-> testing schemes and other considerations, so I'm not really sure what it
-> is you're after.
->
-> --
-> James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
-orkingcode.com>
->
+If you need such a low-level PPP-specific test, I strongly recommend
+getting a protocol validation device or employing a service.  IXIA's
+ixANVL tester can verify low-level details of protocol operation.
+Another place to turn would be UNH's IOL.
+
+If you actually have your own independent implementation (and wanting to
+test this low-level detail on your own suggests that you do), then I
+really recommend getting the right tools for the job.
+
+If you don't want to do either of those, then you're probably on your
+own.  You could perhaps make do by using the existing options described
+in pppd(1M) along with either an external analyzer or (perhaps) using
+either the pppdump(1M) tool or even kdebug 3.
+
+But, again, this is just header compression, not data compression.  It's
+really pretty boring stuff.
+
+Did you mean RFC 1962 instead?  If so, then that's just what
+_negotiates_ compression.  The actual compression takes place using the
+compression algorithms, and these are controlled by the documented
+pppd(1M) options and the kernel modules, as I mentioned in my first reply.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
