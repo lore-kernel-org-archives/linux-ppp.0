@@ -1,66 +1,51 @@
-From: arun b <arun.s.bailur@gmail.com>
-Date: Thu, 24 Jun 2010 16:48:33 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Thu, 24 Jun 2010 17:49:16 +0000
 Subject: Re: PPP comression and extension info required...
-Message-Id: <AANLkTinuhlWiMJnRBOGz3asHJdxD9jRUH3hPdCNyLKfk@mail.gmail.com>
+Message-Id: <4C239A9C.1080901@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <4C2246C1.2000206@workingcode.com>
 In-Reply-To: <4C2246C1.2000206@workingcode.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Ok ,
-let me explore on the server side ....!
+arun b wrote:
+> Ok ,
+> let me explore on the server side ....!
+> 
+> Could you please guide me thru ppp-extension support ....!
 
-Could you please guide me thru ppp-extension support ....!
+Only if you can be more specific in what sort of guidance you need, and
+if you've already read through the existing documentation and still have
+questions.  Otherwise, and no offense really intended, it's likely not
+to be a useful way for either of us to spend time.
 
-Regs,
-Arun
+What "ppp-extension" are you talking about?  Are you talking about the
+configuration options?  The various basic PPP control features?  The
+system-specific kernel modules and features?  The possible add-on
+features?  Or something else?
 
-On Thu, Jun 24, 2010 at 7:49 PM, James Carlson <carlsonj@workingcode.com> w=
-rote:
-> arun b wrote:
->> Ok,
->> as you said i can verify all compression types on PPPoE test...
->> So i have pppoe-server available at my pc, =A0if you have come across
->> related server configuration for this .... pls do know me.
->> and running PPPoA - test running is not just easy to me as
->> unavailability of the device.
->
-> I don't know what you're asking about, but pppd generally enables all
-> available compression modes by default (regardless of the underlying
-> communication mechanism), and will disable a compression mode either if
-> the peer disagrees with the request or if you specify one of the
-> documented options to turn off that mode (or to turn off compression
-> completely).
->
-> In other words, if your "server" is actually pppd, then there's nothing
-> that you need to do to enable compression. =A0If it's something other than
-> pppd, then this might not be the right mailing list. =A0You should consult
-> your server's documentation to find out what features it offers.
->
-> As for selectively turning off available compression types in pppd, I
-> still urge you to read the pppd man page. =A0It's pretty important. =A0For
-> data compression options, you'll find the following:
->
-> =A0noccp, bsdcomp, nobsdcomp, deflate, nodeflate, predictor1,
-> =A0nopredictor1
->
-> For header compression (again, _not_ data compression), you'll find:
->
-> =A0noaccomp, novj, novjccomp, vj-max-slots
->
-> There are also two that are sort of special -- mpshortseq and
-> nompshortseq -- that have to do with header compression when using MP.
-> You haven't mentioned MP yet, so I'll assume you're not using it.
->
-> The really short answer is this: PPP negotiates for everything. =A0If both
-> sides support something, then, great, it'll be enabled. =A0If either or
-> both sides don't support something, then it won't be enabled. =A0That's
-> pretty much the whole story.
->
-> --
-> James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
-orkingcode.com>
->
+As with other questions, and as I mentioned before, if you have a
+question about the documentation or about some error or debug message
+you're seeing, __please__ include a copy of that source material with
+your question.  Providing more context would help.
+
+Based on the messages you've posted to the list so far, and my
+experience in the area, I suspect you need a different kind of
+assistance than I think you'll find available for free on mailing lists.
+ I strongly recommend (as I did in a previous message) searching out
+organizations and products that can simplify your job.  Surely, your
+time is worth something to you, and spending it on a reinvention of
+someone else's wheel can't be a good thing.
+
+The UNH IOL has both interoperability and conformance tests available
+for vendors at a very reasonable rate.  I highly recommend them, and I
+know some of the folks there if you need pointers.  In addition to the
+IOL, there are also commercial devices available that will do validation
+tests, such as IxANVL.  They're by no means "simple" to operate and
+interpret, but they're much simpler and more effective than attempting
+to roll your own tests.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
