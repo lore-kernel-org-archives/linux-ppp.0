@@ -1,53 +1,54 @@
-From: arun b <arun.s.bailur@gmail.com>
-Date: Thu, 24 Jun 2010 13:55:46 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Thu, 24 Jun 2010 14:19:43 +0000
 Subject: Re: PPP comression and extension info required...
-Message-Id: <AANLkTinIkePP2iA0f_4m8ncODbNvASVSegzn2Nj4Md_i@mail.gmail.com>
+Message-Id: <4C23697F.3070405@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <4C2246C1.2000206@workingcode.com>
 In-Reply-To: <4C2246C1.2000206@workingcode.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Ok,
-as you said i can verify all compression types on PPPoE test...
-So i have pppoe-server available at my pc,  if you have come across
-related server configuration for this .... pls do know me.
-and running PPPoA - test running is not just easy to me as
-unavailability of the device.
+arun b wrote:
+> Ok,
+> as you said i can verify all compression types on PPPoE test...
+> So i have pppoe-server available at my pc,  if you have come across
+> related server configuration for this .... pls do know me.
+> and running PPPoA - test running is not just easy to me as
+> unavailability of the device.
 
+I don't know what you're asking about, but pppd generally enables all
+available compression modes by default (regardless of the underlying
+communication mechanism), and will disable a compression mode either if
+the peer disagrees with the request or if you specify one of the
+documented options to turn off that mode (or to turn off compression
+completely).
 
-Regs,
-Arun
+In other words, if your "server" is actually pppd, then there's nothing
+that you need to do to enable compression.  If it's something other than
+pppd, then this might not be the right mailing list.  You should consult
+your server's documentation to find out what features it offers.
 
+As for selectively turning off available compression types in pppd, I
+still urge you to read the pppd man page.  It's pretty important.  For
+data compression options, you'll find the following:
 
+  noccp, bsdcomp, nobsdcomp, deflate, nodeflate, predictor1,
+  nopredictor1
 
-On Thu, Jun 24, 2010 at 4:54 PM, James Carlson <carlsonj@workingcode.com> w=
-rote:
-> arun b wrote:
->> 3) what is shlc ?
->
-> Is it possible you're asking about "slhc?"
->
-> If so, then that's the name of the kernel module on Linux that
-> implements VJ header compression. =A0That's yet another header compression
-> mechanism, and is specific to IPv4 TCP. =A0It was basically designed to
-> make the usual 40 byte highly-predictable TCP header squeeze down to two
-> or three bytes, so that interactive data (think: "telnet" or "rlogin")
-> is usable over a slow serial link (think: "modems").
->
-> Again, pppd(1M) is your friend. =A0It documents the options for turning VJ
-> header compression on and off and adjusting the number of slots available.
->
-> Header compression does not compress the data itself, and is not in any
-> way related to CCP. =A0Instead, VJ header compression is negotiated by IP=
-CP.
->
-> (The "slhc" module is Linux-specific, and isn't a generic PPP term. =A0On
-> other OSes, you'll see VJ compression implemented in other ways.)
->
-> --
-> James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
-orkingcode.com>
->
+For header compression (again, _not_ data compression), you'll find:
+
+  noaccomp, novj, novjccomp, vj-max-slots
+
+There are also two that are sort of special -- mpshortseq and
+nompshortseq -- that have to do with header compression when using MP.
+You haven't mentioned MP yet, so I'll assume you're not using it.
+
+The really short answer is this: PPP negotiates for everything.  If both
+sides support something, then, great, it'll be enabled.  If either or
+both sides don't support something, then it won't be enabled.  That's
+pretty much the whole story.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
