@@ -1,7 +1,7 @@
 From: arun b <arun.s.bailur@gmail.com>
-Date: Thu, 24 Jun 2010 10:18:23 +0000
+Date: Thu, 24 Jun 2010 10:22:36 +0000
 Subject: Re: PPP comression and extension info required...
-Message-Id: <AANLkTiloLMnG1asSBuH2N1x6gQb_m8gIU9efkEfKKPYD@mail.gmail.com>
+Message-Id: <AANLkTilpQlpsiaCCK0Nq6W9Ab1ZetVwzNr3G5ure7bj3@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <4C2246C1.2000206@workingcode.com>
 In-Reply-To: <4C2246C1.2000206@workingcode.com>
