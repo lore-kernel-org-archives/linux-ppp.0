@@ -1,22 +1,22 @@
-From: David Miller <davem@davemloft.net>
-Date: Thu, 05 Aug 2010 04:56:09 +0000
-Subject: Re: [PATCH] ppp: make channel_ops const
-Message-Id: <20100804.215609.191412753.davem@davemloft.net>
+From: Philip Prindeville <philipp_subx@redfish-solutions.com>
+Date: Mon, 09 Aug 2010 21:35:04 +0000
+Subject: Using pppoa and Solos DSL card
+Message-Id: <4C607488.6000903@redfish-solutions.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20100804103436.72e234d6@nehalam>
-In-Reply-To: <20100804103436.72e234d6@nehalam>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: shemminger@vyatta.com
-Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-From: Stephen Hemminger <shemminger@vyatta.com>
-Date: Wed, 4 Aug 2010 10:34:36 -0700
+  Hi.
 
-> The PPP channel ops structure should be const.
-> Cleanup the declarations to use standard C99 format.
-> 
-> Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
+I'm running 2.6.27.49 and using linux-atm-2.5.1.  I have a Solos ADSL2+ card.
 
-Applied.
+My DSL provider (Qwest) recently bumped me from a PPPoE provisioned DSLAM to a PPPoA RT.
+
+I was wondering what all I needed to get pppoa working, so I went googling for documents but most of what I found was from linux-2.4 and ppp-2.3.0... is there more recent documentation?
+
+Thanks,
+
+-Philip
+
