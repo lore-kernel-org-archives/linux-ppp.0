@@ -1,22 +1,67 @@
-From: Philip Prindeville <philipp_subx@redfish-solutions.com>
-Date: Mon, 09 Aug 2010 21:35:04 +0000
-Subject: Using pppoa and Solos DSL card
-Message-Id: <4C607488.6000903@redfish-solutions.com>
+From: Stephen Marron <debian@solo.boxfusion.net>
+Date: Tue, 24 Aug 2010 09:07:24 +0000
+Subject: multilink with nodetach [PATCH]
+Message-Id: <4C7388FC.8010802@solo.boxfusion.net>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-  Hi.
+Hi
 
-I'm running 2.6.27.49 and using linux-atm-2.5.1.  I have a Solos ADSL2+ card.
+This bug has been Reported in the Debian BTS as bug 538107
 
-My DSL provider (Qwest) recently bumped me from a PPPoE provisioned DSLAM to a PPPoA RT.
+	http://bugs.debian.org/578070
 
-I was wondering what all I needed to get pppoa working, so I went googling for documents but most of what I found was from linux-2.4 and ppp-2.3.0... is there more recent documentation?
+If pppd is used with l2tpd (nodetach) in a multilink situation then this
+feature of pppd causes problems
 
-Thanks,
+	MULTILINK
+	If the first link terminates (for example, because of  a
+	hangup or  a received  LCP  terminate-request)  the  bundle  is
+	not destroyed unless there are no other links remaining in the
+	bundle.  Rather than exiting, the first pppd keeps running
+	after its link terminates, until all the links in the bundle
+	have terminated.
 
--Philip
+pppd remains connected to l2tpd even though it is just acting as a
+multilink master, causing l2tpd to believe that pppd is connected... i
+have resolved the issue in my own system by instructing pppd to detach
+from the terminal after it changes to PHASE_MASTER i have been using
+this patch since 2009-02-19 in our production systems and havent had any
+problems
+
+The "if (!detached)" call is redundant since the detach function already
+checks if the process is detached so can be optionally excluded
+
+I have noticed other people complaining of similar issues when using
+multilink/nodetach in other setups (eg pppoe) I believe that this patch
+may also solve the problem for them, but i have not tested that setup
+
+-----
+diff --git a/pppd/auth.c b/pppd/auth.c
+index fb71944..62648b8 100644
+--- a/pppd/auth.c
++++ b/pppd/auth.c
+@@ -669,8 +669,11 @@ link_terminated(unit)
+        (*the_channel->cleanup)();
+
+     if (doing_multilink && multilink_master) {
+-       if (!bundle_terminating)
++       if (!bundle_terminating) {
+            new_phase(PHASE_MASTER);
++           if (!detached)
++               detach();
++       }
+        else
+            mp_bundle_terminated();
+     } else
+-----
+
+feedback is appreciated :)
+
+Regards
+
+Stephen
 
