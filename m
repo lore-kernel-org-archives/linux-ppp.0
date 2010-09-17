@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 17 Sep 2010 14:10:48 +0000
-Subject: Re: COuple questions regarding ppp
-Message-Id: <4C9376E8.3010605@workingcode.com>
+From: tony.chamberlain@lemko.com
+Date: Fri, 17 Sep 2010 14:19:26 +0000
+Subject: Re:  COuple questions regarding ppp
+Message-Id: <W329041774897031284733166@webmail6>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W297245581100211284730447@webmail32>
 In-Reply-To: <W297245581100211284730447@webmail32>
@@ -10,9 +10,16 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 09/17/10 09:34, tony.chamberlain@lemko.com wrote:
-> We had a customer, call them BT.  They set up a PPP server for us, so
-> that I would do a ppp connection from my machine (Linux) to their's it
+Sorry.  By 192 I meant 192.168.5.0/24 network machine.
+I fixed the problem by adding
+
+     iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+     iptables -t nat -A POSTROUTING -o ppp0 -j MASQUERADE
+
+as for MPPE, that is what I am trying to get to work.  I will send output
+again (if anyone still wants it ;-) ).  I have to recreate it.
+
+===
 > would establish a connection.  My machine is a 192 and they set up a remote
 > IP address for me something like 10.1.1.16 or something.
 
@@ -104,3 +111,6 @@ Without details, it's not really possible to come up with a solution.
 
 -- 
 James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+
+
+
