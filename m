@@ -1,57 +1,49 @@
-From: walter harms <wharms@bfs.de>
-Date: Tue, 12 Oct 2010 14:31:21 +0000
-Subject: Re: Using PPPD pty option and script: controlling stdin buffer size?
-Message-Id: <4CB47139.60200@bfs.de>
+From: Arne Lie <Arne.Lie@sintef.no>
+Date: Tue, 12 Oct 2010 14:36:15 +0000
+Subject: RE: Using PPPD pty option and script: controlling stdin buffer size?
+Message-Id: <291B2C7721AC7B49AD11449A2883992E2E0DF56302@SINTEFEXMBX01.sintef.no>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <291B2C7721AC7B49AD11449A2883992E2E0DF561DB@SINTEFEXMBX01.sintef.no>
 In-Reply-To: <291B2C7721AC7B49AD11449A2883992E2E0DF561DB@SINTEFEXMBX01.sintef.no>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-I am not sure if i understand you correctly,
-but can change the bufferhandling of stdio by setting the buffer size
-using setbuf() (man 3 setbuf)
-
-re,
- wh
-
-
-Arne Lie schrieb:
-> Hi,
->=20
-> We have a HW/SW set-up using Linux PPP over slow links, and have recently=
- abandoned a solution with a dedicated kernel module driver for our specifi=
-c hardware, and are now trying a pure user-mode solution using the pty opti=
-on in pppd. Most if its performance is quite OK, but we see that we do not =
-have complete control of the buffering along the packet signal path. From t=
-he PPPD MAN page it says that pty script starts a pseudo-tty instance, and =
-that our script shall read data from it as it was from stdin using read(0,.=
-..). THIS WORKS. HOWEVER, since our link is slow we have implemented flow c=
-ontrol, and in periods we do not read from stdio. In that period data build=
-s up in stdio, but we see no sigh of data being dropped in the ppp0 interfa=
-ce queue (which is set to 3 packets as is the default value).=20
->=20
-> Question: It seems that the stdin interface has a large buffer, much larg=
-er than we appreciate. Is there any way we can configure its size, making i=
-t smaller?
->=20
-> Best regards,
->=20
->=20
-> Arne Lie
-> SINTEF ICT, Dept. of Communication Systems
-> NO-7465 Trondheim, NORWAY
-> Dir. phone +47 73 59 27 03 - mobile +47 450 20 040
-> e-mail: arne.lie@sintef.no=20
->=20
-> N=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BDr=EF=BF=BD=EF=BF=BDy=EF=BF=
-=BD=EF=BF=BD=EF=BF=BDb=EF=BF=BDX=EF=BF=BD=EF=BF=BD=C7=A7v=EF=BF=BD^=EF=BF=
-=BD)=DE=BA{.n=EF=BF=BD+=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD{=EF=BF=BD=EF=BF=
-=BD=EF=BF=BDb=EF=BF=BD=EF=BF=BD^n=EF=BF=BDr=EF=BF=BD=EF=BF=BDz=EF=BF=BD=1A=
-=EF=BF=BD=EF=BF=BDh=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD&=EF=BF=BD=EF=BF=BD=
-=1E=EF=BF=BDG=EF=BF=BD=EF=BF=BD=EF=BF=BDh=EF=BF=BD=03(=EF=BF=BD=E9=9A=8E=EF=
-=BF=BD=DD=A2j"=EF=BF=BD=EF=BF=BD=1A=EF=BF=BD=1Bm=EF=BF=BD=EF=BF=BD=EF=BF=BD=
-=EF=BF=BD=EF=BF=BDz=EF=BF=BD=DE=96=EF=BF=BD=EF=BF=BD=EF=BF=BDf=EF=BF=BD=EF=
-=BF=BD=EF=BF=BDh=EF=BF=BD=EF=BF=BD=EF=BF=BD~=EF=BF=BDmml=3D
+V2FsdGVyLAoKdGhhbmtzLCB0aGlzIGNvdWxkIGJlIHRoZSB0cmljayB5ZXMsIHdlIHdpbGwgaGF2
+ZSBhIGxvb2sgYXQgdGhhdCBvbmUhCgovQXJuZQoKPiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0t
+LQo+IEZyb206IHdhbHRlciBoYXJtcyBbbWFpbHRvOndoYXJtc0BiZnMuZGVdCj4gU2VudDogMTIu
+IG9rdG9iZXIgMjAxMCAxNjozMQo+IFRvOiBBcm5lIExpZQo+IENjOiBwcHAgTGludXgKPiBTdWJq
+ZWN0OiBSZTogVXNpbmcgUFBQRCBwdHkgb3B0aW9uIGFuZCBzY3JpcHQ6IGNvbnRyb2xsaW5nIHN0
+ZGluIGJ1ZmZlcgo+IHNpemU/Cj4gCj4gSSBhbSBub3Qgc3VyZSBpZiBpIHVuZGVyc3RhbmQgeW91
+IGNvcnJlY3RseSwKPiBidXQgY2FuIGNoYW5nZSB0aGUgYnVmZmVyaGFuZGxpbmcgb2Ygc3RkaW8g
+Ynkgc2V0dGluZyB0aGUgYnVmZmVyIHNpemUKPiB1c2luZyBzZXRidWYoKSAobWFuIDMgc2V0YnVm
+KQo+IAo+IHJlLAo+ICB3aAo+IAo+IAo+IEFybmUgTGllIHNjaHJpZWI6Cj4gPiBIaSwKPiA+Cj4g
+PiBXZSBoYXZlIGEgSFcvU1cgc2V0LXVwIHVzaW5nIExpbnV4IFBQUCBvdmVyIHNsb3cgbGlua3Ms
+IGFuZCBoYXZlCj4gcmVjZW50bHkgYWJhbmRvbmVkIGEgc29sdXRpb24gd2l0aCBhIGRlZGljYXRl
+ZCBrZXJuZWwgbW9kdWxlIGRyaXZlciBmb3IKPiBvdXIgc3BlY2lmaWMgaGFyZHdhcmUsIGFuZCBh
+cmUgbm93IHRyeWluZyBhIHB1cmUgdXNlci1tb2RlIHNvbHV0aW9uCj4gdXNpbmcgdGhlIHB0eSBv
+cHRpb24gaW4gcHBwZC4gTW9zdCBpZiBpdHMgcGVyZm9ybWFuY2UgaXMgcXVpdGUgT0ssIGJ1dAo+
+IHdlIHNlZSB0aGF0IHdlIGRvIG5vdCBoYXZlIGNvbXBsZXRlIGNvbnRyb2wgb2YgdGhlIGJ1ZmZl
+cmluZyBhbG9uZyB0aGUKPiBwYWNrZXQgc2lnbmFsIHBhdGguIEZyb20gdGhlIFBQUEQgTUFOIHBh
+Z2UgaXQgc2F5cyB0aGF0IHB0eSBzY3JpcHQKPiBzdGFydHMgYSBwc2V1ZG8tdHR5IGluc3RhbmNl
+LCBhbmQgdGhhdCBvdXIgc2NyaXB0IHNoYWxsIHJlYWQgZGF0YSBmcm9tCj4gaXQgYXMgaXQgd2Fz
+IGZyb20gc3RkaW4gdXNpbmcgcmVhZCgwLC4uLikuIFRISVMgV09SS1MuIEhPV0VWRVIsIHNpbmNl
+Cj4gb3VyIGxpbmsgaXMgc2xvdyB3ZSBoYXZlIGltcGxlbWVudGVkIGZsb3cgY29udHJvbCwgYW5k
+IGluIHBlcmlvZHMgd2UgZG8KPiBub3QgcmVhZCBmcm9tIHN0ZGlvLiBJbiB0aGF0IHBlcmlvZCBk
+YXRhIGJ1aWxkcyB1cCBpbiBzdGRpbywgYnV0IHdlIHNlZQo+IG5vIHNpZ2ggb2YgZGF0YSBiZWlu
+ZyBkcm9wcGVkIGluIHRoZSBwcHAwIGludGVyZmFjZSBxdWV1ZSAod2hpY2ggaXMgc2V0Cj4gdG8g
+MyBwYWNrZXRzIGFzIGlzIHRoZSBkZWZhdWx0IHZhbHVlKS4KPiA+Cj4gPiBRdWVzdGlvbjogSXQg
+c2VlbXMgdGhhdCB0aGUgc3RkaW4gaW50ZXJmYWNlIGhhcyBhIGxhcmdlIGJ1ZmZlciwgbXVjaAo+
+IGxhcmdlciB0aGFuIHdlIGFwcHJlY2lhdGUuIElzIHRoZXJlIGFueSB3YXkgd2UgY2FuIGNvbmZp
+Z3VyZSBpdHMgc2l6ZSwKPiBtYWtpbmcgaXQgc21hbGxlcj8KPiA+Cj4gPiBCZXN0IHJlZ2FyZHMs
+Cj4gPgo+ID4KPiA+IEFybmUgTGllCj4gPiBTSU5URUYgSUNULCBEZXB0LiBvZiBDb21tdW5pY2F0
+aW9uIFN5c3RlbXMKPiA+IE5PLTc0NjUgVHJvbmRoZWltLCBOT1JXQVkKPiA+IERpci4gcGhvbmUg
+KzQ3IDczIDU5IDI3IDAzIC0gbW9iaWxlICs0NyA0NTAgMjAgMDQwCj4gPiBlLW1haWw6IGFybmUu
+bGllQHNpbnRlZi5ubwo+ID4KPiA+Cj4gTu+/ve+/ve+/ve+/ve+/vXLvv73vv71577+977+977+9
+Yu+/vVjvv73vv73Hp3bvv71e77+9Kd66ey5u77+9K++/ve+/ve+/ve+/vXvvv73vv73vv71i77+9
+77+9Xm7vv71y77+977+9eu+/vRrvv73vv71o77+977+977+977+9Ju+/ve+/vR7vv71H77+977+9
+77+9aO+/vQMo77+9Cj4g6ZqO77+93aJqIu+/ve+/vRrvv70bbe+/ve+/ve+/ve+/ve+/vXrvv73e
+lu+/ve+/ve+/vWbvv73vv73vv71o77+977+977+9fu+/vW1tbD0K//Tounsubscribefromthisl
+isv/sendthelinf/unsubscribelinux/ppp/inthebodyofamessagetomajordomr/vger/ker
+nen/orgMoremajordomoinfoathttp///vger/kernel/org/majordomo/infr/htmlCg==
