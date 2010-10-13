@@ -1,42 +1,52 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 13 Oct 2010 12:08:48 +0000
-Subject: Re: Using PPPD pty option and script: controlling stdin buffer size?
-Message-Id: <4CB5A150.2020908@workingcode.com>
+From: Arne Lie <Arne.Lie@sintef.no>
+Date: Wed, 13 Oct 2010 12:19:52 +0000
+Subject: RE: Using PPPD pty option and script: controlling stdin buffer size?
+Message-Id: <291B2C7721AC7B49AD11449A2883992E2E0DF5661E@SINTEFEXMBX01.sintef.no>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <291B2C7721AC7B49AD11449A2883992E2E0DF561DB@SINTEFEXMBX01.sintef.no>
 In-Reply-To: <291B2C7721AC7B49AD11449A2883992E2E0DF561DB@SINTEFEXMBX01.sintef.no>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-Arne Lie wrote:
-> [Arne::] With all the respect, congestion control needs normally packet loss
-> due to traffic overload to respond correctly, yes?
-
-No.  You've also got measurable delay, which I think is the key to
-solving this problem.
-
-> With the large buffering
-> of stdin this do not happen before long... We're dealing with underwater 
-> networks with severely slow links and
-> large propagation delays. We need relative short buffers to avoid seeing too
-> big RTTs. Default PPP interfaces are set up with txqueuelen = 3, which is fine.
-> However, when the *effective* queue size is this plus the stdin buffering, which
-> we do not know the size of in bytes, but is in order of minutes (!) in RTT for such 
-> slow links, then it starts to get an annoyance. 
-
-What would you do if the "excessive" buffering were in some box in the
-middle of the network?  For many older systems, transmit queues of 50
-packets or more are not at all uncommon.
-
-I expect that an algorithm that tracks both round-trip latency and
-throughput (using feedback from the peer) should be able to detect when
-increasing the send rate only causes latency to go up and doesn't change
-throughput.  That's the optimal rate.
-
-If you feel like hacking your kernel anyway then good luck with that,
-but I suspect you'll be back to this problem in the future.
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQo+IEZyb206IEphbWVzIENhcmxzb24gW21haWx0
+bzpjYXJsc29uakB3b3JraW5nY29kZS5jb21dCj4gU2VudDogMTMuIG9rdG9iZXIgMjAxMCAxNDow
+OQo+IFRvOiBBcm5lIExpZQo+IENjOiB3aGFybXNAYmZzLmRlOyBwcHAgTGludXgKPiBTdWJqZWN0
+OiBSZTogVXNpbmcgUFBQRCBwdHkgb3B0aW9uIGFuZCBzY3JpcHQ6IGNvbnRyb2xsaW5nIHN0ZGlu
+IGJ1ZmZlcgo+IHNpemU/Cj4gCj4gQXJuZSBMaWUgd3JvdGU6Cj4gPiBbQXJuZTo6XSBXaXRoIGFs
+bCB0aGUgcmVzcGVjdCwgY29uZ2VzdGlvbiBjb250cm9sIG5lZWRzIG5vcm1hbGx5Cj4gcGFja2V0
+IGxvc3MKPiA+IGR1ZSB0byB0cmFmZmljIG92ZXJsb2FkIHRvIHJlc3BvbmQgY29ycmVjdGx5LCB5
+ZXM/Cj4gCj4gTm8uICBZb3UndmUgYWxzbyBnb3QgbWVhc3VyYWJsZSBkZWxheSwgd2hpY2ggSSB0
+aGluayBpcyB0aGUga2V5IHRvCj4gc29sdmluZyB0aGlzIHByb2JsZW0uCj4gCj4gPiBXaXRoIHRo
+ZSBsYXJnZSBidWZmZXJpbmcKPiA+IG9mIHN0ZGluIHRoaXMgZG8gbm90IGhhcHBlbiBiZWZvcmUg
+bG9uZy4uLiBXZSdyZSBkZWFsaW5nIHdpdGgKPiB1bmRlcndhdGVyCj4gPiBuZXR3b3JrcyB3aXRo
+IHNldmVyZWx5IHNsb3cgbGlua3MgYW5kCj4gPiBsYXJnZSBwcm9wYWdhdGlvbiBkZWxheXMuIFdl
+IG5lZWQgcmVsYXRpdmUgc2hvcnQgYnVmZmVycyB0byBhdm9pZAo+IHNlZWluZyB0b28KPiA+IGJp
+ZyBSVFRzLiBEZWZhdWx0IFBQUCBpbnRlcmZhY2VzIGFyZSBzZXQgdXAgd2l0aCB0eHF1ZXVlbGVu
+ID0gMywKPiB3aGljaCBpcyBmaW5lLgo+ID4gSG93ZXZlciwgd2hlbiB0aGUgKmVmZmVjdGl2ZSog
+cXVldWUgc2l6ZSBpcyB0aGlzIHBsdXMgdGhlIHN0ZGluCj4gYnVmZmVyaW5nLCB3aGljaAo+ID4g
+d2UgZG8gbm90IGtub3cgdGhlIHNpemUgb2YgaW4gYnl0ZXMsIGJ1dCBpcyBpbiBvcmRlciBvZiBt
+aW51dGVzICghKQo+IGluIFJUVCBmb3Igc3VjaAo+ID4gc2xvdyBsaW5rcywgdGhlbiBpdCBzdGFy
+dHMgdG8gZ2V0IGFuIGFubm95YW5jZS4KPiAKPiBXaGF0IHdvdWxkIHlvdSBkbyBpZiB0aGUgImV4
+Y2Vzc2l2ZSIgYnVmZmVyaW5nIHdlcmUgaW4gc29tZSBib3ggaW4gdGhlCj4gbWlkZGxlIG9mIHRo
+ZSBuZXR3b3JrPyAgRm9yIG1hbnkgb2xkZXIgc3lzdGVtcywgdHJhbnNtaXQgcXVldWVzIG9mIDUw
+Cj4gcGFja2V0cyBvciBtb3JlIGFyZSBub3QgYXQgYWxsIHVuY29tbW9uLgo+IAo+IEkgZXhwZWN0
+IHRoYXQgYW4gYWxnb3JpdGhtIHRoYXQgdHJhY2tzIGJvdGggcm91bmQtdHJpcCBsYXRlbmN5IGFu
+ZAo+IHRocm91Z2hwdXQgKHVzaW5nIGZlZWRiYWNrIGZyb20gdGhlIHBlZXIpIHNob3VsZCBiZSBh
+YmxlIHRvIGRldGVjdCB3aGVuCj4gaW5jcmVhc2luZyB0aGUgc2VuZCByYXRlIG9ubHkgY2F1c2Vz
+IGxhdGVuY3kgdG8gZ28gdXAgYW5kIGRvZXNuJ3QKPiBjaGFuZ2UKPiB0aHJvdWdocHV0LiAgVGhh
+dCdzIHRoZSBvcHRpbWFsIHJhdGUuCj4gCj4gSWYgeW91IGZlZWwgbGlrZSBoYWNraW5nIHlvdXIg
+a2VybmVsIGFueXdheSB0aGVuIGdvb2QgbHVjayB3aXRoIHRoYXQsCj4gYnV0IEkgc3VzcGVjdCB5
+b3UnbGwgYmUgYmFjayB0byB0aGlzIHByb2JsZW0gaW4gdGhlIGZ1dHVyZS4KW0FybmU6Ol0gVGhh
+bmtzIGZvciB5b3VyIGlucHV0LCBKYW1lcy4gS2VybmVsIGhhY2tpbmcgaXMgb3V0IG9mIHRoZSBx
+dWVzdGlvbiwgSSBndWVzcy4uLiA7LSkgV2UgZG8gaG93ZXZlciBhbHJlYWR5IGhhdmUgYW4gYWx0
+ZXJuYXRpdmUsIHdoZXJlIHdlIHVzZSBhIHNwZWNpYWxseSBkZXZlbG9wZWQga2VybmVsIG1vZHVs
+ZSBzdyBhcyAidHR5IGRldmljZSBkcml2ZXIiLCBhbmQgd2hlcmUgd2UgaGF2ZSBiZXR0ZXIgY29u
+dHJvbCBvdmVyIHRoZSBidWZmZXJpbmcuIEl0IGhhcyBub3QgcHJvdmVuIHBlcmZlY3RseSBzdGFi
+bGUgdGhvdWdoIGZvciBhbGwgcG9zc2libGUgTGludXggcGxhdGZvcm1zLCBidXQgbWlnaHQgYmUg
+YSBiZXR0ZXIgb3B0aW9uIGZvciBmdXJ0aGVyIHJlZmluZW1lbnRzL2RlYnVnZ2luZywgdGhhbiB0
+aGUgcHVyZSB1c2VyIG1vZGUgc29sdXRpb24gdGhhdCB3ZSBoYXZlIGRpc2N1c3NlZCBoZXJlLgog
+dGhhbmtzIGEgbG90LApBcm5lCv/06Lp7Lm7HK4m3n66JrYYrJYrL/7Hp3bYXpYp3/7p7Lm7HK4m3
+pYp7sf6aaf4p7YXm6HcqH2pnrLGoHraJmo6K3aJq/74Hq/5Hq53p/6K4DKK3pmo6K3aJqIp36GrY
+bbaf//74Hq/5Hq53pf6K4P5mo6K3aJqP4p36/4bZpQo=
