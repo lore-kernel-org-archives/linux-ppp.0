@@ -1,48 +1,56 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 12 Oct 2010 15:18:33 +0000
-Subject: Re: Using PPPD pty option and script: controlling stdin buffer size?
-Message-Id: <4CB47C49.2090401@workingcode.com>
+From: Arne Lie <Arne.Lie@sintef.no>
+Date: Wed, 13 Oct 2010 06:48:38 +0000
+Subject: RE: Using PPPD pty option and script: controlling stdin buffer size?
+Message-Id: <291B2C7721AC7B49AD11449A2883992E2E0DF563EB@SINTEFEXMBX01.sintef.no>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <291B2C7721AC7B49AD11449A2883992E2E0DF561DB@SINTEFEXMBX01.sintef.no>
 In-Reply-To: <291B2C7721AC7B49AD11449A2883992E2E0DF561DB@SINTEFEXMBX01.sintef.no>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
 To: linux-ppp@vger.kernel.org
 
-Arne Lie wrote:
-> Walter,
-> 
-> thanks, this could be the trick yes, we will have a look at that one!
-> 
-> /Arne
-> 
->> -----Original Message-----
->> From: walter harms [mailto:wharms@bfs.de]
->> Sent: 12. oktober 2010 16:31
->> To: Arne Lie
->> Cc: ppp Linux
->> Subject: Re: Using PPPD pty option and script: controlling stdin buffer
->> size?
->>
->> I am not sure if i understand you correctly,
->> but can change the bufferhandling of stdio by setting the buffer size
->> using setbuf() (man 3 setbuf)
-
-That only does something if you're reading through the stdio functions
-(e.g., fread(3C)), and not through the recommended section low-level
-read(2) function.  Using stdio to read/write from the master side of a
-pty pair would be ... odd.
-
-If you're seeing unwanted buffering here, I think you'll need to modify
-either the kernel's pty subsystem or the PPP line discipline that it's
-using.
-
-I wouldn't recommend doing this, though.  Buffering is generally a good
-thing.  If your application doesn't do sufficient congestion control to
-avoid getting unacceptably stuck behind a long queue in the middle of
-the network, then I'd call that a bug in the application, rather than a
-problem with the network interface.
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQo+IEZyb206IEphbWVzIENhcmxzb24gW21haWx0
+bzpjYXJsc29uakB3b3JraW5nY29kZS5jb21dCj4gU2VudDogMTIuIG9rdG9iZXIgMjAxMCAxNzox
+OQo+IFRvOiBBcm5lIExpZQo+IENjOiB3aGFybXNAYmZzLmRlOyBwcHAgTGludXgKPiBTdWJqZWN0
+OiBSZTogVXNpbmcgUFBQRCBwdHkgb3B0aW9uIGFuZCBzY3JpcHQ6IGNvbnRyb2xsaW5nIHN0ZGlu
+IGJ1ZmZlcgo+IHNpemU/Cj4gCj4gQXJuZSBMaWUgd3JvdGU6Cj4gPiBXYWx0ZXIsCj4gPgo+ID4g
+dGhhbmtzLCB0aGlzIGNvdWxkIGJlIHRoZSB0cmljayB5ZXMsIHdlIHdpbGwgaGF2ZSBhIGxvb2sg
+YXQgdGhhdCBvbmUhCj4gPgo+ID4gL0FybmUKPiA+Cj4gPj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdl
+LS0tLS0KPiA+PiBGcm9tOiB3YWx0ZXIgaGFybXMgW21haWx0bzp3aGFybXNAYmZzLmRlXQo+ID4+
+IFNlbnQ6IDEyLiBva3RvYmVyIDIwMTAgMTY6MzEKPiA+PiBUbzogQXJuZSBMaWUKPiA+PiBDYzog
+cHBwIExpbnV4Cj4gPj4gU3ViamVjdDogUmU6IFVzaW5nIFBQUEQgcHR5IG9wdGlvbiBhbmQgc2Ny
+aXB0OiBjb250cm9sbGluZyBzdGRpbgo+IGJ1ZmZlcgo+ID4+IHNpemU/Cj4gPj4KPiA+PiBJIGFt
+IG5vdCBzdXJlIGlmIGkgdW5kZXJzdGFuZCB5b3UgY29ycmVjdGx5LAo+ID4+IGJ1dCBjYW4gY2hh
+bmdlIHRoZSBidWZmZXJoYW5kbGluZyBvZiBzdGRpbyBieSBzZXR0aW5nIHRoZSBidWZmZXIKPiBz
+aXplCj4gPj4gdXNpbmcgc2V0YnVmKCkgKG1hbiAzIHNldGJ1ZikKPiAKPiBUaGF0IG9ubHkgZG9l
+cyBzb21ldGhpbmcgaWYgeW91J3JlIHJlYWRpbmcgdGhyb3VnaCB0aGUgc3RkaW8gZnVuY3Rpb25z
+Cj4gKGUuZy4sIGZyZWFkKDNDKSksIGFuZCBub3QgdGhyb3VnaCB0aGUgcmVjb21tZW5kZWQgc2Vj
+dGlvbiBsb3ctbGV2ZWwKPiByZWFkKDIpIGZ1bmN0aW9uLiAgVXNpbmcgc3RkaW8gdG8gcmVhZC93
+cml0ZSBmcm9tIHRoZSBtYXN0ZXIgc2lkZSBvZiBhCj4gcHR5IHBhaXIgd291bGQgYmUgLi4uIG9k
+ZC4KW0FybmU6Ol0gIlN0ZGlvIiB3YXMgYSBtaXN0eXBpbmcgZnJvbSBteSBzaWRlOiBJIG1lYW50
+ICJzdGRpbiIgYW5kIHVzaW5nIApsb3ctbGV2ZWwgcmVhZCBhbGwgdGhlIHdheS4KPiAKPiBJZiB5
+b3UncmUgc2VlaW5nIHVud2FudGVkIGJ1ZmZlcmluZyBoZXJlLCBJIHRoaW5rIHlvdSdsbCBuZWVk
+IHRvIG1vZGlmeQo+IGVpdGhlciB0aGUga2VybmVsJ3MgcHR5IHN1YnN5c3RlbSBvciB0aGUgUFBQ
+IGxpbmUgZGlzY2lwbGluZSB0aGF0IGl0J3MKPiB1c2luZy4KPiAKPiBJIHdvdWxkbid0IHJlY29t
+bWVuZCBkb2luZyB0aGlzLCB0aG91Z2guICBCdWZmZXJpbmcgaXMgZ2VuZXJhbGx5IGEgZ29vZAo+
+IHRoaW5nLiAgSWYgeW91ciBhcHBsaWNhdGlvbiBkb2Vzbid0IGRvIHN1ZmZpY2llbnQgY29uZ2Vz
+dGlvbiBjb250cm9sIHRvCj4gYXZvaWQgZ2V0dGluZyB1bmFjY2VwdGFibHkgc3R1Y2sgYmVoaW5k
+IGEgbG9uZyBxdWV1ZSBpbiB0aGUgbWlkZGxlIG9mCj4gdGhlIG5ldHdvcmssIHRoZW4gSSdkIGNh
+bGwgdGhhdCBhIGJ1ZyBpbiB0aGUgYXBwbGljYXRpb24sIHJhdGhlciB0aGFuIGEKPiBwcm9ibGVt
+IHdpdGggdGhlIG5ldHdvcmsgaW50ZXJmYWNlLgo+IAo+IC0tCj4gSmFtZXMgQ2FybHNvbiAgICAg
+ICAgIDQyLjcwM04gNzEuMDc2Vwo+IDxjYXJsc29uakB3b3JraW5nY29kZS5jb20+CgpbQXJuZTo6
+XSBXaXRoIGFsbCB0aGUgcmVzcGVjdCwgY29uZ2VzdGlvbiBjb250cm9sIG5lZWRzIG5vcm1hbGx5
+IHBhY2tldCBsb3NzCmR1ZSB0byB0cmFmZmljIG92ZXJsb2FkIHRvIHJlc3BvbmQgY29ycmVjdGx5
+LCB5ZXM/IFdpdGggdGhlIGxhcmdlIGJ1ZmZlcmluZyAKb2Ygc3RkaW4gdGhpcyBkbyBub3QgaGFw
+cGVuIGJlZm9yZSBsb25nLi4uIFdlJ3JlIGRlYWxpbmcgd2l0aCB1bmRlcndhdGVyIApuZXR3b3Jr
+cyB3aXRoIHNldmVyZWx5IHNsb3cgbGlua3MgYW5kCmxhcmdlIHByb3BhZ2F0aW9uIGRlbGF5cy4g
+V2UgbmVlZCByZWxhdGl2ZSBzaG9ydCBidWZmZXJzIHRvIGF2b2lkIHNlZWluZyB0b28KYmlnIFJU
+VHMuIERlZmF1bHQgUFBQIGludGVyZmFjZXMgYXJlIHNldCB1cCB3aXRoIHR4cXVldWVsZW4gPSAz
+LCB3aGljaCBpcyBmaW5lLgpIb3dldmVyLCB3aGVuIHRoZSAqZWZmZWN0aXZlKiBxdWV1ZSBzaXpl
+IGlzIHRoaXMgcGx1cyB0aGUgc3RkaW4gYnVmZmVyaW5nLCB3aGljaAp3ZSBkbyBub3Qga25vdyB0
+aGUgc2l6ZSBvZiBpbiBieXRlcywgYnV0IGlzIGluIG9yZGVyIG9mIG1pbnV0ZXMgKCEpIGluIFJU
+VCBmb3Igc3VjaCAKc2xvdyBsaW5rcywgdGhlbiBpdCBzdGFydHMgdG8gZ2V0IGFuIGFubm95YW5j
+ZS4gCv/06Lp7Lm7HK4m3n66JrYYrJYrL/7Hp3bYXpYp3/7p7Lm7HK4m3pYp7sf6aaf4p7YXm6Hcq
+H2pnrLGoHraJmo6K3aJq/74Hq/5Hq53p/6K4DKK3pmo6K3aJqIp36GrYbbaf//74Hq/5Hq53pf6K
+4P5mo6K3aJqP4p36/4bZpQo=
