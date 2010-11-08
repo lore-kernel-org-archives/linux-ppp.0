@@ -1,24 +1,34 @@
-From: David Miller <davem@davemloft.net>
-Date: Sun, 28 Nov 2010 19:33:43 +0000
-Subject: Re: [PATCH net-2.6] net, ppp: Report correct error code if unit
-Message-Id: <20101128.113343.200360663.davem@davemloft.net>
+From: Richard Hartmann <richih.mailinglist@gmail.com>
+Date: Mon, 08 Nov 2010 14:05:30 +0000
+Subject: Re: [Patch] fix packet loss and massive ping spikes with PPP multi-link
+Message-Id: <AANLkTi=GHmqeb=8rMZAnpqdKGbTEf2mRYhygX1aC2hyD@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20101123214344.GB1839@lenovo>
-In-Reply-To: <20101123214344.GB1839@lenovo>
+References: <2d460de71003260850x7f90d04cy79ac853464108182@mail.gmail.com>
+ <20100326160226.0159ac3b@lxorguk.ukuu.org.uk> <4BACE827.4070006@gmail.com>
+ <20100326170428.6c1ad66c@lxorguk.ukuu.org.uk> <4BB31E00.8060204@netservers.co.uk>
+ <20100529021624.GA2538@brick.ozlabs.ibm.com> <4C03E1CD.4000809@netservers.co.uk>
+ <4C0670E2.1090708@netservers.co.uk>
+In-Reply-To: <4C0670E2.1090708@netservers.co.uk>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: gorcunov@gmail.com
-Cc: netdev@vger.kernel.org, paulus@samba.org, linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: Ben McKeegan <ben@netservers.co.uk>
+Cc: Paul Mackerras <paulus@samba.org>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Alan Cox <alan@lxorguk.ukuu.org.uk>, "Alexander E. Patrakov" <patrakov@gmail.com>, linux-kernel@vger.kernel.org, gabriele.paoloni@intel.com
 
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Date: Wed, 24 Nov 2010 00:43:44 +0300
+On Wed, Jun 2, 2010 at 16:55, Ben McKeegan <ben@netservers.co.uk> wrote:
 
-> Allocating unit from ird might return several error codes
-> not only -EAGAIN, so it should not be changed and returned
-> precisely. Same time unit release procedure should be invoked
-> only if device is unregistering.
-> 
-> Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
+> Still working on this, updating the patch wasn't as trivial as I thought as
+> it clashed with Gabriele Paoloni's ppp_mp_explode redesign.  However, while
+> looking at this code I believe I have found a bug which might have been
+> contributing to the poor performance the OP was experiencing.   For the case
+> where channel speeds are unknown and there are more than 2 channels it would
+> miscalculate the fragment sizes so they are not balanced on the channels.
+>
+> Patch for the bug to follow immediately.
 
-Looks good to me, applied, thanks Cyrill.
+Is there any update on this? It's been quite some time since you last updated
+on this issue.
+
+
+Thanks a lot,
+Richard
