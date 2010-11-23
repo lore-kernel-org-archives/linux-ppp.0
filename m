@@ -1,79 +1,118 @@
-From: Stephen Marron <debian@solo.boxfusion.net>
-Date: Wed, 20 Oct 2010 05:35:45 +0000
-Subject: Re: multilink with nodetach [PATCH]
-Message-Id: <4CBE7CE1.1070506@solo.boxfusion.net>
+From: Cyrill Gorcunov <gorcunov@gmail.com>
+Date: Tue, 23 Nov 2010 21:43:44 +0000
+Subject: [PATCH net-2.6] net, ppp: Report correct error code if unit
+Message-Id: <20101123214344.GB1839@lenovo>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: LNML <netdev@vger.kernel.org>
+Cc: Paul Mackerras <paulus@samba.org>, David Miller <davem@davemloft.net>, linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org
 
-*Bump* :)
+Allocating unit from ird might return several error codes
+not only -EAGAIN, so it should not be changed and returned
+precisely. Same time unit release procedure should be invoked
+only if device is unregistering.
 
-Is there any chance of the below patch making it in to mainline?
+Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
+CC: Paul Mackerras <paulus@samba.org>
+---
+Please review, thanks! (I've tested it a bit but more tests would
+be really appreciated as well as comments)
 
-Im happy to test it in any specific scenarios that someone might have
-concerns with... or if further explanation is nessicary im happy to
-answer any questions that you might have?
+ drivers/net/ppp_generic.c |   43 ++++++++++++++++++++++---------------------
+ 1 file changed, 22 insertions(+), 21 deletions(-)
 
-Regards
-
-Stephen
-
-On 24/08/10 18:25, Stephen Marron wrote:
-> Hi
-> 
-> This bug has been Reported in the Debian BTS as bug 538107
-> 
-> 	http://bugs.debian.org/578070
-> 
-> If pppd is used with l2tpd (nodetach) in a multilink situation then this
-> feature of pppd causes problems
-> 
-> 	MULTILINK
-> 	If the first link terminates (for example, because of  a
-> 	hangup or  a received  LCP  terminate-request)  the  bundle  is
-> 	not destroyed unless there are no other links remaining in the
-> 	bundle.  Rather than exiting, the first pppd keeps running
-> 	after its link terminates, until all the links in the bundle
-> 	have terminated.
-> 
-> pppd remains connected to l2tpd even though it is just acting as a
-> multilink master, causing l2tpd to believe that pppd is connected... i
-> have resolved the issue in my own system by instructing pppd to detach
-> from the terminal after it changes to PHASE_MASTER i have been using
-> this patch since 2009-02-19 in our production systems and havent had any
-> problems
-> 
-> The "if (!detached)" call is redundant since the detach function already
-> checks if the process is detached so can be optionally excluded
-> 
-> I have noticed other people complaining of similar issues when using
-> multilink/nodetach in other setups (eg pppoe) I believe that this patch
-> may also solve the problem for them, but i have not tested that setup
-> 
-> -----
-> diff --git a/pppd/auth.c b/pppd/auth.c
-> index fb71944..62648b8 100644
-> --- a/pppd/auth.c
-> +++ b/pppd/auth.c
-> @@ -669,8 +669,11 @@ link_terminated(unit)
->         (*the_channel->cleanup)();
-> 
->      if (doing_multilink && multilink_master) {
-> -       if (!bundle_terminating)
-> +       if (!bundle_terminating) {
->             new_phase(PHASE_MASTER);
-> +           if (!detached)
-> +               detach();
-> +       }
->         else
->             mp_bundle_terminated();
->      } else
-> -----
-> 
-> feedback is appreciated :)
-> 
-> Regards
-> 
-> Stephen
+Index: linux-2.6.git/drivers/net/ppp_generic.c
+==================================--- linux-2.6.git.orig/drivers/net/ppp_generic.c
++++ linux-2.6.git/drivers/net/ppp_generic.c
+@@ -2584,16 +2584,16 @@ ppp_create_interface(struct net *net, in
+ 	 */
+ 	dev_net_set(dev, net);
+ 
+-	ret = -EEXIST;
+ 	mutex_lock(&pn->all_ppp_mutex);
+ 
+ 	if (unit < 0) {
+ 		unit = unit_get(&pn->units_idr, ppp);
+ 		if (unit < 0) {
+-			*retp = unit;
++			ret = unit;
+ 			goto out2;
+ 		}
+ 	} else {
++		ret = -EEXIST;
+ 		if (unit_find(&pn->units_idr, unit))
+ 			goto out2; /* unit already exists */
+ 		/*
+@@ -2668,10 +2668,10 @@ static void ppp_shutdown_interface(struc
+ 		ppp->closing = 1;
+ 		ppp_unlock(ppp);
+ 		unregister_netdev(ppp->dev);
++		unit_put(&pn->units_idr, ppp->file.index);
+ 	} else
+ 		ppp_unlock(ppp);
+ 
+-	unit_put(&pn->units_idr, ppp->file.index);
+ 	ppp->file.dead = 1;
+ 	ppp->owner = NULL;
+ 	wake_up_interruptible(&ppp->file.rwait);
+@@ -2859,8 +2859,7 @@ static void __exit ppp_cleanup(void)
+  * by holding all_ppp_mutex
+  */
+ 
+-/* associate pointer with specified number */
+-static int unit_set(struct idr *p, void *ptr, int n)
++static int __unit_alloc(struct idr *p, void *ptr, int n)
+ {
+ 	int unit, err;
+ 
+@@ -2871,10 +2870,24 @@ again:
+ 	}
+ 
+ 	err = idr_get_new_above(p, ptr, n, &unit);
+-	if (err = -EAGAIN)
+-		goto again;
++	if (err < 0) {
++		if (err = -EAGAIN)
++			goto again;
++		return err;
++	}
++
++	return unit;
++}
++
++/* associate pointer with specified number */
++static int unit_set(struct idr *p, void *ptr, int n)
++{
++	int unit;
+ 
+-	if (unit != n) {
++	unit = __unit_alloc(p, ptr, n);
++	if (unit < 0)
++		return unit;
++	else if (unit != n) {
+ 		idr_remove(p, unit);
+ 		return -EINVAL;
+ 	}
+@@ -2885,19 +2898,7 @@ again:
+ /* get new free unit number and associate pointer with it */
+ static int unit_get(struct idr *p, void *ptr)
+ {
+-	int unit, err;
+-
+-again:
+-	if (!idr_pre_get(p, GFP_KERNEL)) {
+-		printk(KERN_ERR "PPP: No free memory for idr\n");
+-		return -ENOMEM;
+-	}
+-
+-	err = idr_get_new_above(p, ptr, 0, &unit);
+-	if (err = -EAGAIN)
+-		goto again;
+-
+-	return unit;
++	return __unit_alloc(p, ptr, 0);
+ }
+ 
+ /* put unit number back to a pool */
