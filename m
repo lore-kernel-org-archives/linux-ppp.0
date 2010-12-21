@@ -1,48 +1,59 @@
-From: James Cameron <quozl@laptop.org>
-Date: Thu, 30 Dec 2010 22:55:07 +0000
-Subject: Re: Error configuring 2 Huawei (EC1261 model )CDMA modem at same
-Message-Id: <20101230225507.GD4279@us.netrek.org>
+From: Stephen Hemminger <shemminger@vyatta.com>
+Date: Tue, 21 Dec 2010 03:58:33 +0000
+Subject: [PATCH] ppp: allow disabling multilink protocol ID compression
+Message-Id: <20101220195833.26786ec5@nehalam>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <AANLkTimJxOafgL6qg9ENCRHWqptb14tpzQY7Gi2G10YG@mail.gmail.com>
-In-Reply-To: <AANLkTimJxOafgL6qg9ENCRHWqptb14tpzQY7Gi2G10YG@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-On Thu, Dec 30, 2010 at 02:47:59PM +0530, vandana salve wrote:
-> At a time only one modem is configured successfully. This works with
-> either of the modem but not with both modems at same time
+Linux would not connect to other router running old version Cisco IOS (12.0).
+This is most likely a bug in that version of IOS, since it is fixed
+in later versions. As a workaround this patch allows a module parameter
+to be set to disable compressing the protocol ID.
 
-Perhaps the modems are interfering with each other.
+See: https://bugzilla.vyatta.com/show_bug.cgi?id979
 
-Test as follows: With one modem connected to internet, use AT commands
-on the second modem to reset it (ATZ), query signal strength (AT+CSQ),
-registration with network (AT+CGATT?), and scan for networks (AT+COPS).
-Repeat the tests with both modems disconnected from the internet.
-Compare the results.
+RFC 1990 allows an implementation to formulate MP fragments as if protocol
+compression had been negotiated.  This allows us to always send compressed
+protocol IDs.  But some implementations don't accept MP fragments with
+compressed protocol IDs.  This parameter allows us to interoperate with
+them.  The default value of the configurable parameter is the same as the
+current behavior:  protocol compression is enabled.  If protocol compression
+is disabled we will not send compressed protocol IDs.
 
-Ensure good electrical and physical separation of:
+This is based on an earlier patch by Bob Gilligan (using a sysctl).
+Module parameter is writable to allow for enabling even if ppp
+is already loaded for other uses.
 
-- the modem power supplies,
-- the modem RF stages,
-- the modem antenna systems.
+Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
 
-Repeat the tests after change of separation.
-
-To automate testing, here is one method, using chat included with pppd
-package:
-
-# cat << EOF > test.chatscript
-REPORT +CGATT:
-REPORT +CSQ:
-'' AT
-OK-AT-OK AT+CGATT?
-OK-AT-OK AT+CSQ
-OK-AT-OK ''
-EOF
-# chat -f test.chatscript -t3 -r test.results < /dev/ttyUSB0 > /dev/ttyUSB0
-
--- 
-James Cameron
-http://quozl.linux.org.au/
+--- a/drivers/net/ppp_generic.c	2010-12-17 10:01:42.004531762 -0800
++++ b/drivers/net/ppp_generic.c	2010-12-20 18:58:16.677310954 -0800
+@@ -1283,6 +1283,11 @@ ppp_push(struct ppp *ppp)
+ }
+ 
+ #ifdef CONFIG_PPP_MULTILINK
++static bool mp_protocol_compress __read_mostly = true;
++module_param(mp_protocol_compress, bool, S_IRUGO | S_IWUSR);
++MODULE_PARM_DESC(mp_protocol_compress,
++		 "compress protocol id in multilink fragments");
++
+ /*
+  * Divide a packet to be transmitted into fragments and
+  * send them out the individual links.
+@@ -1345,10 +1350,10 @@ static int ppp_mp_explode(struct ppp *pp
+ 	if (nfree = 0 || nfree < navail / 2)
+ 		return 0; /* can't take now, leave it in xmit_pending */
+ 
+-	/* Do protocol field compression (XXX this should be optional) */
++	/* Do protocol field compression */
+ 	p = skb->data;
+ 	len = skb->len;
+-	if (*p = 0) {
++	if (*p = 0 && mp_protocol_compress) {
+ 		++p;
+ 		--len;
+ 	}
