@@ -1,17 +1,18 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Date: Tue, 21 Dec 2010 05:43:36 +0000
+From: Paul Mackerras <paulus@samba.org>
+Date: Tue, 21 Dec 2010 22:44:00 +0000
 Subject: Re: [PATCH] ppp: allow disabling multilink protocol ID compression
-Message-Id: <1292910216.2627.156.camel@edumazet-laptop>
+Message-Id: <20101221224400.GA17383@brick.ozlabs.ibm.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20101220195833.26786ec5@nehalam>
 In-Reply-To: <20101220195833.26786ec5@nehalam>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: Stephen Hemminger <shemminger@vyatta.com>
-Cc: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-Le lundi 20 décembre 2010 à 19:58 -0800, Stephen Hemminger a écrit :
+On Mon, Dec 20, 2010 at 07:58:33PM -0800, Stephen Hemminger wrote:
+
 > Linux would not connect to other router running old version Cisco IOS (12.0).
 > This is most likely a bug in that version of IOS, since it is fixed
 > in later versions. As a workaround this patch allows a module parameter
@@ -33,6 +34,4 @@ Le lundi 20 décembre 2010 à 19:58 -0800, Stephen Hemminger a écrit :
 > 
 > Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
 
-Acked-by: Eric Dumazet <eric.dumazet@gmail.com>
-
-
+Acked-by: Paul Mackerras <paulus@samba.org>
