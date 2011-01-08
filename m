@@ -1,51 +1,50 @@
-From: Jarek Poplawski <jarkao2@gmail.com>
-Date: Sat, 08 Jan 2011 10:04:43 +0000
+From: Eric Dumazet <eric.dumazet@gmail.com>
+Date: Sat, 08 Jan 2011 10:20:05 +0000
 Subject: Re: [PATCH v2] net: ppp: use {get,put}_unaligned_be{16,32}
-Message-Id: <4D2836BB.6000600@gmail.com>
+Message-Id: <1294482005.2709.90.camel@edumazet-laptop>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1294357056-25889-1-git-send-email-xiaosuo@gmail.com>	<20110107030145.GA8021@brick.ozlabs.ibm.com>	<AANLkTim=1GCah0qp8HJK31LWXPb5vAZYp+d2BTQM+Q+B@mail.gmail.com> <20110107.171534.193718114.davem@davemloft.net>
-In-Reply-To: <20110107.171534.193718114.davem@davemloft.net>
+References: <1294357056-25889-1-git-send-email-xiaosuo@gmail.com>
+	 <20110107030145.GA8021@brick.ozlabs.ibm.com>
+	 <AANLkTim=1GCah0qp8HJK31LWXPb5vAZYp+d2BTQM+Q+B@mail.gmail.com>
+	 <20110107.171534.193718114.davem@davemloft.net>
+	 <4D2836BB.6000600@gmail.com>
+In-Reply-To: <4D2836BB.6000600@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: David Miller <davem@davemloft.net>
-Cc: xiaosuo@gmail.com, paulus@samba.org, harvey.harrison@gmail.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: Jarek Poplawski <jarkao2@gmail.com>
+Cc: David Miller <davem@davemloft.net>, xiaosuo@gmail.com, paulus@samba.org, harvey.harrison@gmail.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-David Miller wrote:
-> From: Changli Gao <xiaosuo@gmail.com>
-> Date: Sat, 8 Jan 2011 08:43:01 +0800
+Le samedi 08 janvier 2011 à 11:04 +0100, Jarek Poplawski a écrit :
+
+> Just for the record: I agree with Paul that current code is more readable.
+> This code still requires thinking about specific bytes and the patch mixes
+> it only with word access.
 > 
->> On Fri, Jan 7, 2011 at 11:01 AM, Paul Mackerras <paulus@samba.org> wrote:
->>> On Fri, Jan 07, 2011 at 07:37:36AM +0800, Changli Gao wrote:
->>>
->>>> Signed-off-by: Changli Gao <xiaosuo@gmail.com>
->>>
->>> This patch description is inadequate.  It should tell us why you are
->>> making this change.  Does it result in smaller and/or faster code, and
->>> if so by how much on what sort of machine?  Do you think it makes the
->>> code clearer?  (I don't.)  Or is there some other motivation for this?
->>>
->>
->> Good designed APIs always make code clearer, smaller and faster. It is
->> obvious enough I think.
+> Jarek P.
 > 
-> I have to say that every time I go read the header parsing code in the
-> PPP driver, I absolutely regret it.
-> 
-> And Changli's patch fixes some of the readability problems.
+> > @@ -395,16 +396,14 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+> >  	 */
+> >  	obuf[0] = PPP_ADDRESS(ibuf);
+> >  	obuf[1] = PPP_CONTROL(ibuf);
+> > -	obuf[2] = PPP_COMP >> 8;	/* isize + MPPE_OVHD + 1 */
+> > -	obuf[3] = PPP_COMP;	/* isize + MPPE_OVHD + 2 */
+> > +	put_unaligned_be16(PPP_COMP, obuf + 2);
+> >  	obuf += PPP_HDRLEN;
 
-Just for the record: I agree with Paul that current code is more readable.
-This code still requires thinking about specific bytes and the patch mixes
-it only with word access.
+Compilers are stupid not generating optimal code, so we should help them
+a bit.
 
-Jarek P.
+Yes, I agree this is ugly Jarek and makes reading of this code a bit
+more complex, but this is a move we cannot stop. Number of functions,
+macros, etc... is exploding and we must follow the trend ;)
 
-> @@ -395,16 +396,14 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
->  	 */
->  	obuf[0] = PPP_ADDRESS(ibuf);
->  	obuf[1] = PPP_CONTROL(ibuf);
-> -	obuf[2] = PPP_COMP >> 8;	/* isize + MPPE_OVHD + 1 */
-> -	obuf[3] = PPP_COMP;	/* isize + MPPE_OVHD + 2 */
-> +	put_unaligned_be16(PPP_COMP, obuf + 2);
->  	obuf += PPP_HDRLEN;
+41 c6 44 24 02 00       movb   $0x0,0x2(%r12)
+41 c6 44 24 03 fd       movb   $0xfd,0x3(%r12)
+
+After patch :
+
+66 41 c7 44 24 02 00 fd   movw   $0xfd00,0x2(%r12)
+
+
 
