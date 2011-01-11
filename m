@@ -1,43 +1,37 @@
-From: David Miller <davem@davemloft.net>
-Date: Tue, 28 Dec 2010 21:53:55 +0000
-Subject: Re: [PATCH] ppp: allow disabling multilink protocol ID compression
-Message-Id: <20101228.135355.115924746.davem@davemloft.net>
+From: Slawomir Skret <sskret@eecs.tufts.edu>
+Date: Tue, 11 Jan 2011 20:30:05 +0000
+Subject: ifconfig ppp0 errors
+Message-Id: <Pine.GSO.4.64.1101111527150.23601@sunfire13.eecs.tufts.edu>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20101220195833.26786ec5@nehalam>
-	<20101221224400.GA17383@brick.ozlabs.ibm.com>
-In-Reply-To: <20101221224400.GA17383@brick.ozlabs.ibm.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: paulus@samba.org
-Cc: shemminger@vyatta.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-From: Paul Mackerras <paulus@samba.org>
-Date: Wed, 22 Dec 2010 09:44:00 +1100
+Hi,
 
-> On Mon, Dec 20, 2010 at 07:58:33PM -0800, Stephen Hemminger wrote:
-> 
->> Linux would not connect to other router running old version Cisco IOS (12.0).
->> This is most likely a bug in that version of IOS, since it is fixed
->> in later versions. As a workaround this patch allows a module parameter
->> to be set to disable compressing the protocol ID.
->> 
->> See: https://bugzilla.vyatta.com/show_bug.cgi?id979
->> 
->> RFC 1990 allows an implementation to formulate MP fragments as if protocol
->> compression had been negotiated.  This allows us to always send compressed
->> protocol IDs.  But some implementations don't accept MP fragments with
->> compressed protocol IDs.  This parameter allows us to interoperate with
->> them.  The default value of the configurable parameter is the same as the
->> current behavior:  protocol compression is enabled.  If protocol compression
->> is disabled we will not send compressed protocol IDs.
->> 
->> This is based on an earlier patch by Bob Gilligan (using a sysctl).
->> Module parameter is writable to allow for enabling even if ppp
->> is already loaded for other uses.
->> 
->> Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
-> 
-> Acked-by: Paul Mackerras <paulus@samba.org>
+I use pppd to connect two serial bus points, i.e. I use it with the 
+"local" flag and not with a modem controls. It all works fine but when 
+downloading files I do get some errors reported by the ifconfig:
 
-Applied, thanks.
+ppp0      Link encap:Point-to-Point Protocol
+           inet addr:192.168.1.202  P-t-P:192.168.1.201 
+Mask:255.255.255.255
+           UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1500  Metric:1
+           RX packets:3662 errors:381 dropped:0 overruns:0 frame:0
+           TX packets:3536 errors:0 dropped:0 overruns:0 carrier:0
+           collisions:0 txqueuelen:3
+           RX bytes:5454442 (5.2 MiB)  TX bytes:203944 (199.1 KiB)
+
+I tried to use the "debug" and "kdebug" flags when starting pppd but get 
+only the configuration related info but nothing during the runtime 
+that would tell me why the errors occurred or what do they mean. From what 
+I read, the ifconfig reports the contents of the /proc/net/dev file which 
+is updated by the kernel modules but again it is a statistics reporter 
+only without describing the nature of the errors.
+
+How can I get more information about these errors?
+
+Thanks,
+Swavek
+
