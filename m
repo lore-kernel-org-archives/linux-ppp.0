@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 12 Jan 2011 14:57:19 +0000
-Subject: Re: ppp / open vpn
-Message-Id: <4D2DC14F.5050903@workingcode.com>
+From: tony.chamberlain@lemko.com
+Date: Wed, 12 Jan 2011 15:17:16 +0000
+Subject: Re:  ppp / open vpn
+Message-Id: <W4528014421215971294845436@webmail59>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W90767349010091294791641@webmail30>
 In-Reply-To: <W90767349010091294791641@webmail30>
@@ -9,6 +9,29 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+>> inet addr:10.1.0.6 P-t-P:10.1.0.6 Mask:255.0.0.0
+
+>That doesn't look happy. Why would both the local and remote address be
+>equal? (I wouldn't expect a functioning system to allow a configuration
+>like that.)
+
+I thought the same thing, but that is how openvpnas sets up the routes.
+As for changing the software so it does not kill all the tunnels, I agree
+completely (as I agree they should use two different config files for
+routing traffic, one to route everything through VPN and one to route
+everything through ethernet) but I have no control over that.  I can't
+change the software.
+
+
+
+
+-----Original Message-----
+From: James Carlson [mailto:carlsonj@workingcode.com]
+Sent: Wednesday, January 12, 2011 08:57 AM
+To: tony.chamberlain@lemko.com
+Cc: linux-ppp@vger.kernel.org
+Subject: Re: ppp / open vpn
 
 On 01/11/11 19:20, tony.chamberlain@lemko.com wrote:
 > For our customers I have to set up an openvpn server and client.
@@ -64,3 +87,6 @@ one IP node to itself!
 
 -- 
 James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+
+
+
