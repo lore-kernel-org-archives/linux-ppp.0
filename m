@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 12 Jan 2011 21:23:29 +0000
+From: James Cameron <quozl@laptop.org>
+Date: Wed, 12 Jan 2011 21:51:25 +0000
 Subject: Re: ifconfig ppp0 errors
-Message-Id: <4D2E1BD1.7070808@workingcode.com>
+Message-Id: <20110112215125.GE3760@us.netrek.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.GSO.4.64.1101111527150.23601@sunfire13.eecs.tufts.edu>
 In-Reply-To: <Pine.GSO.4.64.1101111527150.23601@sunfire13.eecs.tufts.edu>
@@ -10,31 +10,19 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 01/12/11 16:05, James Cameron wrote:
-> I agree with James, it smells like hardware.
-> 
-> You might compare clock cycle, bit or byte counters at either end.
-> 
-> You might check for sensitivity to specific data patterns;
+On Wed, Jan 12, 2011 at 04:23:29PM -0500, James Carlson wrote:
+> I think the most prosaic cause of this sort of problem -- given the
+> evidence so far, which (if I recall correctly) started with OK behavior
+> until large data transfers were attempted -- is simple overflow.
 
-Pattern sensitivity is certainly an interesting area.  I think the ones
-you've mentioned would tend to trip up poorly-designed hardware -- i.e.,
-hardware that has trouble with DC restoration or noise coupled into
-ground, or similar sorts of issues.  They're certainly interesting tests
-to try.
+Yes, that seems most likely.  Overflow can be tested for as well though,
+by sending large amounts of data over the link, in the absence of PPP.
+Careful counting will show what is lost.
 
-I think the most prosaic cause of this sort of problem -- given the
-evidence so far, which (if I recall correctly) started with OK behavior
-until large data transfers were attempted -- is simple overflow.  Either
-the system is just unable to keep up with the interrupt load, or
-something's blocking the interrupts that do happen, or the latency into
-the service routine is greater than the depth of the hardware input buffer.
-
-An overrun would cause lost bytes in the middle of the frame, and cause
-frames to be discarded as corrupt when the FCS isn't validated, and it'd
-be aggravated by larger packet sizes, by a shorter interval between
-packets, and by a system busy doing other things (such as talking to
-disk).  All of those seem to line up well with the original problem report.
+Although, if the link itself has no flow control, then some loss will
+always be a possibility.  10% of packets affected by loss seems a bit
+high, but I've no idea what the original poster's design threshold is.
 
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+James Cameron
+http://quozl.linux.org.au/
