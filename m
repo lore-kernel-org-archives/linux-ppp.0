@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 12 Jan 2011 19:47:09 +0000
+From: James Cameron <quozl@laptop.org>
+Date: Wed, 12 Jan 2011 21:05:44 +0000
 Subject: Re: ifconfig ppp0 errors
-Message-Id: <4D2E053D.2050300@workingcode.com>
+Message-Id: <20110112210544.GA3760@us.netrek.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.GSO.4.64.1101111527150.23601@sunfire13.eecs.tufts.edu>
 In-Reply-To: <Pine.GSO.4.64.1101111527150.23601@sunfire13.eecs.tufts.edu>
@@ -10,51 +10,31 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 01/12/11 13:40, Slawomir Skret wrote:
-> I added an instrumental printk statement in the ppp_receive_frame to
-> print a message before the ppp_receive_error(), rebuilt the kernel, and
-> got these prints for every error count reported. What does that mean? Is
-> there anything I can do/turn on/instrument/etc to tell what's wrong with
-> these frames?
+I agree with James, it smells like hardware.
 
-It means that your hardware is destroying the data in flight.  There's
-not much that PPP can do about that except detect the errors (using the
-Frame Check Sequence -- a CRC-16 scheme) and discard the packets that
-are affected.
+You might compare clock cycle, bit or byte counters at either end.
 
-You could use the "record filename" option to capture the actual raw
-data.  That interposes a pty pair, so it's not completely transparent.
-To do transparent analysis, you'll need an external serial analyzer.
-Several vendors (such as HP) make such machines.  They're by no means
-cheap, but if you're doing real hardware development, there's no
-substitute for having good test gear.
+You might check for sensitivity to specific data patterns;
 
-Reasonable operation of PPP assumes a lower layer that has only a modest
--- and hopefully not traffic-sensitive -- error rate.  It doesn't have
-to be completely error free, but even a small error rate will have a
-relatively large effect on usability and performance of the link.  (And
-systematic errors, such as [say] always discarding the 256th byte of
-packets with 256 or more bytes, will make the link effectively useless
-for ordinary networking purposes.)
+- all zero (00000000 repeating), 
 
-(This isn't really a characteristic of PPP itself, but rather of any
-interface intended for datagram networking purposes.  Error rates other
-than "a little" are bad news.)
+- all ones (11111111 repeating), 
 
-> Also, I built the pppstats and run it:
-> 
-> /var # ./pppstats
->       IN   PACK VJCOMP  VJUNC  VJERR  |      OUT   PACK VJCOMP  VJUNC
-> NON-VJ
->  2351664   1587      0      0      0  |    78364   1465      0      0 1465
-> 
-> but it does not report these errors.
+- proportion of bits set (00000001, then 00000011, then 00000111, etc), 
 
-That indicates that there's no significant errors above the framing
-level.  That's good, as it likely means there are no difficult software
-problems to solve.
+- full byte range sequences (00000000 through to 11111111), 
 
-It's merely a matter of inadequate hardware.
+- random numbers (a file of them for cross checking), 
+
+- long duration patterns that might cause lower frequency effects
+  (00000000 repeating for 10ms, then 11111111 for 10ms, then change the
+  low frequency).
+
+You might test by excluding pppd, such as using cat, diff, and md5sum.
+
+If you've passed all these tests already, then you should find out from
+the kernel why the error count is being incremented.
 
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+James Cameron
+http://quozl.linux.org.au/
