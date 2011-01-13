@@ -1,7 +1,7 @@
-From: Jan Just Keijser <jan.just.keijser@gmail.com>
-Date: Thu, 13 Jan 2011 01:47:06 +0000
-Subject: Re: ppp / open vpn
-Message-Id: <4D2E599A.5030301@gmail.com>
+From: tony.chamberlain@lemko.com
+Date: Thu, 13 Jan 2011 12:41:40 +0000
+Subject: Re:  ppp / open vpn
+Message-Id: <W224531903750281294922500@webmail44>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W90767349010091294791641@webmail30>
 In-Reply-To: <W90767349010091294791641@webmail30>
@@ -9,6 +9,17 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+So how do I set up the ptp instead of topology mode?
+Is that ethernet bridging, which was the only option I saw?
+Or do I even want to change from topology?
+
+-----Original Message-----
+From: Jan Just Keijser [mailto:jan.just.keijser@gmail.com]
+Sent: Wednesday, January 12, 2011 07:47 PM
+To: 'James Carlson'
+Cc: tony.chamberlain@lemko.com, linux-ppp@vger.kernel.org
+Subject: Re: ppp / open vpn
 
 James Carlson wrote:
 > On 01/12/11 16:17, Jan Just Keijser wrote:
@@ -44,5 +55,8 @@ over a ppp-based link.
 HTH,
 
 JJK
+
+
+
 
 
