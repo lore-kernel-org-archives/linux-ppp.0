@@ -1,68 +1,81 @@
-From: "C.J. Adams-Collier" <cjac@colliertech.org>
-Date: Mon, 17 Jan 2011 20:25:14 +0000
-Subject: Re: Need to contract a Linux kernel / ppp / networking / embedded
-Message-Id: <1295295914.3874.28.camel@foxtrot>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="=-wAzL6Yh1aMylFHTiB4et"
+From: Juergen Beisert <juergen127@kreuzholzen.de>
+Date: Fri, 28 Jan 2011 15:49:51 +0000
+Subject: DSL link sometimes dies: pppd or kernel problem?
+Message-Id: <201101281649.51225.juergen127@kreuzholzen.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <8983623.45.1295240534327.JavaMail.root@zimbra.caneris.com>
-In-Reply-To: <8983623.45.1295240534327.JavaMail.root@zimbra.caneris.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi,
 
---=-wAzL6Yh1aMylFHTiB4et
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+I'm running a small x86 based box with a 2.6.28.10 (mostly) vanilla kernel and
+pppd-2.4.5 to act as my DSL router. Sometimes the DSL link dies and I don't
+know where to search for the reason. The external modem is connected via a
+USB-to-Network-Dongle (here interface name 'dsl').
 
-I'm currently employed but have looked at code in each of the projects
-mentioned and would be interested in monitoring the progress of any
-project touching them.
+Here the log from such an event 20 minutes ago:
 
-On Mon, 2011-01-17 at 00:02 -0500, Erik L wrote:
-> Hi,
->=20
-> I apologize if this is a bit OT but it has some relevance to the list due=
- to the area in which we're looking for help. We're looking for a developer=
- to implement several features/fixes per our spec in  kernel ppp code and p=
-ppd, as well as a little bit in other aspects like L2TP, OpenL2TP, OpenWrt,=
- Quagga, and several others.=20
->=20
-> Currently this is just part-time contract to augment a kernel developer w=
-ho's away for the next seven weeks. Location is not an issue as all work is=
- remote.
->=20
-> If anyone is interested, for complete details please contact me off-list.=
- Remove the "_list" part in my e-mail address when replying.
->=20
-> Thanks
-> Erik
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+[...]
+Jan 28 16:04:50 star pppd[249]: Modem hangup
+Jan 28 16:04:50 star pppd[249]: Connect time 397.6 minutes.
+Jan 28 16:04:50 star pppd[249]: Sent 5558948 bytes, received 40122574 bytes.
+Jan 28 16:04:50 star pppd[249]: Connection terminated.
+[...]
+Jan 28 16:05:21 star pppd[249]: Starting link
+Jan 28 16:05:21 star pppd[249]: error sending pppoe packet: Network is down
+Jan 28 16:05:21 star pppd[249]: error receiving pppoe packet: Network is down
+Jan 28 16:05:26 star pppd[249]: error sending pppoe packet: Network is down
+Jan 28 16:05:36 star pppd[249]: error sending pppoe packet: Network is down
+Jan 28 16:05:56 star pppd[249]: Timeout waiting for PADO packets
+Jan 28 16:05:56 star pppd[249]: Unable to complete PPPoE Discovery
+Jan 28 16:06:30 star pppd[249]: Starting link
+Jan 28 16:06:30 star pppd[249]: error sending pppoe packet: Network is down
+Jan 28 16:06:30 star pppd[249]: error receiving pppoe packet: Network is down
+Jan 28 16:06:36 star pppd[249]: error sending pppoe packet: Network is down
+Jan 28 16:06:46 star pppd[249]: error sending pppoe packet: Network is down
+Jan 28 16:07:06 star pppd[249]: Timeout waiting for PADO packets
+Jan 28 16:07:06 star pppd[249]: Unable to complete PPPoE Discovery
+[...]
+Jan 28 16:07:37 star pppd[249]: Starting link
+Jan 28 16:07:37 star pppd[249]: error sending pppoe packet: Network is down
+Jan 28 16:07:37 star pppd[249]: error receiving pppoe packet: Network is down
+[...]
+Jan 28 16:07:42 star pppd[249]: error sending pppoe packet: Network is down
+[...]
+Jan 28 16:08:12 star pppd[249]: Timeout waiting for PADO packets
+Jan 28 16:08:12 star pppd[249]: Unable to complete PPPoE Discovery
 
+Then I stopped the running pppd:
 
---=-wAzL6Yh1aMylFHTiB4et
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+[...]
+Jan 28 16:08:30 star pppd[249]: Terminating on signal 15
+Jan 28 16:08:30 star pppd[249]: Exit.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
+And started it again immediately:
 
-iQIcBAABAgAGBQJNNKWnAAoJEOGmj2Z1AIuuFGoQAJ06/dA+c0M6lUzv3rSGrC35
-7oK0LWcy/aUy2q+LL83//KneFp94YUSCKbXzFFipZiWHdhfsjHcN48a17FNUtGpT
-xNcEMYOWIDyhh9njT52GNWaoCVFkWGgubBvERyf+NmUoZ2glXk2+Hg0UW5SSLKBP
-6ZUFn8XUxnkfpSq1kQG/Cr97gT2LblAHyTu2xmavlTv5fhj1XW1yfhd8uA8aS6X6
-e2hfpXBmYiLDLjStyv3GmW1u+h6+r6xswCRZ8/8pSdrNUvtW2PWuCMNjZr1Bkru1
-/waRIG2gyZtNYHA8v+vddravbV9CVbh+/gILl4308faWir9V0ngAhG8wW6gRszXR
-puSRSNdg7dE/TJhKj/F7jluvWEj6aoXKSUgmQ6qGdeCdjT0P3f1lma/OAk5WkdtZ
-rjQ1ssw/bQtP/jHvPihEMI+NC53cIua6pRX38lA2L7Mx86sunTJiwJLsCZJr1Kv2
-Ym7BNA7qfvvKHfK/+C6vbo/+TzRBwQU4d/Wz2zpzrUKa1SSzAZarDzSyCIt4Jzbe
-LoQD3heBZgUrvIxDse/sdpTfStxT2hEzOA7zhsGyiST5J0MzSxUODT+3J6B0oQMl
-pqqDXIsb4aSoK6zEZvLN/Law0zIiBqaecSyO7GrqrMgua/xE2FcYh3GBdw/RLNqC
-46wAHH9z3Up1JKrMdZQA
-=rFJa
------END PGP SIGNATURE-----
+[...]
+Jan 28 16:08:35 star pppd[420]: Plugin rp-pppoe.so loaded.
+Jan 28 16:08:35 star pppd[420]: RP-PPPoE plugin version 3.8p compiled against pppd 2.4.5
+Jan 28 16:08:35 star pppd[421]: pppd 2.4.5 started by root, uid 0
+Jan 28 16:08:35 star pppd[421]: Using interface ppp0
+Jan 28 16:08:35 star pppd[421]: local  IP address 10.64.64.64
+Jan 28 16:08:35 star pppd[421]: remote IP address 10.112.112.112
+Jan 28 16:08:36 star pppd[421]: Starting link
+Jan 28 16:08:37 star pppd[421]: PPP session is 39172
+Jan 28 16:08:37 star pppd[421]: Connected to xx:xx:xx:xx:xx:xx via interface dsl
+Jan 28 16:08:37 star pppd[421]: Connect: ppp0 <--> dsl
+[...]
+Jan 28 16:08:37 star pppd[421]: PAP authentication succeeded
+Jan 28 16:08:37 star pppd[421]: peer from calling number xx:xx:xx:xx:xx:xx authorized
+Jan 28 16:08:37 star pppd[421]: Local IP address changed to xxx.xxx.xxx.xxx
+Jan 28 16:08:37 star pppd[421]: Remote IP address changed to xxx.xxx.xxx.xxx
 
---=-wAzL6Yh1aMylFHTiB4et--
+Since the restart, it works again. No reboot of the machine, I only restared
+the pppd.
 
+What can be broken? pppd or the kernel?
+
+Regards,
+jbe
