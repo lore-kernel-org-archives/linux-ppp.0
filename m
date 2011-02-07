@@ -1,27 +1,42 @@
-From: Toralf =?utf-8?q?F=C3=B6rster?= <toralf.foerster@gmx.de>
-Date: Wed, 05 Jan 2011 13:25:29 +0000
-Subject: unmet direct dependencies (NETDEVICES)
-Message-Id: <201101051425.29481.toralf.foerster@gmx.de>
+From: David Miller <davem@davemloft.net>
+Date: Mon, 07 Feb 2011 07:28:56 +0000
+Subject: Re: [BUG] 2.6.38-rc2: Circular Locking Dependency
+Message-Id: <20110206.232856.246531984.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <4D3D45A3.7040809@t-online.de>
+In-Reply-To: <4D3D45A3.7040809@t-online.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Knut_Petersen@t-online.de
+Cc: linux-kernel@vger.kernel.org, paulus@samba.org, mostrows@earthlink.net, linux-ppp@vger.kernel.org
 
-Hello,
+From: Knut Petersen <Knut_Petersen@t-online.de>
+Date: Mon, 24 Jan 2011 10:25:55 +0100
 
-a "make randconfig 1>/dev/null" gave today :
+> As I was hunting something different I found the following (potential)
+> problem on an openSuSE 11.3 system with kernel 2.6.38-rc2.
+> The message is triggerd by smpppd starting a dsl connection.
+> 
+> Knut
+> 
+> 
+>  NET: Registered protocol family 24
+> 
+>  ===========================>  [ INFO: possible circular locking dependency detected ]
+>  2.6.38-rc2-kape #7
+>  -------------------------------------------------------
+>  pppd/2529 is trying to acquire lock:
+>   (&(&pch->downl)->rlock){+.....}, at: [<f814a634>] ppp_push+0x59/0x4a8
+> [ppp_generic]
+> 
+>  but task is already holding lock:
+>   (&(&ppp->wlock)->rlock){+.-...}, at: [<f814ae1b>]
+> ppp_xmit_process+0x19/0x451 [ppp_generic]
+> 
+>  which lock already depends on the new lock.
 
-warning: (PPP && NETDEVICES || SLIP_COMPRESSED && NETDEVICES && SLIP ||=20
-ISDN_PPP && ISDN && ISDN_I4L && INET) selects SLHC which has unmet direct=20
-dependencies (NETDEVICES)
+I've stared over this trace several times and can't figure out what
+the problem is.
 
-for the current git kernel sources.
-Is this an already known issue ?
-
---=20
-MfG/Kind regards
-Toralf F=C3=B6rster
-
-pgp finger print: 7B1A 07F4 EC82 0F90 D4C2 8936 872A E508 7DB6 9DA3
-
+Paul, any idea?
