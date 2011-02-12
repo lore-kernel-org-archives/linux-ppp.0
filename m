@@ -1,146 +1,207 @@
-From: Knut Petersen <Knut_Petersen@t-online.de>
-Date: Wed, 09 Feb 2011 07:26:37 +0000
-Subject: Re: [BUG] 2.6.38-rc2: Circular Locking Dependency
-Message-Id: <4D5241AD.6030208@t-online.de>
+From: Alexey Osipov <simba@lerlan.ru>
+Date: Sat, 12 Feb 2011 18:51:59 +0000
+Subject: MPPE stateful mode problem and investigation
+Message-Id: <1297536719.8306.149.camel@dahari>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="=-tIpYNbTTiPu6TtXPGjSJ"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20110207104315.GB17044@brick.ozlabs.ibm.com>	<4D50F5FA.7050202@t-online.de>	<20110208.000721.193716330.davem@davemloft.net> <20110208.150411.102552333.davem@davemloft.net>
-In-Reply-To: <20110208.150411.102552333.davem@davemloft.net>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+To: linux-ppp@vger.kernel.org
+
+
+--=-tIpYNbTTiPu6TtXPGjSJ
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-To: David Miller <davem@davemloft.net>
-Cc: paulus@samba.org, linux-kernel@vger.kernel.org, mostrows@earthlink.net, linux-ppp@vger.kernel.org, xiaosuo@gmail.com, eric.dumazet@gmail.com, ebiederm@xmission.com
 
-Am 09.02.2011 00:04, schrieb David Miller:
-> From: David Miller <davem@davemloft.net>
-> Date: Tue, 08 Feb 2011 00:07:21 -0800 (PST)
->
-> [ Eric B., CC:'ing you so that you are aware of the init network
->   namespace leak that's fixed as a side effect of this change. ]
->
->   
->> From: Knut Petersen <Knut_Petersen@t-online.de>
->> Date: Tue, 08 Feb 2011 08:51:22 +0100
->>
->>     
->>> I bisected the problem with the following result:
->>>
->>> aa9421041128abb4d269ee1dc502ff65fb3b7d69 is the first bad commit
->>> commit aa9421041128abb4d269ee1dc502ff65fb3b7d69
->>> Author: Changli Gao <xiaosuo@gmail.com>
->>> Date:   Sat Dec 4 02:31:41 2010 +0000
->>>
->>>     net: init ingress queue
->>>
->>>     The dev field of ingress queue is forgot to initialized, then NULL
->>>     pointer dereference happens in qdisc_alloc().
->>>
->>>     Move inits of tx queues to netif_alloc_netdev_queues().
->>>
->>>     Signed-off-by: Changli Gao <xiaosuo@gmail.com>
->>>     Acked-by: Eric Dumazet <eric.dumazet@gmail.com>
->>>     Signed-off-by: David S. Miller <davem@davemloft.net>
->>>
->>> :040000 040000 dcbb6ab41c4308cba1bc6823d200dcf92aa402d8
->>> b5e190ec681d26ffe62d1d0214c4ef77b8034189 M      net
->>>       
->> Indeed, this initialization is now too early for the sake
->> of getting the lockdep bits right.  The problem is that at
->> the point in which we call netif_alloc_netdev_queue() we
->> haven't initialized dev->type yet, it is therefore always
->> zero when we setup the lockdep class for ->_xmit_lock.
->>     
-> Ok, this should fix it, please test it out for me.
->
-> Thanks!
->   
+Hi.
 
-Yes, that patch does solve the problem, and I do not see
-any negative effects.
+I have being recently configuring a small linux pppoe server on top of
+pppd and pppoe-server and run into a problem with MPPE stateful mode.
 
-Thanks!
+If I state "require-mppe-128" in pppd options file, linux clients
+connect to this server just perfectly. But Windows isn't. The log
+analysis shown that the problem is in MPPE stateful mode. Windows PPPoE
+client just can't use stateless mode (in contrast to linux PPPoE client
+or Windows PPTP client). I have tested Windows XP, Windows 7 and Windows
+2008 server. All of them can't use stateless MPPE mode when connecting
+over PPPoE and all of them behave same way in scenarios described below.
 
-Knut
+If I add "mppe-stateful" in pppd options file, Windows clients connect
+fine, IP configuration goes well and MPPE initialisation seems OK. The
+linux kernel driver claims:
 
-> --------------------
-> net: Fix lockdep regression caused by initializing netdev queues too early.
->
-> In commit aa9421041128abb4d269ee1dc502ff65fb3b7d69 ("net: init ingress
-> queue") we moved the allocation and lock initialization of the queues
-> into alloc_netdev_mq() since register_netdevice() is way too late.
->
-> The problem is that dev->type is not setup until the setup()
-> callback is invoked by alloc_netdev_mq(), and the dev->type is
-> what determines the lockdep class to use for the locks in the
-> queues.
->
-> Fix this by doing the queue allocation after the setup() callback
-> runs.
->
-> This is safe because the setup() callback is not allowed to make any
-> state changes that need to be undone on error (memory allocations,
-> etc.).  It may, however, make state changes that are undone by
-> free_netdev() (such as netif_napi_add(), which is done by the
-> ipoib driver's setup routine).
->
-> The previous code also leaked a reference to the &init_net namespace
-> object on RX/TX queue allocation failures.
->
-> Signed-off-by: David S. Miller <davem@davemloft.net>
-> ---
->  net/core/dev.c |   27 ++++++++++++++++-----------
->  1 files changed, 16 insertions(+), 11 deletions(-)
->
-> diff --git a/net/core/dev.c b/net/core/dev.c
-> index b6d0bf8..8e726cb 100644
-> --- a/net/core/dev.c
-> +++ b/net/core/dev.c
-> @@ -5660,30 +5660,35 @@ struct net_device *alloc_netdev_mqs(int sizeof_priv, const char *name,
->  
->  	dev_net_set(dev, &init_net);
->  
-> +	dev->gso_max_size = GSO_MAX_SIZE;
-> +
-> +	INIT_LIST_HEAD(&dev->ethtool_ntuple_list.list);
-> +	dev->ethtool_ntuple_list.count = 0;
-> +	INIT_LIST_HEAD(&dev->napi_list);
-> +	INIT_LIST_HEAD(&dev->unreg_list);
-> +	INIT_LIST_HEAD(&dev->link_watch_list);
-> +	dev->priv_flags = IFF_XMIT_DST_RELEASE;
-> +	setup(dev);
-> +
->  	dev->num_tx_queues = txqs;
->  	dev->real_num_tx_queues = txqs;
->  	if (netif_alloc_netdev_queues(dev))
-> -		goto free_pcpu;
-> +		goto free_all;
->  
->  #ifdef CONFIG_RPS
->  	dev->num_rx_queues = rxqs;
->  	dev->real_num_rx_queues = rxqs;
->  	if (netif_alloc_rx_queues(dev))
-> -		goto free_pcpu;
-> +		goto free_all;
->  #endif
->  
-> -	dev->gso_max_size = GSO_MAX_SIZE;
-> -
-> -	INIT_LIST_HEAD(&dev->ethtool_ntuple_list.list);
-> -	dev->ethtool_ntuple_list.count = 0;
-> -	INIT_LIST_HEAD(&dev->napi_list);
-> -	INIT_LIST_HEAD(&dev->unreg_list);
-> -	INIT_LIST_HEAD(&dev->link_watch_list);
-> -	dev->priv_flags = IFF_XMIT_DST_RELEASE;
-> -	setup(dev);
->  	strcpy(dev->name, name);
->  	return dev;
->  
-> +free_all:
-> +	free_netdev(dev);
-> +	return NULL;
-> +
->  free_pcpu:
->  	free_percpu(dev->pcpu_refcnt);
->  	kfree(dev->_tx);
->   
+---------------
+mppe_comp_init[6]: initialized with 128-bit stateful mode
+mppe_decomp_init[6]: initialized with 128-bit stateful mode
+---------------
+
+But the connection doesn't work - no pings, no any other data can go
+through it. The log looks like this:
+
+---------------
+pppd[4678]: rcvd [proto=0x41] f9 e0 ...
+pppd[4678]: Unsupported protocol 'Cisco Systems' (0x41) received
+pppd[4678]: sent [LCP ProtRej id=0x3 00 41 f9 ...]
+kernel: [607845.560045] mppe_decompress[6]: ccount 0
+pppd[4678]: rcvd [proto=0x1447] d5 e3 ...
+pppd[4678]: Unsupported protocol 0x1447 received
+pppd[4678]: sent [LCP ProtRej id=0x4 14 47 d5 e3 ...]
+kernel: [607848.660046] mppe_decompress[6]: ccount 1
+pppd[4678]: rcvd [proto=0xe610] f8 03 ...
+pppd[4678]: Unsupported protocol 0xe610 received
+pppd[4678]: sent [LCP ProtRej id=0x5 e6 10 f8 03 ...]
+kernel: [607849.110031] mppe_decompress[6]: ccount 2
+---------------
+
+The unsupported protocol's number (id) is always different. This has
+pointed me to the thought that linux MPPE module tries to decode
+received packet with wrong session key and thus get an incorrect result.
+
+After some kernel code digging (drivers/net/ppp_mppe.c mainly), RFC 3078
+reading and packets sniffing, I found out that the first packet sent by 
+Windows client has "Bit A" (MPPE_BIT_FLUSHED) set. Thus, the code in
+mppe_decompress (ppp_mppe.c:597) that looks like
+
+---------------
+if (flushed)
+    mppe_rekey(state, 0);
+---------------
+
+do session key change just BEFORE decryption of the first packet. So we
+have first session key initialised in mppe_init (ppp_mppe.c:297) and
+change it once again before decrypting the first packet. That was
+looking strange for me and I supposed the problem was in here. So I
+changed the code to:
+
+---------------
+if (flushed && ccount > 0)
+    mppe_rekey(state, 0);
+---------------
+
+And after module recompilation I have got MPPE stateful working with
+Windows client!
+
+But... only for the first 256 packets. :) Then, as stated in section 7.2
+of RFC 3078, the "flag" packet should be sent and session key must be
+changed. That really happens, Windows sent the "flag" packet but WITHOUT
+MPPE_BIT_FLUSHED set. So, the kernel MPPE module has complained about
+that:
+
+---------------
+kernel: [ 3088.260282] mppe_decompress[6]: FLUSHED bit not set on flag
+packet!
+---------------
+
+and return (at ppp_mppe.c:536) a DECOMP_ERROR, because of sanity check
+failure. After that session keys are no more synchronised between server
+and client, which leads to more "Unsupported protocol" claims.
+
+I have modified the sanity check (at ppp_mppe.c:533) and set "flushed"
+variable to non-zero value by hand on each "flag" packet like this:
+
+---------------
+if (state->stateful && ((ccount & 0xff) == 0xff) && !flushed) {
+    printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit not set on "
+           "flag packet!\n", state->unit);
+    //state->sanity_errors += 100;
+    //sanity = 1;
+    flushed = 1;
+}
+---------------
+
+After that change "flag" packet rekeying was successful and the
+connection works well again!
+
+Until... CCP ResetReq packet was received from Windows client. As stated
+in section 8.2 of RFC 3078, the CCP ResetReq packet is used if packet
+loss detected. The receiver of CCP ResetReq packet must then change the
+session key silently and continue transfer data WITHOUT sending CCP
+ResetAck packet. But linux MPPE implementation does SEND CCP ResetAck
+packet, which leads to the following log:
+
+---------------
+kernel: [511970.080047] mppe_decompress[6]: ccount 633
+kernel: [511970.080077] mppe_compress[6]: ccount 793
+kernel: [511970.110035] mppe_decompress[6]: ccount 634
+kernel: [511970.110062] mppe_compress[6]: ccount 794
+pppd[17938]: rcvd [CCP ResetReq id=0x0]
+pppd[17938]: sent [CCP ResetAck id=0x0]
+pppd[17938]: rcvd [CCP CodeRej id=0xb 0f 00 00 04]
+pppd[17938]: CCP: Rcvd Code-Reject for code 15, id 0
+kernel: [511970.280040] mppe_decompress[6]: ccount 635
+kernel: [511970.280077] mppe_compress[6]: ccount 795
+kernel: [511970.280081] mppe_compress[6]: rekeying
+kernel: [511970.810044] mppe_decompress[6]: ccount 636
+kernel: [511970.810087] mppe_compress[6]: ccount 796
+pppd[17938]: rcvd [LCP ProtRej id=0xc 9a 1f ...]
+pppd[17938]: Protocol-Reject for unsupported protocol 0x9a1f
+kernel: [511974.016241] mppe_compress[6]: ccount 797
+kernel: [511974.016274] mppe_compress[6]: ccount 798
+kernel: [511975.030048] mppe_decompress[6]: ccount 637
+kernel: [511975.030065] mppe_decompress[6]: ccount 638
+kernel: [511975.030105] mppe_compress[6]: ccount 799
+kernel: [511975.030131] mppe_compress[6]: ccount 800
+kernel: [511975.050036] mppe_decompress[6]: ccount 639
+kernel: [511975.050060] mppe_compress[6]: ccount 801
+kernel: [511975.520044] mppe_decompress[6]: ccount 640
+kernel: [511975.520079] mppe_compress[6]: ccount 802
+pppd[17938]: rcvd [LCP ProtRej id=0xd dc 02 ...]
+pppd[17938]: Protocol-Reject for unsupported protocol 0xdc02
+kernel: [511980.030047] mppe_decompress[6]: ccount 641
+kernel: [511980.030092] mppe_compress[6]: ccount 803
+kernel: [511980.051418] mppe_decompress[6]: ccount 642
+---------------
+
+Given to this log, rekeying done as expected - on the next mppe_compress
+packet after the CCP ResetReq was received. But, it seems that:
+1) The windows client don't like CCP ResetAck we sent (as it replies
+with CCP CodeRej).
+2) The windows client don't like our new session key (as we receive more
+"Unsupported protocol"s).
+
+The second may be the consequence of the first, or may not.
+
+So, my questions to the linux-ppp guys are:
+
+1) Does somebody successfully use stateful MPPE with MS Windows clients?
+2) Does someone know how exactly MS implementation of MPPE works? In
+particular, why rekeying in case of CCP ResetReq fails?
+
+I attach the patch of modifications I made. It applies cleanly to 2.6.37
+stable kernel.
+
+Best regards,
+Alexey Osipov. 
+
+--=-tIpYNbTTiPu6TtXPGjSJ
+Content-Disposition: attachment; filename="mppe_stateful_v1.patch"
+Content-Type: text/x-patch; name="mppe_stateful_v1.patch"; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+
+diff --git a/drivers/net/ppp_mppe.c b/drivers/net/ppp_mppe.c
+index 88f03c9..086b74e 100644
+--- a/drivers/net/ppp_mppe.c
++++ b/drivers/net/ppp_mppe.c
+@@ -527,8 +527,9 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	if (state->stateful && ((ccount & 0xff) == 0xff) && !flushed) {
+ 		printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit not set on "
+ 		       "flag packet!\n", state->unit);
+-		state->sanity_errors += 100;
+-		sanity = 1;
++		//state->sanity_errors += 100;
++		//sanity = 1;
++		flushed = 1;
+ 	}
+ 
+ 	if (sanity) {
+@@ -594,7 +595,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 				 */
+ 			}
+ 		}
+-		if (flushed)
++		if (flushed && ccount > 0)
+ 			mppe_rekey(state, 0);
+ 	}
+ 
+
+--=-tIpYNbTTiPu6TtXPGjSJ--
 
