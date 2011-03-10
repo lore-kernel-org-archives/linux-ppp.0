@@ -1,7 +1,7 @@
-From: Jan Just Keijser <jan.just.keijser@gmail.com>
-Date: Thu, 10 Mar 2011 14:38:12 +0000
-Subject: Re: pptponfig centos 5.4
-Message-Id: <4D78E254.2070302@gmail.com>
+From: tony.chamberlain@lemko.com
+Date: Thu, 10 Mar 2011 14:49:59 +0000
+Subject: Re:  pptponfig centos 5.4
+Message-Id: <W6858320341230011299768599@webmail10>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W6630510430284451299766958@webmail23>
 In-Reply-To: <W6630510430284451299766958@webmail23>
@@ -9,6 +9,28 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+Some kind of error:
+
+Install      1 Package(s)         
+Update       1 Package(s)         
+Remove       0 Package(s)         
+
+Total size: 76 k
+Is this ok [y/N]: y
+Downloading Packages:
+warning: rpmts_HdrFromFdno: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+
+
+GPG key retrieval failed: [Errno 5] OSError: [Errno 2] No such file or directory: '/etc/pki/rpm-gpg/RPM-GPG-KEY-rpmforge-dag'
+
+
+-----Original Message-----
+From: Jan Just Keijser [mailto:jan.just.keijser@gmail.com]
+Sent: Thursday, March 10, 2011 08:38 AM
+To: tony.chamberlain@lemko.com
+Cc: 'ppp Linux'
+Subject: Re: pptponfig centos 5.4
 
 tony.chamberlain@lemko.com wrote:
 > Hi
@@ -57,5 +79,12 @@ then do a
 HTH,
 
 JJK
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
 
 
