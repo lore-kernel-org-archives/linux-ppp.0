@@ -1,7 +1,7 @@
-From: James Cameron <quozl@laptop.org>
-Date: Thu, 10 Mar 2011 21:19:52 +0000
-Subject: Re: pptponfig centos 5.4
-Message-Id: <20110310211952.GB6776@us.netrek.org>
+From: tony.chamberlain@lemko.com
+Date: Fri, 11 Mar 2011 03:09:19 +0000
+Subject: Re:  pptponfig centos 5.4
+Message-Id: <W128383271048081299812959@webmail27>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <W6630510430284451299766958@webmail23>
 In-Reply-To: <W6630510430284451299766958@webmail23>
@@ -9,6 +9,19 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+Yeah I did pptpsetup -whatever (i put all the parameters in and called the
+connection "hill"  Then I did "pppd call hill".  That connected, set up
+my IP and routes and I had ppp connections for a few minutes (5 or so) but 
+then it would disconnect again
+
+  
+
+-----Original Message-----
+From: James Cameron [mailto:quozl@laptop.org]
+Sent: Thursday, March 10, 2011 03:19 PM
+To: linux-ppp@vger.kernel.org
+Subject: Re: pptponfig centos 5.4
 
 On Thu, Mar 10, 2011 at 02:22:38PM +0000, tony.chamberlain@lemko.com wrote:
 > I remember one of the James's wrote pptpconfig ;-)
@@ -36,3 +49,10 @@ same thing as pptpconfig,
 -- 
 James Cameron
 http://quozl.linux.org.au/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
