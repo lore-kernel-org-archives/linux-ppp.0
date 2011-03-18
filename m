@@ -1,42 +1,51 @@
-From: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Date: Thu, 31 Mar 2011 21:39:14 +0000
-Subject: Re: 'scheduling while atomic' during ppp connection on 2.6.37.1 and
-Message-Id: <20110331223914.458a36b7@lxorguk.ukuu.org.uk>
+From: Tomas Lund <tlund@nxs.se>
+Date: Fri, 18 Mar 2011 12:10:12 +0000
+Subject: Huawei E398 4G/LTE USB-modem - IPCP fails under pppd 2.4.5
+Message-Id: <Pine.LNX.4.61.1103181230280.12352@envy.nxs.se>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <fuopaigyaypsqveewtjx@pwmq>
-	<4D864A82.4090104@fastmail.fm>
-	<20110320215826.79cadfe2@lxorguk.ukuu.org.uk>
-	<4D87173D.50906@suse.cz>
-	<20110321110214.5174f1b2@lxorguk.ukuu.org.uk>
-	<4D94E9E7.2050600@suse.cz>
-In-Reply-To: <4D94E9E7.2050600@suse.cz>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Jiri Slaby <jslaby@suse.cz>
-Cc: Jack Stone <jwjstone@fastmail.fm>, Mac <kmac@poczta.fm>, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, Greg Kroah-Hartman <gregkh@suse.de>, Jiri Slaby <jirislaby@gmail.com>
+To: linux-ppp@vger.kernel.org
 
-> What is the proper way to avoid a race with HUP in tty->ops->write,
-> chars_in_buffer, ntty_write_room and possibly others?
+I have a Huawei E398 4G/LTE USB-modem where IPCP fails under pppd 2.4.5 
+but works in Windows.
 
-You shouldn't need to do anything in those cases as tty and
-tty->driver_data won't be going anywhere. port->tty may go NULL and the
-IRQ handlers etc need to get the refs properly and keep refs when needed
-so the tty isn't freed under them, but that *should* be all that is
-needed if the logic is right.
+Under linux, this is what happens:
 
-> I looked into the drivers, moxa tests tty->driver_data (why? [1]), mxser
-> does nothing as well as rocket and many others. What is the reference
-> driver I should look into?
+Mar 18 12:16:04 localhost pppd[18558]: sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0x8591b3b5> <pcomp> <accomp>]
+Mar 18 12:16:04 localhost pppd[18558]: rcvd [LCP ConfReq id=0x0 <asyncmap 0x0> <auth chap MD5> <magic 0x2b18e0e> <pcomp> <accomp>]
+Mar 18 12:16:04 localhost pppd[18558]: sent [LCP ConfAck id=0x0 <asyncmap 0x0> <auth chap MD5> <magic 0x2b18e0e> <pcomp> <accomp>]
+Mar 18 12:16:04 localhost pppd[18558]: rcvd [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0x8591b3b5> <pcomp> <accomp>]
+Mar 18 12:16:04 localhost pppd[18558]: sent [LCP EchoReq id=0x0 magic=0x8591b3b5]
+Mar 18 12:16:04 localhost pppd[18558]: rcvd [LCP DiscReq id=0x1 magic=0x2b18e0e]
+Mar 18 12:16:04 localhost pppd[18558]: rcvd [CHAP Challenge id=0x1 <26c7ca167a9bd85a2e95c7424221133d>, name = "UMTS_CHAP_SRVR"]
+Mar 18 12:16:04 localhost pppd[18558]: sent [CHAP Response id=0x1 <eed8ef3a56256e7f149dc27eff078935>, name = "wap"]
+Mar 18 12:16:04 localhost pppd[18558]: rcvd [LCP EchoRep id=0x0 magic=0x2b18e0e 85 91 b3 b5]
+Mar 18 12:16:04 localhost pppd[18558]: rcvd [CHAP Success id=0x1 ""]
+Mar 18 12:16:04 localhost pppd[18558]: CHAP authentication succeeded
+Mar 18 12:16:04 localhost pppd[18558]: CHAP authentication succeeded
+Mar 18 12:16:04 localhost pppd[18558]: sent [IPCP ConfReq id=0x1 <addr 0.0.0.0>]
+Mar 18 12:16:05 localhost pppd[18558]: rcvd [IPCP ConfNak id=0x1]
+Mar 18 12:16:05 localhost pppd[18558]: sent [IPCP ConfReq id=0x2 <addr 0.0.0.0>]
+Mar 18 12:16:06 localhost pppd[18558]: rcvd [IPCP ConfNak id=0x2]
+Mar 18 12:16:06 localhost pppd[18558]: sent [IPCP ConfReq id=0x3 <addr 0.0.0.0>]
+Mar 18 12:16:07 localhost pppd[18558]: rcvd [IPCP ConfNak id=0x3]
+Mar 18 12:16:07 localhost pppd[18558]: sent [IPCP ConfReq id=0x4 <addr 0.0.0.0>]
+Mar 18 12:16:08 localhost pppd[18558]: rcvd [IPCP ConfNak id=0x4]
+(and this just repeats)
 
-I think its a delusion from early drivers that never got sorted
+In windows, I am running the application that comes with the modem to 
+connect, and I have collected a sniff of the serial port between the modem 
+and windows where IPCP works and posted it at 
+http://tlund.pp.se/ppp/windows_ppp_sniff.txt
 
-> 
-> [1] Perhaps leftover from when moxa_shutdown used to NULL it.
-> 
-> I don't see why the driver should care at all. It has a tty,
-> tty->driver_data and thus all the HW info. So it should ignore the race,
-> i.e. test nothing, right?
+I suspect that Huawei PPP/IPCP implementation in the modem requires it to 
+be done JUST the way that their application does it, instead of just 
+following the relevant RFC:s.
 
-Yes
+I am willing to provide any additional details that might be needed, do 
+additional sniffing and try any patches or config changes you might have.
 
+Best regards,
+Tomas
