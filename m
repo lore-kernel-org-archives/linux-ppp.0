@@ -1,7 +1,7 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 18 Mar 2011 13:11:13 +0000
+From: Tomas Lund <tlund@nxs.se>
+Date: Sun, 20 Mar 2011 11:23:18 +0000
 Subject: Re: Huawei E398 4G/LTE USB-modem - IPCP fails under pppd 2.4.5
-Message-Id: <4D8359F1.4070900@workingcode.com>
+Message-Id: <Pine.LNX.4.61.1103181456350.12352@envy.nxs.se>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <Pine.LNX.4.61.1103181230280.12352@envy.nxs.se>
 In-Reply-To: <Pine.LNX.4.61.1103181230280.12352@envy.nxs.se>
@@ -10,72 +10,68 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Tomas Lund wrote:
-> I have a Huawei E398 4G/LTE USB-modem where IPCP fails under pppd 2.4.5
-> but works in Windows.
+On Fri, 18 Mar 2011, James Carlson wrote:
 
-Ah, 4G.  That's difficult.
+> Ah, 4G. That's difficult.
 
-> Mar 18 12:16:04 localhost pppd[18558]: sent [IPCP ConfReq id=0x1 <addr
-> 0.0.0.0>]
-> Mar 18 12:16:05 localhost pppd[18558]: rcvd [IPCP ConfNak id=0x1]
+The difference between how PS works in 2G/3G/4G is not really that big, 
+its mostly the name of the boxes and the interfaces that change :)
 
-Typically, with 4G-type devices, this means that either the
-authentication failed or that the phone isn't properly registered with
-the network.
+> Typically, with 4G-type devices, this means that either the 
+> authentication failed or that the phone isn't properly registered with 
+> the network.
 
-What happens here (and it's really just cell-phone brain-damage; nobody
-else does it this way) is that the PPP server you're talking to sends
-back a fake "success" message regardless of what credentials you offer,
-and it delays actually doing the authentication work until you start IPCP.
+Autentication is disabled in the network and you should be able to send 
+anything you want. Access is allowed by the MME and the PGW based on the 
+IMSI and configuration made in the HSS.
 
-When you start IPCP, the PPP server sends your credentials to a central
-system that either responds with the IP address you should use, which
-the PPP server then sends back to you.  If authentication fails, though,
-the PPP server wigs out (I think that's the technical term ;-}) and
-starts sending garbage.
+>> In windows, I am running the application that comes with the modem to 
+>> connect, and I have collected a sniff of the serial port between the 
+>> modem and windows where IPCP works and posted it at 
+>> http://tlund.pp.se/ppp/windows_ppp_sniff.txt
+>
+> That shows a blank (!) user name being sent.
+>
+>> I suspect that Huawei PPP/IPCP implementation in the modem requires it 
+>> to be done JUST the way that their application does it, instead of just 
+>> following the relevant RFC:s.
+>
+> Possibly so.  It may require some experimentation to figure out just 
+> what it wants to see.
 
-Some of these systems will send back a bogus, unusable "default" IP
-address.  Some will hang up the call.  Some will terminate LCP or IPCP.
- It seems that this one sends a thoroughly bogus IPCP Configuration-Nak
-that lacks any options.
+I was hoping it should be possible to figure out exactly what the Huawei 
+windows application does differently from what pppd does based on my 
+sniff. :)
 
-I guess once you walk away from one part of the standard as written, you
-might as well go completely nuts.  ;-}
+>> I am willing to provide any additional details that might be needed, do 
+>> additional sniffing and try any patches or config changes you might 
+>> have.
+>
+> Try using this:
+>
+> 	user ""
+>
+> and adjust /etc/ppp/chap-secrets to match.
 
-Anyway, check your configured user name / passphrase.  Make sure that
-any special characters in the passphrase are escaped properly.
+I tried that, and it made no difference. I also went back to the windows 
+box and entered a username/password to see what happened, and it made no 
+difference there either.
 
-> In windows, I am running the application that comes with the modem to
-> connect, and I have collected a sniff of the serial port between the
-> modem and windows where IPCP works and posted it at
-> http://tlund.pp.se/ppp/windows_ppp_sniff.txt
+However, after moving it back to the linux box again, I found someting 
+curious! The defined PDP-contexts in the modem (as shown by AT+CGDCONT?) 
+was all empty! (possibly removed by doing AT&F, not verified yet)
 
-That shows a blank (!) user name being sent.
+In my chat-script I always overwrite the APN-name based on what IMSI the 
+SIM-card has (i use alot of different dongles and SIM-cards and move them 
+around alot), so .. just on a whim, I quickly edited the script not to do 
+this, and just go ahead and sedn ATDT*99# anyways, without an APN set.
 
-> I suspect that Huawei PPP/IPCP implementation in the modem requires it
-> to be done JUST the way that their application does it, instead of just
-> following the relevant RFC:s.
+Success!
 
-Possibly so.  It may require some experimentation to figure out just
-what it wants to see.
+I do not yet understand why or how, but this magically worked. :)
 
-> I am willing to provide any additional details that might be needed, do
-> additional sniffing and try any patches or config changes you might have.
+I am going to sniff the control-plane of the MME and the SGW to see what 
+actually happens in the PDP set-up signaling.
 
-Try using this:
-
-	user ""
-
-and adjust /etc/ppp/chap-secrets to match.
-
-That seems to be what the peer wants.  If that doesn't work, someone
-with access to the hardware (possibly you) will have to tinker around
-with the code to see what might work.
-
-I doubt it's something that could be done effectively at a distance.  I
-probably don't have the time to do it, but perhaps someone else on the
-list does ...
-
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+Best regards,
+Tomas
