@@ -1,54 +1,53 @@
-From: Jack Stone <jwjstone@fastmail.fm>
-Date: Mon, 21 Mar 2011 17:40:32 +0000
+From: Jiri Slaby <jslaby@suse.cz>
+Date: Thu, 31 Mar 2011 20:53:59 +0000
 Subject: Re: 'scheduling while atomic' during ppp connection on 2.6.37.1 and
-Message-Id: <4D878D90.6070100@fastmail.fm>
+Message-Id: <4D94E9E7.2050600@suse.cz>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <fuopaigyaypsqveewtjx@pwmq>	<4D864A82.4090104@fastmail.fm>	<20110320215826.79cadfe2@lxorguk.ukuu.org.uk>	<6627fbdd-cce6-4717-8920-3a0d7526274b@email.android.com> <20110321112723.248e7a52@lxorguk.ukuu.org.uk>
-In-Reply-To: <20110321112723.248e7a52@lxorguk.ukuu.org.uk>
+References: <fuopaigyaypsqveewtjx@pwmq>	<4D864A82.4090104@fastmail.fm>	<20110320215826.79cadfe2@lxorguk.ukuu.org.uk>	<4D87173D.50906@suse.cz> <20110321110214.5174f1b2@lxorguk.ukuu.org.uk>
+In-Reply-To: <20110321110214.5174f1b2@lxorguk.ukuu.org.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Cc: Mac <kmac@poczta.fm>, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, Greg Kroah-Hartman <gregkh@suse.de>
+Cc: Jack Stone <jwjstone@fastmail.fm>, Mac <kmac@poczta.fm>, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, Greg Kroah-Hartman <gregkh@suse.de>, Jiri Slaby <jirislaby@gmail.com>
 
-On 21/03/2011 11:27, Alan Cox wrote:
-> It's quite likely that was as broken before your change as after. The
-> locking in the code makes no sense so I flagged it up. The
-> nozomi ntty_write also has lots of oddness in it that really needs
-> sorting out.
+On 03/21/2011 12:02 PM, Alan Cox wrote:
+>> Anyway is the test needed at all? I.e. could
+>> tty->ops->write/chars_in_buffer/ntty_write_room be called with
+>> port->port.count = 0 at all?
 > 
-> I suspect that the chunk
-> 
->         if (!dc || !port)
->                 return -ENODEV;
-> 
->         mutex_lock(&port->tty_sem);
-> 
->         if (unlikely(!port->port.count)) {
->                 DBG1(" ");
->                 goto exit;
->         }
-> 
-> and
-> 
->       /* notify card */
->         if (unlikely(dc = NULL)) {
->                 DBG1("No device context?");
->                 goto exit;
->         }
-> 
-> and the mutex unlock are actually not doing anything
-> 
-> On the write_room case I think that as the code already uses tty_port
-> helpers it needs to simply just return the correct value and not do all
-> the other checks. chars_in_buffer() likewise
-> 
-> So in fact I don't think at this point the tty_sem needs replacing with
-> anything, but the various bogus port.count checks want ripping out.
-> 
-> 
+> I'm not entirely sure what the Nozomi driver is trying to do. Generally
+> any case a driver is looking at port->port.count it's a bug and should
+> not matter with the tty krefs. However the chances are it should be
+> testing *something* instead in this case.
 
-Thank you very much for the explanation. I will do my best to respin the
-patch with appropriate changes.
+Well, I looked into the history of the driver and into the driver
+itself. What I've found out is:
 
-Jack
+* tty_sem is useless now. It was used to protect port->tty_open_count
+which was later switched to port->port.count. The lock should have been
+switched to port->lock at that time too.
+
+* the port->port.count = 0 tests are an illusion of protection against
+race with hup.
+
+IOW both of them are crap nowadays. The former doesn't protect anything,
+the latter is not protected by anything.
+
+What is the proper way to avoid a race with HUP in tty->ops->write,
+chars_in_buffer, ntty_write_room and possibly others?
+
+I looked into the drivers, moxa tests tty->driver_data (why? [1]), mxser
+does nothing as well as rocket and many others. What is the reference
+driver I should look into?
+
+[1] Perhaps leftover from when moxa_shutdown used to NULL it.
+
+I don't see why the driver should care at all. It has a tty,
+tty->driver_data and thus all the HW info. So it should ignore the race,
+i.e. test nothing, right?
+
+thanks,
+-- 
+js
+suse labs
