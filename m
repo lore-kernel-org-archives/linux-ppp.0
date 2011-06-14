@@ -1,30 +1,23 @@
-From: David Miller <davem@davemloft.net>
-Date: Thu, 19 May 2011 18:52:26 +0000
-Subject: Re: net: add seq_before/seq_after functions
-Message-Id: <20110519.145226.81502363776050802.davem@davemloft.net>
+From: Alan Cox <alan@linux.intel.com>
+Date: Tue, 14 Jun 2011 13:24:46 +0000
+Subject: Re: [PATCH] TTY: define TTY_MAX_RECEIVE_ROOM to 65536
+Message-Id: <20110614142446.063c0859@bob.linux.org.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <201105191054.34912.sven@narfation.org>
-	<20110519.050824.838971689287732822.davem@davemloft.net>
-	<201105191121.23888.sven@narfation.org>
-In-Reply-To: <201105191121.23888.sven@narfation.org>
+References: <1308057986-11472-1-git-send-email-ffainelli@freebox.fr>
+In-Reply-To: <1308057986-11472-1-git-send-email-ffainelli@freebox.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: sven@narfation.org
-Cc: ordex@autistici.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, linux-ppp@vger.kernel.org
+To: Florian Fainelli <ffainelli@freebox.fr>
+Cc: linux-kernel@vger.kernel.org, Marcel Holtmann <marcel@holtmann.org>, "Gustavo F. Padovan" <padovan@profusion.mobi>, Wolfgang Grandegger <wg@grandegger.com>, Andreas Koensgen <ajk@comnets.uni-bremen.de>, Samuel Ortiz <samuel@sortiz.org>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@suse.de>, Mikael Starvik <starvik@axis.com>, Jesper Nilsson <jesper.nilsson@axis.com>, Pavan Savoy <pavan_savoy@ti.com>, Felipe Balbi <balbi@ti.com>, Thomas Gleixner <tglx@linutronix.de>, David Miller <davem@davemloft.net>, Eric Dumazet <eric.dumazet@gmail.com>, Oliver Hartkopp <socketcan@hartkopp.net>, Tobias Klauser <tklauser@distanz.ch>, Jiri Slaby <jslaby@suse.cz>, linux-bluetooth@vger.kernel.org, socketcan-core@lists.berlios.de, netdev@vger.kernel.org, linux-hams@vger.kernel.org, linux-ppp@vger.kernel.org, linux-cris-kernel@axis.com, linux-serial@vger.kernel.org
 
-From: Sven Eckelmann <sven@narfation.org>
-Date: Thu, 19 May 2011 11:21:21 +0200
+On Tue, 14 Jun 2011 15:26:25 +0200
+Florian Fainelli <ffainelli@freebox.fr> wrote:
 
-> This is currently used by vis.c in net/batman-adv and could also be used by 
-> ppp-generic.c (with my changes of course). And it is planned to be used by 
-> transtable.c in net/batman-adv. The idea was to propose this to linux-
-> kernel/netdev before we move it to a place were only batman-adv can use it 
-> (the current situation is that vis.c in batman-adv can only use it).
-> 
-> It is ok that you say that it should be batman-adv specific - we only wanted 
-> to ask first.
+> A lot of TTY drivers are setting their receive_room value to 65536
+> so let's define a constant for this.
 
-Well, this is a purely networking change, the header you're touching is
-networking specific, so really in this case linux-kernel didn't need to
-get involved :-)
+These are not all the same thing so NAK
+
+Linus wants to get rid of tty->receive_room anyway
+
