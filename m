@@ -1,56 +1,43 @@
-From: Martin Jackson <mjackson220.list@gmail.com>
-Date: Sun, 26 Jun 2011 21:17:54 +0000
+From: David Miller <davem@davemloft.net>
+Date: Tue, 28 Jun 2011 04:15:58 +0000
 Subject: Re: ppp_deflate + kmalloc
-Message-Id: <BANLkTinMNb65nyo+Y8xhpTP2RC6x06ZJqQ@mail.gmail.com>
+Message-Id: <20110627.211558.640845527643065916.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <BANLkTi=+2dqr1LPwG8MHpcYOyzJH57iavw@mail.gmail.com>
 	<4E049900.4080402@workingcode.com>
-In-Reply-To: <4E049900.4080402@workingcode.com>
+	<BANLkTinMNb65nyo+Y8xhpTP2RC6x06ZJqQ@mail.gmail.com>
+In-Reply-To: <BANLkTinMNb65nyo+Y8xhpTP2RC6x06ZJqQ@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-To: James Carlson <carlsonj@workingcode.com>
-Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: mjackson220.list@gmail.com
+Cc: carlsonj@workingcode.com, paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-On Fri, Jun 24, 2011 at 4:02 PM, James Carlson <carlsonj@workingcode.com> w=
-rote:
-> Martin Jackson wrote:
->> In our android froyo-based system (omap3 hardware), we are getting the
->> following problem where the ppp driver cannot kmalloc enough memory
->> for the decomp buffer in the ppp driver.
->>
->> Trying to make a 4th-order kmalloc (I think that amounts to 64kB)
->> seems ambitious. I do not understand why vmalloc is not being used
->> here, like it is for the compression buffer. Is using vmalloc here an
->> acceptable solution?
->
-> The code here shouldn't need contiguous pages, so vmalloc (even if
-> "slower") shouldn't be a problem.
->
-> But a higher-level question might be why you're bothering with RFC 1979
-> Deflate compression at all on this platform. =A0I'd expect that you're
-> most likely going to end up talking to commercially-produced PPP servers
-> (possibly 3GPP or similar) at the other end, and very, very few of them
-> offer data compression with either RFC 1977 (BSD Compression) or RFC
-> 1979. =A0("Very, very few" is probably being generous ...)
->
-> If it's always going to be negotiated away in practice, and if you're
-> having trouble with memory constraints, why not just ditch the baggage?
->
-> --
-> James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
-orkingcode.com>
->
+From: Martin Jackson <mjackson220.list@gmail.com>
+Date: Sun, 26 Jun 2011 23:17:54 +0200
 
-Thanks for the advice. Hopefully we can indeed remove these obscure
-PPP options from our configuration - I'll look into that.
+> Thanks for the advice. Hopefully we can indeed remove these obscure
+> PPP options from our configuration - I'll look into that.
+> 
+> However, the point still stands that a 4th order kmalloc is likely to
+> fail (even our "embedded" device has 256MB RAM and slub allocator,
+> after all), and the page allocation code regards anything above order
+> 3 as unrealistic and doesn't invoke the OOM to try to satisfy it, so
+> my view remains that this should be changed to vmalloc.
 
-However, the point still stands that a 4th order kmalloc is likely to
-fail (even our "embedded" device has 256MB RAM and slub allocator,
-after all), and the page allocation code regards anything above order
-3 as unrealistic and doesn't invoke the OOM to try to satisfy it, so
-my view remains that this should be changed to vmalloc.
+PPP is not the only place in the tree where we potentially have
+this problem.
 
-Best regards,
+crypto/deflate.c:	stream->workspace = kzalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
+crypto/zlib.c:	stream->workspace = kzalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
+drivers/net/bnx2x/bnx2x_main.c:	bp->strm->workspace = kmalloc(zlib_inflate_workspacesize(),
+drivers/net/ppp_deflate.c:	state->strm.workspace = kmalloc(zlib_inflate_workspacesize(),
+fs/binfmt_flat.c:	strm.workspace = kmalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
+lib/zlib_inflate/infutil.c:	strm->workspace = kmalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
 
-Martin Jackson
+A particularly problematic case is binfmt_flat.c since this is used on
+systems which lack an MMU, and therefore for which vmalloc() is not
+applicable.
+
+What I'll do for now is transform all of the networking cases, but
+someone should think seriously about the remaining cases.
