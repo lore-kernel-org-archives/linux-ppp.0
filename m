@@ -1,43 +1,36 @@
-From: David Miller <davem@davemloft.net>
-Date: Tue, 28 Jun 2011 04:15:58 +0000
-Subject: Re: ppp_deflate + kmalloc
-Message-Id: <20110627.211558.640845527643065916.davem@davemloft.net>
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Mon, 08 Aug 2011 13:25:19 +0000
+Subject: [PATCH 12/12] headers, ppp: Add missing #include to
+Message-Id: <1312809919.2591.1152.camel@deadeye>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <BANLkTi=+2dqr1LPwG8MHpcYOyzJH57iavw@mail.gmail.com>
-	<4E049900.4080402@workingcode.com>
-	<BANLkTinMNb65nyo+Y8xhpTP2RC6x06ZJqQ@mail.gmail.com>
-In-Reply-To: <BANLkTinMNb65nyo+Y8xhpTP2RC6x06ZJqQ@mail.gmail.com>
+References: <1312809302.2591.1139.camel@deadeye>
+In-Reply-To: <1312809302.2591.1139.camel@deadeye>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: mjackson220.list@gmail.com
-Cc: carlsonj@workingcode.com, paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: netdev@vger.kernel.org, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
 
-From: Martin Jackson <mjackson220.list@gmail.com>
-Date: Sun, 26 Jun 2011 23:17:54 +0200
+<linux/if_ppp.h> uses various types defined in <linux/ppp_defs.h>.
 
-> Thanks for the advice. Hopefully we can indeed remove these obscure
-> PPP options from our configuration - I'll look into that.
-> 
-> However, the point still stands that a 4th order kmalloc is likely to
-> fail (even our "embedded" device has 256MB RAM and slub allocator,
-> after all), and the page allocation code regards anything above order
-> 3 as unrealistic and doesn't invoke the OOM to try to satisfy it, so
-> my view remains that this should be changed to vmalloc.
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+ include/linux/if_ppp.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-PPP is not the only place in the tree where we potentially have
-this problem.
+diff --git a/include/linux/if_ppp.h b/include/linux/if_ppp.h
+index c9ad383..4d70e16 100644
+--- a/include/linux/if_ppp.h
++++ b/include/linux/if_ppp.h
+@@ -35,6 +35,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/compiler.h>
++#include <linux/ppp_defs.h>
+ 
+ /*
+  * Packet sizes
+-- 
+1.7.5.4
 
-crypto/deflate.c:	stream->workspace = kzalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
-crypto/zlib.c:	stream->workspace = kzalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
-drivers/net/bnx2x/bnx2x_main.c:	bp->strm->workspace = kmalloc(zlib_inflate_workspacesize(),
-drivers/net/ppp_deflate.c:	state->strm.workspace = kmalloc(zlib_inflate_workspacesize(),
-fs/binfmt_flat.c:	strm.workspace = kmalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
-lib/zlib_inflate/infutil.c:	strm->workspace = kmalloc(zlib_inflate_workspacesize(), GFP_KERNEL);
 
-A particularly problematic case is binfmt_flat.c since this is used on
-systems which lack an MMU, and therefore for which vmalloc() is not
-applicable.
-
-What I'll do for now is transform all of the networking cases, but
-someone should think seriously about the remaining cases.
