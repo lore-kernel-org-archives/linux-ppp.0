@@ -1,84 +1,67 @@
-From: Gordon Henderson <gordon@drogon.net>
-Date: Fri, 21 Oct 2011 11:16:38 +0000
-Subject: Multilink PPPoE - Header corruption
-Message-Id: <alpine.DEB.2.00.1110201134350.11377@unicorn.drogon.net>
+From: "Jason St. John" <jstjohn@purdue.edu>
+Date: Fri, 14 Oct 2011 04:08:14 +0000
+Subject: Patch Submission: Enable 'poff' to properly end a 'pppd' process when
+Message-Id: <CAEjxke-aNC7keOTesp7hawU6gdUtU5W9sC1Xet5uzmLX-57nLQ@mail.gmail.com>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="90e6ba1efd3a2e819704af3a694f"
 List-Id: <linux-ppp.vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+--90e6ba1efd3a2e819704af3a694f
+Content-Type: text/plain; charset=UTF-8
 
-Searching the archives, I see that this list has been relatively quiet as 
-of late - probably because the PPP systems are considered stable and "just 
-work"... However I've hit an interesting issue that I can't find any 
-solution to..
+The patch (with context) is attached to this email, and it will allow
+/usr/bin/poff to properly end a /usr/sbin/pppd process that was
+started with additional arguments.
 
-I have a Linux based router - nothing fancy, however it has 8 Intel 
-Ethernet ports - 4 x Gb, 4 x 10/100. It's running Debian, with a custom 
-compiled 2.6.35.13 kernel tailored to the hardware. (Although I've just 
-now tried 3.0.4 with the same issues)
+The patch (without context) is found below (see line 93 of /usr/bin/poff):
+-PID=`ps axw | grep "[ /]pppd call $1 *\$" | awk '{print $1}'`
++PID=`ps axw | grep "[ /]pppd call $1" | awk '{print $1}'`
 
-(using that 2.6.35 kernel as it's the latest flagged for long-term support 
-and I'm using it elsewhere in routers/servers, etc. I'm not averse to 
-trying a different kernel though - especially if someone can say "Oh look, 
-a regression, try this" or something)
+The problem with the current poff script is on line 93 where the
+output of `ps axw` is piped into grep. The current regular expression
+that grep searches for prevents the PID of the specified pppd process
+from being found, which results in the script failing to terminate the
+pppd process. The output of poff in that case would be the following:
 
-Anyway, one of the 10/100 Ethernet ports is running PPPoE to a Vigor 120 
-modem acting as a PPPoE <> PPPoA bridge to the ISP. This is working fine 
-and is something I've done several times in the past.
+/usr/bin/poff: I could not find a pppd process for provider 'cit-vpn'.
+None stopped.
 
-Another 2 ports connect in a similar manner via a pair of Vigor 120's to a 
-different ISP who is providing a bonded service.
+The reason for this is that the " *\$" at the end of the regular
+expression does not match the output of the following example from `ps
+axw`:
 
-I can bring each of these lines up individually and pass data over them 
-without any issues. I can bring them both up, and I see the links bundled 
-together in the log messages, however then the fun begins... I can ping 
-the far end (and remote hosts in-general), but I can't transfer any data. 
-In particular what appears to be happening is that the first SYN packet 
-that leaves the router is corrupted, or the SYN+ACK packet is response to 
-a remote connection is similarly corrupted.
+11846 ?        Ss     0:00 /usr/sbin/pppd call cit-vpn updetach persist
 
-e.g. tshark looking at the Ethernet port connecting the router to the 
-modem when I try to connect in remotely (ssh - 195.10.225.68 is my remote 
-host, 93.89.81.142 is the router)
+To resolve this issue, I removed the troublesome part of the regular
+expression (" *\$") and now grep can properly match the example output
+provided above.
 
-   7.494318 195.10.225.68 -> 93.89.81.142 TCP 40323 > 22
- 	 [SYN] Seq=0 WinX40 Len=0 TSV3234063 TSER=0 MSS46 WS=6
+I have tested this using ppp 2.4.5-2 in conjunction with
+pptpclient-1.7.2-3 on Arch Linux x86_64.
+______________________________________________
+Jason St. John
+Graduate Research Assistant,
+Department of Computer and Information Technology,
+Purdue University
 
-The router then sends the syn+ack back... or should have, but sends this:
+--90e6ba1efd3a2e819704af3a694f
+Content-Type: text/x-patch; charset=US-ASCII; name="poff.patch"
+Content-Disposition: attachment; filename="poff.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_gtqnjxxm0
 
-   7.498888 93.89.81.142 -> 195.10.225.68 TCP 22 > 40323[Malformed Packet]
-
-the far-end also sees a zero-length header message.
-
-The link does work in some way though - e.g. if I bring up one link, 
-establish a connection - e.g. an scp of a big file, then I bring up the 
-2nd line it carries on working - at double the speed - which is to be 
-expected - but if I then try a new connection, the syn/syn+ack packet will 
-be corrupted as before.
-
-I've tried the various firewalling, mtu and mss clamping on and off, 
-particular values, etc. to no avail. I've also tried the kernel PPPoE 
-driver as well as the RP userspace one too.
-
-So it's quite frustrating!
-
-A quick glance at the code suggests no changes since about 2005, which 
-sort of implys that many others are using it successfully, or no-one is 
-and I'm the first to try for some years (which I don't believe!)
-
-The ISP doing the bonding line has other customers doing the same, but I'm 
-not convinced it's an issue with them - seeing that corrupted packet come 
-out of my router sort of points the finger right at it from what I reckon.
-
-If anyone has any clues, suggestions or ideas, I'm all ears! I may not be 
-able to try out much as the site is generally "live" with people using the 
-initial link to the first ISP on a daily basis, so any tests/experiments 
-may have to wait until an evening or weekend, but at this stage I'm 
-willing to try almost anything...
-
-Cheers,
-
-Gordon
-(Based in the UK if any makes any difference)
+LS0tIHBvZmYJMjAxMS0xMC0wMSAxOTo0OTo1Mi4yNjIzMTg4NjQgLTA0MDAKKysrIHBvZmZfcGF0
+Y2hlZAkyMDExLTEwLTAxIDE5OjUxOjI5LjE3OTEyNTkwOCAtMDQwMApAQCAtODMsMjEgKzgzLDIx
+IEBACiAjIHBwcGQncy4KIGlmIHRlc3QgIiQjIiAtZXEgMCAtbyAiJE1PREUiID0gImFsbCIgOyB0
+aGVuCiAgICAgJEtJTEwgLSRTSUcgJFBJRFMgfHwgewogICAgICAgICBlY2hvICIkMDogJEtJTEwg
+ZmFpbGVkLiAgTm9uZSAke0RPTkV9LiIKICAgICAgICAgZXhpdCAxCiAgICAgfQogICAgIGV4aXQg
+MAogZmkKIAogIyBUaGVyZSBpcyBhbiBhcmd1bWVudCwgc28ga2lsbCB0aGUgcHBwZCBzdGFydGVk
+IG9uIHRoYXQgcHJvdmlkZXIuCi1QSUQ9YHBzIGF4dyB8IGdyZXAgIlsgL11wcHBkIGNhbGwgJDEg
+KlwkIiB8IGF3ayAne3ByaW50ICQxfSdgCitQSUQ9YHBzIGF4dyB8IGdyZXAgIlsgL11wcHBkIGNh
+bGwgJDEiIHwgYXdrICd7cHJpbnQgJDF9J2AKIGlmIHRlc3QgLW4gIiRQSUQiIDsgdGhlbgogICAg
+ICRLSUxMIC0kU0lHICRQSUQgfHwgewogICAgICAgICBlY2hvICIkMDogJEtJTEwgZmFpbGVkLiAg
+Tm9uZSAke0RPTkV9LiIKICAgICAgICAgZXhpdCAxCiAgICAgfQogZWxzZQogICAgZWNobyAiJDA6
+IEkgY291bGQgbm90IGZpbmQgYSBwcHBkIHByb2Nlc3MgZm9yIHByb3ZpZGVyICckMScuIE5vbmUg
+JHtET05FfS4iCiAgICBleGl0IDEKIGZpCiBleGl0IDAK
+--90e6ba1efd3a2e819704af3a694f--
