@@ -1,67 +1,30 @@
-From: "Jason St. John" <jstjohn@purdue.edu>
-Date: Fri, 14 Oct 2011 04:08:14 +0000
-Subject: Patch Submission: Enable 'poff' to properly end a 'pppd' process when
-Message-Id: <CAEjxke-aNC7keOTesp7hawU6gdUtU5W9sC1Xet5uzmLX-57nLQ@mail.gmail.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="90e6ba1efd3a2e819704af3a694f"
+From: Bradley Peterson <despite@gmail.com>
+Date: Thu, 19 Jan 2012 22:35:59 +0000
+Subject: Single core gets pegged on multi-core PPTP server
+Message-Id: <CAJuWrdtDgeCOSEvD-ytfwGj4UQeOtjeqUZd3Y1SLpbbsSvrycg@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-To: linux-ppp@vger.kernel.org
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
---90e6ba1efd3a2e819704af3a694f
-Content-Type: text/plain; charset=UTF-8
+Hello,
 
-The patch (with context) is attached to this email, and it will allow
-/usr/bin/poff to properly end a /usr/sbin/pppd process that was
-started with additional arguments.
+I am trying to test the capacity of a linux PPTP server, both in
+number of connections, and in packets per second.  I am using kernel
+2.6.38.8, with the ppp, pptp, and gre modules, and accel-pptp 0.8.3.
+I have RPS, RFS, and XPS enabled on the network devices for SMP
+support.
 
-The patch (without context) is found below (see line 93 of /usr/bin/poff):
--PID=`ps axw | grep "[ /]pppd call $1 *\$" | awk '{print $1}'`
-+PID=`ps axw | grep "[ /]pppd call $1" | awk '{print $1}'`
+But I'm seeing one CPU get pegged out with soft interrupt, while the
+others are almost completely idle.
 
-The problem with the current poff script is on line 93 where the
-output of `ps axw` is piped into grep. The current regular expression
-that grep searches for prevents the PID of the specified pppd process
-from being found, which results in the script failing to terminate the
-pppd process. The output of poff in that case would be the following:
+In my current test, I'm starting 250 pptp connections from another
+server, then running iperf across each connection.  The client machine
+pegs out, sure, but I'm surprised the server pegs out a single CPU.
+With RPS, I would expect softirq's to be more balanced.
 
-/usr/bin/poff: I could not find a pppd process for provider 'cit-vpn'.
-None stopped.
+Where could the bottleneck be?  Do all ppp packets need to be
+processed serially?
 
-The reason for this is that the " *\$" at the end of the regular
-expression does not match the output of the following example from `ps
-axw`:
-
-11846 ?        Ss     0:00 /usr/sbin/pppd call cit-vpn updetach persist
-
-To resolve this issue, I removed the troublesome part of the regular
-expression (" *\$") and now grep can properly match the example output
-provided above.
-
-I have tested this using ppp 2.4.5-2 in conjunction with
-pptpclient-1.7.2-3 on Arch Linux x86_64.
-______________________________________________
-Jason St. John
-Graduate Research Assistant,
-Department of Computer and Information Technology,
-Purdue University
-
---90e6ba1efd3a2e819704af3a694f
-Content-Type: text/x-patch; charset=US-ASCII; name="poff.patch"
-Content-Disposition: attachment; filename="poff.patch"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_gtqnjxxm0
-
-LS0tIHBvZmYJMjAxMS0xMC0wMSAxOTo0OTo1Mi4yNjIzMTg4NjQgLTA0MDAKKysrIHBvZmZfcGF0
-Y2hlZAkyMDExLTEwLTAxIDE5OjUxOjI5LjE3OTEyNTkwOCAtMDQwMApAQCAtODMsMjEgKzgzLDIx
-IEBACiAjIHBwcGQncy4KIGlmIHRlc3QgIiQjIiAtZXEgMCAtbyAiJE1PREUiID0gImFsbCIgOyB0
-aGVuCiAgICAgJEtJTEwgLSRTSUcgJFBJRFMgfHwgewogICAgICAgICBlY2hvICIkMDogJEtJTEwg
-ZmFpbGVkLiAgTm9uZSAke0RPTkV9LiIKICAgICAgICAgZXhpdCAxCiAgICAgfQogICAgIGV4aXQg
-MAogZmkKIAogIyBUaGVyZSBpcyBhbiBhcmd1bWVudCwgc28ga2lsbCB0aGUgcHBwZCBzdGFydGVk
-IG9uIHRoYXQgcHJvdmlkZXIuCi1QSUQ9YHBzIGF4dyB8IGdyZXAgIlsgL11wcHBkIGNhbGwgJDEg
-KlwkIiB8IGF3ayAne3ByaW50ICQxfSdgCitQSUQ9YHBzIGF4dyB8IGdyZXAgIlsgL11wcHBkIGNh
-bGwgJDEiIHwgYXdrICd7cHJpbnQgJDF9J2AKIGlmIHRlc3QgLW4gIiRQSUQiIDsgdGhlbgogICAg
-ICRLSUxMIC0kU0lHICRQSUQgfHwgewogICAgICAgICBlY2hvICIkMDogJEtJTEwgZmFpbGVkLiAg
-Tm9uZSAke0RPTkV9LiIKICAgICAgICAgZXhpdCAxCiAgICAgfQogZWxzZQogICAgZWNobyAiJDA6
-IEkgY291bGQgbm90IGZpbmQgYSBwcHBkIHByb2Nlc3MgZm9yIHByb3ZpZGVyICckMScuIE5vbmUg
-JHtET05FfS4iCiAgICBleGl0IDEKIGZpCiBleGl0IDAK
---90e6ba1efd3a2e819704af3a694f--
+Brad
