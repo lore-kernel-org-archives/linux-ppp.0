@@ -1,33 +1,45 @@
-From: Lo Yuk Fai <loyukfai@gmail.com>
-Date: Tue, 10 Jan 2012 22:54:03 +0000
-Subject: Poptop MPPE Issue...?
-Message-Id: <CAJRGjhotd3-S4OdeU=yyCPZMGbmeXBw8-Svo42DdwDLKTR1myQ@mail.gmail.com>
+From: Rick Blair <rickblair@mac.com>
+Date: Sat, 18 Feb 2012 21:11:20 +0000
+Subject: PPP to MS RRAS Server Protocol errors
+Message-Id: <loom.20120218T220252-25@post.gmane.org>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hello,
+hi all,
 
-Long story short, I’ve setup pptpd/poptop on a Debian Squeeze running
-2.6.32 kernel. For some reasons there are a lot of these errors when I
-browse the Internet through the server…
+I can connect to a microsoft RRAS server on Windows 2003 server.
 
-Jan 10 16:07:06 debian kernel: [ 2407.827927] mppe_compress[0]: osize
-too small! (have: 1404 need: 1408)
-Jan 10 16:07:06 debian kernel: [ 2407.827930] ppp: compressor dropped pkt
+Setup Fedora 15 64 bit 
+Kernel 2.6.41.10-3
 
-Tried fiddling around the mtu and mru setting to no avail. Googled for
-hours and most of the results talk about patches that are years old
-and should be implemented already...?
+I am using wvdial
 
-The pptpd-options and pptpd.conf are as defaults, except for the IP ranges.
+I successfully authenticate with MS-CHAP V2
 
-Any idea…?
+PPP options
+nobsdcomp
+refuse-eap
+require-mppe-128
+mppe-stateful
+noaccomp
+nodeflate
+nopcomp
 
-Thanks in advance.
 
-Lo Yuk Fai
+Everything looks good,  except every packet I receive from the windows box I get
+Unsupported protocol xxxxx received
 
-P.S. Upgraded the kernel to 2.6.39 via debian-backport, but problem persists.
+where xxx seems to have a fairly random value.
+Any clues?
+
+Thanks
+
+
+
+
+
+
+
