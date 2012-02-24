@@ -1,61 +1,86 @@
-From: Srinidhi M <srinidhi.m26@gmail.com>
-Date: Wed, 08 Feb 2012 11:55:19 +0000
-Subject: Re: CPU processing time between using TCP and UDP
-Message-Id: <CADa7JjWKJLBTPtK1c5iUbvbBsqO+kwWNWJZ1R6NkeJZXY2DWfg@mail.gmail.com>
+From: Ben McKeegan <ben@netservers.co.uk>
+Date: Fri, 24 Feb 2012 16:33:56 +0000
+Subject: [PATCH] ppp: fix 'ppp_mp_reconstruct bad seq' errors
+Message-Id: <Pine.LNX.4.58.1202241616590.5575@benxen>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <CADa7JjUrtiQF=bBm--a1WLBFSW877_=Ws95Z+rDpwhaWnXBuyg@mail.gmail.com>
-In-Reply-To: <CADa7JjUrtiQF=bBm--a1WLBFSW877_=Ws95Z+rDpwhaWnXBuyg@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: davem@davemloft.net
+Cc: paulus@samba.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-On Tue, Feb 7, 2012 at 9:00 PM, James Carlson <carlsonj@workingcode.com> wr=
-ote:
-> Srinidhi M wrote:
->> Could you please let me know, which module in TCP/IP is consuming more
->> time than UDP? How can we reduce packet processing time when sending
->> through TCP stack? Please let me know your thoughts.
->
-> Are you sure you wanted to post this message on the Linux PPP mailing lis=
-t?
 
-No. I do not know the exact mailing list name for these type of
-questions. First, I mailed to main kernel, but, I did not get any
-response. So, I mailed to this group. Please let me know the mailing
-list name for posting these type of questions.
+This patch fixes a (mostly cosmetic) bug introduced by the patch
+'ppp: Use SKB queue abstraction interfaces in fragment processing'
+found here: http://www.spinics.net/lists/netdev/msg153312.html
 
-> Anyway, without knowing a lot about your application, how you're
-> measuring things, and what environment you're running in, it's a little
-> hard to guess at what sort of change you might require. =A0But I'll give
-> it a try.
+The above patch rewrote and moved the code responsible for cleaning
+up discarded fragments but the new code does not catch every case
+where this is necessary.  This results in some discarded fragments
+remaining in the queue, and triggering a 'bad seq' error on the
+subsequent call to ppp_mp_reconstruct.  Fragments are discarded
+whenever other fragments of the same frame have been lost.
+This can generate a lot of unwanted and misleading log messages.
 
-Just using "top" command. No other commands.
+This patch also adds additional detail to the debug logging to
+make it clearer which fragments were lost and which other fragments
+were discarded as a result of losses. (Run pppd with 'kdebug 1'
+option to enable debug logging.)
 
-> Have you tried setting the TCP_NODELAY option and/or redesigning around
-> TCP_CORK?
+Signed-off-by: Ben McKeegan <ben@netservers.co.uk>
 
-No. We are not using these options. We will try to change the options
-for setsockopt call.
+diff -upr linux-3.2.7-orig/drivers/net/ppp/ppp_generic.c linux-3.2.7-fix-mp-reconstruct/drivers/net/ppp/ppp_generic.c
+--- linux-3.2.7-orig/drivers/net/ppp/ppp_generic.c	2012-02-21 23:27:47.000000000 +0000
++++ linux-3.2.7-fix-mp-reconstruct/drivers/net/ppp/ppp_generic.c	2012-02-23 18:05:29.000000000 +0000
+@@ -2162,14 +2162,22 @@ ppp_mp_reconstruct(struct ppp *ppp)
+ 			continue;
+ 		}
+ 		if (PPP_MP_CB(p)->sequence != seq) {
++			u32 oldseq;
+ 			/* Fragment `seq' is missing.  If it is after
+ 			   minseq, it might arrive later, so stop here. */
+ 			if (seq_after(seq, minseq))
+ 				break;
+ 			/* Fragment `seq' is lost, keep going. */
+ 			lost = 1;
++			oldseq = seq;
+ 			seq = seq_before(minseq, PPP_MP_CB(p)->sequence)?
+ 				minseq + 1: PPP_MP_CB(p)->sequence;
++
++			if (ppp->debug & 1)
++				netdev_printk(KERN_DEBUG, ppp->dev,
++					      "lost frag %u..%u\n",
++					      oldseq, seq-1);
++
+ 			goto again;
+ 		}
 
-> If your application does a lot of tiny write(2) calls, you
-> will sometimes see RTT delays in delivery. =A0This is normal, and it's
-> something that the stack does in order to protect the network against
-> misbehaving (or just inefficient) applications. =A0You can disable it in
-> order to force a write(2) to result in a transmission ... but be careful
-> if you do this, because doing so can result in a flood of tiny packets
-> if you (say) write a byte at a time.
->
-> Have you considered SCTP instead? =A0If you have a message-oriented
-> protocol (rather than a stream-oriented one), and you need reliable
-> delivery, SCTP may be a better option for you than TCP.
+@@ -2214,6 +2222,10 @@ ppp_mp_reconstruct(struct ppp *ppp)
+ 			struct sk_buff *tmp2;
 
-We will think about these, later.
-
-Thank you very much for your reply.
-
-Regards,
-Srinidhi M.
-> --
-> James Carlson =A0 =A0 =A0 =A0 42.703N 71.076W =A0 =A0 =A0 =A0 <carlsonj@w=
-orkingcode.com>
+ 			skb_queue_reverse_walk_from_safe(list, p, tmp2) {
++				if (ppp->debug & 1)
++					netdev_printk(KERN_DEBUG, ppp->dev,
++						      "discarding frag %u\n",
++						      PPP_MP_CB(p)->sequence);
+ 				__skb_unlink(p, list);
+ 				kfree_skb(p);
+ 			}
+@@ -2229,6 +2241,17 @@ ppp_mp_reconstruct(struct ppp *ppp)
+ 		/* If we have discarded any fragments,
+ 		   signal a receive error. */
+ 		if (PPP_MP_CB(head)->sequence != ppp->nextseq) {
++			skb_queue_walk_safe(list, p, tmp) {
++				if (p = head)
++					break;
++				if (ppp->debug & 1)
++					netdev_printk(KERN_DEBUG, ppp->dev,
++						      "discarding frag %u\n",
++						      PPP_MP_CB(p)->sequence);
++				__skb_unlink(p, list);
++				kfree_skb(p);
++			}
++
+ 			if (ppp->debug & 1)
+ 				netdev_printk(KERN_DEBUG, ppp->dev,
+ 					      "  missed pkts %u..%u\n",
