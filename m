@@ -1,7 +1,7 @@
-From: md@Linux.IT (Marco d'Itri)
-Date: Tue, 05 Jun 2012 21:43:55 +0000
+From: Charlie Brady <charlieb-linux-ppp@budge.apana.org.au>
+Date: Tue, 05 Jun 2012 22:08:58 +0000
 Subject: Re: Upcoming 2.4.6 release
-Message-Id: <20120605214355.GC31223@bongo.bofh.it>
+Message-Id: <Pine.LNX.4.64.1206051808040.21188@e-smith.charlieb.ott.istop.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20120602100037.GE17089@pale.ozlabs.ibm.com>
 In-Reply-To: <20120602100037.GE17089@pale.ozlabs.ibm.com>
@@ -10,16 +10,20 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Jun 05, Daniel Golle <dgolle@allnet.de> wrote:
 
-> I guess you are aware of
-> https://dev.openwrt.org/browser/trunk/package/ppp/patches
+On Tue, 5 Jun 2012, Marco d'Itri wrote:
 
-Debian too has many patches which have been tested for many years and
-should be merged:
+> On Jun 05, Daniel Golle <dgolle@allnet.de> wrote:
+> 
+> > I guess you are aware of
+> > https://dev.openwrt.org/browser/trunk/package/ppp/patches
 
-http://patch-tracker.debian.org/package/ppp/2.4.5-5.1
+I would guess not.
 
--- 
-ciao,
-Marco
+> Debian too has many patches which have been tested for many years and
+> should be merged:
+> 
+> http://patch-tracker.debian.org/package/ppp/2.4.5-5.1
+
+And both project should take some time to send patches upstream some 
+time...
