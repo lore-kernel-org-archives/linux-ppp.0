@@ -1,23 +1,35 @@
-From: David Miller <davem@davemloft.net>
-Date: Sat, 07 Jul 2012 23:15:04 +0000
+From: Benjamin LaHaise <bcrl@kvack.org>
+Date: Sun, 08 Jul 2012 00:38:04 +0000
 Subject: Re: [PATCH next-next] ppp: change default for incoming protocol filter to NPMODE_DROP
-Message-Id: <20120707.161504.686059289738005570.davem@davemloft.net>
+Message-Id: <20120708003804.GH19462@kvack.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20120704013258.GA26225@kvack.org>
-	<20120705.030027.655926012207641451.davem@davemloft.net>
-	<20120706172800.GC19462@kvack.org>
-In-Reply-To: <20120706172800.GC19462@kvack.org>
+References: <20120704013258.GA26225@kvack.org> <20120705.030027.655926012207641451.davem@davemloft.net> <20120706172800.GC19462@kvack.org> <20120707.161504.686059289738005570.davem@davemloft.net>
+In-Reply-To: <20120707.161504.686059289738005570.davem@davemloft.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: bcrl@kvack.org
+To: David Miller <davem@davemloft.net>
 Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-From: Benjamin LaHaise <bcrl@kvack.org>
-Date: Fri, 6 Jul 2012 13:28:00 -0400
+On Sat, Jul 07, 2012 at 04:15:04PM -0700, David Miller wrote:
+> From: Benjamin LaHaise <bcrl@kvack.org>
+> Date: Fri, 6 Jul 2012 13:28:00 -0400
+> 
+> > How about the following addition instead to provide a list of
+> > protocols to disable?
+> 
+> The userspace programs must accomodate all existing kernels, so
+> the addition of this feature is rather pointless.
 
-> How about the following addition instead to provide a list of
-> protocols to disable?
+It's not existing kernels that this guards against, but the use of older 
+versions of the API users on new kernels that support additional protocols.  
+I'm in the middle of porting a PPP stack to using the ppp_generic interface, 
+and there is no way for me to prevent packet types for protocols which are 
+newly added to the kernel from getting these new packet types leaked.  I 
+came across this exactly because I was testing this case.  I suppose I can 
+ignore the issue, but I'd prefer to get it right since it is technically a 
+security hole that bypasses PPP session authentication.
 
-The userspace programs must accomodate all existing kernels, so
-the addition of this feature is rather pointless.
+		-ben
+-- 
+"Thought is the essence of where you are now."
