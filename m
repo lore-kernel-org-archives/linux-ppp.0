@@ -1,7 +1,7 @@
-From: Paul Mackerras <paulus@samba.org>
-Date: Sat, 28 Jul 2012 10:07:01 +0000
+From: Edgard Lima <edgard.lima@gmail.com>
+Date: Sat, 28 Jul 2012 14:17:20 +0000
 Subject: Re: DCD and EOF
-Message-Id: <20120728100701.GA23552@bloggs.ozlabs.ibm.com>
+Message-Id: <CAK9rZUBpS3qbDbKshfmYpt6uPs9mY804Bn985f9VeZbKpGdeoA@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <CAK9rZUB745VY28ptj29dNDCXVGg0CAF3H0_iDZoTkbpNwQmA9A@mail.gmail.com>
 In-Reply-To: <CAK9rZUB745VY28ptj29dNDCXVGg0CAF3H0_iDZoTkbpNwQmA9A@mail.gmail.com>
@@ -10,22 +10,45 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Fri, Jul 27, 2012 at 07:49:32PM -0300, Edgard Lima wrote:
-> So where is this EOF check in the PPPD code?
+Hi,
 
-The read() calls in read_packet() (pppd/sys-linux.c) will return 0
-on EOF.
+>
+> Are you observing that pppd is not noticing when DCD gets deasserted?
 
-> How could I be sure the serial device driver answer with EOF when DCD
-> line is up? Could you please point out this on serial driver code?
+Yep, it wasn't and for that reason it delayed a bit till reconnect. To
+tell you the truth, I'm not 100% confident the serial driver was fine
+and the modem was correctly configured with something like AT&C1
 
-In the Linux kernel, ppp_asynctty_hangup() should get called when DCD
-is deasserted.  That should cause a 0-length skbuff to get queued up
-in the receive queue, which will cause the read() in pppd to return 0,
-which is the normal EOF indication.
+To make it work as expected I did some changes by hand on pppd code do
+access the GPIO connected to DCD modem pin and close the connection.
 
-Are you observing that pppd is not noticing when DCD gets deasserted?
-If so, what kernel version are you using (I presume it's Linux since
-you're asking on the linux-ppp mailing list), and what version of pppd?
+> If so, what kernel version are you using (I presume it's Linux since
+> you're asking on the linux-ppp mailing list), and what version of pppd?
 
-Paul.
+pppd version 2.4.3 and linux version 2.4.19
+
+But now Im porting my whole system to pppd 2.4.5 (latest) and linux 2.6.37
+
+
+Lets suppose I have my serial driver sending EOF and DCD is detected.
+How fast will PPPD will close and redial ? Do you have some advises
+about patches I could apply to PPPD or configuration parameters to set
+to speedup this process ?
+
+And, I would like to also make the first connection faster (basically
+gprs and possibly a line modem), could we please give me some tips how
+could I do that? Something like try to patch to skip some steps, or
+even configurations parameters would be worth to try to fine tune?
+
+Thanks again and best regards
+
+>
+> Paul.
+
+
+
+-- 
+Edgard Lima
+http://EdgardLima.com
+http://www.linkedin.com/in/edgardlima
+edgard.lima@gmail.com
