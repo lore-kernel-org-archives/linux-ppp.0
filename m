@@ -1,47 +1,26 @@
-From: Charles Williams <chuck@itadmins.net>
-Date: Sat, 11 Aug 2012 11:13:49 +0000
-Subject: PPTP/PPP/Radius/LDAP and usernames in email format
-Message-Id: <50263E6D.80803@itadmins.net>
+From: Stephen Hemminger <shemminger@vyatta.com>
+Date: Mon, 29 Oct 2012 18:34:02 +0000
+Subject: [PATCH net-next] ppp: make  ppp_get_stats64 static
+Message-Id: <20121029113402.10736805@nehalam.linuxnetplumber.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <50263DC9.4080305@itadmins.net>
-In-Reply-To: <50263DC9.4080305@itadmins.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-Sorry all, it would seem that a bit of HTML got caught up in the 
-pasting. Here is the one that was meant to be sent.
+This was picked up by sparse.
 
+Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
 
-Hey all,
-
-Heres's one for you. I am currently setting up a new MS-ChapV2/MPPE VPN 
-gateway with pptp/ppp to freeradius authing against an LDAP store.
-
-This VPN will be used for multiple client domains and so I would like to 
-use usernames in the form of „user@domain.tld“ instead of „user“ (which 
-is the situation atm).
-
-The LDAP store has a branch as follows:
-
-ou=domains,dc=company,dc=com
-
-under ou=domains I have entries for each domain that I will be offering 
-VPN access to.
-
-ie. cn=domain.tld,ou=domains,dc=company,dc=com
-
-I would like to get ppp to send the complete user@domain.tld to radius 
-and have radius use the „domain.tld“ as part of the filter for the 
-username search to limit the search to the sub-branch from the correct 
-domain.
-
-The problem is that I have yet to find a way to get ppp to send the 
-username to Freeradius if there is an @ symbol in the username.
-
-Any ideas?
-
-thanks,
-chuck
-
+--- a/drivers/net/ppp/ppp_generic.c	2012-10-25 09:11:13.963289236 -0700
++++ b/drivers/net/ppp/ppp_generic.c	2012-10-29 11:26:06.167077708 -0700
+@@ -1034,7 +1034,7 @@ ppp_net_ioctl(struct net_device *dev, st
+ 	return err;
+ }
+ 
+-struct rtnl_link_stats64*
++static struct rtnl_link_stats64*
+ ppp_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats64)
+ {
+ 	struct ppp *ppp = netdev_priv(dev);
