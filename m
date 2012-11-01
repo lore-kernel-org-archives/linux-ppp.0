@@ -1,45 +1,21 @@
-From: Charlie Brady <charlieb-linux-ppp@budge.apana.org.au>
-Date: Fri, 23 Nov 2012 16:40:37 +0000
-Subject: Re: [PATCH] ppp: ignore unrecognised radiusclient configuration directives
-Message-Id: <Pine.LNX.4.64.1211231136350.4185@e-smith.charlieb.ott.istop.com>
+From: David Miller <davem@davemloft.net>
+Date: Thu, 01 Nov 2012 16:39:58 +0000
+Subject: Re: [PATCH net-next] ppp: make ppp_get_stats64 static
+Message-Id: <20121101.123958.2028302088629559547.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <Pine.LNX.4.64.1208301919580.27411@e-smith.charlieb.ott.istop.com>
-In-Reply-To: <Pine.LNX.4.64.1208301919580.27411@e-smith.charlieb.ott.istop.com>
+References: <20121029113402.10736805@nehalam.linuxnetplumber.net>
+In-Reply-To: <20121029113402.10736805@nehalam.linuxnetplumber.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: shemminger@vyatta.com
+Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
+From: Stephen Hemminger <shemminger@vyatta.com>
+Date: Mon, 29 Oct 2012 11:34:02 -0700
 
-Paul, did you just miss this, or are you waiting for some more 
-information? Or do we need David Skoll's input?
-
-This is relevant for RHEL6, BTW, where default freeradiusclient 
-configuration includes new 'bindaddr' keyword.
-
-On Thu, 30 Aug 2012, Charlie Brady wrote:
-
-> New versions of freeradius occasionally add configuration keywords. 
-> There's no reason that the pppd plugin should fail when that occurs.
+> This was picked up by sparse.
 > 
-> Signed-off-by:  Charlie Brady <charlieb@budge.apana.org.au>
-> 
-> --- ppp-2.4.5.rhel6/pppd/plugins/radius/config.c        2009-11-16 17:26:07.000000000 -0500
-> +++ ppp-2.4.5/pppd/plugins/radius/config.c      2012-08-30 16:59:19.911025000 -0400
-> @@ -216,8 +216,8 @@
->                 p[pos] = '\0';
->  
->                 if ((option = find_option(p, OT_ANY)) = NULL) {
-> -                       error("%s: line %d: unrecognized keyword: %s", filename, line, p);
-> -                       return (-1);
-> +                       warn("%s: line %d: unrecognized keyword: %s", filename, line, p);
-> +                       continue;
->                 }
->  
->                 if (option->status != ST_UNDEF) {
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+> Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
+
+Applied, thanks.
