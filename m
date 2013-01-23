@@ -1,7 +1,7 @@
-From: =?UTF-8?B?Tmd1eeG7hW4gSOG7k25nIFF1w6Ju?= <quannguyen@mbm.vn>
-Date: Wed, 23 Jan 2013 02:23:05 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 23 Jan 2013 12:25:07 +0000
 Subject: Re: PPP on TP-Link router?
-Message-Id: <50FF4989.8080901@mbm.vn>
+Message-Id: <50FFD6A3.2010506@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <50FF425E.4000208@mbm.vn>
 In-Reply-To: <50FF425E.4000208@mbm.vn>
@@ -10,23 +10,19 @@ Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 To: linux-ppp@vger.kernel.org
 
-Here is my log:
-http://paste.ubuntu.com/1561429/
+On 01/22/13 21:23, Nguyễn Hồng Quân wrote:
+> Here is my log:
+> http://paste.ubuntu.com/1561429/
 
-On Wed 23 Jan 2013 08:52:30 AM ICT, Nguyễn Hồng Quân wrote:
-> Hello
-> I install OpenWrt to Tp-link 940N router, which is based on SoC: Atheros
-> AR7240 rev 2.
-> I tried to establish PPPoE connection but not successfully.
-> Sometimes pppd failed due to timeout after sending config-request,
-> sometimes failed due to "Couldn't rename ppp1 to pppoe-wan".
->
-> How can I do to solve this?
->
+The logs show what appears to be a low-level communications problem.
+We're receiving fine, but the peer cannot receive the messages we're
+sending.
 
---
-Regards,
-Quân
+If you're able to get diagnostic information out of the peer, you may be
+able to find out what is going wrong, but I think it's more likely that
+a problem like this will require a dedicated external Ethernet analyzer
+to figure out whether or not your system is sending correctly-formed
+messages.
 
-Y!IM: ng_hquan_vn
-GTalk: ng.hong.quan
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
