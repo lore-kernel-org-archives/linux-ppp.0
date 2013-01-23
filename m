@@ -1,21 +1,26 @@
-From: David Miller <davem@davemloft.net>
-Date: Thu, 01 Nov 2012 16:39:58 +0000
-Subject: Re: [PATCH net-next] ppp: make ppp_get_stats64 static
-Message-Id: <20121101.123958.2028302088629559547.davem@davemloft.net>
+From: =?UTF-8?B?Tmd1eeG7hW4gSOG7k25nIFF1w6Ju?= <quannguyen@mbm.vn>
+Date: Wed, 23 Jan 2013 01:52:30 +0000
+Subject: PPP on TP-Link router?
+Message-Id: <50FF425E.4000208@mbm.vn>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20121029113402.10736805@nehalam.linuxnetplumber.net>
-In-Reply-To: <20121029113402.10736805@nehalam.linuxnetplumber.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: shemminger@vyatta.com
-Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+To: linux-ppp@vger.kernel.org
 
-From: Stephen Hemminger <shemminger@vyatta.com>
-Date: Mon, 29 Oct 2012 11:34:02 -0700
+Hello
+I install OpenWrt to Tp-link 940N router, which is based on SoC: Atheros
+AR7240 rev 2.
+I tried to establish PPPoE connection but not successfully.
+Sometimes pppd failed due to timeout after sending config-request,
+sometimes failed due to "Couldn't rename ppp1 to pppoe-wan".
 
-> This was picked up by sparse.
-> 
-> Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
+How can I do to solve this?
 
-Applied, thanks.
+--=20
+Regards,
+Qu=C3=A2n
+
+Y!IM: ng_hquan_vn
+GTalk: ng.hong.quan
+
