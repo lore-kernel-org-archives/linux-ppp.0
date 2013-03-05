@@ -1,22 +1,43 @@
-From: David Miller <davem@davemloft.net>
-Date: Wed, 27 Mar 2013 17:09:51 +0000
-Subject: Re: [PATCH 2/2] ppp: reuse print_hex_dump_bytes
-Message-Id: <20130327.130951.525326368973122161.davem@davemloft.net>
+From: Stephen Hemminger <stephen@networkplumber.org>
+Date: Tue, 05 Mar 2013 16:24:20 +0000
+Subject: Fw: [Bug 54601] PPP regression on 3.2.39 stop work need restart server on version 3.0.X not found th
+Message-Id: <20130305082420.3e683cca@nehalam.linuxnetplumber.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1364399654-9729-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	<1364399654-9729-2-git-send-email-andriy.shevchenko@linux.intel.com>
-In-Reply-To: <1364399654-9729-2-git-send-email-andriy.shevchenko@linux.intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: andriy.shevchenko@linux.intel.com
-Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Date: Wed, 27 Mar 2013 17:54:14 +0200
 
-> There is a native function to dump hex buffers.
-> 
-> Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 
-Applied.
+Begin forwarded message:
+
+Date: Tue, 5 Mar 2013 04:36:23 -0800
+From: "bugzilla-daemon@bugzilla.kernel.org" <bugzilla-daemon@bugzilla.kernel.org>
+To: "stephen@networkplumber.org" <stephen@networkplumber.org>
+Subject: [Bug 54601] PPP regression on 3.2.39 stop work need restart server on version 3.0.X not found this problem.
+
+
+https://bugzilla.kernel.org/show_bug.cgi?idT601
+
+
+
+
+
+--- Comment #2 from Martin Zaharinov <micron10@gmail.com>  2013-03-05 12:35:16 ---
+One test from my:
+After connect 1000 pppoe users to server, 10 user with home soho routers and
+wrong password try to reconnect 10 times for 1 minute. After random time server
+crash with the above errors!
+Next test reboot system and fix password and user from this 10 users the
+problem is going.
+Maybe the problem is a end of open socket and kernel is going ot Hung task with
+this crash.
+
+Best regards,
+m.
+
+-- 
+Configure bugmail: https://bugzilla.kernel.org/userprefs.cgi?tab=email
+------- You are receiving this mail because: -------
+You are the assignee for the bug.
