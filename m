@@ -1,43 +1,164 @@
-From: Stephen Hemminger <stephen@networkplumber.org>
-Date: Tue, 05 Mar 2013 16:24:20 +0000
-Subject: Fw: [Bug 54601] PPP regression on 3.2.39 stop work need restart server on version 3.0.X not found th
-Message-Id: <20130305082420.3e683cca@nehalam.linuxnetplumber.net>
+From: Peter Hurley <peter@hurleysoftware.com>
+Date: Mon, 11 Mar 2013 21:36:53 +0000
+Subject: Re: [PATCH v5 25/44] tty: Fix recursive deadlock in tty_perform_flush()
+Message-Id: <1363037813.27803.12.camel@thor.lan>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1361390599-15195-1-git-send-email-peter@hurleysoftware.com>
+	 <1363034704-28036-1-git-send-email-peter@hurleysoftware.com>
+	 <1363034704-28036-26-git-send-email-peter@hurleysoftware.com>
+In-Reply-To: <1363034704-28036-26-git-send-email-peter@hurleysoftware.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Peter Hurley <peter@hurleysoftware.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Sasha Levin <levinsasha928@gmail.com>, Dave Jones <davej@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Shawn Guo <shawn.guo@linaro.org>, linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+
+[ +cc Paul Mackerras, linux-ppp, netdev ]
+
+I neglected to cc the proper folks. Sorry about that.
+
+Regards,
+Peter Hurley
+
+On Mon, 2013-03-11 at 16:44 -0400, Peter Hurley wrote:
+> tty_perform_flush() can deadlock when called while holding
+> a line discipline reference. By definition, all ldisc drivers
+> hold a ldisc reference, so calls originating from ldisc drivers
+> must not block for a ldisc reference.
+> 
+> The deadlock can occur when:
+>   CPU 0                    |  CPU 1
+>                            |
+> tty_ldisc_ref(tty)         |
+> ....                       | <line discipline halted>
+> tty_ldisc_ref_wait(tty)    |
+>                            |
+> 
+> CPU 0 cannot progess because it cannot obtain an ldisc reference
+> with the line discipline has been halted (thus no new references
+> are granted).
+> CPU 1 cannot progress because an outstanding ldisc reference
+> has not been released.
+> 
+> An in-tree call-tree audit of tty_perform_flush() [1] shows 5
+> ldisc drivers calling tty_perform_flush() indirectly via
+> n_tty_ioctl_helper() and 2 ldisc drivers calling directly.
+> A single tty driver safely uses the function.
+> 
+> [1]
+> Recursive usage:
+> 
+> /* These functions are line discipline ioctls and thus
+>  * recursive wrt line discipline references */
+> 
+> tty_perform_flush() - ./drivers/tty/tty_ioctl.c
+>     n_tty_ioctl_helper()
+>         hci_uart_tty_ioctl(default) - drivers/bluetooth/hci_ldisc.c (N_HCI)
+>         n_hdlc_tty_ioctl(default) - drivers/tty/n_hdlc.c (N_HDLC)
+>         gsmld_ioctl(default) - drivers/tty/n_gsm.c (N_GSM0710)
+>         n_tty_ioctl(default) - drivers/tty/n_tty.c (N_TTY)
+>         gigaset_tty_ioctl(default) - drivers/isdn/gigaset/ser-gigaset.c (N_GIGASET_M101)
+>     ppp_synctty_ioctl(TCFLSH) - drivers/net/ppp/pps_synctty.c
+>     ppp_asynctty_ioctl(TCFLSH) - drivers/net/ppp/ppp_async.c
+> 
+> Non-recursive use:
+> 
+> tty_perform_flush() - drivers/tty/tty_ioctl.c
+>     ipw_ioctl(TCFLSH) - drivers/tty/ipwireless/tty.c
+>        /* This function is a tty i/o ioctl method, which
+>         * is invoked by tty_ioctl() */
+> 
+> Signed-off-by: Peter Hurley <peter@hurleysoftware.com>
+> ---
+>  drivers/net/ppp/ppp_async.c   |  2 +-
+>  drivers/net/ppp/ppp_synctty.c |  2 +-
+>  drivers/tty/tty_ioctl.c       | 28 +++++++++++++++++++---------
+>  3 files changed, 21 insertions(+), 11 deletions(-)
+> 
+> diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
+> index a031f6b..9c889e0 100644
+> --- a/drivers/net/ppp/ppp_async.c
+> +++ b/drivers/net/ppp/ppp_async.c
+> @@ -314,7 +314,7 @@ ppp_asynctty_ioctl(struct tty_struct *tty, struct file *file,
+>  		/* flush our buffers and the serial port's buffer */
+>  		if (arg = TCIOFLUSH || arg = TCOFLUSH)
+>  			ppp_async_flush_output(ap);
+> -		err = tty_perform_flush(tty, arg);
+> +		err = n_tty_ioctl_helper(tty, file, cmd, arg);
+>  		break;
+>  
+>  	case FIONREAD:
+> diff --git a/drivers/net/ppp/ppp_synctty.c b/drivers/net/ppp/ppp_synctty.c
+> index 1a12033..bdf3b13 100644
+> --- a/drivers/net/ppp/ppp_synctty.c
+> +++ b/drivers/net/ppp/ppp_synctty.c
+> @@ -355,7 +355,7 @@ ppp_synctty_ioctl(struct tty_struct *tty, struct file *file,
+>  		/* flush our buffers and the serial port's buffer */
+>  		if (arg = TCIOFLUSH || arg = TCOFLUSH)
+>  			ppp_sync_flush_output(ap);
+> -		err = tty_perform_flush(tty, arg);
+> +		err = n_tty_ioctl_helper(tty, file, cmd, arg);
+>  		break;
+>  
+>  	case FIONREAD:
+> diff --git a/drivers/tty/tty_ioctl.c b/drivers/tty/tty_ioctl.c
+> index d58b92c..935b032 100644
+> --- a/drivers/tty/tty_ioctl.c
+> +++ b/drivers/tty/tty_ioctl.c
+> @@ -1086,14 +1086,12 @@ int tty_mode_ioctl(struct tty_struct *tty, struct file *file,
+>  }
+>  EXPORT_SYMBOL_GPL(tty_mode_ioctl);
+>  
+> -int tty_perform_flush(struct tty_struct *tty, unsigned long arg)
+> +
+> +/* Caller guarantees ldisc reference is held */
+> +static int __tty_perform_flush(struct tty_struct *tty, unsigned long arg)
+>  {
+> -	struct tty_ldisc *ld;
+> -	int retval = tty_check_change(tty);
+> -	if (retval)
+> -		return retval;
+> +	struct tty_ldisc *ld = tty->ldisc;
+>  
+> -	ld = tty_ldisc_ref_wait(tty);
+>  	switch (arg) {
+>  	case TCIFLUSH:
+>  		if (ld && ld->ops->flush_buffer) {
+> @@ -1111,12 +1109,24 @@ int tty_perform_flush(struct tty_struct *tty, unsigned long arg)
+>  		tty_driver_flush_buffer(tty);
+>  		break;
+>  	default:
+> -		tty_ldisc_deref(ld);
+>  		return -EINVAL;
+>  	}
+> -	tty_ldisc_deref(ld);
+>  	return 0;
+>  }
+> +
+> +int tty_perform_flush(struct tty_struct *tty, unsigned long arg)
+> +{
+> +	struct tty_ldisc *ld;
+> +	int retval = tty_check_change(tty);
+> +	if (retval)
+> +		return retval;
+> +
+> +	ld = tty_ldisc_ref_wait(tty);
+> +	retval = __tty_perform_flush(tty, arg);
+> +	if (ld)
+> +		tty_ldisc_deref(ld);
+> +	return retval;
+> +}
+>  EXPORT_SYMBOL_GPL(tty_perform_flush);
+>  
+>  int n_tty_ioctl_helper(struct tty_struct *tty, struct file *file,
+> @@ -1155,7 +1165,7 @@ int n_tty_ioctl_helper(struct tty_struct *tty, struct file *file,
+>  		}
+>  		return 0;
+>  	case TCFLSH:
+> -		return tty_perform_flush(tty, arg);
+> +		return __tty_perform_flush(tty, arg);
+>  	default:
+>  		/* Try the mode commands */
+>  		return tty_mode_ioctl(tty, file, cmd, arg);
 
 
-
-Begin forwarded message:
-
-Date: Tue, 5 Mar 2013 04:36:23 -0800
-From: "bugzilla-daemon@bugzilla.kernel.org" <bugzilla-daemon@bugzilla.kernel.org>
-To: "stephen@networkplumber.org" <stephen@networkplumber.org>
-Subject: [Bug 54601] PPP regression on 3.2.39 stop work need restart server on version 3.0.X not found this problem.
-
-
-https://bugzilla.kernel.org/show_bug.cgi?idT601
-
-
-
-
-
---- Comment #2 from Martin Zaharinov <micron10@gmail.com>  2013-03-05 12:35:16 ---
-One test from my:
-After connect 1000 pppoe users to server, 10 user with home soho routers and
-wrong password try to reconnect 10 times for 1 minute. After random time server
-crash with the above errors!
-Next test reboot system and fix password and user from this 10 users the
-problem is going.
-Maybe the problem is a end of open socket and kernel is going ot Hung task with
-this crash.
-
-Best regards,
-m.
-
--- 
-Configure bugmail: https://bugzilla.kernel.org/userprefs.cgi?tab=email
-------- You are receiving this mail because: -------
-You are the assignee for the bug.
