@@ -1,86 +1,45 @@
-From: Tejun Heo <tj@kernel.org>
-Date: Sun, 03 Feb 2013 01:20:40 +0000
-Subject: [PATCH 39/62] ppp: convert to idr_alloc()
-Message-Id: <1359854463-2538-40-git-send-email-tj@kernel.org>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Date: Wed, 27 Mar 2013 15:54:13 +0000
+Subject: [PATCH 1/2] net: core: let's use native isxdigit instead of custom
+Message-Id: <1364399654-9729-1-git-send-email-andriy.shevchenko@linux.intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1359854463-2538-1-git-send-email-tj@kernel.org>
-In-Reply-To: <1359854463-2538-1-git-send-email-tj@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: akpm@linux-foundation.org
-Cc: linux-kernel@vger.kernel.org, rusty@rustcorp.com.au, bfields@fieldses.org, skinsbursky@parallels.com, ebiederm@xmission.com, jmorris@namei.org, axboe@kernel.dk, Tejun Heo <tj@kernel.org>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 
-Convert to the much saner new idr interface.
+In kernel we have fast and pretty implementation of the isxdigit() function.
+Let's use it.
 
-Only compile tested.
-
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linux-ppp@vger.kernel.org
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
-This patch depends on an earlier idr changes and I think it would be
-best to route these together through -mm.  Please holler if there's
-any objection.  Thanks.
+ net/core/utils.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
- drivers/net/ppp/ppp_generic.c | 33 ++++-----------------------------
- 1 file changed, 4 insertions(+), 29 deletions(-)
-
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 0b2706a..7efdb91 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -2946,46 +2946,21 @@ static void __exit ppp_cleanup(void)
-  * by holding all_ppp_mutex
-  */
+diff --git a/net/core/utils.c b/net/core/utils.c
+index e3487e46..3c7f5b5 100644
+--- a/net/core/utils.c
++++ b/net/core/utils.c
+@@ -17,6 +17,7 @@
+ #include <linux/module.h>
+ #include <linux/jiffies.h>
+ #include <linux/kernel.h>
++#include <linux/ctype.h>
+ #include <linux/inet.h>
+ #include <linux/mm.h>
+ #include <linux/net.h>
+@@ -348,9 +349,7 @@ int mac_pton(const char *s, u8 *mac)
  
--static int __unit_alloc(struct idr *p, void *ptr, int n)
--{
--	int unit, err;
--
--again:
--	if (!idr_pre_get(p, GFP_KERNEL)) {
--		pr_err("PPP: No free memory for idr\n");
--		return -ENOMEM;
--	}
--
--	err = idr_get_new_above(p, ptr, n, &unit);
--	if (err < 0) {
--		if (err = -EAGAIN)
--			goto again;
--		return err;
--	}
--
--	return unit;
--}
--
- /* associate pointer with specified number */
- static int unit_set(struct idr *p, void *ptr, int n)
- {
- 	int unit;
- 
--	unit = __unit_alloc(p, ptr, n);
--	if (unit < 0)
--		return unit;
--	else if (unit != n) {
--		idr_remove(p, unit);
--		return -EINVAL;
--	}
--
-+	unit = idr_alloc(p, ptr, n, n + 1, GFP_KERNEL);
-+	if (unit = -ENOSPC)
-+		unit = -EINVAL;
- 	return unit;
- }
- 
- /* get new free unit number and associate pointer with it */
- static int unit_get(struct idr *p, void *ptr)
- {
--	return __unit_alloc(p, ptr, 0);
-+	return idr_alloc(p, ptr, 0, 0, GFP_KERNEL);
- }
- 
- /* put unit number back to a pool */
+ 	/* Don't dirty result unless string is valid MAC. */
+ 	for (i = 0; i < ETH_ALEN; i++) {
+-		if (!strchr("0123456789abcdefABCDEF", s[i * 3]))
+-			return 0;
+-		if (!strchr("0123456789abcdefABCDEF", s[i * 3 + 1]))
++		if (!isxdigit(s[i * 3]) || !isxdigit(s[i * 3 + 1]))
+ 			return 0;
+ 		if (i != ETH_ALEN - 1 && s[i * 3 + 2] != ':')
+ 			return 0;
 -- 
-1.8.1
+1.8.2.rc0.22.gb3600c3
 
