@@ -1,62 +1,82 @@
-From: Joe Perches <joe@perches.com>
-Date: Tue, 21 May 2013 18:40:26 +0000
-Subject: Re: [RFC PATCH v2 3/4] ppp_mppe: cleanup kernel log messages
-Message-Id: <1369161626.2143.45.camel@joe-AO722>
+From: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
+Date: Mon, 20 May 2013 16:34:00 +0000
+Subject: [RFC PATCH 2/2] ppp_mppe: Check coherency counter for out-of-order sequencing
+Message-Id: <1369067640-2793-2-git-send-email-jorge@dti2.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1369160304-31967-1-git-send-email-jorge@dti2.net>
-	 <1369160304-31967-3-git-send-email-jorge@dti2.net>
-In-Reply-To: <1369160304-31967-3-git-send-email-jorge@dti2.net>
+References: <1369067640-2793-1-git-send-email-jorge@dti2.net>
+In-Reply-To: <1369067640-2793-1-git-send-email-jorge@dti2.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: jorge@dti2.net
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+Cc: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
 
-On Tue, 2013-05-21 at 20:18 +0200, Jorge Boncompte [DTI2] wrote:
-> From: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
-> 
-> - Consolidate log messages, print PPP unit number where available.
-> - Changes error or warning messages to correct log level.
-> - Use _ratelimited() functions for messages triggered by network packets.
-[]
-> diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-[]
-> @@ -178,7 +178,8 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
->  		setup_sg(sg_out, state->session_key, state->keylen);
->  		if (crypto_blkcipher_encrypt(&desc, sg_out, sg_in,
->  					     state->keylen) != 0) {
-> -    		    printk(KERN_WARNING "mppe_rekey: cipher_encrypt failed\n");
-> +			net_warn_ratelimited("%s[%d]: crypto_blkcipher_encrypt "
-> +					     "failed\n", __func__, state->unit);
+From: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
 
-Please don't split formats across multiple lines.
+While testing a L2TP tunnel without sequencing with MPPE encryption in
+stateless mode noticed that after a packet was reordered the encapsulated
+traffic session was stuck but testing against a Cisco gear did work.
 
-			net_warn_ratelimited("%s[%d]: crypto_blkcipher_encrypt failed\n",
-					     __func__, state->unit);
+From RFC3078 "MPPE expects packets to be delivered in sequence".
 
-is just fine.
+The thing it's that the ppp_mppe module treats the reorder as if the
+coherency counter did wrap and rekeys all the "missing" packets.
 
-> @@ -314,8 +314,7 @@ mppe_init(void *arg, unsigned char *options, int optlen, int unit, int debug,
->  			sprintf(mkey + i * 2, "%02x", state->master_key[i]);
->  		for (i = 0; i < sizeof(state->session_key); i++)
->  			sprintf(skey + i * 2, "%02x", state->session_key[i]);
-> -		printk(KERN_DEBUG
-> -		       "%s[%d]: keys: master: %s initial session: %s\n",
-> +		printk(KERN_DEBUG "%s[%d]: keys: master: %s initial session: %s\n",
->  		       debugstr, unit, mkey, skey);
+The link layer protocol should deliver the packets in order but at least
+with this patch in place the decryption process survives some packet reorder.
 
-this could probably use:
-	%*ph, (int)sizeof(state->session_key), state->session_key
+Signed-off-by: Jorge Boncompte [DTI2] <jorge@dti2.net>
+---
+ drivers/net/ppp/ppp_mppe.c |   21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
 
->  	}
->  
-> @@ -387,9 +386,9 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
-[]
-> +		net_err_ratelimited("%s[%d]: osize too small! "
-> +				    "(have: %d need: %d)\n", __func__,
-> +				    state->unit, osize, isize + MPPE_OVHD + 2);
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index 9a1849a..0a10a6d 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -55,6 +55,7 @@
+ #include <linux/ppp_defs.h>
+ #include <linux/ppp-comp.h>
+ #include <linux/scatterlist.h>
++#include <linux/net.h>
+ #include <asm/unaligned.h>
+ 
+ #include "ppp_mppe.h"
+@@ -469,6 +470,15 @@ static void mppe_decomp_reset(void *arg)
+ }
+ 
+ /*
++ * Compares two coherency counter values.
++ */
++static int
++mppe_cmp_ccount(unsigned int a, unsigned int b)
++{
++	return (int)((a << 20) - (b << 20));
++}
++
++/*
+  * Decompress (decrypt) an MPPE packet.
+  */
+ static int
+@@ -547,6 +557,17 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	 */
+ 
+ 	if (!state->stateful) {
++		if (mppe_cmp_ccount(ccount, state->ccount) < 0) {
++			if (state->debug >= 7 && net_ratelimit())
++				printk(KERN_DEBUG
++				       "%s[%d:]: Dropping out-of-order packet, "
++				       "ccount %u expecting %u.\n",
++				       __func__, state->unit, ccount,
++				       state->ccount);
++
++			return DECOMP_DROPERROR;
++		}
++
+ 		/* RFC 3078, sec 8.1.  Rekey for every packet. */
+ 		while (state->ccount != ccount) {
+ 			mppe_rekey(state, 0);
+-- 
+1.7.10.4
 
-another split format, please coalesce.
-
-etc...
 
