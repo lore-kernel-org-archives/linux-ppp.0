@@ -1,164 +1,225 @@
-From: Peter Hurley <peter@hurleysoftware.com>
-Date: Mon, 11 Mar 2013 21:36:53 +0000
-Subject: Re: [PATCH v5 25/44] tty: Fix recursive deadlock in tty_perform_flush()
-Message-Id: <1363037813.27803.12.camel@thor.lan>
+From: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
+Date: Tue, 21 May 2013 18:18:23 +0000
+Subject: [RFC PATCH v2 3/4] ppp_mppe: cleanup kernel log messages
+Message-Id: <1369160304-31967-3-git-send-email-jorge@dti2.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1361390599-15195-1-git-send-email-peter@hurleysoftware.com>
-	 <1363034704-28036-1-git-send-email-peter@hurleysoftware.com>
-	 <1363034704-28036-26-git-send-email-peter@hurleysoftware.com>
-In-Reply-To: <1363034704-28036-26-git-send-email-peter@hurleysoftware.com>
+References: <1369160304-31967-1-git-send-email-jorge@dti2.net>
+In-Reply-To: <1369160304-31967-1-git-send-email-jorge@dti2.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Peter Hurley <peter@hurleysoftware.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.cz>, Sasha Levin <levinsasha928@gmail.com>, Dave Jones <davej@redhat.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Shawn Guo <shawn.guo@linaro.org>, linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+Cc: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
 
-[ +cc Paul Mackerras, linux-ppp, netdev ]
+From: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
 
-I neglected to cc the proper folks. Sorry about that.
+- Consolidate log messages, print PPP unit number where available.
+- Changes error or warning messages to correct log level.
+- Use _ratelimited() functions for messages triggered by network packets.
 
-Regards,
-Peter Hurley
+Signed-off-by: Jorge Boncompte [DTI2] <jorge@dti2.net>
+---
+ drivers/net/ppp/ppp_mppe.c |   78 +++++++++++++++++++++++---------------------
+ 1 file changed, 41 insertions(+), 37 deletions(-)
 
-On Mon, 2013-03-11 at 16:44 -0400, Peter Hurley wrote:
-> tty_perform_flush() can deadlock when called while holding
-> a line discipline reference. By definition, all ldisc drivers
-> hold a ldisc reference, so calls originating from ldisc drivers
-> must not block for a ldisc reference.
-> 
-> The deadlock can occur when:
->   CPU 0                    |  CPU 1
->                            |
-> tty_ldisc_ref(tty)         |
-> ....                       | <line discipline halted>
-> tty_ldisc_ref_wait(tty)    |
->                            |
-> 
-> CPU 0 cannot progess because it cannot obtain an ldisc reference
-> with the line discipline has been halted (thus no new references
-> are granted).
-> CPU 1 cannot progress because an outstanding ldisc reference
-> has not been released.
-> 
-> An in-tree call-tree audit of tty_perform_flush() [1] shows 5
-> ldisc drivers calling tty_perform_flush() indirectly via
-> n_tty_ioctl_helper() and 2 ldisc drivers calling directly.
-> A single tty driver safely uses the function.
-> 
-> [1]
-> Recursive usage:
-> 
-> /* These functions are line discipline ioctls and thus
->  * recursive wrt line discipline references */
-> 
-> tty_perform_flush() - ./drivers/tty/tty_ioctl.c
->     n_tty_ioctl_helper()
->         hci_uart_tty_ioctl(default) - drivers/bluetooth/hci_ldisc.c (N_HCI)
->         n_hdlc_tty_ioctl(default) - drivers/tty/n_hdlc.c (N_HDLC)
->         gsmld_ioctl(default) - drivers/tty/n_gsm.c (N_GSM0710)
->         n_tty_ioctl(default) - drivers/tty/n_tty.c (N_TTY)
->         gigaset_tty_ioctl(default) - drivers/isdn/gigaset/ser-gigaset.c (N_GIGASET_M101)
->     ppp_synctty_ioctl(TCFLSH) - drivers/net/ppp/pps_synctty.c
->     ppp_asynctty_ioctl(TCFLSH) - drivers/net/ppp/ppp_async.c
-> 
-> Non-recursive use:
-> 
-> tty_perform_flush() - drivers/tty/tty_ioctl.c
->     ipw_ioctl(TCFLSH) - drivers/tty/ipwireless/tty.c
->        /* This function is a tty i/o ioctl method, which
->         * is invoked by tty_ioctl() */
-> 
-> Signed-off-by: Peter Hurley <peter@hurleysoftware.com>
-> ---
->  drivers/net/ppp/ppp_async.c   |  2 +-
->  drivers/net/ppp/ppp_synctty.c |  2 +-
->  drivers/tty/tty_ioctl.c       | 28 +++++++++++++++++++---------
->  3 files changed, 21 insertions(+), 11 deletions(-)
-> 
-> diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
-> index a031f6b..9c889e0 100644
-> --- a/drivers/net/ppp/ppp_async.c
-> +++ b/drivers/net/ppp/ppp_async.c
-> @@ -314,7 +314,7 @@ ppp_asynctty_ioctl(struct tty_struct *tty, struct file *file,
->  		/* flush our buffers and the serial port's buffer */
->  		if (arg = TCIOFLUSH || arg = TCOFLUSH)
->  			ppp_async_flush_output(ap);
-> -		err = tty_perform_flush(tty, arg);
-> +		err = n_tty_ioctl_helper(tty, file, cmd, arg);
->  		break;
->  
->  	case FIONREAD:
-> diff --git a/drivers/net/ppp/ppp_synctty.c b/drivers/net/ppp/ppp_synctty.c
-> index 1a12033..bdf3b13 100644
-> --- a/drivers/net/ppp/ppp_synctty.c
-> +++ b/drivers/net/ppp/ppp_synctty.c
-> @@ -355,7 +355,7 @@ ppp_synctty_ioctl(struct tty_struct *tty, struct file *file,
->  		/* flush our buffers and the serial port's buffer */
->  		if (arg = TCIOFLUSH || arg = TCOFLUSH)
->  			ppp_sync_flush_output(ap);
-> -		err = tty_perform_flush(tty, arg);
-> +		err = n_tty_ioctl_helper(tty, file, cmd, arg);
->  		break;
->  
->  	case FIONREAD:
-> diff --git a/drivers/tty/tty_ioctl.c b/drivers/tty/tty_ioctl.c
-> index d58b92c..935b032 100644
-> --- a/drivers/tty/tty_ioctl.c
-> +++ b/drivers/tty/tty_ioctl.c
-> @@ -1086,14 +1086,12 @@ int tty_mode_ioctl(struct tty_struct *tty, struct file *file,
->  }
->  EXPORT_SYMBOL_GPL(tty_mode_ioctl);
->  
-> -int tty_perform_flush(struct tty_struct *tty, unsigned long arg)
-> +
-> +/* Caller guarantees ldisc reference is held */
-> +static int __tty_perform_flush(struct tty_struct *tty, unsigned long arg)
->  {
-> -	struct tty_ldisc *ld;
-> -	int retval = tty_check_change(tty);
-> -	if (retval)
-> -		return retval;
-> +	struct tty_ldisc *ld = tty->ldisc;
->  
-> -	ld = tty_ldisc_ref_wait(tty);
->  	switch (arg) {
->  	case TCIFLUSH:
->  		if (ld && ld->ops->flush_buffer) {
-> @@ -1111,12 +1109,24 @@ int tty_perform_flush(struct tty_struct *tty, unsigned long arg)
->  		tty_driver_flush_buffer(tty);
->  		break;
->  	default:
-> -		tty_ldisc_deref(ld);
->  		return -EINVAL;
->  	}
-> -	tty_ldisc_deref(ld);
->  	return 0;
->  }
-> +
-> +int tty_perform_flush(struct tty_struct *tty, unsigned long arg)
-> +{
-> +	struct tty_ldisc *ld;
-> +	int retval = tty_check_change(tty);
-> +	if (retval)
-> +		return retval;
-> +
-> +	ld = tty_ldisc_ref_wait(tty);
-> +	retval = __tty_perform_flush(tty, arg);
-> +	if (ld)
-> +		tty_ldisc_deref(ld);
-> +	return retval;
-> +}
->  EXPORT_SYMBOL_GPL(tty_perform_flush);
->  
->  int n_tty_ioctl_helper(struct tty_struct *tty, struct file *file,
-> @@ -1155,7 +1165,7 @@ int n_tty_ioctl_helper(struct tty_struct *tty, struct file *file,
->  		}
->  		return 0;
->  	case TCFLSH:
-> -		return tty_perform_flush(tty, arg);
-> +		return __tty_perform_flush(tty, arg);
->  	default:
->  		/* Try the mode commands */
->  		return tty_mode_ioctl(tty, file, cmd, arg);
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index 97f4804..54c64cf 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -178,7 +178,8 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
+ 		setup_sg(sg_out, state->session_key, state->keylen);
+ 		if (crypto_blkcipher_encrypt(&desc, sg_out, sg_in,
+ 					     state->keylen) != 0) {
+-    		    printk(KERN_WARNING "mppe_rekey: cipher_encrypt failed\n");
++			net_warn_ratelimited("%s[%d]: crypto_blkcipher_encrypt "
++					     "failed\n", __func__, state->unit);
+ 		}
+ 	} else {
+ 		memcpy(state->session_key, state->sha1_digest, state->keylen);
+@@ -291,8 +292,7 @@ mppe_init(void *arg, unsigned char *options, int optlen, int unit, int debug,
+ 	else if (mppe_opts & MPPE_OPT_40)
+ 		state->keylen = 8;
+ 	else {
+-		printk(KERN_WARNING "%s[%d]: unknown key length\n", debugstr,
+-		       unit);
++		pr_warn("%s[%d]: unknown key length\n", debugstr, unit);
+ 		return 0;
+ 	}
+ 	if (mppe_opts & MPPE_OPT_STATEFUL)
+@@ -314,8 +314,7 @@ mppe_init(void *arg, unsigned char *options, int optlen, int unit, int debug,
+ 			sprintf(mkey + i * 2, "%02x", state->master_key[i]);
+ 		for (i = 0; i < sizeof(state->session_key); i++)
+ 			sprintf(skey + i * 2, "%02x", state->session_key[i]);
+-		printk(KERN_DEBUG
+-		       "%s[%d]: keys: master: %s initial session: %s\n",
++		printk(KERN_DEBUG "%s[%d]: keys: master: %s initial session: %s\n",
+ 		       debugstr, unit, mkey, skey);
+ 	}
+ 
+@@ -387,9 +386,9 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+ 	/* Make sure we have enough room to generate an encrypted packet. */
+ 	if (osize < isize + MPPE_OVHD + 2) {
+ 		/* Drop the packet if we should encrypt it, but can't. */
+-		printk(KERN_DEBUG "mppe_compress[%d]: osize too small! "
+-		       "(have: %d need: %d)\n", state->unit,
+-		       osize, osize + MPPE_OVHD + 2);
++		net_err_ratelimited("%s[%d]: osize too small! "
++				    "(have: %d need: %d)\n", __func__,
++				    state->unit, osize, isize + MPPE_OVHD + 2);
+ 		return -1;
+ 	}
+ 
+@@ -405,7 +404,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+ 
+ 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
+ 	if (state->debug >= 7)
+-		printk(KERN_DEBUG "mppe_compress[%d]: ccount %d\n", state->unit,
++		printk(KERN_DEBUG "%s[%d]: ccount %d\n", __func__, state->unit,
+ 		       state->ccount);
+ 	put_unaligned_be16(state->ccount, obuf);
+ 
+@@ -414,7 +413,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+ 	    (state->bits & MPPE_BIT_FLUSHED)) {	/* CCP Reset-Request  */
+ 		/* We must rekey */
+ 		if (state->debug && state->stateful)
+-			printk(KERN_DEBUG "mppe_compress[%d]: rekeying\n",
++			printk(KERN_DEBUG "%s[%d]: rekeying\n", __func__,
+ 			       state->unit);
+ 		mppe_rekey(state, 0);
+ 		state->bits |= MPPE_BIT_FLUSHED;
+@@ -432,7 +431,8 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+ 	setup_sg(sg_in, ibuf, isize);
+ 	setup_sg(sg_out, obuf, osize);
+ 	if (crypto_blkcipher_encrypt(&desc, sg_out, sg_in, isize) != 0) {
+-		printk(KERN_DEBUG "crypto_cypher_encrypt failed\n");
++		net_err_ratelimited("%s[%d]: crypto_blkcipher_encrypt failed\n",
++				    __func__, state->unit);
+ 		return -1;
+ 	}
+ 
+@@ -496,9 +496,8 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 
+ 	if (isize <= PPP_HDRLEN + MPPE_OVHD) {
+ 		if (state->debug)
+-			printk(KERN_DEBUG
+-			       "mppe_decompress[%d]: short pkt (%d)\n",
+-			       state->unit, isize);
++			printk(KERN_DEBUG "%s[%d]: short pkt (%d)\n",
++			       __func__, state->unit, isize);
+ 		return DECOMP_ERROR;
+ 	}
+ 
+@@ -509,35 +508,36 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	 * this is to account for possible PFC.
+ 	 */
+ 	if (osize < isize - MPPE_OVHD - 1) {
+-		printk(KERN_DEBUG "mppe_decompress[%d]: osize too small! "
+-		       "(have: %d need: %d)\n", state->unit,
+-		       osize, isize - MPPE_OVHD - 1);
++		net_warn_ratelimited("%s[%d]: osize too small! "
++				     "(have: %d need: %d)\n", __func__,
++				     state->unit, osize, isize - MPPE_OVHD - 1);
+ 		return DECOMP_ERROR;
+ 	}
+ 	osize = isize - MPPE_OVHD - 2;	/* assume no PFC */
+ 
+ 	ccount = MPPE_CCOUNT(ibuf);
+ 	if (state->debug >= 7)
+-		printk(KERN_DEBUG "mppe_decompress[%d]: ccount %d\n",
+-		       state->unit, ccount);
++		printk(KERN_DEBUG "%s[%d]: ccount %d\n", __func__, state->unit,
++		       ccount);
+ 
+ 	/* sanity checks -- terminate with extreme prejudice */
+ 	if (!(MPPE_BITS(ibuf) & MPPE_BIT_ENCRYPTED)) {
+-		printk(KERN_DEBUG
+-		       "mppe_decompress[%d]: ENCRYPTED bit not set!\n",
+-		       state->unit);
++		net_warn_ratelimited("%s[%d]: ENCRYPTED bit not set!\n",
++				     __func__, state->unit);
+ 		state->sanity_errors += 100;
+ 		sanity = 1;
+ 	}
+ 	if (!state->stateful && !flushed) {
+-		printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit not set in "
+-		       "stateless mode!\n", state->unit);
++		net_warn_ratelimited("%s[%d]: FLUSHED bit not set "
++				     "in stateless mode!\n", __func__,
++				     state->unit);
+ 		state->sanity_errors += 100;
+ 		sanity = 1;
+ 	}
+ 	if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed) {
+-		printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit not set on "
+-		       "flag packet!\n", state->unit);
++		net_warn_ratelimited("%s[%d]: FLUSHED bit not set "
++				     "on flag packet!\n", __func__,
++				     state->unit);
+ 		state->sanity_errors += 100;
+ 		sanity = 1;
+ 	}
+@@ -560,11 +560,11 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 
+ 	if (!state->stateful) {
+ 		if (mppe_cmp_ccount(ccount, state->ccount) < 0) {
+-			if (net_ratelimit())
+-				printk(KERN_WARNING "%s[%d]: Dropping out-of-order "
+-				       "packet with ccount %u, "
+-				       "expecting %u!\n", __func__,
+-				       state->unit, ccount, state->ccount);
++			net_warn_ratelimited("%s[%d]: Dropping out-of-order "
++					     "packet with ccount %u, "
++					     "expecting %u!\n", __func__,
++					     state->unit, ccount,
++					     state->ccount);
+ 			return DECOMP_DROPERROR;
+ 		}
+ 
+@@ -638,7 +638,9 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	setup_sg(sg_in, ibuf, 1);
+ 	setup_sg(sg_out, obuf, 1);
+ 	if (crypto_blkcipher_decrypt(&desc, sg_out, sg_in, 1) != 0) {
+-		printk(KERN_DEBUG "crypto_cypher_decrypt failed\n");
++		net_warn_ratelimited
++		    ("%s[%d]: crypto_blkcipher_decrypt failed\n", __func__,
++		     state->unit);
+ 		return DECOMP_ERROR;
+ 	}
+ 
+@@ -658,7 +660,9 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	setup_sg(sg_in, ibuf + 1, isize - 1);
+ 	setup_sg(sg_out, obuf + 1, osize - 1);
+ 	if (crypto_blkcipher_decrypt(&desc, sg_out, sg_in, isize - 1)) {
+-		printk(KERN_DEBUG "crypto_cypher_decrypt failed\n");
++		net_warn_ratelimited
++		    ("%s[%d]: crypto_blkcipher_decrypt failed\n", __func__,
++		     state->unit);
+ 		return DECOMP_ERROR;
+ 	}
+ 
+@@ -685,9 +689,9 @@ static void mppe_incomp(void *arg, unsigned char *ibuf, int icnt)
+ 
+ 	if (state->debug &&
+ 	    (PPP_PROTOCOL(ibuf) >= 0x0021 && PPP_PROTOCOL(ibuf) <= 0x00fa))
+-		printk(KERN_DEBUG
+-		       "mppe_incomp[%d]: incompressible (unencrypted) data! "
+-		       "(proto %04x)\n", state->unit, PPP_PROTOCOL(ibuf));
++		printk(KERN_DEBUG "%s[%d]: incompressible (unencrypted) data! "
++		       "(proto %04x)\n", __func__, state->unit,
++		       PPP_PROTOCOL(ibuf));
+ 
+ 	state->stats.inc_bytes += icnt;
+ 	state->stats.inc_packets++;
+@@ -744,7 +748,7 @@ static int __init ppp_mppe_init(void)
+ 	answer = ppp_register_compressor(&ppp_mppe);
+ 
+ 	if (answer = 0)
+-		printk(KERN_INFO "PPP MPPE Compression module registered\n");
++		pr_info("PPP MPPE Compression module registered\n");
+ 	else
+ 		kfree(sha_pad);
+ 
+-- 
+1.7.10.4
 
 
