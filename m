@@ -1,8 +1,10 @@
 From: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
-Date: Tue, 21 May 2013 18:18:21 +0000
-Subject: [RFC PATCH v2 1/4] ppp: adds new error for decompressors to signal that packet must be dropped
-Message-Id: <1369160304-31967-1-git-send-email-jorge@dti2.net>
+Date: Wed, 22 May 2013 11:32:51 +0000
+Subject: [PATCH v3 2/4] ppp_mppe: check coherency counter for out-of-order sequencing
+Message-Id: <1369222373-7701-2-git-send-email-jorge@dti2.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1369222373-7701-1-git-send-email-jorge@dti2.net>
+In-Reply-To: <1369222373-7701-1-git-send-email-jorge@dti2.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -11,76 +13,78 @@ Cc: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
 
 From: "Jorge Boncompte [DTI2]" <jorge@dti2.net>
 
-Currently decompressors can't signal the generic PPP layer to silently
-drop a packet without notifying the PPP daemon or the other party.
+While testing a L2TP tunnel without sequencing with MPPE encryption in
+stateless mode I noticed that after a packet was reordered the encapsulated
+traffic session was stuck but testing against a Cisco gear did work.
+
+From RFC3078 "MPPE expects packets to be delivered in sequence".
+
+The thing it's that the ppp_mppe module treats the reorder as if the
+coherency counter did wrap and rekeys all the "missing" packets.
+
+The link layer protocol should deliver the packets in order but at least
+with this patch in place the decryption process survives some packet reorder.
 
 Signed-off-by: Jorge Boncompte [DTI2] <jorge@dti2.net>
 ---
- drivers/net/ppp/ppp_generic.c |   12 ++++++++++++
- include/linux/ppp-comp.h      |    6 ++++--
- 2 files changed, 16 insertions(+), 2 deletions(-)
+Changes from v2:
+- Addressed Eric Dumazet review.
+- Checkpatch clean.
 
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 72ff14b..7d26825 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -1729,6 +1729,10 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
- 	    (ppp->rstate & (SC_DC_FERROR | SC_DC_ERROR)) = 0)
- 		skb = ppp_decompress_frame(ppp, skb);
+ drivers/net/ppp/ppp_mppe.c |   19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index 9a1849a..f2e3d17 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -55,6 +55,7 @@
+ #include <linux/ppp_defs.h>
+ #include <linux/ppp-comp.h>
+ #include <linux/scatterlist.h>
++#include <linux/net.h>
+ #include <asm/unaligned.h>
  
-+	/* Packet dropped */
-+	if (skb = NULL)
-+		goto err;
+ #include "ppp_mppe.h"
+@@ -125,7 +126,10 @@ struct ppp_mppe_state {
+ 
+ #define MPPE_BITS(p) ((p)[4] & 0xf0)
+ #define MPPE_CCOUNT(p) ((((p)[4] & 0x0f) << 8) + (p)[5])
+-#define MPPE_CCOUNT_SPACE 0x1000	/* The size of the ccount space */
++#define MPPE_CCOUNT_BITS 12	/* MPPE coherency count bits */
++/* The size of the ccount space */
++#define MPPE_CCOUNT_SPACE (1 << MPPE_CCOUNT_BITS)
++#define MPPE_CCOUNT_SHIFT ((sizeof(int) * 8) - MPPE_CCOUNT_BITS)
+ 
+ #define MPPE_OVHD	2	/* MPPE overhead/packet */
+ #define SANITY_MAX	1600	/* Max bogon factor we will tolerate */
+@@ -468,6 +472,12 @@ static void mppe_decomp_reset(void *arg)
+ 	return;
+ }
+ 
++/* Compares two coherency counter values. */
++static int mppe_cmp_ccount(unsigned int a, unsigned int b)
++{
++	return (int)((a << MPPE_CCOUNT_SHIFT) - (b << MPPE_CCOUNT_SHIFT));
++}
 +
- 	if (ppp->flags & SC_MUST_COMP && ppp->rstate & SC_DC_FERROR)
- 		goto err;
- 
-@@ -1888,6 +1892,13 @@ ppp_decompress_frame(struct ppp *ppp, struct sk_buff *skb)
- 		len = ppp->rcomp->decompress(ppp->rc_state, skb->data - 2,
- 				skb->len + 2, ns->data, obuff_size);
- 		if (len < 0) {
-+			/* Drop the packet and continue */
-+			if (len = DECOMP_DROPERROR) {
-+				kfree_skb(ns);
-+				kfree_skb(skb);
-+				skb = NULL;
-+				goto out;
-+			}
- 			/* Pass the compressed frame to pppd as an
- 			   error indication. */
- 			if (len = DECOMP_FATALERROR)
-@@ -1909,6 +1920,7 @@ ppp_decompress_frame(struct ppp *ppp, struct sk_buff *skb)
- 					   skb->len + 2);
- 	}
- 
-+out:
- 	return skb;
- 
-  err:
-diff --git a/include/linux/ppp-comp.h b/include/linux/ppp-comp.h
-index 4ea1d37..12a8ce8 100644
---- a/include/linux/ppp-comp.h
-+++ b/include/linux/ppp-comp.h
-@@ -89,8 +89,9 @@ struct compressor {
  /*
-  * The return value from decompress routine is the length of the
-  * decompressed packet if successful, otherwise DECOMP_ERROR
-- * or DECOMP_FATALERROR if an error occurred.
-- * 
-+ * or DECOMP_FATALERROR if an error occurred but don't want the
-+ * PPP generic layer to drop the packet.
-+ *
-  * We need to make this distinction so that we can disable certain
-  * useful functionality, namely sending a CCP reset-request as a result
-  * of an error detected after decompression.  This is to avoid infringing
-@@ -100,6 +101,7 @@ struct compressor {
+  * Decompress (decrypt) an MPPE packet.
+  */
+@@ -547,6 +557,13 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	 */
  
- #define DECOMP_ERROR		-1	/* error detected before decomp. */
- #define DECOMP_FATALERROR	-2	/* error detected after decomp. */
-+#define DECOMP_DROPERROR	-3	/* error detected, drop packet. */
- 
- extern int ppp_register_compressor(struct compressor *);
- extern void ppp_unregister_compressor(struct compressor *);
+ 	if (!state->stateful) {
++		if (mppe_cmp_ccount(ccount, state->ccount) < 0) {
++			net_warn_ratelimited("%s[%d]: Dropping out-of-order packet with ccount %u, expecting %u!\n",
++					     __func__, state->unit, ccount,
++					     state->ccount);
++			return DECOMP_DROPERROR;
++		}
++
+ 		/* RFC 3078, sec 8.1.  Rekey for every packet. */
+ 		while (state->ccount != ccount) {
+ 			mppe_rekey(state, 0);
 -- 
 1.7.10.4
 
