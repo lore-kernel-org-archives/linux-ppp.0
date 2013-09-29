@@ -1,7 +1,7 @@
 From: James Carlson <carlsonj@workingcode.com>
-Date: Sun, 29 Sep 2013 22:07:49 +0000
+Date: Sun, 29 Sep 2013 22:07:52 +0000
 Subject: Re: Wrong remote IP, bug or feature?
-Message-Id: <5248A4B5.9050408@workingcode.com>
+Message-Id: <5248A4B8.7090201@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <5247FC26.8040200@perfect-privacy.com>
 In-Reply-To: <5247FC26.8040200@perfect-privacy.com>
@@ -14,17 +14,7 @@ To: linux-ppp@vger.kernel.org
 Hash: SHA1
 
 On 9/29/2013 6:08 AM, Lars Mueller wrote:
-> Hi, I have set remoteip in the pppd.conf to an 10.x.x.x  range, i 
-> would expect that users get an IP in this range from the server. 
-> However, some users misconfigurations set the remoteip to a
-> 192.x.x IP given by the user. So my ip-up and ip-down scripts on
-> the server gets called with a user given, wrong, 192.x.x. IP, and
-> not the server provided 10.x.x.x Should a user be allowed to do
-> this or is this a bug? If yes, can i block users from providing
-> their own IPs? As the ip-up and ip-down scripts set per-user
-> firewall rules, it is quite a security issue if a user has the
-> possibility to provide an IP of his choice, rather than the IP that
-> is given to him by the server.
+
 
 Another poster suggested "ipcp-accept-remote."  I don't believe that
 answer to be correct.  That option actually *allows* the peer to
@@ -76,7 +66,7 @@ you to determine how much to inconvenience the user.
 
 About the options you have configured:
 
-> receive-all
+
 
 This one may be a mistake.  It's possible you may need this if the
 peer has known implementation bugs, but I strongly suggest omitting
@@ -86,7 +76,7 @@ I doubt it's needed here, as the AHDLC "peer" is entirely internal to
 the pptp implementation.  If the "peer" is broken, it means that your
 local pptpd is broken.
 
-> defaultroute
+
 
 This is very likely wrong for an access server.  You don't want to
 treat your remote user as your default route to connect to the
@@ -97,7 +87,7 @@ If you were hoping that this option would *supply* a default route to
 the peer, it does not.  There's (quite intentionally) no way to do
 that in PPP.
 
-> mru 1450 default-mru
+
 
 That combination is a little weird.  You're telling pppd to use an MRU
 that's less than the default of 1500 but also not to bother telling
@@ -107,7 +97,7 @@ send smaller packets (by telling it to do so) *or* setting just
 "default-mru" if you don't want to tell the peer anything about the
 MRU setting (allowing it to assume whatever it wants), and not both.
 
-> refuse-pap refuse-chap refuse-mschap
+
 
 These probably don't do what you expect.  All of the "refuse-*"
 authentication options control the how the local system (i.e., this
@@ -119,7 +109,7 @@ But the remote system isn't going to do that, and if it did, it
 wouldn't find any compatible secrets in any of the /etc/ppp/*-secrets
 files, so what you're specifying here is actually already the default.
 
-> lock
+
 
 That doesn't seem useful on a virtual link, such as pptp.  The point
 of the "lock" option is to control access to a physical serial port
@@ -129,14 +119,14 @@ port is in use, and either wait for it to become idle or return an
 error to the user.  Clearly, physical serial ports are not in use
 here.  See the man page for details.
 
-> novj novjccomp
+
 
 No need to specify both of these; "novj" is more than enough.  If
 you're going to do this, I'd suggest adding "nopcomp" and "noaccomp"
 as well.  Those options mean something for a serial link, but not much
 for a virtual link.
 
-> nologfd
+
 
 That's not really needed.  You're not logging on stdout here.  I
 suppose it's harmless, although I do recommend that specifying as
@@ -156,7 +146,7 @@ James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2.0.17 (MingW32)
 
-iEYEARECAAYFAlJIpKcACgkQ6TIHA1NkzvAK7gCeNslam3NeLqh37OjDgZ6OAHSN
-wzYAn1XZVLQkPOU1ETrlBijO0RGFbxrQ
-=y4gd
+iEYEARECAAYFAlJIpLIACgkQ6TIHA1NkzvD/nACdF3kT3pc5aFeXv9lhtJvhDsQy
++AUAni5cFLmYiOXtLJ5ZMMQVF+q4/HCT
+=/3+k
 -----END PGP SIGNATURE-----
