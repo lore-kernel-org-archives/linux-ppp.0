@@ -1,50 +1,30 @@
-From: James Chapman <jchapman@katalix.com>
-Date: Thu, 24 Oct 2013 15:43:42 +0000
+From: Benjamin LaHaise <bcrl@kvack.org>
+Date: Thu, 24 Oct 2013 15:53:54 +0000
 Subject: Re: [RFC PATCH net-next] ppp: Allow ppp device connected to an l2tp session to change of namespace
-Message-Id: <5269402E.2070203@katalix.com>
+Message-Id: <20131024155354.GQ2704@kvack.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <5268F6CD.9070600@alphalink.fr> <5268FCB1.7020903@katalix.com> <526923A7.8090108@alphalink.fr>
-In-Reply-To: <526923A7.8090108@alphalink.fr>
+References: <5268F6CD.9070600@alphalink.fr> <5268FCB1.7020903@katalix.com> <526923A7.8090108@alphalink.fr> <5269402E.2070203@katalix.com>
+In-Reply-To: <5269402E.2070203@katalix.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-To: =?ISO-8859-1?Q?Fran=E7ois_Cachereul?= <f.cachereul@alphalink.fr>
-Cc: Paul Mackerras <paulus@samba.org>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: James Chapman <jchapman@katalix.com>
+Cc: =?iso-8859-1?Q?Fran=E7ois?= Cachereul <f.cachereul@alphalink.fr>, Paul Mackerras <paulus@samba.org>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-On 24/10/13 14:41, Fran=E7ois Cachereul wrote:
-> On 10/24/2013 12:55 PM, James Chapman wrote:
->> On 24/10/13 11:30, Fran=E7ois Cachereul wrote:
->>> Remove NETIF_F_NETNS_LOCAL flag from ppp device in ppp_connect_channel()
->>> if the device is connected to a l2tp session socket.
->>> Restore the flag in ppp_disconnect_channel().
->>
->> What about pppd's network namespace? Also, L2TP's tunnel socket (UDP or
->> L2TP/IP) will be in a different namespace if the ppp interface is moved.
->=20
-> That's what I'm trying to achieve. I'm not using pppd and my problem is
-> as follow:  I need to isolate ppp devices from each other, even when
-> they are connected to sessions carried by the same L2TP tunnel.
+On Thu, Oct 24, 2013 at 04:43:42PM +0100, James Chapman wrote:
+> I'm thinking about the implications of a skb in the net namespace of the
+> ppp interface passing through a tunnel socket which is in another
+> namespace. I think net namespaces are completely isolated.
+> 
+> To keep your ppp interfaces isolated from each other, have you
+> considered using netfilter to prevent data being passed between ppp
+> interfaces?
 
-I'm thinking about the implications of a skb in the net namespace of the
-ppp interface passing through a tunnel socket which is in another
-namespace. I think net namespaces are completely isolated.
+Using network namespaces for this is far more efficient.  We've already 
+added support for doing this to other tunneling interfaces.  This approach 
+also makes creating VPNs where there is re-use of the private address space 
+between different customers far easier to implement.
 
-To keep your ppp interfaces isolated from each other, have you
-considered using netfilter to prevent data being passed between ppp
-interfaces?
-
-> Also, I
-> need the authentication to be terminated to know the namespace in which
-> the ppp will be moved. For that, the process runs in a namespace with
-> its l2tp sockets (tunnel and session) in that same namespace and each
-> ppp device is moved in a specific namespace after authentication.
-> =20
-> Regards
-> Fran=E7ois
->=20
-
---=20
-James Chapman
-Katalix Systems Ltd
-http://www.katalix.com
-Catalysts for your Embedded Linux software development
+		-ben
+-- 
+"Thought is the essence of where you are now."
