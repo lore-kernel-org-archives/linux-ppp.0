@@ -1,59 +1,50 @@
-From: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
-Date: Thu, 24 Oct 2013 14:23:14 +0000
+From: James Chapman <jchapman@katalix.com>
+Date: Thu, 24 Oct 2013 15:43:42 +0000
 Subject: Re: [RFC PATCH net-next] ppp: Allow ppp device connected to an l2tp session to change of namespace
-Message-Id: <52692D52.8090503@cogentembedded.com>
+Message-Id: <5269402E.2070203@katalix.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <5268F6CD.9070600@alphalink.fr>
-In-Reply-To: <5268F6CD.9070600@alphalink.fr>
+References: <5268F6CD.9070600@alphalink.fr> <5268FCB1.7020903@katalix.com> <526923A7.8090108@alphalink.fr>
+In-Reply-To: <526923A7.8090108@alphalink.fr>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: =?UTF-8?B?RnJhbsOnb2lzIENhY2hlcmV1bA==?= <f.cachereul@alphalink.fr>, Paul Mackerras <paulus@samba.org>, James Chapman <jchapman@katalix.com>
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+To: =?ISO-8859-1?Q?Fran=E7ois_Cachereul?= <f.cachereul@alphalink.fr>
+Cc: Paul Mackerras <paulus@samba.org>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org
 
-Hello.
+On 24/10/13 14:41, Fran=E7ois Cachereul wrote:
+> On 10/24/2013 12:55 PM, James Chapman wrote:
+>> On 24/10/13 11:30, Fran=E7ois Cachereul wrote:
+>>> Remove NETIF_F_NETNS_LOCAL flag from ppp device in ppp_connect_channel()
+>>> if the device is connected to a l2tp session socket.
+>>> Restore the flag in ppp_disconnect_channel().
+>>
+>> What about pppd's network namespace? Also, L2TP's tunnel socket (UDP or
+>> L2TP/IP) will be in a different namespace if the ppp interface is moved.
+>=20
+> That's what I'm trying to achieve. I'm not using pppd and my problem is
+> as follow:  I need to isolate ppp devices from each other, even when
+> they are connected to sessions carried by the same L2TP tunnel.
 
-On 10/24/2013 02:30 PM, François Cachereul wrote:
+I'm thinking about the implications of a skb in the net namespace of the
+ppp interface passing through a tunnel socket which is in another
+namespace. I think net namespaces are completely isolated.
 
-> Remove NETIF_F_NETNS_LOCAL flag from ppp device in ppp_connect_channel()
-> if the device is connected to a l2tp session socket.
-> Restore the flag in ppp_disconnect_channel().
+To keep your ppp interfaces isolated from each other, have you
+considered using netfilter to prevent data being passed between ppp
+interfaces?
 
-> Signed-off-by: François CACHEREUL <f.cachereul@alphalink.fr>
-> ---
-> I'm trying to get rid of this flag for ppp device connected to l2tp
-> session, it's seem to be safe to do it for as l2tp_ppp module hasn't any
-> reference to the ppp device except to the device name. We can probably
-> do it for others modules but pppoe and pptp will require more work.
+> Also, I
+> need the authentication to be terminated to know the namespace in which
+> the ppp will be moved. For that, the process runs in a namespace with
+> its l2tp sockets (tunnel and session) in that same namespace and each
+> ppp device is moved in a specific namespace after authentication.
+> =20
+> Regards
+> Fran=E7ois
+>=20
 
-> I remove the flag for l2tp in ppp_generic.c because I couldn't find a
-> place like a callback to do it in l2tp_ppp.c. The best will be to
-> remove the flag for all ppp devices.
-
-> François
-
->   drivers/net/ppp/ppp_generic.c |   11 +++++++++++
->   1 file changed, 11 insertions(+)
-
-> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-> index 72ff14b..7ccf2ae 100644
-> --- a/drivers/net/ppp/ppp_generic.c
-> +++ b/drivers/net/ppp/ppp_generic.c
-[...]
-> @@ -2883,6 +2886,13 @@ ppp_connect_channel(struct channel *pch, int unit)
->   	++ppp->n_channels;
->   	pch->ppp = ppp;
->   	atomic_inc(&ppp->file.refcnt);
-> +
-> +	/* allow ppp net device to be moved in another network namespace
-> +	 * if it's connected to an l2tp session */
-
-    Acording to Documentation/CodingStyle, the preferred comment style in the 
-networking code is:
-
-/* bla
-  * bla
-  */
-
-WBR, Sergei
-
+--=20
+James Chapman
+Katalix Systems Ltd
+http://www.katalix.com
+Catalysts for your Embedded Linux software development
