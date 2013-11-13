@@ -1,8 +1,10 @@
-From: "Iris" <china_supplier6@smtp6.taoqindao.com>
-Date: Fri, 01 Nov 2013 07:28:02 +0000
+From: "Iris" <trade4@smtp4.045omg.com>
+Date: Wed, 13 Nov 2013 08:58:20 +0000
 Subject: Re: High quality HDPE LDPE
-Message-Id: <201311011528026877278@smtp6.taoqindao.com>
+Message-Id: <201311131658201140507@smtp4.045omg.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <201311011528026877278@smtp6.taoqindao.com>
+In-Reply-To: <201311011528026877278@smtp6.taoqindao.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
