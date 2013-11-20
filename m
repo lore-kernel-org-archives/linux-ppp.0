@@ -1,7 +1,7 @@
-From: Charlie Brady <charlieb-linux-ppp@budge.apana.org.au>
-Date: Wed, 20 Nov 2013 22:01:24 +0000
+From: Lorenzo Milesi <maxxer@ufficyo.com>
+Date: Wed, 20 Nov 2013 22:15:31 +0000
 Subject: Re: Double radius accounting
-Message-Id: <Pine.LNX.4.64.1311201658480.12149@e-smith.charliebrady.org>
+Message-Id: <1998004623.142136.1384985731564.JavaMail.zimbra@yetopen.it>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1683678123.142102.1384983923718.JavaMail.zimbra@yetopen.it>
 In-Reply-To: <1683678123.142102.1384983923718.JavaMail.zimbra@yetopen.it>
@@ -10,17 +10,17 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+> What happens if you remove 'option /etc/ppp/options' from pptpd.conf?
 
-On Wed, 20 Nov 2013, Lorenzo Milesi wrote:
+IT WORKS!
 
-> Is it normal to see the radius plugin initializaion TWICE?
+Damn, it was so easy! You saved me a lot of hair (at least the one I didn't pull yet!) ;)
 
-I think because it is reading /etc/ppp/options twice. From 'man pppd':
+So my fault was to use /etc/ppp/options as options file and leave the "option" directive in config?
 
-OPTIONS FILES
-   Options can be taken from files as well as the command line.  Pppd reads options from the
-   files /etc/ppp/options, ~/.ppprc and /etc/ppp/options.ttyname (in that order) before pro
-   cessing  the options on the command line.
+Thank you very much!
+-- 
+Lorenzo Milesi - lorenzo.milesi@yetopen.it
 
-What happens if you remove 'option /etc/ppp/options' from pptpd.conf?
+YetOpen S.r.l. - http://www.yetopen.it/
 
