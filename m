@@ -1,7 +1,7 @@
 From: "Iris" <trade4@smtp4.045omg.com>
-Date: Mon, 25 Nov 2013 14:20:39 +0000
+Date: Mon, 25 Nov 2013 19:43:59 +0000
 Subject: Re:HDPE LDPE PET
-Message-Id: <201311252220394216214@smtp4.045omg.com>
+Message-Id: <201311260343594846066@smtp4.045omg.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <201311191346083511612@smtp4.045omg.com>
 In-Reply-To: <201311191346083511612@smtp4.045omg.com>
@@ -10,11 +10,12 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-RGVhciBTaXIsDQoNCkdvb2QgZGF5IQ0KDQpXZSBoYWQgZGVhbGluZyBwbGFzdGljIHJhdyBtYXRl
-cmlhbHMgZm9yIG1hbnkgeWVhcnMgLiBBbmQgc3VwcGxpZWQgaGlnaCBxdWFsaXR5IGRpZmZlcmVu
-dCBncmFkZSBIRFBFL0xEUEUvUFAvUEVUIHRvIG91ciBvbGQgYW5kIG5ldyBjdXN0b21lcnMuDQog
-IA0KU2hvdWxkIGFueSBvZiB0aGUgaXRlbXMgYmUgb2YgaW50ZXJlc3QgdG8geW91LCBwbGVhc2Ug
-bGV0IG1lIGtub3cuIFdlIHNoYWxsIGJlIGdsYWQgdG8gZ2l2ZSB5b3Ugb3VyIGxvd2VzdCBxdW90
-YXRpb25zIHVwb24gcmVjZWlwdCBvZiB5b3VyIGRldGFpbGVkIHJlcXVpcmVtZW50cy4NCg0KVGhh
-bmtzLA0KSXJpcw0KRW1haWw6IGlyaXMyMDExMTIwN0Bob3RtYWlsLmNvbQ0KU2t5cGU6aXJpcy5z
-b25nMTI
+RGVhciBTaXIsDQoNCkdsYWQgdG8gaGVhciB0aGF0IHlvdSdyZSBvbiB0aGUgbWFya2V0IGZvciBI
+RFBFL0xEUEUvTExEUEUvUEVULiBXZSBzcGVjaWFsaXplIGluIHRoaXMgZmllbGQgZm9yIHNldmVy
+YWwgeWVhcnMsIHdpdGggdGhlIEJsb3cgbW91bGRpbmcgLGluamVjdGlvbiBtb3VsZGluZyAsZmls
+bSBpbmR1c3RyeSwgd2l0aCBnb29kIHF1YWxpdHkgYW5kIHByZXR0eSBjb21wZXRpdGl2ZSBwcmlj
+ZS4NCg0KU2hvdWxkIHlvdSBoYXZlIGFueSBxdWVzdGlvbnMsIHBscyBkbyBub3QgaGVzaXRhdGUg
+dG8gY29udGFjdCBtZS4gRlJFRSBTQU1QTEVTIHdpbGwgYmUgc2VudCBmb3IgeW91ciBldmFsdWF0
+aW9uIQ0KDQpUa3MgJiBiciwNCg0KSXJpcw0KQ29tcGFueTogVElBTkpJTiBERUtBWSAgSU5EVVNU
+UklBTCBDTy4sIExJTUlURUQgDQpTa3lwZTogaXJpcy5zb25nMTINCk1TTjogaXJpczIwMTExMjA3
+QGhvdG1haWwuY29tDQpx
