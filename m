@@ -1,10 +1,10 @@
-From: "Iris" <ky5@smtp5.170bc.com>
-Date: Sun, 15 Dec 2013 14:19:33 +0000
-Subject: Re:HDPE LDPE PET
-Message-Id: <201312152219338125183@smtp5.170bc.com>
+From: "Iris" <ben3@smtp3.tycib.com>
+Date: Wed, 08 Jan 2014 16:01:19 +0000
+Subject: Re: High quality HDPE LDPE
+Message-Id: <201401090001196401942@smtp3.tycib.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <201311191346083511612@smtp4.045omg.com>
-In-Reply-To: <201311191346083511612@smtp4.045omg.com>
+References: <201311011528026877278@smtp6.taoqindao.com>
+In-Reply-To: <201311011528026877278@smtp6.taoqindao.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
