@@ -1,21 +1,19 @@
-From: "Iris" <ben3@smtp3.tycib.com>
-Date: Wed, 08 Jan 2014 16:01:19 +0000
-Subject: Re: High quality HDPE LDPE
-Message-Id: <201401090001196401942@smtp3.tycib.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Date: Sat, 25 Jan 2014 13:47:40 +0000
+Subject: 2.4.6 tar missing
+Message-Id: <52E3C07C.2000508@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <201311011528026877278@smtp6.taoqindao.com>
-In-Reply-To: <201311011528026877278@smtp6.taoqindao.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-RGVhciBTaXIsDQoNCkdsYWQgdG8gaGVhciB0aGF0IHlvdSdyZSBvbiB0aGUgbWFya2V0IGZvciBI
-RFBFL0xEUEUvTExEUEUvUEVULiBXZSBzcGVjaWFsaXplIGluIHRoaXMgZmllbGQgZm9yIHNldmVy
-YWwgeWVhcnMsIHdpdGggdGhlIEJsb3cgbW91bGRpbmcgLGluamVjdGlvbiBtb3VsZGluZyAsZmls
-bSBpbmR1c3RyeSwgd2l0aCBnb29kIHF1YWxpdHkgYW5kIHByZXR0eSBjb21wZXRpdGl2ZSBwcmlj
-ZS4NCg0KU2hvdWxkIHlvdSBoYXZlIGFueSBxdWVzdGlvbnMsIHBscyBkbyBub3QgaGVzaXRhdGUg
-dG8gY29udGFjdCBtZS4gRlJFRSBTQU1QTEVTIHdpbGwgYmUgc2VudCBmb3IgeW91ciBldmFsdWF0
-aW9uIQ0KDQpUa3MgJiBiciwNCg0KSXJpcw0KQ29tcGFueTogVElBTkpJTiBERUtBWSAgSU5EVVNU
-UklBTCBDTy4sIExJTUlURUQgDQpTa3lwZTogaXJpcy5zb25nMTINCk1TTjogaXJpczIwMTExMjA3
-QGhvdG1haWwuY29tDQpx
+hi,
+
+[cc: linux-ppp]
+
+ppp 2.4.6 "was released" on git: http://git.ozlabs.org/?p=ppp.git;a=commitdiff;h@43750fca36e7e0eb90d702e048ad1da4929418
+
+But still there is no tar.gz at: http://ftp.samba.org/pub/ppp/
+
+thank you.
