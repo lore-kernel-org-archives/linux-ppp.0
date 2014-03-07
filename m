@@ -1,33 +1,60 @@
-From: walter harms <wharms@bfs.de>
-Date: Mon, 17 Mar 2014 16:19:25 +0000
-Subject: Re: Plugin Development getting peer ip.
-Message-Id: <5327208D.1060300@bfs.de>
+From: Sree Harsha Totakura <sreeharsha@totakura.in>
+Date: Fri, 07 Mar 2014 21:19:59 +0000
+Subject: pppd service crash in linux-3.13.6
+Message-Id: <531A37FF.4000509@totakura.in>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <532717B6.4040909@gmail.com>
-In-Reply-To: <532717B6.4040909@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-hi Greg,
-according to the man page you can have up to 6 arguments:
-  interface-name   tty-device   speed  local-IP-address   remote-IP-address ipparam
+Hi,
 
-I guess you are searching for remote-IP-address.
+Using linux-3.13.6, I observed the following output from the pppd kernel
+thread.  This happened when I tried to suspend my computer and it
+*stops* the computer from suspending.  Before going to suspend, I had
+used ppp to connect via my bluetooth modem and I later found that the
+connection was broken abruptly with a similar trace output.
 
-re,
- wh
+Trace:
+[22735.115313] PM: Syncing filesystems ... done.
+[22735.665613] PM: Preparing system for mem sleep
+[22735.665829] Freezing user space processes ...
+[22755.659538] Freezing of tasks failed after 20.004 seconds (1 tasks
+refusing to freeze, wq_
+busy=0):
+[22755.659555] pppd            D ffff8800376c9a58     0 16801      1
+0x00000006
+[22755.659557]  ffff8800376c9750 0000000000000046 0000000000012e80
+0000000000012e80
+[22755.659560]  ffff8802a1c1dfd8 ffff8800376c9750 0000000000000009
+ffff8802a1c1dd78
+[22755.659562]  0000000000000046 ffff8800376c9750 0000000000000028
+ffff8800376c9750
+[22755.659564] Call Trace:
+[22755.659569]  [<ffffffff81048507>] ? do_exit+0x937/0xa50
+[22755.659573]  [<ffffffff814bb6e1>] ? oops_end+0x91/0xd0
+[22755.659575]  [<ffffffff814b1f4f>] ? no_context+0x1f3/0x1ff
+[22755.659577]  [<ffffffff814bdb69>] ? __do_page_fault+0x89/0x500
+[22755.659581]  [<ffffffff811017dc>] ? free_pcppages_bulk+0x17c/0x3b0
+[22755.659584]  [<ffffffff81101cce>] ? free_hot_cold_page_list+0x3e/0x90
+[22755.659586]  [<ffffffff814babf8>] ? page_fault+0x28/0x30
+[22755.659591]  [<ffffffffa06fd5a3>] ? ppp_register_channel+0x13/0x20
+[ppp_generic]
+[22755.659594]  [<ffffffffa07062ab>] ? ppp_asynctty_open+0x12b/0x170
+[ppp_async]
+[22755.659596]  [<ffffffff812ec907>] ? tty_ldisc_open.isra.2+0x27/0x60
+[22755.659598]  [<ffffffff812ed1d3>] ? tty_ldisc_hangup+0x1e3/0x220
+[22755.659601]  [<ffffffff812e4614>] ? __tty_hangup+0x2c4/0x440
+[22755.659603]  [<ffffffff812e56a1>] ? disassociate_ctty+0x61/0x270
+[22755.659605]  [<ffffffff810483c2>] ? do_exit+0x7f2/0xa50
+[22755.659607]  [<ffffffff81053ad2>] ? recalc_sigpending+0x12/0x50
+[22755.659609]  [<ffffffff81054308>] ? __set_task_blocked+0x28/0x70
+[22755.659611]  [<ffffffff81048684>] ? do_group_exit+0x34/0xa0
+[22755.659613]  [<ffffffff810486fb>] ? SyS_exit_group+0xb/0x10
+[22755.659615]  [<ffffffff814c1eb9>] ? system_call_fastpath+0x16/0x1b
+[22755.659618]
+[22755.659619] Restarting tasks ... done.
 
-
-Am 17.03.2014 16:41, schrieb Greg:
-> Hey guys,
-> 
-> I was wondering if anyone could tell me how to get the ip address from
-> the client when using ip_up notifier?
-> 
-> Also, with the ip_down notifier.
-> 
-> I'm attempting to track the bandwidth usage and connection via the above
-> notifiers.  Any help would be greatly appreciated.
-> 
+Regards,
+Sree
