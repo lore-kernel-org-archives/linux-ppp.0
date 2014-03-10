@@ -1,161 +1,100 @@
-From: Greg <gregborbonus@gmail.com>
-Date: Mon, 10 Mar 2014 14:23:08 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 10 Mar 2014 15:14:41 +0000
 Subject: Re: PPPD plugin development
-Message-Id: <531DCACC.2020309@gmail.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="------------050404080506030007060204"
+Message-Id: <531DD6E1.3040003@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <531BEBF2.3020508@gmail.com>
 In-Reply-To: <531BEBF2.3020508@gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------050404080506030007060204
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+On 03/10/14 10:23, Greg wrote:
+> I'm attempting to authenticate a user who is trying to connect to pptp
+> via an external means.
+> 
+> They would sign up on the site and have the username and password stored
+> in a database(I do not want direct database access).  The password would
+> be encrypted(MD5).
 
-I'm attempting to authenticate a user who is trying to connect to pptp 
-via an external means.
+MD5 isn't encryption.  It's hashing.  The big difference is that hashes
+are (by design) not reversible.
 
-They would sign up on the site and have the username and password stored 
-in a database(I do not want direct database access).  The password would 
-be encrypted(MD5).
+What you're describing just cannot be done because it's architecturally
+flawed.  PAP, by design, passes the raw password on the wire, which
+means that the recipient (the authenticator) can do the usual sort of
+hashed password comparison: look up the stored hashed password, compute
+a hash based on the input, and compare results.
 
+CHAP doesn't work that way.  With CHAP, the authenticator presents a
+Challenge to the authenticatee.  That authenticatee then computes a hash
+and sends it back.  The authenticator then must look up the CLEAR TEXT
+passphrase, compute a hash based on the CLEAR TEXT and the challenge,
+and compare results.
 
-On 3/10/2014 9:01 AM, James Carlson wrote:
-> On 03/10/14 08:31, Greg wrote:
->> as stated before, I'm trying to write a plugin to authenticate against
->> an external script. So far, I've only managed to get it to write a bit
->> information to a log file on the server.
-> It would help if you could provide details -- the code you're using, the
-> debug log messages, the configuration options in use, and any other
-> information related to your system.
->
-> At this point, I'm not even really sure whether you're attempting to
-> write authenticator or authenticatee code.  The two are different.
-> Details on the problem to be solved would help -- "authenticate against
-> an external script" is a chosen solution to some issue, not a problem
-> statement.
-I'm attempting to write an authenticator on the server itself.
+Note that important part in the previous paragraph: with PAP, the server
+need not store the original password, but with CHAP, it MUST.  This is
+exactly how it's designed.  See RFC 1994.
 
-As for the debugging, how can I provide that for you?
+Of course, MS-CHAP is a little different.  What it does is compute an
+intermediate passphrase based on an MD4 (not MD5) hash of what the user
+believes to be the password.  This intermediate passphrase is then used
+as the actual passphrase for the challenge/response handshake.  (Indeed,
+there's no need for either side to know the original user's password;
+storing just the intermediate value works as well.  You can do the same
+with regular CHAP so why the MD4 part is written into the protocol is
+beyond me.  Individual submissions are strange like that.)
 
-The code is attached.
+I guess that whoever designed that database didn't take that wrinkle
+into account.
 
+That issue aside, PPTP as I understand it generally requires the MS-CHAP
+variant and MPPE.  So, if you're the autenticator, you should have
+"require-mschap" or (more likely) "require-mschapv2", plus
+"require-mppe" among your configuration options.
 
->> I'm trying to use the digest->code to determine the type of digest used.
->> I figured that if I can find out which type it's using then I could then
->> move forward with converting it or determining how to store the
->> encrypted password to do a comparison.
-> digest->code will have the PPP code number for the digest type, which
-> will be CHAP_MD5 (0x05), CHAP_MICROSOFT (0x80), or CHAP_MICROSOFT_V2 (0x81).
->
-> You can see all of the registered chap_digest_type objects by grepping
-> the code for chap_register_digest.
->
-> I don't believe it can end up being anything else, given the current design.
-It's empty.
+> I'm attempting to write an authenticator on the server itself.
+> 
+> As for the debugging, how can I provide that for you?
 
->> I've also made it return 1 so that no matter what I enter, it should
->> show authenticated.
->>
->> digest->code writes as blank.
-> "writes"?
-I'm writing the output of the variables to a file.
-I've tried writing the value of digest->code to a file. it's empty or 
-being interpreted in such a way that it's not writing anything to the file.
+Text works.  Use the "debug" option and make sure that syslog
+"daemon.debug" is directed to a file.
 
+Or if syslog isn't an option for some reason, then use the "logfile
+/tmp/pppd.log" option to direct the log messages to the specified file.
+ (You can choose any file name you like, of course.)
 
->
->> When using it as a switch->case scenario, it goes to default:
->> switch (digest->code) {
->>          case CHAP_MICROSOFT:
->>          {
->>            codemess = "MIC";
->>          }
->>          case CHAP_MICROSOFT_V2:
->>          {
->>            codemess = "MV2";
->>          }
->>          default:
->>            codemess = "Default";
->> }
-> At a guess, that should mean that digest->code is CHAP_MD5, though I'm
-> really not sure without more information.  A debug trace would likely
-> show more, as would a copy of your code.
-I missed that one, but added it to the check and it to still shows default.
->> The return 1 appears to work, but then I get the message:
->> MPPE required, but keys are not available.  Possible plugin problem?
-> If you return 1 when MS-CHAP is enabled, then you're required to set up
-> keys and set the mppe_keys_set flag.  It's a bit ugly, but MPPE and
-> MS-CHAP are deeply intertwined.
->
->> I REALLY wish this was a documented better. Though I code in other
->> scripting languages, C is not something I'm used to coding. So please
->> feel free to give me a hard time, I'm muddling my way through C just to
->> get the basics right.
-> The plug-in interface just is not designed for use by someone without a
-> deep understanding of the existing code and a healthy amount of C
-> experience.  I somewhat doubt that a plug-in shared library type
-> interface, regardless of the depth of the documentation, could get
-> around that.
->
-> Normally, when folks want to do external authentication, they do it with
-> RADIUS or some other AAA protocol like that.  It might help to know what
-> problem you're trying to solve.
->
+> The code is attached.
 
-Thank you,
-Greg Borbonus
-*Nix Server administrator
+In your code, "challenge" and "response" are not strings, so printing
+them that way (even for debug) isn't going to work so well.  These are
+arrays of bytes.
 
+>> I don't believe it can end up being anything else, given the current
+>> design.
+> It's empty.
 
---------------050404080506030007060204
-Content-Type: text/plain; charset=windows-1252;
- name="external_auth.c.txt"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="external_auth.c.txt"
+I still don't understand.  Integers aren't "empty."
 
-#include "pppd.h"
-#include "chap-new.h"
-#include "chap_ms.h"
-#ifdef MPPE
-#include "md5.h"
-#endif
-#include "fsm.h"
-#include "ipcp.h"
-#include <syslog.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/time.h>
-#include <sys/wait.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <ctype.h>
+>>> I've also made it return 1 so that no matter what I enter, it should
+>>> show authenticated.
+>>>
+>>> digest->code writes as blank.
+>> "writes"?
+> I'm writing the output of the variables to a file.
+> I've tried writing the value of digest->code to a file. it's empty or
+> being interpreted in such a way that it's not writing anything to the file.
 
-/**
-        static int external_chap_check(void);
-        static int external_chap_verify(char *user, char *ourname, int id,
-                    struct chap_digest_type *digest,
-                    unsigned char *challenge,
-                    unsigned char *response,
-                    char *message, int message_space);
-**/
-        static int external_chap_check(void){
-          return 1;
-        }
-        static int external_auth_hook(char *user, char *ourname, int id,
-                    struct chap_digest_type *digest,
-                    unsigned char *challenge,
-                    unsigned char *response,
-                    char *message, int message_space)
-        {
-char *codemess;
-switch (digest->code) {
+Does the file get created at all?  If so, does it have zero length?
+
+Not writing anything to the file doesn't suggest that digest->code is
+empty.  It suggests that something in your code is falling apart.
+
+There's at least one obvious bug here: that switch statement doesn't
+work because it lacks "break;" between the cases.  Thus, everything
+falls down to just "Default."  Instead of this:
+
         case CHAP_MICROSOFT:
         {
           codemess = "MIC";
@@ -172,34 +111,30 @@ switch (digest->code) {
           codemess = "Default";
 }
 
-        FILE *f = fopen("/tmp/auth.pppd.log", "w");
-if (f == NULL)
-{
-    printf("Error opening file!\n");
-    exit(1);
-}
+Try this:
 
-
-
-fprintf(f, "User: %s\n", user);
-fprintf(f, "Challenge: %s\n",challenge);
-fprintf(f, "Response: %s\n", response);
-fprintf(f, "CODE: %s\n",codemess);
-
-fclose(f);
-
-
-        return 1;
+        case CHAP_MICROSOFT:
+        {
+          codemess = "MIC"; break;
         }
-
-
-void plugin_init(void) {
-        dbglog("PLUGIN: Initializing authenticaton plugin.");
-
-
-        chap_check_hook=external_chap_check;
-        chap_verify_hook=external_auth_hook;
-
-        return;
+        case CHAP_MICROSOFT_V2:
+        {
+          codemess = "MV2"; break;
+        }
+        case CHAP_MD5:
+        {
+          codemess = "MD5"; break;
+        }
+        default:
+          codemess = "Default";
 }
---------------050404080506030007060204--
+
+I don't know what else might be wrong.
+
+For what it's worth, I suggest using the logging functions in util.c
+(fatal, error, warn, notice, info, dbglog) rather than rolling your own
+with fprintf.  Even with "just" debug code, I think it's easier to use
+the existing infrastructure.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
