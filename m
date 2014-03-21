@@ -1,10 +1,10 @@
 From: Daniel Borkmann <dborkman@redhat.com>
-Date: Wed, 26 Mar 2014 21:06:07 +0000
-Subject: [PATCH net-next v3 6/9] net: ppp: use sk_unattached_filter api
-Message-Id: <1395867970-1338-7-git-send-email-dborkman@redhat.com>
+Date: Fri, 21 Mar 2014 12:20:15 +0000
+Subject: [PATCH net-next 6/9] net: ppp: use sk_unattached_filter api
+Message-Id: <1395404418-25376-7-git-send-email-dborkman@redhat.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1395867970-1338-1-git-send-email-dborkman@redhat.com>
-In-Reply-To: <1395867970-1338-1-git-send-email-dborkman@redhat.com>
+References: <1395404418-25376-1-git-send-email-dborkman@redhat.com>
+In-Reply-To: <1395404418-25376-1-git-send-email-dborkman@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
