@@ -1,60 +1,166 @@
-From: Sree Harsha Totakura <sreeharsha@totakura.in>
-Date: Fri, 07 Mar 2014 21:19:59 +0000
-Subject: pppd service crash in linux-3.13.6
-Message-Id: <531A37FF.4000509@totakura.in>
+From: Daniel Borkmann <dborkman@redhat.com>
+Date: Fri, 28 Mar 2014 17:58:23 +0000
+Subject: [PATCH net-next v4 6/9] net: ppp: use sk_unattached_filter api
+Message-Id: <1396029506-16776-7-git-send-email-dborkman@redhat.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1396029506-16776-1-git-send-email-dborkman@redhat.com>
+In-Reply-To: <1396029506-16776-1-git-send-email-dborkman@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: davem@davemloft.net
+Cc: ast@plumgrid.com, netdev@vger.kernel.org, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
 
-Hi,
+For the ppp driver, there are currently two open-coded BPF filters in use,
+that is, pass_filter and active_filter. Migrate both to make proper use
+of sk_unattached_filter_{create,destroy} API so that the actual BPF code
+is decoupled from direct access, and filters can be jited as a side-effect
+by the internal filter compiler.
 
-Using linux-3.13.6, I observed the following output from the pppd kernel
-thread.  This happened when I tried to suspend my computer and it
-*stops* the computer from suspending.  Before going to suspend, I had
-used ppp to connect via my bluetooth modem and I later found that the
-connection was broken abruptly with a similar trace output.
+Joint work with Alexei Starovoitov.
 
-Trace:
-[22735.115313] PM: Syncing filesystems ... done.
-[22735.665613] PM: Preparing system for mem sleep
-[22735.665829] Freezing user space processes ...
-[22755.659538] Freezing of tasks failed after 20.004 seconds (1 tasks
-refusing to freeze, wq_
-busy=0):
-[22755.659555] pppd            D ffff8800376c9a58     0 16801      1
-0x00000006
-[22755.659557]  ffff8800376c9750 0000000000000046 0000000000012e80
-0000000000012e80
-[22755.659560]  ffff8802a1c1dfd8 ffff8800376c9750 0000000000000009
-ffff8802a1c1dd78
-[22755.659562]  0000000000000046 ffff8800376c9750 0000000000000028
-ffff8800376c9750
-[22755.659564] Call Trace:
-[22755.659569]  [<ffffffff81048507>] ? do_exit+0x937/0xa50
-[22755.659573]  [<ffffffff814bb6e1>] ? oops_end+0x91/0xd0
-[22755.659575]  [<ffffffff814b1f4f>] ? no_context+0x1f3/0x1ff
-[22755.659577]  [<ffffffff814bdb69>] ? __do_page_fault+0x89/0x500
-[22755.659581]  [<ffffffff811017dc>] ? free_pcppages_bulk+0x17c/0x3b0
-[22755.659584]  [<ffffffff81101cce>] ? free_hot_cold_page_list+0x3e/0x90
-[22755.659586]  [<ffffffff814babf8>] ? page_fault+0x28/0x30
-[22755.659591]  [<ffffffffa06fd5a3>] ? ppp_register_channel+0x13/0x20
-[ppp_generic]
-[22755.659594]  [<ffffffffa07062ab>] ? ppp_asynctty_open+0x12b/0x170
-[ppp_async]
-[22755.659596]  [<ffffffff812ec907>] ? tty_ldisc_open.isra.2+0x27/0x60
-[22755.659598]  [<ffffffff812ed1d3>] ? tty_ldisc_hangup+0x1e3/0x220
-[22755.659601]  [<ffffffff812e4614>] ? __tty_hangup+0x2c4/0x440
-[22755.659603]  [<ffffffff812e56a1>] ? disassociate_ctty+0x61/0x270
-[22755.659605]  [<ffffffff810483c2>] ? do_exit+0x7f2/0xa50
-[22755.659607]  [<ffffffff81053ad2>] ? recalc_sigpending+0x12/0x50
-[22755.659609]  [<ffffffff81054308>] ? __set_task_blocked+0x28/0x70
-[22755.659611]  [<ffffffff81048684>] ? do_group_exit+0x34/0xa0
-[22755.659613]  [<ffffffff810486fb>] ? SyS_exit_group+0xb/0x10
-[22755.659615]  [<ffffffff814c1eb9>] ? system_call_fastpath+0x16/0x1b
-[22755.659618]
-[22755.659619] Restarting tasks ... done.
+Signed-off-by: Daniel Borkmann <dborkman@redhat.com>
+Signed-off-by: Alexei Starovoitov <ast@plumgrid.com>
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org
+---
+ drivers/net/ppp/ppp_generic.c | 60 +++++++++++++++++++++++++++++--------------
+ 1 file changed, 41 insertions(+), 19 deletions(-)
 
-Regards,
-Sree
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 72ff14b..e3923eb 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -143,9 +143,8 @@ struct ppp {
+ 	struct sk_buff_head mrq;	/* MP: receive reconstruction queue */
+ #endif /* CONFIG_PPP_MULTILINK */
+ #ifdef CONFIG_PPP_FILTER
+-	struct sock_filter *pass_filter;	/* filter for packets to pass */
+-	struct sock_filter *active_filter;/* filter for pkts to reset idle */
+-	unsigned pass_len, active_len;
++	struct sk_filter *pass_filter;	/* filter for packets to pass */
++	struct sk_filter *active_filter;/* filter for pkts to reset idle */
+ #endif /* CONFIG_PPP_FILTER */
+ 	struct net	*ppp_net;	/* the net we belong to */
+ 	struct ppp_link_stats stats64;	/* 64 bit network stats */
+@@ -755,28 +754,42 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	case PPPIOCSPASS:
+ 	{
+ 		struct sock_filter *code;
++
+ 		err = get_filter(argp, &code);
+ 		if (err >= 0) {
++			struct sock_fprog fprog = {
++				.len = err,
++				.filter = code,
++			};
++
+ 			ppp_lock(ppp);
+-			kfree(ppp->pass_filter);
+-			ppp->pass_filter = code;
+-			ppp->pass_len = err;
++			if (ppp->pass_filter)
++				sk_unattached_filter_destroy(ppp->pass_filter);
++			err = sk_unattached_filter_create(&ppp->pass_filter,
++							  &fprog);
++			kfree(code);
+ 			ppp_unlock(ppp);
+-			err = 0;
+ 		}
+ 		break;
+ 	}
+ 	case PPPIOCSACTIVE:
+ 	{
+ 		struct sock_filter *code;
++
+ 		err = get_filter(argp, &code);
+ 		if (err >= 0) {
++			struct sock_fprog fprog = {
++				.len = err,
++				.filter = code,
++			};
++
+ 			ppp_lock(ppp);
+-			kfree(ppp->active_filter);
+-			ppp->active_filter = code;
+-			ppp->active_len = err;
++			if (ppp->active_filter)
++				sk_unattached_filter_destroy(ppp->active_filter);
++			err = sk_unattached_filter_create(&ppp->active_filter,
++							  &fprog);
++			kfree(code);
+ 			ppp_unlock(ppp);
+-			err = 0;
+ 		}
+ 		break;
+ 	}
+@@ -1184,7 +1197,7 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
+ 		   a four-byte PPP header on each packet */
+ 		*skb_push(skb, 2) = 1;
+ 		if (ppp->pass_filter &&
+-		    sk_run_filter(skb, ppp->pass_filter) = 0) {
++		    SK_RUN_FILTER(ppp->pass_filter, skb) = 0) {
+ 			if (ppp->debug & 1)
+ 				netdev_printk(KERN_DEBUG, ppp->dev,
+ 					      "PPP: outbound frame "
+@@ -1194,7 +1207,7 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
+ 		}
+ 		/* if this packet passes the active filter, record the time */
+ 		if (!(ppp->active_filter &&
+-		      sk_run_filter(skb, ppp->active_filter) = 0))
++		      SK_RUN_FILTER(ppp->active_filter, skb) = 0))
+ 			ppp->last_xmit = jiffies;
+ 		skb_pull(skb, 2);
+ #else
+@@ -1818,7 +1831,7 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
+ 
+ 			*skb_push(skb, 2) = 0;
+ 			if (ppp->pass_filter &&
+-			    sk_run_filter(skb, ppp->pass_filter) = 0) {
++			    SK_RUN_FILTER(ppp->pass_filter, skb) = 0) {
+ 				if (ppp->debug & 1)
+ 					netdev_printk(KERN_DEBUG, ppp->dev,
+ 						      "PPP: inbound frame "
+@@ -1827,7 +1840,7 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
+ 				return;
+ 			}
+ 			if (!(ppp->active_filter &&
+-			      sk_run_filter(skb, ppp->active_filter) = 0))
++			      SK_RUN_FILTER(ppp->active_filter, skb) = 0))
+ 				ppp->last_recv = jiffies;
+ 			__skb_pull(skb, 2);
+ 		} else
+@@ -2672,6 +2685,10 @@ ppp_create_interface(struct net *net, int unit, int *retp)
+ 	ppp->minseq = -1;
+ 	skb_queue_head_init(&ppp->mrq);
+ #endif /* CONFIG_PPP_MULTILINK */
++#ifdef CONFIG_PPP_FILTER
++	ppp->pass_filter = NULL;
++	ppp->active_filter = NULL;
++#endif /* CONFIG_PPP_FILTER */
+ 
+ 	/*
+ 	 * drum roll: don't forget to set
+@@ -2802,10 +2819,15 @@ static void ppp_destroy_interface(struct ppp *ppp)
+ 	skb_queue_purge(&ppp->mrq);
+ #endif /* CONFIG_PPP_MULTILINK */
+ #ifdef CONFIG_PPP_FILTER
+-	kfree(ppp->pass_filter);
+-	ppp->pass_filter = NULL;
+-	kfree(ppp->active_filter);
+-	ppp->active_filter = NULL;
++	if (ppp->pass_filter) {
++		sk_unattached_filter_destroy(ppp->pass_filter);
++		ppp->pass_filter = NULL;
++	}
++
++	if (ppp->active_filter) {
++		sk_unattached_filter_destroy(ppp->active_filter);
++		ppp->active_filter = NULL;
++	}
+ #endif /* CONFIG_PPP_FILTER */
+ 
+ 	kfree_skb(ppp->xmit_pending);
+-- 
+1.7.11.7
+
