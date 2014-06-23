@@ -1,56 +1,56 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 28 May 2014 11:59:21 +0000
-Subject: Re: How can one supply username & password combination on command line?
-Message-Id: <5385CF99.40807@workingcode.com>
+From: Hernan Freschi <hjf@hjf.com.ar>
+Date: Mon, 23 Jun 2014 01:10:09 +0000
+Subject: Fwd: RADATTR files empty
+Message-Id: <CALruTQdoqFKT1xyHmmX9n5kKeYSGanx+fHGRsDM=thYLQH0E=g@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <CAJZVxRnUo7RtXmGNBE1xChQ4sqA+vrZKUpY7fr9ucbuo3JjAqQ@mail.gmail.com>
-In-Reply-To: <CAJZVxRnUo7RtXmGNBE1xChQ4sqA+vrZKUpY7fr9ucbuo3JjAqQ@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 05/28/14 07:04, Aaron Lewis wrote:
-> Is it possible to supply credentials on command line? So far the only
-> way seems to be *-secrets file
-> 
-> I need to find a way to launch PPTP & L2TP connections on command
-> line, without modifying these files
-> 
-> Any ideas?
+Hello,
+I have a problem with PPP + RP-PPPOE. I'm authenticating against
+FreeRADIUS which returns a valid Access-Accept packet, and two more AV
+pairs, Cisco-AVPair. The problem is that the radattr.pppN files are
+created, but they're empty.
 
-Here's an idea from the fine manual:
+In syslog I see: RADATTR plugin wrote 0 line(s) to file /var/run/radattr.ppp6.
 
-  password password-string
-    Specifies the password to use for authenticating to the peer.  Use
-    of this option is discouraged, as the password is likely to be
-    visible to other users on the system (for example, by using ps(1)).
+radtest gives this output:
 
-  user name
-    Sets the name used for authenticating the local system to the peer
-    to name.
+root@acceso-rc:~# radtest xxx xxx localhost 0 testing123
+Sending Access-Request of id 2 to 127.0.0.1 port 1812
+        User-Name = "xxx"
+        User-Password = "xxx"
+        NAS-IP-Address = 127.0.1.1
+        NAS-Port = 0
+        Message-Authenticator = 0x00000000000000000000000000000000
+rad_recv: Access-Accept packet from host 127.0.0.1 port 1812, id=2, length1
+        Cisco-AVPair = "lcp:interface-config#1=service-policy input 192"
+        Cisco-AVPair = "lcp:interface-config#2=service-policy output 768"
 
-There are, of course, other ways to do this.  Perhaps the most
-straightforward way is to put the two options (and the respective
-values) into a temporary file (or even a named pipe), and then use the
-"file" option to read the options from that file.  That way, the values
-are not visible to other users, though the name of the file containing
-them will be.
+My pppoe-server-options file:
 
-Another solution is to use the "passwordfd" plug-in that comes with
-pppd.  It allows you to supply the PAP password or CHAP passphrase via a
-separate file descriptor (a pipe) that you pass to pppd.  That's easy
-and secure.
+root@acceso-rc:~# cat /etc/ppp/pppoe-server-options
+plugin radius.so
+plugin radattr.so
+radius-config-file /etc/radiusclient/radiusclient.conf
+name pppoe
+auth
+#login
 
-Still another solution is to write your own plug-in that gets the
-required information from any source you like.  Both passprompt.c and
-passwordfd.c provide decent starting points, and are located in the
-pppd/plugins/ directory in the source distribution.
+ms-dns 10.67.220.220
+ms-dns 10.67.222.222
+refuse-mschap
+refuse-pap
+require-chap
 
-As for LT2P itself, I'm not currently using it, and I don't know what
-options there may be for the implementation you're using.  (Note that
-PPP is one thing that can be carried over L2TP, and that L2TP is a
-substantial protocol of its own.)
+proxyarp
+nodefaultroute
+debug
+dump
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+#lock
+nomultilink
+nobsdcomp
+ipparam CLIENTEPPPOE
