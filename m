@@ -1,113 +1,41 @@
-From: Christoph Schulz <develop@kristov.de>
-Date: Fri, 11 Jul 2014 07:10:40 +0000
-Subject: [PATCH net-next] net: ppp: fix creating PPP pass and active filters
-Message-Id: <53BF8DF0.6030003@kristov.de>
+From: Tom Gundersen <teg@jklm.no>
+Date: Thu, 10 Jul 2014 08:17:35 +0000
+Subject: [PATCH v7 30/33] net: ppp - set name assign type
+Message-Id: <1404980258-30853-31-git-send-email-teg@jklm.no>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1404980258-30853-1-git-send-email-teg@jklm.no>
+In-Reply-To: <1404980258-30853-1-git-send-email-teg@jklm.no>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: netdev@vger.kernel.org
-Cc: linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
+Cc: linux-kernel@vger.kernel.org, David Miller <davem@davemloft.net>, David Herrmann <dh.herrmann@gmail.com>, Kay Sievers <kay@vrfy.org>, Tom Gundersen <teg@jklm.no>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
 
-From: Christoph Schulz <develop@kristov.de>
+The ifname is of the form pppX where X is the unit number. This is even set
+by userspace, or userspace requests the kernel to chose one, which is then
+returned to userspace. Either way the creating user knows the name, so we
+treat both cases as if the user had explicitly chosen the name and label
+it NET_NAME_USER.
 
-Commit 568f194e8bd16c353ad50f9ab95d98b20578a39d ("net: ppp: use
-sk_unattached_filter api") inadvertently changed the logic when setting
-pass and active PPP filters. The original ppp_ioctl() code handling PPPIOCSPASS
-and PPPIOCSACTIVE allowed to remove a pass/active filter previously set by
-using a filter of length zero. However, with the new code this is not possible
-anymore as this case is not explicitly checked for, which leads to passing NULL
-as a filter to sk_unattached_filter_create(). This results in returning EINVAL
-to the caller. Additionally, ppp->pass_filter and ppp->active_filter are not
-reset by sk_unattached_filter_create() in this EINVAL case, so dangling
-pointers may be left behind. This patch corrects both problems by checking
-whether the filter passed is empty or not, and so prevents
-sk_unattached_filter_create() from being called for empty filters.
-
-This error is found in exactly the same way in the isdn4linux PPP driver, so
-it is fixed there the same way.
-
-Signed-off-by: Christoph Schulz <develop@kristov.de>
+Signed-off-by: Tom Gundersen <teg@jklm.no>
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org
 ---
-diff --git a/drivers/isdn/i4l/isdn_ppp.c b/drivers/isdn/i4l/isdn_ppp.c
-index 61ac632..cd2f4c3 100644
---- a/drivers/isdn/i4l/isdn_ppp.c
-+++ b/drivers/isdn/i4l/isdn_ppp.c
-@@ -644,9 +644,15 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
- 		fprog.len = len;
- 		fprog.filter = code;
- 
--		if (is->pass_filter)
-+		if (is->pass_filter) {
- 			sk_unattached_filter_destroy(is->pass_filter);
--		err = sk_unattached_filter_create(&is->pass_filter, &fprog);
-+			is->pass_filter = NULL;
-+		}
-+		if (fprog.filter != NULL)
-+			err = sk_unattached_filter_create(&is->pass_filter,
-+							  &fprog);
-+		else
-+			err = 0;
- 		kfree(code);
- 
- 		return err;
-@@ -663,9 +669,15 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
- 		fprog.len = len;
- 		fprog.filter = code;
- 
--		if (is->active_filter)
-+		if (is->active_filter) {
- 			sk_unattached_filter_destroy(is->active_filter);
--		err = sk_unattached_filter_create(&is->active_filter, &fprog);
-+			is->active_filter = NULL;
-+		}
-+		if (fprog.filter != NULL)
-+			err = sk_unattached_filter_create(&is->active_filter,
-+							  &fprog);
-+		else
-+			err = 0;
- 		kfree(code);
- 
- 		return err;
+ drivers/net/ppp/ppp_generic.c | 1 +
+ 1 file changed, 1 insertion(+)
+
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 91d6c12..d0f6f93 100644
+index 5c002b1..9757b52 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -763,10 +763,15 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 			};
+@@ -2726,6 +2726,7 @@ ppp_create_interface(struct net *net, int unit, int *retp)
+ 	/* Initialize the new ppp unit */
+ 	ppp->file.index = unit;
+ 	sprintf(dev->name, "ppp%d", unit);
++	dev->name_assign_type = NET_NAME_USER;
  
- 			ppp_lock(ppp);
--			if (ppp->pass_filter)
-+			if (ppp->pass_filter) {
- 				sk_unattached_filter_destroy(ppp->pass_filter);
--			err = sk_unattached_filter_create(&ppp->pass_filter,
--							  &fprog);
-+				ppp->pass_filter = NULL;
-+			}
-+			if (fprog.filter != NULL)
-+				err = sk_unattached_filter_create(&ppp->pass_filter,
-+								  &fprog);
-+			else
-+				err = 0;
- 			kfree(code);
- 			ppp_unlock(ppp);
- 		}
-@@ -784,10 +789,15 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 			};
- 
- 			ppp_lock(ppp);
--			if (ppp->active_filter)
-+			if (ppp->active_filter) {
- 				sk_unattached_filter_destroy(ppp->active_filter);
--			err = sk_unattached_filter_create(&ppp->active_filter,
--							  &fprog);
-+				ppp->active_filter = NULL;
-+			}
-+			if (fprog.filter != NULL)
-+				err = sk_unattached_filter_create(&ppp->active_filter,
-+								  &fprog);
-+			else
-+				err = 0;
- 			kfree(code);
- 			ppp_unlock(ppp);
- 		}
+ 	ret = register_netdev(dev);
+ 	if (ret != 0) {
+-- 
+1.9.3
+
