@@ -1,53 +1,113 @@
-From: Michael Richardson <mcr@sandelman.ca>
-Date: Wed, 16 Jul 2014 02:04:33 +0000
-Subject: about that partial copy of radiusclient in pppd/plugins/radius
-Message-Id: <4670.1405476273@sandelman.ca>
+From: Christoph Schulz <develop@kristov.de>
+Date: Fri, 11 Jul 2014 07:10:40 +0000
+Subject: [PATCH net-next] net: ppp: fix creating PPP pass and active filters
+Message-Id: <53BF8DF0.6030003@kristov.de>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
 
+From: Christoph Schulz <develop@kristov.de>
 
-According to the git history on pppd, back in Nov. 14, 2004, radiusclient,
-which had been imported into pppd, got merged so that only the critical
-pieces were present.
-   https://github.com/wkz/pppd/commit/4abe4296f0eddbb2b6ff11dbbd27100156c85f87
+Commit 568f194e8bd16c353ad50f9ab95d98b20578a39d ("net: ppp: use
+sk_unattached_filter api") inadvertently changed the logic when setting
+pass and active PPP filters. The original ppp_ioctl() code handling PPPIOCSPASS
+and PPPIOCSACTIVE allowed to remove a pass/active filter previously set by
+using a filter of length zero. However, with the new code this is not possible
+anymore as this case is not explicitly checked for, which leads to passing NULL
+as a filter to sk_unattached_filter_create(). This results in returning EINVAL
+to the caller. Additionally, ppp->pass_filter and ppp->active_filter are not
+reset by sk_unattached_filter_create() in this EINVAL case, so dangling
+pointers may be left behind. This patch corrects both problems by checking
+whether the filter passed is empty or not, and so prevents
+sk_unattached_filter_create() from being called for empty filters.
 
-This was likely the right decision at the time.
-The Freeradius folks picked up radiusclient see: http://freeradius.org/freeradius-client/
-and https://github.com/FreeRADIUS/freeradius-client
+This error is found in exactly the same way in the isdn4linux PPP driver, so
+it is fixed there the same way.
 
-I have need to add the IPv6 attributes, which means having ipv6addr and
-ipv6prefix values, and adding decode support for that.
-
-I'd rather not work on ancient code, yet the latest freeradius-client doesn't
-have the support I need anyway.
-
-It appears that there are the following differences:
-        1) rc_handle on all calls; not much of a problem.
-        2) use of pppd's error() call rather than rc_log(), I'm sure that
-           I can work this out in the freeradius-client library with a
-           pointer to function somewhere.
-        3) some other stuff involving VENDOR_NONE and the like.
-           It appears to be simple divergence.
-
-My opinion is that freeradius-client does not need to compile to a .so,
-that's it's better as a straight .a, most projects never need to install it,
-just link it in.
-
-My other opinion is that 99% of uses of pppd client ends, or are server ends
-that do not use the radius plugin, and for the rest, it's not enough to have
-libradiusclient.a, you need a bunch of /etc/*radiusclient/.. stuff too.
-If I were packaging pppd for a distro, I'd make the radius part a seperate
-package.  In git, I'd make the freeradius-client a submodule, and in tar.gz
-form, I'd just document that you should extract freeradius-client.tgz "HERE"
-
-Opinions?
-
---
-]               Never tell me the odds!                 | ipv6 mesh networks [
-]   Michael Richardson, Sandelman Software Works        | network architect  [
-]     mcr@sandelman.ca  http://www.sandelman.ca/        |   ruby on rails    [
-
-
+Signed-off-by: Christoph Schulz <develop@kristov.de>
+---
+diff --git a/drivers/isdn/i4l/isdn_ppp.c b/drivers/isdn/i4l/isdn_ppp.c
+index 61ac632..cd2f4c3 100644
+--- a/drivers/isdn/i4l/isdn_ppp.c
++++ b/drivers/isdn/i4l/isdn_ppp.c
+@@ -644,9 +644,15 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
+ 		fprog.len = len;
+ 		fprog.filter = code;
+ 
+-		if (is->pass_filter)
++		if (is->pass_filter) {
+ 			sk_unattached_filter_destroy(is->pass_filter);
+-		err = sk_unattached_filter_create(&is->pass_filter, &fprog);
++			is->pass_filter = NULL;
++		}
++		if (fprog.filter != NULL)
++			err = sk_unattached_filter_create(&is->pass_filter,
++							  &fprog);
++		else
++			err = 0;
+ 		kfree(code);
+ 
+ 		return err;
+@@ -663,9 +669,15 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
+ 		fprog.len = len;
+ 		fprog.filter = code;
+ 
+-		if (is->active_filter)
++		if (is->active_filter) {
+ 			sk_unattached_filter_destroy(is->active_filter);
+-		err = sk_unattached_filter_create(&is->active_filter, &fprog);
++			is->active_filter = NULL;
++		}
++		if (fprog.filter != NULL)
++			err = sk_unattached_filter_create(&is->active_filter,
++							  &fprog);
++		else
++			err = 0;
+ 		kfree(code);
+ 
+ 		return err;
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 91d6c12..d0f6f93 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -763,10 +763,15 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 			};
+ 
+ 			ppp_lock(ppp);
+-			if (ppp->pass_filter)
++			if (ppp->pass_filter) {
+ 				sk_unattached_filter_destroy(ppp->pass_filter);
+-			err = sk_unattached_filter_create(&ppp->pass_filter,
+-							  &fprog);
++				ppp->pass_filter = NULL;
++			}
++			if (fprog.filter != NULL)
++				err = sk_unattached_filter_create(&ppp->pass_filter,
++								  &fprog);
++			else
++				err = 0;
+ 			kfree(code);
+ 			ppp_unlock(ppp);
+ 		}
+@@ -784,10 +789,15 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 			};
+ 
+ 			ppp_lock(ppp);
+-			if (ppp->active_filter)
++			if (ppp->active_filter) {
+ 				sk_unattached_filter_destroy(ppp->active_filter);
+-			err = sk_unattached_filter_create(&ppp->active_filter,
+-							  &fprog);
++				ppp->active_filter = NULL;
++			}
++			if (fprog.filter != NULL)
++				err = sk_unattached_filter_create(&ppp->active_filter,
++								  &fprog);
++			else
++				err = 0;
+ 			kfree(code);
+ 			ppp_unlock(ppp);
+ 		}
