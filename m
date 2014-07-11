@@ -1,52 +1,21 @@
-From: Christoph Schulz <develop@kristov.de>
-Date: Fri, 11 Jul 2014 07:09:53 +0000
-Subject: [PATCH net-next] net: pppoe: use correct MTU when using Multilink PPP with PPPoE
-Message-Id: <53BF8DC1.1040905@kristov.de>
+From: David Miller <davem@davemloft.net>
+Date: Fri, 11 Jul 2014 21:14:34 +0000
+Subject: Re: [PATCH net-next] net: pppoe: use correct MTU when using Multilink PPP with PPPoE
+Message-Id: <20140711.141434.862425773778158308.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <53BF8DC1.1040905@kristov.de>
+In-Reply-To: <53BF8DC1.1040905@kristov.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: netdev@vger.kernel.org
-Cc: linux-ppp@vger.kernel.org, mostrows@gmail.com
+To: develop@kristov.de
+Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, mostrows@gmail.com
 
-From: Christoph Schulz <develop@kristov.de>
 
-The PPP channel MTU is used with Multilink PPP when ppp_mp_explode() (see
-ppp_generic module) tries to determine how big a fragment might be. If we
-don't subtract 2 bytes (which corresponds to the PPP protocol number), the
-payload becomes 1-2 bytes too big (1 byte if PPP protocol compression is
-used, 2 otherwise), which causes the generated Ethernet packets to be dropped.
-This is due to code in ppp_mp_explode() which says:
+Bug fixes like these should be targetted at 'net' not 'net-next'.
 
-		/*
-		 * hdrlen includes the 2-byte PPP protocol field, but the
-		 * MTU counts only the payload excluding the protocol field.
-		 * (RFC1661 Section 2)
-		 */
-		mtu = pch->chan->mtu - (hdrlen - 2);
+Please fix your subjects, number your patches, provides a "[PATCH 0/N]"
+header posting explaining your changes at a high level, and resubmit
+everything.
 
-This is correct, but the pppoe module does not account for it and includes
-the 2-byte PPP protocol field into the computed MTU, which is wrong. This
-error only manifests itself when using Multilink PPP, as otherwise the channel
-MTU is not used anywhere.
-
-The bug was introduced in commit c9aa6895371b2a257401f59d3393c9f7ac5a8698
-("[PPPOE]: Advertise PPPoE MTU") from the very beginning. This patch applies
-to 3.10 upwards but the fix can be applied (with minor modifications) to
-kernels as old as 2.6.32.
-
-Signed-off-by: Christoph Schulz <develop@kristov.de>
----
-diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
-index 2ea7efd..6c9c16d 100644
---- a/drivers/net/ppp/pppoe.c
-+++ b/drivers/net/ppp/pppoe.c
-@@ -675,7 +675,7 @@ static int pppoe_connect(struct socket *sock, struct sockaddr *uservaddr,
- 		po->chan.hdrlen = (sizeof(struct pppoe_hdr) +
- 				   dev->hard_header_len);
- 
--		po->chan.mtu = dev->mtu - sizeof(struct pppoe_hdr);
-+		po->chan.mtu = dev->mtu - sizeof(struct pppoe_hdr) - 2;
- 		po->chan.private = sk;
- 		po->chan.ops = &pppoe_chan_ops;
- 
+Thank you.
