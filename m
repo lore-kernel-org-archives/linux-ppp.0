@@ -1,26 +1,88 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 14 Jul 2014 06:28:14 +0000
-Subject: Re: [PATCH net-next] net: filter: sk_chk_filter() no longer mangles filter
-Message-Id: <20140713.232814.1618910912826730440.davem@davemloft.net>
+From: Christoph Schulz <develop@kristov.de>
+Date: Fri, 11 Jul 2014 07:10:36 +0000
+Subject: [PATCH net-next] net: ppp: don't call sk_chk_filter twice
+Message-Id: <53BF8DEC.4000307@kristov.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <CAADnVQLQR9fYVGfxfnwpirXt4CwBUzr36tJL+aEoo0err7cppw@mail.gmail.com>
-	<53C10C8A.70706@redhat.com>
-	<1405172956.3515.41.camel@edumazet-glaptop2.roam.corp.google.com>
-In-Reply-To: <1405172956.3515.41.camel@edumazet-glaptop2.roam.corp.google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: eric.dumazet@gmail.com
-Cc: dborkman@redhat.com, alexei.starovoitov@gmail.com, develop@kristov.de, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
+To: netdev@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
 
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Date: Sat, 12 Jul 2014 15:49:16 +0200
+From: Christoph Schulz <develop@kristov.de>
 
-> From: Eric Dumazet <edumazet@google.com>
-> 
-> Add const attribute to filter argument to make clear it is no
-> longer modified.
-> 
-> Signed-off-by: Eric Dumazet <edumazet@google.com>
+Commit 568f194e8bd16c353ad50f9ab95d98b20578a39d ("net: ppp: use
+sk_unattached_filter api") causes sk_chk_filter() to be called twice when
+setting a pass or active filter. The first call is from within get_filter().
+The second one is through the call chain
 
-Applied, thanks Eric.
+  ppp_ioctl() --> sk_unattached_filter_create()
+              --> __sk_prepare_filter()
+              --> sk_chk_filter()
+
+However, sk_chk_filter() is not idempotent as it sometimes replaces filter
+codes. So running it a second time over the same filter does not work and
+yields EINVAL. The net effect is that setting pass and/or active PPP filters
+does not work anymore, since sk_unattached_filter_create() always returns
+EINVAL due to the second (and erroneous) call to sk_chk_filter(), regardless
+whether the filter was sane or not. So this patch simply removes the call to
+sk_chk_filter() from within get_filter(). This is safe as the filter will
+be checked by sk_chk_filter() later anyway.
+
+This error is found in exactly the same way in the isdn4linux PPP driver, so
+it is fixed there the same way.
+
+Signed-off-by: Christoph Schulz <develop@kristov.de>
+---
+diff --git a/drivers/isdn/i4l/isdn_ppp.c b/drivers/isdn/i4l/isdn_ppp.c
+index 61ac632..a333b7f 100644
+--- a/drivers/isdn/i4l/isdn_ppp.c
++++ b/drivers/isdn/i4l/isdn_ppp.c
+@@ -442,7 +442,7 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ {
+ 	struct sock_fprog uprog;
+ 	struct sock_filter *code = NULL;
+-	int len, err;
++	int len;
+ 
+ 	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+ 		return -EFAULT;
+@@ -458,12 +458,6 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ 	if (IS_ERR(code))
+ 		return PTR_ERR(code);
+ 
+-	err = sk_chk_filter(code, uprog.len);
+-	if (err) {
+-		kfree(code);
+-		return err;
+-	}
+-
+ 	*p = code;
+ 	return uprog.len;
+ }
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 91d6c12..e2f20f8 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -539,7 +539,7 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ {
+ 	struct sock_fprog uprog;
+ 	struct sock_filter *code = NULL;
+-	int len, err;
++	int len;
+ 
+ 	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+ 		return -EFAULT;
+@@ -554,12 +554,6 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ 	if (IS_ERR(code))
+ 		return PTR_ERR(code);
+ 
+-	err = sk_chk_filter(code, uprog.len);
+-	if (err) {
+-		kfree(code);
+-		return err;
+-	}
+-
+ 	*p = code;
+ 	return uprog.len;
+ }
