@@ -1,43 +1,52 @@
-From: David Miller <davem@davemloft.net>
-Date: Thu, 17 Jul 2014 06:42:50 +0000
-Subject: Re: [PATCH RESEND net 1/1] net: ppp: fix creating PPP pass and active filters
-Message-Id: <20140716.234250.1209740744579611908.davem@davemloft.net>
+From: Christoph Schulz <develop@kristov.de>
+Date: Fri, 11 Jul 2014 07:09:53 +0000
+Subject: [PATCH net-next] net: pppoe: use correct MTU when using Multilink PPP with PPPoE
+Message-Id: <53BF8DC1.1040905@kristov.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <53C6DC35.3030400@kristov.de>
-In-Reply-To: <53C6DC35.3030400@kristov.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: develop@kristov.de
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
+To: netdev@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org, mostrows@gmail.com
 
 From: Christoph Schulz <develop@kristov.de>
-Date: Wed, 16 Jul 2014 22:10:29 +0200
 
-> From: Christoph Schulz <develop@kristov.de>
-> 
-> Commit 568f194e8bd16c353ad50f9ab95d98b20578a39d ("net: ppp: use
-> sk_unattached_filter api") inadvertently changed the logic when setting
-> PPP pass and active filters. This applies to both the generic PPP subsystem
-> implemented by drivers/net/ppp/ppp_generic.c and the ISDN PPP subsystem
-> implemented by drivers/isdn/i4l/isdn_ppp.c. The original code in ppp_ioctl()
-> (or isdn_ppp_ioctl(), resp.) handling PPPIOCSPASS and PPPIOCSACTIVE allowed to
-> remove a pass/active filter previously set by using a filter of length zero.
-> However, with the new code this is not possible anymore as this case is not
-> explicitly checked for, which leads to passing NULL as a filter to
-> sk_unattached_filter_create(). This results in returning EINVAL to the caller.
-> 
-> Additionally, the variables ppp->pass_filter and ppp->active_filter (or
-> is->pass_filter and is->active_filter, resp.) are not reset to NULL, although
-> the filters they point to may have been destroyed by
-> sk_unattached_filter_destroy(), so in this EINVAL case dangling pointers are
-> left behind (provided the pointers were previously non-NULL).
-> 
-> This patch corrects both problems by checking whether the filter passed is
-> empty or non-empty, and prevents sk_unattached_filter_create() from being
-> called in the first case. Moreover, the pointers are always reset to NULL
-> as soon as sk_unattached_filter_destroy() returns.
-> 
-> Signed-off-by: Christoph Schulz <develop@kristov.de>
+The PPP channel MTU is used with Multilink PPP when ppp_mp_explode() (see
+ppp_generic module) tries to determine how big a fragment might be. If we
+don't subtract 2 bytes (which corresponds to the PPP protocol number), the
+payload becomes 1-2 bytes too big (1 byte if PPP protocol compression is
+used, 2 otherwise), which causes the generated Ethernet packets to be dropped.
+This is due to code in ppp_mp_explode() which says:
 
-Applied and queued up for -stable, thanks.
+		/*
+		 * hdrlen includes the 2-byte PPP protocol field, but the
+		 * MTU counts only the payload excluding the protocol field.
+		 * (RFC1661 Section 2)
+		 */
+		mtu = pch->chan->mtu - (hdrlen - 2);
+
+This is correct, but the pppoe module does not account for it and includes
+the 2-byte PPP protocol field into the computed MTU, which is wrong. This
+error only manifests itself when using Multilink PPP, as otherwise the channel
+MTU is not used anywhere.
+
+The bug was introduced in commit c9aa6895371b2a257401f59d3393c9f7ac5a8698
+("[PPPOE]: Advertise PPPoE MTU") from the very beginning. This patch applies
+to 3.10 upwards but the fix can be applied (with minor modifications) to
+kernels as old as 2.6.32.
+
+Signed-off-by: Christoph Schulz <develop@kristov.de>
+---
+diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
+index 2ea7efd..6c9c16d 100644
+--- a/drivers/net/ppp/pppoe.c
++++ b/drivers/net/ppp/pppoe.c
+@@ -675,7 +675,7 @@ static int pppoe_connect(struct socket *sock, struct sockaddr *uservaddr,
+ 		po->chan.hdrlen = (sizeof(struct pppoe_hdr) +
+ 				   dev->hard_header_len);
+ 
+-		po->chan.mtu = dev->mtu - sizeof(struct pppoe_hdr);
++		po->chan.mtu = dev->mtu - sizeof(struct pppoe_hdr) - 2;
+ 		po->chan.private = sk;
+ 		po->chan.ops = &pppoe_chan_ops;
+ 
