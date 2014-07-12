@@ -1,29 +1,21 @@
-From: Daniel Borkmann <dborkman@redhat.com>
-Date: Sat, 12 Jul 2014 10:23:06 +0000
+From: Christoph Schulz <develop@kristov.de>
+Date: Sat, 12 Jul 2014 21:11:26 +0000
 Subject: Re: [PATCH net-next] net: ppp: don't call sk_chk_filter twice
-Message-Id: <53C10C8A.70706@redhat.com>
+Message-Id: <20140712231126.103531fxfrk9sola@kristov.noip.me>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <53BF8DEC.4000307@kristov.de> <CAADnVQLQR9fYVGfxfnwpirXt4CwBUzr36tJL+aEoo0err7cppw@mail.gmail.com>
+References: <53BF8DEC.4000307@kristov.de>
+ <CAADnVQLQR9fYVGfxfnwpirXt4CwBUzr36tJL+aEoo0err7cppw@mail.gmail.com>
 In-Reply-To: <CAADnVQLQR9fYVGfxfnwpirXt4CwBUzr36tJL+aEoo0err7cppw@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Christoph Schulz <develop@kristov.de>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
+Cc: "netdev@vger.kernel.org" <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
 
-On 07/12/2014 05:59 AM, Alexei Starovoitov wrote:
-> On Fri, Jul 11, 2014 at 9:10 AM, Christoph Schulz <develop@kristov.de> wrote:
->> From: Christoph Schulz <develop@kristov.de>
->>
->> Commit 568f194e8bd16c353ad50f9ab95d98b20578a39d ("net: ppp: use
->> sk_unattached_filter api") causes sk_chk_filter() to be called twice when
->> setting a pass or active filter. The first call is from within get_filter().
->> The second one is through the call chain
->>
->>    ppp_ioctl() --> sk_unattached_filter_create()
->>                --> __sk_prepare_filter()
->>                --> sk_chk_filter()
->>
+Hello!
+
+Alexei Starovoitov schrieb am Sat, 12 Jul 2014 05:59:46 +0200:
+
 >> However, sk_chk_filter() is not idempotent as it sometimes replaces filter
 >> codes. So running it a second time over the same filter does not work and
 >
@@ -31,4 +23,15 @@ On 07/12/2014 05:59 AM, Alexei Starovoitov wrote:
 > log is incorrect.
 > sk_chk_filter() doesn't replace filter codes anymore.
 
-Exactly.
+Fair enough. Then how should I correctly proceed to submit this patch  
+which fixes a bug in the 3.15 branch (only)? In 3.15.x filter codes  
+_are_ replaced (I just checked the code in 3.15.5). And I originally  
+based my analysis on 3.15.1. Your statement makes the patch an  
+optional improvement for 3.16.x, but it's a necessary fix for 3.15.x.  
+Do I need to submit this patch two times with different commit logs?
+
+
+Thank you in advance,
+
+Christoph Schulz
+
