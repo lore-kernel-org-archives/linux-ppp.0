@@ -1,41 +1,131 @@
-From: Tom Gundersen <teg@jklm.no>
-Date: Thu, 10 Jul 2014 08:17:35 +0000
-Subject: [PATCH v7 30/33] net: ppp - set name assign type
-Message-Id: <1404980258-30853-31-git-send-email-teg@jklm.no>
+From: Christoph Schulz <develop@kristov.de>
+Date: Sat, 12 Jul 2014 22:53:15 +0000
+Subject: [PATCH 1/1]   net: pppoe: use correct channel MTU when using Multilink PPP
+Message-Id: <53C1BC5B.9010004@kristov.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1404980258-30853-1-git-send-email-teg@jklm.no>
-In-Reply-To: <1404980258-30853-1-git-send-email-teg@jklm.no>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: netdev@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, David Miller <davem@davemloft.net>, David Herrmann <dh.herrmann@gmail.com>, Kay Sievers <kay@vrfy.org>, Tom Gundersen <teg@jklm.no>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org, mostrows@gmail.com
 
-The ifname is of the form pppX where X is the unit number. This is even set
-by userspace, or userspace requests the kernel to chose one, which is then
-returned to userspace. Either way the creating user knows the name, so we
-treat both cases as if the user had explicitly chosen the name and label
-it NET_NAME_USER.
+From: Christoph Schulz <develop@kristov.de>
 
-Signed-off-by: Tom Gundersen <teg@jklm.no>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linux-ppp@vger.kernel.org
+The PPP channel MTU is used with Multilink PPP when ppp_mp_explode() (see
+ppp_generic module) tries to determine how big a fragment might be. According
+to RFC 1661, the MTU excludes the 2-byte PPP protocol field, see the
+corresponding comment and code in ppp_mp_explode():
+
+		/*
+		 * hdrlen includes the 2-byte PPP protocol field, but the
+		 * MTU counts only the payload excluding the protocol field.
+		 * (RFC1661 Section 2)
+		 */
+		mtu = pch->chan->mtu - (hdrlen - 2);
+
+However, the pppoe module *does* include the PPP protocol field in the channel
+MTU, which is wrong as it causes the PPP payload to be 1-2 bytes too big under
+certain circumstances (one byte if PPP protocol compression is used, two
+otherwise), causing the generated Ethernet packets to be dropped. So the pppoe
+module has to subtract two bytes from the channel MTU. This error only
+manifests itself when using Multilink PPP, as otherwise the channel MTU is not
+used anywhere.
+
+In the following, I will describe how to reproduce this bug. We configure two
+pppd instances for multilink PPP over two PPPoE links, say eth2 and eth3, with
+a MTU of 1492 bytes for each link and a MRRU of 2976 bytes. (This MRRU is
+computed by adding the two link MTUs and subtracting the MP header twice, which
+is 4 bytes long.) The necessary pppd statements on both sides are "multilink
+mtu 1492 mru 1492 mrru 2976". On the client side, we additionally need "plugin
+rp-pppoe.so eth2" and "plugin rp-pppoe.so eth3", respectively; on the server
+side, we additionally need to start two pppoe-server instances to be able to
+establish two PPPoE sessions, one over eth2 and one over eth3. We set the MTU
+of the PPP network interface to the MRRU (2976) on both sides of the connection
+in order to make use of the higher bandwidth. (If we didn't do that, IP
+fragmentation would kick in, which we want to avoid.)
+
+Now we send a ICMPv4 echo request with a payload of 2948 bytes from client to
+server over the PPP link. This results in the following network packet:
+
+   2948 (echo payload)
+ +    8 (ICMPv4 header)
+ +   20 (IPv4 header)
+---------------------
+   2976 (PPP payload)
+
+These 2976 bytes do not exceed the MTU of the PPP network interface, so the
+IP packet is not fragmented. Now the multilink PPP code in ppp_mp_explode()
+prepends one protocol byte (0x21 for IPv4), making the packet one byte bigger
+than the negotiated MRRU. So this packet would have to be divided in three
+fragments. But this does not happen as each link MTU is assumed to be two bytes
+larger. So this packet is diveded into two fragments only, one of size 1489 and
+one of size 1488. Now we have for that bigger fragment:
+
+   1489 (PPP payload)
+ +    4 (MP header)
+ +    2 (PPP protocol field for the MP payload (0x3d))
+ +    6 (PPPoE header)
+--------------------------
+   1501 (Ethernet payload)
+
+This packet exceeds the link MTU and is discarded.
+
+If one configures the link MTU on the client side to 1501, one can see the
+discarded Ethernet frames with tcpdump running on the client. A
+
+ping -s 2948 -c 1 192.168.15.254
+
+leads to the smaller fragment that is correctly received on the server side:
+
+(tcpdump -vvvne -i eth3 pppoes and ppp proto 0x3d)
+52:54:00:ad:87:fd > 52:54:00:79:5c:d0, ethertype PPPoE S (0x8864),
+  length 1514: PPPoE  [ses 0x3] MLPPP (0x003d), length 1494: seq 0x000,
+  Flags [end], length 1492
+
+and to the bigger fragment that is not received on the server side:
+
+(tcpdump -vvvne -i eth2 pppoes and ppp proto 0x3d)
+52:54:00:70:9e:89 > 52:54:00:5d:6f:b0, ethertype PPPoE S (0x8864),
+  length 1515: PPPoE  [ses 0x5] MLPPP (0x003d), length 1495: seq 0x000,
+  Flags [begin], length 1493
+
+With the patch below, we correctly obtain three fragments:
+
+52:54:00:ad:87:fd > 52:54:00:79:5c:d0, ethertype PPPoE S (0x8864),
+  length 1514: PPPoE  [ses 0x1] MLPPP (0x003d), length 1494: seq 0x000,
+  Flags [begin], length 1492
+52:54:00:70:9e:89 > 52:54:00:5d:6f:b0, ethertype PPPoE S (0x8864),
+  length 1514: PPPoE  [ses 0x1] MLPPP (0x003d), length 1494: seq 0x000,
+  Flags [none], length 1492
+52:54:00:ad:87:fd > 52:54:00:79:5c:d0, ethertype PPPoE S (0x8864),
+  length 27: PPPoE  [ses 0x1] MLPPP (0x003d), length 7: seq 0x000,
+  Flags [end], length 5
+
+And the ICMPv4 echo request is successfully received at the server side:
+
+IP (tos 0x0, ttl 64, id 21925, offset 0, flags [DF], proto ICMP (1),
+  length 2976)
+    192.168.222.2 > 192.168.15.254: ICMP echo request, id 30530, seq 0,
+      length 2956
+
+The bug was introduced in commit c9aa6895371b2a257401f59d3393c9f7ac5a8698
+("[PPPOE]: Advertise PPPoE MTU") from the very beginning. This patch applies
+to 3.10 upwards but the fix can be applied (with minor modifications) to
+kernels as old as 2.6.32.
+
+Signed-off-by: Christoph Schulz <develop@kristov.de>
 ---
- drivers/net/ppp/ppp_generic.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 5c002b1..9757b52 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -2726,6 +2726,7 @@ ppp_create_interface(struct net *net, int unit, int *retp)
- 	/* Initialize the new ppp unit */
- 	ppp->file.index = unit;
- 	sprintf(dev->name, "ppp%d", unit);
-+	dev->name_assign_type = NET_NAME_USER;
+diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
+index 2ea7efd..6c9c16d 100644
+--- a/drivers/net/ppp/pppoe.c
++++ b/drivers/net/ppp/pppoe.c
+@@ -675,7 +675,7 @@ static int pppoe_connect(struct socket *sock, struct sockaddr *uservaddr,
+ 		po->chan.hdrlen = (sizeof(struct pppoe_hdr) +
+ 				   dev->hard_header_len);
  
- 	ret = register_netdev(dev);
- 	if (ret != 0) {
--- 
-1.9.3
+-		po->chan.mtu = dev->mtu - sizeof(struct pppoe_hdr);
++		po->chan.mtu = dev->mtu - sizeof(struct pppoe_hdr) - 2;
+ 		po->chan.private = sk;
+ 		po->chan.ops = &pppoe_chan_ops;
+ 
 
