@@ -1,37 +1,72 @@
-From: Christoph Schulz <develop@kristov.de>
-Date: Wed, 16 Jul 2014 21:48:51 +0000
-Subject: Re: [PATCH net-next 1/1] net: ppp: reset nextseq counter when enabling SC_MULTILINK
-Message-Id: <20140716234851.95825g9vvaydvbyb@berry.schulz.ip-v6.eu>
+From: Eric Dumazet <eric.dumazet@gmail.com>
+Date: Sat, 12 Jul 2014 13:49:16 +0000
+Subject: [PATCH net-next] net: filter: sk_chk_filter() no longer mangles filter
+Message-Id: <1405172956.3515.41.camel@edumazet-glaptop2.roam.corp.google.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20140715.225259.1933230941203001162.davem@davemloft.net>
- <20140716231950.17744ie9e3i9ea9i@berry.schulz.ip-v6.eu>
- <20140716232443.872830586nfymtnf@berry.schulz.ip-v6.eu>
- <20140716.142754.647038534547707816.davem@davemloft.net>
-In-Reply-To: <20140716.142754.647038534547707816.davem@davemloft.net>
+References: <53BF8DEC.4000307@kristov.de>
+	 <CAADnVQLQR9fYVGfxfnwpirXt4CwBUzr36tJL+aEoo0err7cppw@mail.gmail.com>
+	 <53C10C8A.70706@redhat.com>
+In-Reply-To: <53C10C8A.70706@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: David Miller <davem@davemloft.net>
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org
+To: Daniel Borkmann <dborkman@redhat.com>, David Miller <davem@davemloft.net>
+Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Christoph Schulz <develop@kristov.de>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
 
-Hello!
+From: Eric Dumazet <edumazet@google.com>
 
-David Miller schrieb am Wed, 16 Jul 2014 14:27:54 -0700 (PDT):
+Add const attribute to filter argument to make clear it is no
+longer modified.
 
->> Sorry, how should I do it? Based on the *current* state of net-next,
->> i.e. based on my original (but incomplete) patch? Or based on the
->> net-next tree before my original patch was included?
->
-> Based upon the current state of net-next, you're sending me a bug
-> fix for the change you made.
+Signed-off-by: Eric Dumazet <edumazet@google.com>
+---
+ include/linux/filter.h |    2 +-
+ net/core/filter.c      |    6 +++---
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-Thank you for the clarification. I just sent the bugfix patch to the  
-mailing list. Sorry for my first erroneous patch -- I have never  
-tested the patch without CONFIG_PPP_MULTILINK being defined. At least  
-I learned something for the future...
+diff --git a/include/linux/filter.h b/include/linux/filter.h
+index b885dcb7eaca..c43c8258e682 100644
+--- a/include/linux/filter.h
++++ b/include/linux/filter.h
+@@ -362,7 +362,7 @@ void sk_unattached_filter_destroy(struct sk_filter *fp);
+ int sk_attach_filter(struct sock_fprog *fprog, struct sock *sk);
+ int sk_detach_filter(struct sock *sk);
+ 
+-int sk_chk_filter(struct sock_filter *filter, unsigned int flen);
++int sk_chk_filter(const struct sock_filter *filter, unsigned int flen);
+ int sk_get_filter(struct sock *sk, struct sock_filter __user *filter,
+ 		  unsigned int len);
+ 
+diff --git a/net/core/filter.c b/net/core/filter.c
+index 87af1e3e56c0..b90ae7fb3b89 100644
+--- a/net/core/filter.c
++++ b/net/core/filter.c
+@@ -1085,7 +1085,7 @@ err:
+  * a cell if not previously written, and we check all branches to be sure
+  * a malicious user doesn't try to abuse us.
+  */
+-static int check_load_and_stores(struct sock_filter *filter, int flen)
++static int check_load_and_stores(const struct sock_filter *filter, int flen)
+ {
+ 	u16 *masks, memvalid = 0; /* One bit per cell, 16 cells */
+ 	int pc, ret = 0;
+@@ -1218,7 +1218,7 @@ static bool chk_code_allowed(u16 code_to_probe)
+  *
+  * Returns 0 if the rule set is legal or -EINVAL if not.
+  */
+-int sk_chk_filter(struct sock_filter *filter, unsigned int flen)
++int sk_chk_filter(const struct sock_filter *filter, unsigned int flen)
+ {
+ 	bool anc_found;
+ 	int pc;
+@@ -1228,7 +1228,7 @@ int sk_chk_filter(struct sock_filter *filter, unsigned int flen)
+ 
+ 	/* Check the filter code now */
+ 	for (pc = 0; pc < flen; pc++) {
+-		struct sock_filter *ftest = &filter[pc];
++		const struct sock_filter *ftest = &filter[pc];
+ 
+ 		/* May we actually operate on this code? */
+ 		if (!chk_code_allowed(ftest->code))
 
-
-Regards,
-
-Christoph Schulz
 
