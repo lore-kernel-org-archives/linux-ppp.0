@@ -1,12 +1,15 @@
 From: Christoph Schulz <develop@kristov.de>
-Date: Sun, 13 Jul 2014 12:59:01 +0000
+Date: Sun, 13 Jul 2014 13:01:41 +0000
 Subject: [PATCH net 1/1] net: ppp: don't call sk_chk_filter twice
-Message-Id: <53C28295.8050708@kristov.de>
+Message-Id: <53C28335.9090902@kristov.de>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <53C28295.8050708@kristov.de>
+In-Reply-To: <53C28295.8050708@kristov.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
 
 From: Christoph Schulz <develop@kristov.de>
 
@@ -39,6 +42,9 @@ was originally sane or not.
 
 Signed-off-by: Christoph Schulz <develop@kristov.de>
 ---
+Sorry for the resend, I forgot to add netdev@vger.kernel.org to the recipient
+list...
+
 diff --git a/drivers/isdn/i4l/isdn_ppp.c b/drivers/isdn/i4l/isdn_ppp.c
 index 61ac632..a333b7f 100644
 --- a/drivers/isdn/i4l/isdn_ppp.c
@@ -49,14 +55,12 @@ index 61ac632..a333b7f 100644
  	struct sock_filter *code = NULL;
 -	int len, err;
 +	int len;
- 
- 	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+  	if (copy_from_user(&uprog, arg, sizeof(uprog)))
  		return -EFAULT;
 @@ -458,12 +458,6 @@ static int get_filter(void __user *arg, struct sock_filter **p)
  	if (IS_ERR(code))
  		return PTR_ERR(code);
- 
--	err = sk_chk_filter(code, uprog.len);
+ -	err = sk_chk_filter(code, uprog.len);
 -	if (err) {
 -		kfree(code);
 -		return err;
@@ -75,14 +79,12 @@ index 91d6c12..e2f20f8 100644
  	struct sock_filter *code = NULL;
 -	int len, err;
 +	int len;
- 
- 	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+  	if (copy_from_user(&uprog, arg, sizeof(uprog)))
  		return -EFAULT;
 @@ -554,12 +554,6 @@ static int get_filter(void __user *arg, struct sock_filter **p)
  	if (IS_ERR(code))
  		return PTR_ERR(code);
- 
--	err = sk_chk_filter(code, uprog.len);
+ -	err = sk_chk_filter(code, uprog.len);
 -	if (err) {
 -		kfree(code);
 -		return err;
