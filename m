@@ -1,7 +1,7 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Date: Sun, 13 Jul 2014 17:07:32 +0000
+From: Daniel Borkmann <dborkman@redhat.com>
+Date: Sun, 13 Jul 2014 18:56:05 +0000
 Subject: Re: [PATCH net 1/1] net: ppp: don't call sk_chk_filter twice
-Message-Id: <CAADnVQJ8cBaROGee3osvK5maEmVjfU0ubv8-MXRAKqWQPcKRjA@mail.gmail.com>
+Message-Id: <53C2D645.3070102@redhat.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <53C28335.9090902@kristov.de>
 In-Reply-To: <53C28335.9090902@kristov.de>
@@ -9,9 +9,9 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Christoph Schulz <develop@kristov.de>
-Cc: "netdev@vger.kernel.org" <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
+Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de, ast@plumgrid.com
 
-On Sun, Jul 13, 2014 at 3:01 PM, Christoph Schulz <develop@kristov.de> wrote:
+On 07/13/2014 03:01 PM, Christoph Schulz wrote:
 > From: Christoph Schulz <develop@kristov.de>
 >
 > Commit 568f194e8bd16c353ad50f9ab95d98b20578a39d ("net: ppp: use
@@ -21,10 +21,10 @@ On Sun, Jul 13, 2014 at 3:01 PM, Christoph Schulz <develop@kristov.de> wrote:
 > subsystem implemented by drivers/isdn/i4l/isdn_ppp.c. The first call is from
 > within get_filter(). The second one is through the call chain
 >
->   ppp_ioctl() or isdn_ppp_ioctl()
->   --> sk_unattached_filter_create()
->       --> __sk_prepare_filter()
->           --> sk_chk_filter()
+>    ppp_ioctl() or isdn_ppp_ioctl()
+>    --> sk_unattached_filter_create()
+>        --> __sk_prepare_filter()
+>            --> sk_chk_filter()
 >
 > The first call from within get_filter() should be deleted as get_filter() is
 > called just before calling sk_unattached_filter_create() later on, which
@@ -43,6 +43,10 @@ On Sun, Jul 13, 2014 at 3:01 PM, Christoph Schulz <develop@kristov.de> wrote:
 >
 > Signed-off-by: Christoph Schulz <develop@kristov.de>
 
-Acked-by: Alexei Starovoitov <ast@plumgrid.com>
+Looking at [1]'s mbox, it seems to me your patch is corrupted by your
+email client (the last chunk not recognized) ... perhaps try to send
+it by using git-send-email(1).
 
-Thank you for fixing it.
+Other than that, it's fine.
+
+   [1] http://patchwork.ozlabs.org/patch/369404/
