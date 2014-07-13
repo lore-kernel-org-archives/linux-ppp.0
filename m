@@ -1,47 +1,54 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Date: Sun, 13 Jul 2014 01:44:59 +0000
+From: Christoph Schulz <develop@kristov.de>
+Date: Sun, 13 Jul 2014 07:03:23 +0000
 Subject: Re: [PATCH net-next] net: ppp: don't call sk_chk_filter twice
-Message-Id: <CAADnVQKdTb6B_LsSogr94RS=FwL2Wngc8ACCWavSgaiMqxqdQg@mail.gmail.com>
+Message-Id: <20140713090323.14624salobzn3nzv@berry.schulz.ip-v6.eu>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <53BF8DEC.4000307@kristov.de>
-	<CAADnVQLQR9fYVGfxfnwpirXt4CwBUzr36tJL+aEoo0err7cppw@mail.gmail.com>
-	<20140712231126.103531fxfrk9sola@kristov.noip.me>
-In-Reply-To: <20140712231126.103531fxfrk9sola@kristov.noip.me>
+ <CAADnVQLQR9fYVGfxfnwpirXt4CwBUzr36tJL+aEoo0err7cppw@mail.gmail.com>
+ <20140712231126.103531fxfrk9sola@kristov.noip.me>
+ <CAADnVQKdTb6B_LsSogr94RS=FwL2Wngc8ACCWavSgaiMqxqdQg@mail.gmail.com>
+In-Reply-To: <CAADnVQKdTb6B_LsSogr94RS=FwL2Wngc8ACCWavSgaiMqxqdQg@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Christoph Schulz <develop@kristov.de>
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
 Cc: "netdev@vger.kernel.org" <netdev@vger.kernel.org>, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
 
-On Sat, Jul 12, 2014 at 11:11 PM, Christoph Schulz <develop@kristov.de> wrote:
-> Hello!
->
-> Alexei Starovoitov schrieb am Sat, 12 Jul 2014 05:59:46 +0200:
->
->
->>> However, sk_chk_filter() is not idempotent as it sometimes replaces
->>> filter
->>> codes. So running it a second time over the same filter does not work and
->>
->>
->> It's a good thing not to call sk_chk_filter() twice, but the commit
->> log is incorrect.
->> sk_chk_filter() doesn't replace filter codes anymore.
->
->
-> Fair enough. Then how should I correctly proceed to submit this patch which
-> fixes a bug in the 3.15 branch (only)? In 3.15.x filter codes _are_ replaced
-> (I just checked the code in 3.15.5). And I originally based my analysis on
-> 3.15.1. Your statement makes the patch an optional improvement for 3.16.x,
-> but it's a necessary fix for 3.15.x. Do I need to submit this patch two
-> times with different commit logs?
+Hello!
 
-I think this patch still makes sense for 'net-next' as cleanup. Just explain it
-correctly in the log. It's not needed for 'net'.
-As far as stable for 3.15, I'm not yet sure what exactly the problem
-you're hitting. The way you describe it, the whole ppp filtering shouldn't
-be working in 3.15...
+Alexei Starovoitov schrieb am Sun, 13 Jul 2014 03:44:59 +0200:
 
-Also it sounds like you've created a patch out of 3.15 tree, but marked it
-as 'net-next'. That's not the right. If the tag is 'net-next' it obviously
-should be based on net-next tree.
+> I think this patch still makes sense for 'net-next' as cleanup. Just  
+> explain it
+> correctly in the log. It's not needed for 'net'.
+
+OK.
+
+> As far as stable for 3.15, I'm not yet sure what exactly the problem
+> you're hitting. The way you describe it, the whole ppp filtering shouldn't
+> be working in 3.15...
+
+I'm afraid this is true. The pppd daemon fails to set the filter(s)  
+with the message "Couldn't set pass-filter in kernel: Invalid  
+argument". (It doesn't try to set the active-filter because it gives  
+up after the first error.) For 3.15.x, you have to apply both of my  
+patches to make it work. For 'net', presumably only the second patch  
+("fix creating PPP pass and active filters") is necessary because as  
+you wrote, sk_chk_filter() can be called multiple times there. See  
+also my comment in our bug tracker where the creation of the filter is  
+compared between 3.14.x and 3.15.x (I'm afraid the description is in  
+German):
+
+https://ssl.nettworks.org/bugs/browse/FFL-858?focusedCommentId289&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-17289
+
+> Also it sounds like you've created a patch out of 3.15 tree, but marked it
+> as 'net-next'. That's not the right. If the tag is 'net-next' it obviously
+> should be based on net-next tree.
+
+Yes, this was my fault. I'm sorry. I will resubmit the patches soon.
+
+
+Regards,
+
+Christoph Schulz
+
