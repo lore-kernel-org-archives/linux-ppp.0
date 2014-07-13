@@ -1,35 +1,93 @@
-From: David Miller <davem@davemloft.net>
-Date: Wed, 16 Jul 2014 19:40:30 +0000
-Subject: Re: [PATCH net 1/1] net: ppp: fix creating PPP pass and active filters
-Message-Id: <20140716.124030.250979094438378500.davem@davemloft.net>
+From: Christoph Schulz <develop@kristov.de>
+Date: Sun, 13 Jul 2014 12:59:01 +0000
+Subject: [PATCH net 1/1] net: ppp: don't call sk_chk_filter twice
+Message-Id: <53C28295.8050708@kristov.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <53C4D14C.607@redhat.com>
-	<CAADnVQJ3GEdxTBg9BvvLfW1JFsMQ2-J6HgRvEim7vWaSDeWd_Q@mail.gmail.com>
-	<20140716204755.36527ey95gjknnx7@berry.schulz.ip-v6.eu>
-In-Reply-To: <20140716204755.36527ey95gjknnx7@berry.schulz.ip-v6.eu>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: develop@kristov.de
-Cc: alexei.starovoitov@gmail.com, dborkman@redhat.com, varkabhadram@gmail.com, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
+To: linux-ppp@vger.kernel.org
 
 From: Christoph Schulz <develop@kristov.de>
-Date: Wed, 16 Jul 2014 20:47:55 +0200
 
-> Hello!
-> 
-> Alexei Starovoitov schrieb am Tue, 15 Jul 2014 08:38:58 -0700:
-> 
->>> Well, this is a soft-limit, and in this particular circumstance
->>> it should be fine to use your original proposal. I don't see how
->>> Varka's suggestions make this better in _any way_, rather the
->>> very opposite.
->>
->> +1
-> 
-> Fine. So I need not change anything, right? How can I change (or
-> trigger changing) the patch's state from "Changes Requested" to "Under
-> Review" again without resubmitting it without any modifications? Or
-> will that happen eventually anyway after some time has elapsed?
+Commit 568f194e8bd16c353ad50f9ab95d98b20578a39d ("net: ppp: use
+sk_unattached_filter api") causes sk_chk_filter() to be called twice when
+setting a PPP pass or active filter. This applies to both the generic PPP
+subsystem implemented by drivers/net/ppp/ppp_generic.c and the ISDN PPP
+subsystem implemented by drivers/isdn/i4l/isdn_ppp.c. The first call is from
+within get_filter(). The second one is through the call chain
 
-Please just submit the patch again.
+  ppp_ioctl() or isdn_ppp_ioctl()
+  --> sk_unattached_filter_create()
+      --> __sk_prepare_filter()
+          --> sk_chk_filter()
+
+The first call from within get_filter() should be deleted as get_filter() is
+called just before calling sk_unattached_filter_create() later on, which
+eventually calls sk_chk_filter() anyway.
+
+For 3.15.x, this proposed change is a bugfix rather than a pure optimization as
+in that branch, sk_chk_filter() may replace filter codes by other codes which
+are not recognized when executing sk_chk_filter() a second time. So with
+3.15.x, if sk_chk_filter() is called twice, the second invocation may yield
+EINVAL (this depends on the filter codes found in the filter to be set, but
+because the replacement is done for frequently used codes, this is almost
+always the case). The net effect is that setting pass and/or active PPP filters
+does not work anymore, since sk_unattached_filter_create() always returns
+EINVAL due to the second call to sk_chk_filter(), regardless whether the filter
+was originally sane or not.
+
+Signed-off-by: Christoph Schulz <develop@kristov.de>
+---
+diff --git a/drivers/isdn/i4l/isdn_ppp.c b/drivers/isdn/i4l/isdn_ppp.c
+index 61ac632..a333b7f 100644
+--- a/drivers/isdn/i4l/isdn_ppp.c
++++ b/drivers/isdn/i4l/isdn_ppp.c
+@@ -442,7 +442,7 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ {
+ 	struct sock_fprog uprog;
+ 	struct sock_filter *code = NULL;
+-	int len, err;
++	int len;
+ 
+ 	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+ 		return -EFAULT;
+@@ -458,12 +458,6 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ 	if (IS_ERR(code))
+ 		return PTR_ERR(code);
+ 
+-	err = sk_chk_filter(code, uprog.len);
+-	if (err) {
+-		kfree(code);
+-		return err;
+-	}
+-
+ 	*p = code;
+ 	return uprog.len;
+ }
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 91d6c12..e2f20f8 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -539,7 +539,7 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ {
+ 	struct sock_fprog uprog;
+ 	struct sock_filter *code = NULL;
+-	int len, err;
++	int len;
+ 
+ 	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+ 		return -EFAULT;
+@@ -554,12 +554,6 @@ static int get_filter(void __user *arg, struct sock_filter **p)
+ 	if (IS_ERR(code))
+ 		return PTR_ERR(code);
+ 
+-	err = sk_chk_filter(code, uprog.len);
+-	if (err) {
+-		kfree(code);
+-		return err;
+-	}
+-
+ 	*p = code;
+ 	return uprog.len;
+ }
