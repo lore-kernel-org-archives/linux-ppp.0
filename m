@@ -1,35 +1,37 @@
-From: Daniel Borkmann <dborkman@redhat.com>
-Date: Mon, 14 Jul 2014 07:17:45 +0000
+From: David Miller <davem@davemloft.net>
+Date: Mon, 14 Jul 2014 23:15:23 +0000
 Subject: Re: [PATCH net v2 1/1] net: ppp: don't call sk_chk_filter twice
-Message-Id: <53C38419.5050609@redhat.com>
+Message-Id: <20140714.161523.399591287185710608.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <53C37226.2020106@kristov.de>
 In-Reply-To: <53C37226.2020106@kristov.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Christoph Schulz <develop@kristov.de>
+To: develop@kristov.de
 Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org, isdn@linux-pingi.de
 
-On 07/14/2014 08:01 AM, Christoph Schulz wrote:
+From: Christoph Schulz <develop@kristov.de>
+Date: Mon, 14 Jul 2014 08:01:10 +0200
+
 > From: Christoph Schulz <develop@kristov.de>
->
+> 
 > Commit 568f194e8bd16c353ad50f9ab95d98b20578a39d ("net: ppp: use
 > sk_unattached_filter api") causes sk_chk_filter() to be called twice when
 > setting a PPP pass or active filter. This applies to both the generic PPP
 > subsystem implemented by drivers/net/ppp/ppp_generic.c and the ISDN PPP
 > subsystem implemented by drivers/isdn/i4l/isdn_ppp.c. The first call is from
 > within get_filter(). The second one is through the call chain
->
->    ppp_ioctl() or isdn_ppp_ioctl()
->    --> sk_unattached_filter_create()
->        --> __sk_prepare_filter()
->            --> sk_chk_filter()
->
+> 
+>   ppp_ioctl() or isdn_ppp_ioctl()
+>   --> sk_unattached_filter_create()
+>       --> __sk_prepare_filter()
+>           --> sk_chk_filter()
+> 
 > The first call from within get_filter() should be deleted as get_filter() is
 > called just before calling sk_unattached_filter_create() later on, which
 > eventually calls sk_chk_filter() anyway.
->
+> 
 > For 3.15.x, this proposed change is a bugfix rather than a pure optimization as
 > in that branch, sk_chk_filter() may replace filter codes by other codes which
 > are not recognized when executing sk_chk_filter() a second time. So with
@@ -40,9 +42,7 @@ On 07/14/2014 08:01 AM, Christoph Schulz wrote:
 > does not work anymore, since sk_unattached_filter_create() always returns
 > EINVAL due to the second call to sk_chk_filter(), regardless whether the filter
 > was originally sane or not.
->
+> 
 > Signed-off-by: Christoph Schulz <develop@kristov.de>
 
-Looks good, thanks a lot!
-
-Acked-by: Daniel Borkmann <dborkman@redhat.com>
+Applied, thank you.
