@@ -1,44 +1,37 @@
-From: Tom Gundersen <teg@jklm.no>
-Date: Wed, 16 Jul 2014 22:43:14 +0000
-Subject: [PATCH v8] net: ppp - set name assign type
-Message-Id: <1405550594-11786-7-git-send-email-teg@jklm.no>
+From: David Miller <davem@davemloft.net>
+Date: Mon, 14 Jul 2014 21:36:24 +0000
+Subject: Re: [PATCH 1/1] net: pppoe: use correct channel MTU when using Multilink PPP
+Message-Id: <20140714.143624.287339351063026762.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1405550594-11786-1-git-send-email-teg@jklm.no>
-In-Reply-To: <1405550594-11786-1-git-send-email-teg@jklm.no>
+References: <53C1BC5B.9010004@kristov.de>
+In-Reply-To: <53C1BC5B.9010004@kristov.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: netdev@vger.kernel.org
-Cc: David Miller <davem@davemloft.net>, linux-kernel@vger.kernel.org, Tom Gundersen <teg@jklm.no>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
+To: develop@kristov.de
+Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, mostrows@gmail.com
 
-The ifname is of the form pppX where X is the unit number. This is either set
-by userspace, or userspace requests the kernel to chose one, which is then
-returned to userspace. Either way the creating user knows the name, so we
-treat both cases as if the user had explicitly chosen the name and label
-it NET_NAME_USER.
+From: Christoph Schulz <develop@kristov.de>
+Date: Sun, 13 Jul 2014 00:53:15 +0200
 
-Signed-off-by: Tom Gundersen <teg@jklm.no>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linux-ppp@vger.kernel.org
----
+> The PPP channel MTU is used with Multilink PPP when ppp_mp_explode() (see
+> ppp_generic module) tries to determine how big a fragment might be. According
+> to RFC 1661, the MTU excludes the 2-byte PPP protocol field, see the
+> corresponding comment and code in ppp_mp_explode():
+> 
+> 		/*
+> 		 * hdrlen includes the 2-byte PPP protocol field, but the
+> 		 * MTU counts only the payload excluding the protocol field.
+> 		 * (RFC1661 Section 2)
+> 		 */
+> 		mtu = pch->chan->mtu - (hdrlen - 2);
+> 
+> However, the pppoe module *does* include the PPP protocol field in the channel
+> MTU, which is wrong as it causes the PPP payload to be 1-2 bytes too big under
+> certain circumstances (one byte if PPP protocol compression is used, two
+> otherwise), causing the generated Ethernet packets to be dropped. So the pppoe
+> module has to subtract two bytes from the channel MTU. This error only
+> manifests itself when using Multilink PPP, as otherwise the channel MTU is not
+> used anywhere.
 
-This patch goes on top of net-next.
-
- drivers/net/ppp/ppp_generic.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index c38ee90..6526057 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -2728,6 +2728,7 @@ ppp_create_interface(struct net *net, int unit, int *retp)
- 	/* Initialize the new ppp unit */
- 	ppp->file.index = unit;
- 	sprintf(dev->name, "ppp%d", unit);
-+	dev->name_assign_type = NET_NAME_USER;
- 
- 	ret = register_netdev(dev);
- 	if (ret != 0) {
--- 
-1.9.3
-
+Applied and queued up for -stable, thank you.
