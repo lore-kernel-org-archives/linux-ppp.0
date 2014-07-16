@@ -1,10 +1,10 @@
 From: Tom Gundersen <teg@jklm.no>
-Date: Thu, 17 Jul 2014 08:06:10 +0000
-Subject: [PATCH net-next v9 9/9] net: ppp - set name assign type
-Message-Id: <1405584370-30054-10-git-send-email-teg@jklm.no>
+Date: Wed, 16 Jul 2014 22:43:14 +0000
+Subject: [PATCH v8] net: ppp - set name assign type
+Message-Id: <1405550594-11786-7-git-send-email-teg@jklm.no>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1405584370-30054-1-git-send-email-teg@jklm.no>
-In-Reply-To: <1405584370-30054-1-git-send-email-teg@jklm.no>
+References: <1405550594-11786-1-git-send-email-teg@jklm.no>
+In-Reply-To: <1405550594-11786-1-git-send-email-teg@jklm.no>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,6 +21,9 @@ Signed-off-by: Tom Gundersen <teg@jklm.no>
 Cc: Paul Mackerras <paulus@samba.org>
 Cc: linux-ppp@vger.kernel.org
 ---
+
+This patch goes on top of net-next.
+
  drivers/net/ppp/ppp_generic.c | 1 +
  1 file changed, 1 insertion(+)
 
