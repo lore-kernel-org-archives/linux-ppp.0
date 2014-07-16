@@ -1,11 +1,12 @@
 From: Christoph Schulz <develop@kristov.de>
-Date: Wed, 16 Jul 2014 21:19:50 +0000
+Date: Wed, 16 Jul 2014 21:24:43 +0000
 Subject: Re: [PATCH net-next 1/1] net: ppp: reset nextseq counter when enabling SC_MULTILINK
-Message-Id: <20140716231950.17744ie9e3i9ea9i@berry.schulz.ip-v6.eu>
+Message-Id: <20140716232443.872830586nfymtnf@berry.schulz.ip-v6.eu>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <53C4F987.1040401@kristov.de>
  <20140715.225259.1933230941203001162.davem@davemloft.net>
-In-Reply-To: <20140715.225259.1933230941203001162.davem@davemloft.net>
+ <20140716231950.17744ie9e3i9ea9i@berry.schulz.ip-v6.eu>
+In-Reply-To: <20140716231950.17744ie9e3i9ea9i@berry.schulz.ip-v6.eu>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -14,20 +15,16 @@ Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org
 
 Hello!
 
-David Miller schrieb am Tue, 15 Jul 2014 22:52:59 -0700 (PDT):
+Christoph Schulz schrieb am Wed, 16 Jul 2014 23:19:50 +0200:
 
-> Applied, thanks Christoph.
+> I will submit an updated patch ASAP.
 
-Sorry, the extra code has to be surrounded by
-
-#ifdef CONFIG_PPP_MULTILINK
-...
-#endif
-
-I will submit an updated patch ASAP.
+Sorry, how should I do it? Based on the *current* state of net-next,  
+i.e. based on my original (but incomplete) patch? Or based on the  
+net-next tree before my original patch was included?
 
 
-Best regards,
+Thank you in advance,
 
 Christoph Schulz
 
