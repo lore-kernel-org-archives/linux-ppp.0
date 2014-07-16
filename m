@@ -1,37 +1,53 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 14 Jul 2014 21:36:24 +0000
-Subject: Re: [PATCH 1/1] net: pppoe: use correct channel MTU when using Multilink PPP
-Message-Id: <20140714.143624.287339351063026762.davem@davemloft.net>
+From: Michael Richardson <mcr@sandelman.ca>
+Date: Wed, 16 Jul 2014 02:04:33 +0000
+Subject: about that partial copy of radiusclient in pppd/plugins/radius
+Message-Id: <4670.1405476273@sandelman.ca>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <53C1BC5B.9010004@kristov.de>
-In-Reply-To: <53C1BC5B.9010004@kristov.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: develop@kristov.de
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, mostrows@gmail.com
+To: linux-ppp@vger.kernel.org
 
-From: Christoph Schulz <develop@kristov.de>
-Date: Sun, 13 Jul 2014 00:53:15 +0200
 
-> The PPP channel MTU is used with Multilink PPP when ppp_mp_explode() (see
-> ppp_generic module) tries to determine how big a fragment might be. According
-> to RFC 1661, the MTU excludes the 2-byte PPP protocol field, see the
-> corresponding comment and code in ppp_mp_explode():
-> 
-> 		/*
-> 		 * hdrlen includes the 2-byte PPP protocol field, but the
-> 		 * MTU counts only the payload excluding the protocol field.
-> 		 * (RFC1661 Section 2)
-> 		 */
-> 		mtu = pch->chan->mtu - (hdrlen - 2);
-> 
-> However, the pppoe module *does* include the PPP protocol field in the channel
-> MTU, which is wrong as it causes the PPP payload to be 1-2 bytes too big under
-> certain circumstances (one byte if PPP protocol compression is used, two
-> otherwise), causing the generated Ethernet packets to be dropped. So the pppoe
-> module has to subtract two bytes from the channel MTU. This error only
-> manifests itself when using Multilink PPP, as otherwise the channel MTU is not
-> used anywhere.
+According to the git history on pppd, back in Nov. 14, 2004, radiusclient,
+which had been imported into pppd, got merged so that only the critical
+pieces were present.
+   https://github.com/wkz/pppd/commit/4abe4296f0eddbb2b6ff11dbbd27100156c85f87
 
-Applied and queued up for -stable, thank you.
+This was likely the right decision at the time.
+The Freeradius folks picked up radiusclient see: http://freeradius.org/freeradius-client/
+and https://github.com/FreeRADIUS/freeradius-client
+
+I have need to add the IPv6 attributes, which means having ipv6addr and
+ipv6prefix values, and adding decode support for that.
+
+I'd rather not work on ancient code, yet the latest freeradius-client doesn't
+have the support I need anyway.
+
+It appears that there are the following differences:
+        1) rc_handle on all calls; not much of a problem.
+        2) use of pppd's error() call rather than rc_log(), I'm sure that
+           I can work this out in the freeradius-client library with a
+           pointer to function somewhere.
+        3) some other stuff involving VENDOR_NONE and the like.
+           It appears to be simple divergence.
+
+My opinion is that freeradius-client does not need to compile to a .so,
+that's it's better as a straight .a, most projects never need to install it,
+just link it in.
+
+My other opinion is that 99% of uses of pppd client ends, or are server ends
+that do not use the radius plugin, and for the rest, it's not enough to have
+libradiusclient.a, you need a bunch of /etc/*radiusclient/.. stuff too.
+If I were packaging pppd for a distro, I'd make the radius part a seperate
+package.  In git, I'd make the freeradius-client a submodule, and in tar.gz
+form, I'd just document that you should extract freeradius-client.tgz "HERE"
+
+Opinions?
+
+--
+]               Never tell me the odds!                 | ipv6 mesh networks [
+]   Michael Richardson, Sandelman Software Works        | network architect  [
+]     mcr@sandelman.ca  http://www.sandelman.ca/        |   ruby on rails    [
+
+
