@@ -1,48 +1,29 @@
-From: Michael Richardson <mcr@sandelman.ca>
-Date: Thu, 09 Oct 2014 14:20:04 +0000
-Subject: Re: PPP connection corruption with Windows client, MPPE, and RDP
-Message-Id: <16672.1412864404@sandelman.ca>
+From: Arne Van Theemsche <arne.vantheemsche@evonet.be>
+Date: Thu, 02 Oct 2014 07:29:31 +0000
+Subject: ml-ppp bundle dies if initial link fails (even in 2.4.7)
+Message-Id: <542CFEDB.6090301@evonet.be>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <CALas-ij41eAabeTrq+VVPoBc2eZwnPyj0vdKPDBvWKQ5LU0NPQ@mail.gmail.com>
-In-Reply-To: <CALas-ij41eAabeTrq+VVPoBc2eZwnPyj0vdKPDBvWKQ5LU0NPQ@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Hi all
 
-Francesco Pretto <ceztko@gmail.com> wrote:
-    >> I suspect that RDP triggers it with a full-sized TCP packet.
-    > [...]
-    >> Do you have appropriate patches/things-enabled, so that the
-    >> esp/l2tp/ppp packets all stay in the kernel?  If not, then you might
-    >> also get some debug from xl2tp.
-    >>
+We can't seem to get ml-ppp to work in a stable way (nor PPPoE, nor 
+PPPoL2TP). Even when I found out the master_detach option, we compiled 
+2.4.7 but that didn't to the trick.
 
-    > I am not sure what esp is. PPP and MPPE are in the kernel. xl2tpd log
+All links may fail, except for the one who created the bundle, if that 
+happens, the link goes down, if-down scripts are called, and all other 
+links are nicely closed.
 
-ESP is IPsec.
+Does anybody have a solution for that?
 
-    >> MPPE and IPsec are not related. AFAIK, MPPE provides for encryption
-    >> within PPP.  you would be double encrypting.
+P.S. tried killing pppd with the HUP signal (as mentioned in the man), 
+tried interrupting the link somewhere in the middle, so the LCP fails, 
+nothing has helped me so far
 
-    > Yes, I knew. In fact I was more than satisfied with the reliability I
-    > get with "nomppe". But maybe MS-CHAP v2 use MPPE for authentication
-    > encryption? I don't know.
-
-No.
-
-    >> Does other traffic continue to function?  Is one end Windows?
-
-    > No, other traffic stops as well. VPN traffic is Windows-Windows.
-    > ipsec-ppp-l2tp endpoints are Windows-Linux.
-
-Do you continue to see raw packets transmitted in both directions, if you
-tcpdump the wire?  I'm wondering if one end is broken and does not transmit,
-or if one is broken, and receives incorrectly.
-
---
-]               Never tell me the odds!                 | ipv6 mesh networks [
-]   Michael Richardson, Sandelman Software Works        | network architect  [
-]     mcr@sandelman.ca  http://www.sandelman.ca/        |   ruby on rails    [
+kind regards
+Arne
 
