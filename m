@@ -1,16 +1,17 @@
 From: Alan Stern <stern@rowland.harvard.edu>
-Date: Thu, 02 Oct 2014 01:59:03 +0000
-Subject: Soft lockup in 3.17-rc7 when using PPP over L2TP over IPSEC
-Message-Id: <Pine.LNX.4.44L0.1410012150160.27089-100000@netrider.rowland.org>
+Date: Sun, 05 Oct 2014 15:25:10 +0000
+Subject: Deadlock in ppp_generic
+Message-Id: <Pine.LNX.4.44L0.1410051114230.11070-100000@netrider.rowland.org>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, linux-wireless@vger.kernel.org
-Cc: Kernel development list <linux-kernel@vger.kernel.org>
+To: linux-ppp@vger.kernel.org
 
-I reliably get the following lockup when trying to set up a VPN tunnel 
-using L2TP over IPSEC:
+Paul:
+
+While trying to set up a VPN using PPP over L2TP over IPSEC, I 
+reliably encounter the following deadlock:
 
 [ 2214.970639] BUG: soft lockup - CPU#1 stuck for 22s! [pppd:9423]
 [ 2214.970648] Modules linked in: l2tp_ppp l2tp_netlink l2tp_core pppoe pppox ppp_generic slhc authenc cmac rmd160 crypto_null ip_vti ip_tunnel af_key ah6 ah4 esp6 esp4 xfrm4_mode_beet xfrm4_tunnel tunnel4 xfrm4_mode_tunnel xfrm4_mode_transport xfrm6_mode_transport xfrm6_mode_ro xfrm6_mode_beet xfrm6_mode_tunnel ipcomp ipcomp6 xfrm6_tunnel tunnel6 xfrm_ipcomp salsa20_i586 camellia_generic cast6_generic cast5_generic cast_common deflate cts gcm ccm serpent_sse2_i586 serpent_generic glue_helper blowfish_generic blowfish_common twofish_generic twofish_i586 twofish_common xcbc sha512_generic des_generic geode_aes tpm_rng tpm timeriomem_rng virtio_rng uas usb_storage fuse ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 nf_conntrack_ipv4 nf_defrag_ipv4 ip6table_filter xt_conntrack ip6_tables nf_conntrack vfat
@@ -64,23 +65,19 @@ using L2TP over IPSEC:
 [ 2214.971007]  [<c0577951>] SyS_write+0x51/0xb0
 [ 2214.971007]  [<c0a07b9f>] sysenter_do_call+0x12/0x12
 [ 2214.971007] Code: 00 00 00 55 89 e5 66 66 66 66 90 64 81 05 90 b6 dc c0 00 02 00 00 ba 00 01 00 00 f0 66 0f c1 10 0f b6 ce 38 d1 75 04 5d c3 f3 90 <0f> b6 10 38 ca 75 f7 5d c3 90 90 90 90 90 90 90 90 90 90 90 90
-[ 2220.002045] iwlwifi 0000:01:00.0: No space in command queue
-[ 2220.002058] iwlwifi 0000:01:00.0: Restarting adapter queue is full
-[ 2220.002073] iwlwifi 0000:01:00.0: Error sending REPLY_LEDS_CMD: enqueue_hcmd failed: -28
-[ 2220.002524] ieee80211 phy0: Hardware restart was requested
 
-A few seconds after this appears, the second CPU also locks up and the 
-system becomes useless.
+The lock in question is pch->downl, which is acquired in
+ppp_channel_push.  The subsequent call to pch->chan->ops->start_xmit
+ends up going down to ppp_push, which then tries to acquire the same
+spinlock.
 
-I don't know if the problem is in the networking core or in the 
-wireless driver.  If anyone wants, I can try testing using a wired 
-Ethernet connection.
+What's going on here?  Is this a routing error in the L2TP or IPSEC
+layers?  Or a problem in one of the userspace daemons?  I get the
+impression that the system is trying to send a PPP-encapsulated packet
+through the PPP tunnel, which certainly isn't the right thing to do.
+Any ideas how I can track this down and fix it?
 
-Note: This problem is not new.  It has been happening for at least the
-last several kernel versions -- in fact, I don't know if this has ever
-worked.
-
-Can this be debugged and fixed?
+Thanks for any help,
 
 Alan Stern
 
