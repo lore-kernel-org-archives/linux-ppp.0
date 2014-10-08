@@ -1,49 +1,261 @@
-From: Alan Stern <stern@rowland.harvard.edu>
-Date: Tue, 21 Oct 2014 14:15:57 +0000
-Subject: Re: Routing BUG with ppp over l2tp
-Message-Id: <Pine.LNX.4.44L0.1410211007210.1159-100000@iolanthe.rowland.org>
+From: Francesco Pretto <ceztko@gmail.com>
+Date: Wed, 08 Oct 2014 21:16:35 +0000
+Subject: PPP connection corruption with Windows client, MPPE, and RDP
+Message-Id: <CALas-ij41eAabeTrq+VVPoBc2eZwnPyj0vdKPDBvWKQ5LU0NPQ@mail.gmail.com>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="20cf3010e31fe45b6b0504efd543"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <54456F15.9070206@workingcode.com>
-In-Reply-To: <54456F15.9070206@workingcode.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: James Carlson <carlsonj@workingcode.com>
-Cc: James Chapman <jchapman@katalix.com>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-On Mon, 20 Oct 2014, James Carlson wrote:
+--20cf3010e31fe45b6b0504efd543
+Content-Type: text/plain; charset=UTF-8
 
-> >> Otherwise, contact the maintainer of that VPN server.  It's just plain
-> >> old broken, and life's too short for broken software.
-> > 
-> > It is an old Cisco security appliance, no doubt well past End-Of-Life.  
-> > I'm starting to think it might be preferable to throw the thing away 
-> > and start up a VPN server on the department's firewall (which is a 
-> > Linux box) instead.
-> 
-> That sounds like a good (and easier to support) solution.
+Hello PPP mantainers,
 
-Okay.  I looked into iptables, but it doesn't seem to provide any way 
-to prevent a packet from being routed through a particular interface. 
-:-(
+I configured an IPsec-L2TP VPN on my work network. The VPN has both
+endpoints on natted networks: ipsec client/server are both NAT enabled
+and routers are configured to properly forward IPSEC UPD ports and to
+passthrough VPN traffic. For some weeks it has worked reliably.
+Recently it stopped working properly with RDP (Remote Desktop
+Protocol) seeming to be the most effective trigger that leads the
+connection to a corrupted state.
 
-On the other hand, I tried writing a short /etc/ppp/ip-up.local script
-that changes the destination address of the ppp interface and adds a
-default route to the new, correct address.  It worked!  It's not a
-perfect solution, because there's still a short window in which the
-interface is up with the wrong address.  A few packets get lost and a
-deadlock could occur.  But at least it's simple and non-invasive, and
-it definitely proves the address conflict was indeed the cause of the
-problem.
+Enabling the full PPP debug, when the connection is corrupted the log
+begin to be spammed with plenty of warnings of spurious packets:
+Oct  1 14:18:55 lanmaster pppd[1977]: rcvd [proto=0xa1] 5f e4 25 5a 19
+6b ad 6b
+                                               b7 0d 60 f7 49 f8 47 f3
+5d 87 73 97 12 b2 a7 63 54 21 05 35 43 6a 94 14 ...
+Oct  1 14:18:55 lanmaster pppd[1977]: Unsupported protocol 0xa1 received
+Oct  1 14:18:55 lanmaster pppd[1977]: sent [LCP ProtRej id=0x21 00 a1
+5f e4 25 5
+                                                a 19 6b ad 6b b7 0d 60
+f7 49 f8 47 f3 5d 87 73 97 12 b2 a7 63 54 21 05 35 43 6a
 
-Changing pppd would be more foolproof.  But then I'd also have to 
-change the programs that call it (xl2tpd and then NetworkManager), and 
-doing all that doesn't seem worthwhile.
+                        ...]
+Oct  1 14:18:55 lanmaster pppd[1977]: rcvd [proto=0x36f4] 76 df 4c 41
+50 1b ad 4
+                                                d 5d c6 2e fb c7 77 1d
+6f ae b3 6c 55 db 2b 89 94 6c 7b e3 66 1d 2c d2 57 ...
+Oct  1 14:18:55 lanmaster pppd[1977]: Unsupported protocol 0x36f4 received
+Oct  1 14:18:55 lanmaster pppd[1977]: sent [LCP ProtRej id=0x22 36 f4
+76 df 4c 4
+                                                1 50 1b ad 4d 5d c6 2e
+fb c7 77 1d 6f ae b3 6c 55 db 2b 89 94 6c 7b e3 66 1d 2c
 
-In the end, I think the best solution will be to replace the VPN 
-server.
+                        ...]
+Oct  1 14:18:56 lanmaster pppd[1977]: rcvd [proto=0xda76] 17 88 8a 2f
+86 5e 3f 4
+                                                c 69 3e e4 ff bb 61 5d
+f8 0f 3e da ab 0b 7c 29 3b 99 87 7c 7e f7 12 4a 7b ...
+Oct  1 14:18:56 lanmaster pppd[1977]: Unsupported protocol 0xda76 received
+Oct  1 14:18:56 lanmaster pppd[1977]: sent [LCP ProtRej id=0x23 da 76 17 88 8a 2
+[...]
 
-Thanks for your help,
+This initially seemed to me an IPSEC problem but, after much
+troubleshooting, removing the ppp option "require-mppe-128" option and
+adding "nomppe", effectively disabling MPPE, resulted in a extremely
+reliable connection again.
 
-Alan Stern
+My observations:
+- PPP doesn't detect a disconnection of a corruption. The client can
+still proper hang-up;
+- It's not RDP client-server related: RDP it's just the trigger, after
+the whole connection TCP/IP connection is corrupted and must be reset;
+- It's not Windows ipsec-ppp-l2tp client problem: same happen with
+Windows 8.1 and fresh Windows7 client installed;
+- It doesn't seem to be linux kernel problem: I tried to install older
+ubuntu 3.2.0 kernels observing same problems. Now I use 3.13.0 kernel
+with no changes as well;
+- Tweaking PPP MTU doesn't help. I haven't tried tweaking ipsec MTU.
 
+My stack version has been recently updated (from Ubuntu 12.04, that
+had the same problem. Now it's 14.04):
+- ppp 2.4.5-5.1ubuntu2
+- xl2tpd 1.3.6+dfsg-1:
+- openswan 1:2.6.38-1
+- kernel 3.13.0-36
+
+I'm unable to say if updates on these packages triggered the problem.
+
+The workaround is effective for me as I don't need the PPP link to be
+encrypted but the configuration should be supported with MPPE enabled
+I offer my help to do further testing if someone notice there could be
+a problem in PPP (for example the MPPE state could be partially
+corrupted but PPP is unable to detect it). Also it may be useful for
+others that may have the same problem.
+
+I attached the faulty configuration and  the initial log of the
+l2tp-ppp connection.
+
+In case CC me as I'm not subscribed. Thanks.
+
+Francesco
+
+--20cf3010e31fe45b6b0504efd543
+Content-Type: application/octet-stream; name="xl2tpd.conf"
+Content-Disposition: attachment; filename="xl2tpd.conf"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_i1141z861
+
+W2dsb2JhbF0NCmlwc2VjIHNhcmVmID0geWVzDQoNCltsbnMgZGVmYXVsdF0NCmlwIHJhbmdlID0g
+MTkyLjE2OC4xMDEuMjAwLTE5Mi4xNjguMTAxLjI1MA0KbG9jYWwgaXAgPSAxOTIuMTY4LjEwMS4y
+Ng0KcHBwb3B0ZmlsZSA9IC9ldGMvcHBwL29wdGlvbnMueGwydHBkDQpsZW5ndGggYml0ID0geWVz
+--20cf3010e31fe45b6b0504efd543
+Content-Type: application/octet-stream; name="ipsec.conf"
+Content-Disposition: attachment; filename="ipsec.conf"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_i11427io2
+
+dmVyc2lvbiAyLjANCmNvbmZpZyBzZXR1cA0KICAgIG5hdF90cmF2ZXJzYWw9eWVzDQogICAgdmly
+dHVhbF9wcml2YXRlPSV2NDoxMC4wLjAuMC84LCV2NDoxOTIuMTY4LjAuMC8xNiwldjQ6MTcyLjE2
+LjAuMC8xMg0KICAgIG9lPW9mZg0KICAgIHByb3Rvc3RhY2s9bmV0a2V5DQojICAgIGtsaXBzZGVi
+dWc9ImFsbCINCiMgICAgcGx1dG9kZWJ1Zz0iYWxsIg0KDQojIFJlbW92ZWQgYXMgc2FpZCBoZXJl
+IGh0dHA6Ly91YnVudHVmb3J1bXMub3JnL3Nob3d0aHJlYWQucGhwP3Q9MjIzODY5Mg0KI2Nvbm4g
+TDJUUC1QU0stTkFUDQojICAgIHJpZ2h0c3VibmV0PXZob3N0OiVwcml2DQojICAgIGFsc289TDJU
+UC1QU0stbm9OQVQNCg0KY29ubiBMMlRQLVBTSy1ub05BVA0KICAgIGF1dGhieT1zZWNyZXQNCiAg
+ICBwZnM9bm8NCiAgICBhdXRvPWFkZA0KIyByZWtleSBzZWVtcyBvaw0KIyAgICByZWtleT1ubw0K
+IyAgICBrZXlpbmd0cmllcz0zDQogICAgcmVrZXk9eWVzDQogICAga2V5aW5ndHJpZXM9JWZvcmV2
+ZXINCiAgICBpa2VsaWZldGltZT04aA0KICAgIGtleWxpZmU9MWgNCiAgICB0eXBlPXRyYW5zcG9y
+dA0KICAgIGxlZnQ9MTkyLjE2OC4xMDEuMjANCiAgICBsZWZ0cHJvdG9wb3J0PTE3LzE3MDENCiAg
+ICByaWdodD0lYW55DQogICAgcmlnaHRwcm90b3BvcnQ9MTcvJWFueQ0KICAgIGRwZGRlbGF5PTEw
+DQogICAgZHBkdGltZW91dD0xMA0KICAgIGRwZGFjdGlvbj1yZXN0YXJ0
+--20cf3010e31fe45b6b0504efd543
+Content-Type: application/octet-stream; name="l2tp-ppp-init.log"
+Content-Disposition: attachment; filename="l2tp-ppp-init.log"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_i115x1b43
+
+T2N0ICAxIDE0OjI2OjIwIGxhbm1hc3RlciB4bDJ0cGRbMjMzMV06IEVuYWJsaW5nIElQc2VjIFNB
+cmVmIHByb2Nlc3NpbmcgZm9yIEwyVFAgdHJhbnNwb3J0IG1vZGUgU0FzDQpPY3QgIDEgMTQ6MjY6
+MjAgbGFubWFzdGVyIHhsMnRwZFsyMzMxXTogSVBzZWMgU0FyZWYgZG9lcyBub3Qgd29yayB3aXRo
+IEwyVFAga2VybmVsIG1vZGUgeWV0LCBlbmFibGluZyBmb3JjZSB1c2Vyc3BhY2U9eWVzDQpPY3Qg
+IDEgMTQ6MjY6MjAgbGFubWFzdGVyIHhsMnRwZFsyMzMxXTogc2V0c29ja29wdCByZWN2cmVmWzMw
+XTogUHJvdG9jb2wgbm90IGF2YWlsYWJsZQ0KT2N0ICAxIDE0OjI2OjIwIGxhbm1hc3RlciB4bDJ0
+cGRbMjMzMV06IFRoaXMgYmluYXJ5IGRvZXMgbm90IHN1cHBvcnQga2VybmVsIEwyVFAuDQpPY3Qg
+IDEgMTQ6MjY6MjAgbGFubWFzdGVyIHhsMnRwZFsyMzMyXTogeGwydHBkIHZlcnNpb24geGwydHBk
+LTEuMy42IHN0YXJ0ZWQgb24gbGFubWFzdGVyIFBJRDoyMzMyDQpPY3QgIDEgMTQ6MjY6MjAgbGFu
+bWFzdGVyIHhsMnRwZFsyMzMyXTogV3JpdHRlbiBieSBNYXJrIFNwZW5jZXIsIENvcHlyaWdodCAo
+QykgMTk5OCwgQWR0cmFuLCBJbmMuDQpPY3QgIDEgMTQ6MjY6MjAgbGFubWFzdGVyIHhsMnRwZFsy
+MzMyXTogRm9ya2VkIGJ5IFNjb3R0IEJhbG1vcyBhbmQgRGF2aWQgU3RpcHAsIChDKSAyMDAxDQpP
+Y3QgIDEgMTQ6MjY6MjAgbGFubWFzdGVyIHhsMnRwZFsyMzMyXTogSW5oZXJpdGVkIGJ5IEplZmYg
+TWNBZGFtcywgKEMpIDIwMDINCk9jdCAgMSAxNDoyNjoyMCBsYW5tYXN0ZXIgeGwydHBkWzIzMzJd
+OiBGb3JrZWQgYWdhaW4gYnkgWGVsZXJhbmNlICh3d3cueGVsZXJhbmNlLmNvbSkgKEMpIDIwMDYN
+Ck9jdCAgMSAxNDoyNjoyMCBsYW5tYXN0ZXIgeGwydHBkWzIzMzJdOiBMaXN0ZW5pbmcgb24gSVAg
+YWRkcmVzcyAwLjAuMC4wLCBwb3J0IDE3MDENCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgeGwy
+dHBkWzIzMzJdOiBDb25uZWN0aW9uIGVzdGFibGlzaGVkIHRvIDE1MS40NC42Ljk1LCAxNzAxLiAg
+TG9jYWw6IDU2MzM3LCBSZW1vdGU6IDQgKHJlZj0wLzApLiAgTE5TIHNlc3Npb24gaXMgJ2RlZmF1
+bHQnDQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHhsMnRwZFsyMzMyXTogY2hlY2tfY29udHJv
+bDogUmVjZWl2ZWQgb3V0IG9mIG9yZGVyIGNvbnRyb2wgcGFja2V0IG9uIHR1bm5lbCA0IChnb3Qg
+MywgZXhwZWN0ZWQgMikNCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgeGwydHBkWzIzMzJdOiBo
+YW5kbGVfcGFja2V0OiBiYWQgY29udHJvbCBwYWNrZXQhDQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFz
+dGVyIHhsMnRwZFsyMzMyXTogcmVzdWx0X2NvZGVfYXZwOiByZXN1bHQgY29kZSBub3QgYXBwcm9w
+cmlhdGUgZm9yIEluY29taW5nLUNhbGwtUmVxdWVzdC4gIElnbm9yaW5nLg0KT2N0ICAxIDE0OjI2
+OjUyIGxhbm1hc3RlciB4bDJ0cGRbMjMzMl06IHN0YXJ0X3BwcGQ6IEknbSBydW5uaW5nOg0KT2N0
+ICAxIDE0OjI2OjUyIGxhbm1hc3RlciB4bDJ0cGRbMjMzMl06ICIvdXNyL3NiaW4vcHBwZCINCk9j
+dCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgeGwydHBkWzIzMzJdOiAicGFzc2l2ZSINCk9jdCAgMSAx
+NDoyNjo1MiBsYW5tYXN0ZXIgeGwydHBkWzIzMzJdOiAibm9kZXRhY2giDQpPY3QgIDEgMTQ6MjY6
+NTIgbGFubWFzdGVyIHhsMnRwZFsyMzMyXTogIjE5Mi4xNjguMTAxLjI2OjE5Mi4xNjguMTAxLjIw
+MCINCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgeGwydHBkWzIzMzJdOiAiZmlsZSINCk9jdCAg
+MSAxNDoyNjo1MiBsYW5tYXN0ZXIgeGwydHBkWzIzMzJdOiAiL2V0Yy9wcHAvb3B0aW9ucy54bDJ0
+cGQiDQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHhsMnRwZFsyMzMyXTogIi9kZXYvcHRzLzQi
+DQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHhsMnRwZFsyMzMyXTogQ2FsbCBlc3RhYmxpc2hl
+ZCB3aXRoIDE1MS40NC42Ljk1LCBMb2NhbDogNjQyNTMsIFJlbW90ZTogMSwgU2VyaWFsOiAwDQpP
+Y3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHBwcGQgMi40LjUgc3RhcnRlZCBi
+eSBhZG1pbmlzdHJhdG9yLCB1aWQgMA0KT2N0ICAxIDE0OjI2OjUyIGxhbm1hc3RlciBwcHBkWzIz
+NDJdOiB1c2luZyBjaGFubmVsIDQNCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsyMzQy
+XTogVXNpbmcgaW50ZXJmYWNlIHBwcDANCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsy
+MzQyXTogQ29ubmVjdDogcHBwMCA8LS0+IC9kZXYvcHRzLzQNCk9jdCAgMSAxNDoyNjo1MiBsYW5t
+YXN0ZXIgcHBwZFsyMzQyXTogc2VudCBbTENQIENvbmZSZXEgaWQ9MHgxIDxtcnUgMTQwMD4gPGFz
+eW5jbWFwIDB4MD4gPGF1dGggY2hhcCBNUy12Mj4gPG1hZ2ljIDB4MWJkYzdkOTY+IDxwY29tcD4g
+PGFjY29tcD5dDQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHJjdmQgW0xD
+UCBDb25mUmVxIGlkPTB4MCA8bXJ1IDE0MDA+IDxtYWdpYyAweDczODUwNjQ5PiA8cGNvbXA+IDxh
+Y2NvbXA+IDxjYWxsYmFjayBDQkNQPl0NCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsy
+MzQyXTogc2VudCBbTENQIENvbmZSZWogaWQ9MHgwIDxjYWxsYmFjayBDQkNQPl0NCk9jdCAgMSAx
+NDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsyMzQyXTogcmN2ZCBbTENQIENvbmZBY2sgaWQ9MHgxIDxt
+cnUgMTQwMD4gPGFzeW5jbWFwIDB4MD4gPGF1dGggY2hhcCBNUy12Mj4gPG1hZ2ljIDB4MWJkYzdk
+OTY+IDxwY29tcD4gPGFjY29tcD5dDQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0
+Ml06IHJjdmQgW0xDUCBDb25mUmVxIGlkPTB4MSA8bXJ1IDE0MDA+IDxtYWdpYyAweDczODUwNjQ5
+PiA8cGNvbXA+IDxhY2NvbXA+XQ0KT2N0ICAxIDE0OjI2OjUyIGxhbm1hc3RlciBwcHBkWzIzNDJd
+OiBzZW50IFtMQ1AgQ29uZkFjayBpZD0weDEgPG1ydSAxNDAwPiA8bWFnaWMgMHg3Mzg1MDY0OT4g
+PHBjb21wPiA8YWNjb21wPl0NCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsyMzQyXTog
+c2VudCBbTENQIEVjaG9SZXEgaWQ9MHgwIG1hZ2ljPTB4MWJkYzdkOTZdDQpPY3QgIDEgMTQ6MjY6
+NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHNlbnQgW0NIQVAgQ2hhbGxlbmdlIGlkPTB4MTggPGY3
+ZWMxNjIwMDc1MjY2ZTEwMmYxMDNkZGZiOTg5Zjg2PiwgbmFtZSA9ICJsMnRwZCJdDQpPY3QgIDEg
+MTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHJjdmQgW0xDUCBJZGVudCBpZD0weDIgbWFn
+aWM9MHg3Mzg1MDY0OSAiTVNSQVNWNS4yMCJdDQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHBw
+cGRbMjM0Ml06IHJjdmQgW0xDUCBJZGVudCBpZD0weDMgbWFnaWM9MHg3Mzg1MDY0OSAiTVNSQVMt
+MC1MQVBUT1AtQkJLIl0NCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsyMzQyXTogcmN2
+ZCBbTENQIElkZW50IGlkPTB4NCBtYWdpYz0weDczODUwNjQ5ICJcMzc3Nzc3Nzc2MjZcMDIzP1wz
+Nzc3Nzc3NzYzMFwzNzc3Nzc3NzYyNW1QSFwzNzc3Nzc3NzY3MVwzNzc3Nzc3NzY0M0RcMzc3Nzc3
+Nzc3NjVcMzc3Nzc3Nzc3NzNcMDI3XDAwMVwzNzc3Nzc3NzYxMiJdDQpPY3QgIDEgMTQ6MjY6NTIg
+bGFubWFzdGVyIHBwcGRbMjM0Ml06IHJjdmQgW0xDUCBFY2hvUmVwIGlkPTB4MCBtYWdpYz0weDcz
+ODUwNjQ5XQ0KT2N0ICAxIDE0OjI2OjUyIGxhbm1hc3RlciBwcHBkWzIzNDJdOiByY3ZkIFtDSEFQ
+IFJlc3BvbnNlIGlkPTB4MTggPGRlNTg2MWMwZjQwMDlkYzgxZTAyNTQ1NzkyNGE5MWE4MDAwMDAw
+MDAwMDAwMDAwMGIyZjc3N2I4N2QyZTZmOTA4MDY1OGY4Njk1YTkzZWNkZjdmNzZiZWEyZDZjY2Y2
+ODAwPiwgbmFtZSA9ICJmcmFuY2VzY28iXQ0KT2N0ICAxIDE0OjI2OjUyIGxhbm1hc3RlciBwcHBk
+WzIzNDJdOiBzZW50IFtDSEFQIFN1Y2Nlc3MgaWQ9MHgxOCAiUz00NjlBRTgyRDFBNUJCMjEzM0RB
+NTg0RDY4NEJBM0REMzY5OERGOEQxIE09QWNjZXNzIGdyYW50ZWQiXQ0KT2N0ICAxIDE0OjI2OjUy
+IGxhbm1hc3RlciBwcHBkWzIzNDJdOiBzZW50IFtDQ1AgQ29uZlJlcSBpZD0weDEgPG1wcGUgK0gg
+LU0gK1MgLUwgLUQgLUM+XQ0KT2N0ICAxIDE0OjI2OjUyIGxhbm1hc3RlciBwcHBkWzIzNDJdOiBy
+Y3ZkIFtJUFY2Q1AgQ29uZlJlcSBpZD0weDUgPGFkZHIgZmU4MDo6MTAxNDoxZmQxOjVlMDg6MzAx
+YT5dDQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IFVuc3VwcG9ydGVkIHBy
+b3RvY29sICdJUHY2IENvbnRyb2wgUHJvdG9jb2wnICgweDgwNTcpIHJlY2VpdmVkDQpPY3QgIDEg
+MTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHNlbnQgW0xDUCBQcm90UmVqIGlkPTB4MiA4
+MCA1NyAwMSAwNSAwMCAwZSAwMSAwYSAxMCAxNCAxZiBkMSA1ZSAwOCAzMCAxYV0NCk9jdCAgMSAx
+NDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsyMzQyXTogcmN2ZCBbQ0NQIENvbmZSZXEgaWQ9MHg2IDxt
+cHBlICtIIC1NIC1TIC1MIC1EIC1DPl0NCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsy
+MzQyXTogc2VudCBbQ0NQIENvbmZOYWsgaWQ9MHg2IDxtcHBlICtIIC1NICtTIC1MIC1EIC1DPl0N
+Ck9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsyMzQyXTogcmN2ZCBbSVBDUCBDb25mUmVx
+IGlkPTB4NyA8YWRkciAwLjAuMC4wPiA8bXMtZG5zMSAwLjAuMC4wPiA8bXMtd2lucyAwLjAuMC4w
+PiA8bXMtZG5zMiAwLjAuMC4wPiA8bXMtd2lucyAwLjAuMC4wPl0NCk9jdCAgMSAxNDoyNjo1MiBs
+YW5tYXN0ZXIgcHBwZFsyMzQyXTogc2VudCBbSVBDUCBUZXJtQWNrIGlkPTB4N10NCk9jdCAgMSAx
+NDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsyMzQyXTogcmN2ZCBbQ0NQIENvbmZBY2sgaWQ9MHgxIDxt
+cHBlICtIIC1NICtTIC1MIC1EIC1DPl0NCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsy
+MzQyXTogcmN2ZCBbQ0NQIENvbmZSZXEgaWQ9MHg4IDxtcHBlICtIIC1NICtTIC1MIC1EIC1DPl0N
+Ck9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsyMzQyXTogc2VudCBbQ0NQIENvbmZBY2sg
+aWQ9MHg4IDxtcHBlICtIIC1NICtTIC1MIC1EIC1DPl0NCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0
+ZXIgcHBwZFsyMzQyXTogTVBQRSAxMjgtYml0IHN0YXRlbGVzcyBjb21wcmVzc2lvbiBlbmFibGVk
+DQpPY3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHNlbnQgW0lQQ1AgQ29uZlJl
+cSBpZD0weDEgPGNvbXByZXNzIFZKIDBmIDAxPiA8YWRkciAxOTIuMTY4LjEwMS4yNj5dDQpPY3Qg
+IDEgMTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHJjdmQgW0lQQ1AgQ29uZlJlaiBpZD0w
+eDEgPGNvbXByZXNzIFZKIDBmIDAxPl0NCk9jdCAgMSAxNDoyNjo1MiBsYW5tYXN0ZXIgcHBwZFsy
+MzQyXTogc2VudCBbSVBDUCBDb25mUmVxIGlkPTB4MiA8YWRkciAxOTIuMTY4LjEwMS4yNj5dDQpP
+Y3QgIDEgMTQ6MjY6NTIgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHJjdmQgW0lQQ1AgQ29uZkFjayBp
+ZD0weDIgPGFkZHIgMTkyLjE2OC4xMDEuMjY+XQ0KT2N0ICAxIDE0OjI2OjU0IGxhbm1hc3RlciBw
+cHBkWzIzNDJdOiByY3ZkIFtJUENQIENvbmZSZXEgaWQ9MHg5IDxhZGRyIDAuMC4wLjA+IDxtcy1k
+bnMxIDAuMC4wLjA+IDxtcy13aW5zIDAuMC4wLjA+IDxtcy1kbnMyIDAuMC4wLjA+IDxtcy13aW5z
+IDAuMC4wLjA+XQ0KT2N0ICAxIDE0OjI2OjU0IGxhbm1hc3RlciBwcHBkWzIzNDJdOiBzZW50IFtJ
+UENQIENvbmZSZWogaWQ9MHg5IDxtcy1kbnMxIDAuMC4wLjA+IDxtcy13aW5zIDAuMC4wLjA+IDxt
+cy1kbnMyIDAuMC4wLjA+IDxtcy13aW5zIDAuMC4wLjA+XQ0KT2N0ICAxIDE0OjI2OjU0IGxhbm1h
+c3RlciBwcHBkWzIzNDJdOiByY3ZkIFtJUENQIENvbmZSZXEgaWQ9MHhhIDxhZGRyIDAuMC4wLjA+
+XQ0KT2N0ICAxIDE0OjI2OjU0IGxhbm1hc3RlciBwcHBkWzIzNDJdOiBzZW50IFtJUENQIENvbmZO
+YWsgaWQ9MHhhIDxhZGRyIDE5Mi4xNjguMTAxLjIwMD5dDQpPY3QgIDEgMTQ6MjY6NTQgbGFubWFz
+dGVyIHBwcGRbMjM0Ml06IHJjdmQgW0lQQ1AgQ29uZlJlcSBpZD0weGIgPGFkZHIgMTkyLjE2OC4x
+MDEuMjAwPl0NCk9jdCAgMSAxNDoyNjo1NCBsYW5tYXN0ZXIgcHBwZFsyMzQyXTogc2VudCBbSVBD
+UCBDb25mQWNrIGlkPTB4YiA8YWRkciAxOTIuMTY4LjEwMS4yMDA+XQ0KT2N0ICAxIDE0OjI2OjU0
+IGxhbm1hc3RlciBwcHBkWzIzNDJdOiBmb3VuZCBpbnRlcmZhY2UgZXRoMCBmb3IgcHJveHkgYXJw
+DQpPY3QgIDEgMTQ6MjY6NTQgbGFubWFzdGVyIHBwcGRbMjM0Ml06IGxvY2FsICBJUCBhZGRyZXNz
+IDE5Mi4xNjguMTAxLjI2DQpPY3QgIDEgMTQ6MjY6NTQgbGFubWFzdGVyIHBwcGRbMjM0Ml06IHJl
+bW90ZSBJUCBhZGRyZXNzIDE5Mi4xNjguMTAxLjIwMA0KT2N0ICAxIDE0OjI2OjU0IGxhbm1hc3Rl
+ciBwcHBkWzIzNDJdOiBTY3JpcHQgL2V0Yy9wcHAvaXAtdXAgc3RhcnRlZCAocGlkIDIzNjIpDQpP
+Y3QgIDEgMTQ6MjY6NTQgbGFubWFzdGVyIHBwcGRbMjM0Ml06IFNjcmlwdCAvZXRjL3BwcC9pcC11
+cCBmaW5pc2hlZCAocGlkIDIzNjIpLCBzdGF0dXMgPSAweDANCk9jdCAgMSAxNDoyNjo1NCBsYW5t
+YXN0ZXIgZG5zbWFzcS1kaGNwWzExNjRdOiBESENQSU5GT1JNKHBwcDApIDE5Mi4xNjguMTAxLjIw
+MCAwMDozMzphOTo1MjozZDozMDpmMDozNDo0MDpiYzo4ZTo2MzoyNDo1NjpmZjphYToxZQ0KT2N0
+ICAxIDE0OjI2OjU0IGxhbm1hc3RlciBkbnNtYXNxLWRoY3BbMTE2NF06IERIQ1BBQ0socHBwMCkg
+MTkyLjE2OC4xMDEuMjAwIDAwOjMzOmE5OjUyOjNkOjMwOmYwOjM0OjQwOmJjOjhlOjYzOjI0OjU2
+OmZmOmFhOjFlIGxhcHRvcC1iYms=
+--20cf3010e31fe45b6b0504efd543
+Content-Type: application/octet-stream; name="ppp.xl2tpd"
+Content-Disposition: attachment; filename="ppp.xl2tpd"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_i115yaid3
+
+bmFtZSBsMnRwZA0KYXV0aA0KY3J0c2N0cw0KaGlkZS1wYXNzd29yZA0KbW9kZW0NCiNkZWJ1Zw0K
+I2R1bXANCg0KcHJveHlhcnANCm5vZGVmYXVsdHJvdXRlDQoNCnJlZnVzZS1wYXANCnJlZnVzZS1j
+aGFwDQpyZWZ1c2UtbXNjaGFwDQpyZXF1aXJlLW1zY2hhcC12Mg0KDQpub2JzZGNvbXANCiMgVGhl
+IGZvbGxvd2luZyBkb3NuJ3Qgd29yaw0KcmVxdWlyZS1tcHBlLTEyOA0KI25vbXBwZQ0KDQpsY3At
+ZWNoby1pbnRlcnZhbCAzMA0KbGNwLWVjaG8tZmFpbHVyZSA0DQoNCiMgVHdlYWsNCiNtdHUgMTI4
+MCAjIGlwdjYgbWluaW11bQ0KI21ydSAxMjgwDQptdHUgMTQwMA0KbXJ1IDE0MDA=
+--20cf3010e31fe45b6b0504efd543--
