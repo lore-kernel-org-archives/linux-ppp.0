@@ -1,37 +1,52 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 03 Dec 2014 11:46:38 +0000
-Subject: Re: Delayed error message
-Message-Id: <547EF81E.7040003@workingcode.com>
+From: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>
+Date: Mon, 01 Dec 2014 12:19:08 +0000
+Subject: Re: [PATCH 1/3] net-PPP: Deletion of unnecessary checks before the function call "kfree"
+Message-Id: <547C5CBC.6060607@cogentembedded.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <2ECB8EB7-DED1-40E2-AD43-A3112183047E@rajancraveri.it>
-In-Reply-To: <2ECB8EB7-DED1-40E2-AD43-A3112183047E@rajancraveri.it>
+References: <5307CAA2.8060406@users.sourceforge.net> <alpine.DEB.2.02.1402212321410.2043@localhost6.localdomain6> <530A086E.8010901@users.sourceforge.net> <alpine.DEB.2.02.1402231635510.1985@localhost6.localdomain6> <530A72AA.3000601@users.sourceforge.net> <alpine.DEB.2.02.1402240658210.2090@localhost6.localdomain6> <530B5FB6.6010207@users.sourceforge.net> <alpine.DEB.2.10.1402241710370.2074@hadrien> <530C5E18.1020800@users.sourceforge.net> <alpine.DEB.2.10.1402251014170.2080@hadrien> <530CD2C4.4050903@users.sourceforge.net> <alpine.DEB.2.10.1402251840450.7035@hadrien> <530CF8FF.8080600@users.sourceforge.net> <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6> <530DD06F.4090703@users.sourceforge.net> <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6> <5317A59D.4@users.sourceforge.net> <547B4886.4080406@users.sourceforge.net> <547B496E.604@users.sourceforge.net>
+In-Reply-To: <547B496E.604@users.sourceforge.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: SF Markus Elfring <elfring@users.sourceforge.net>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 
-On 12/02/14 17:50, Rajan Craveri wrote:
-> Hi, when for some reasons the connection fails
-> I receive a delayed message in prompt
-> Is there a way to avoid that delayed message?
-> 
-> I need keep the screen clean after boot in a museum installation.
+Hello.
 
-I think you might need to provide a little more detail on exactly what
-message you're getting and what the word "prompt" means in this context.
+On 11/30/2014 7:44 PM, SF Markus Elfring wrote:
 
-At a guess, the problem is that there's a rule in your /etc/syslog.conf
-(or /etc/rsyslog.conf on some Linux systems) that is directing messages
-for 'daemon' to /dev/console.
+> From: Markus Elfring <elfring@users.sourceforge.net>
+> Date: Sun, 30 Nov 2014 17:02:07 +0100
 
-pppd always writes to syslog, with severity level based on the nature of
-the problem.  It never writes a message above "error" severity, so as
-long as only "daemon.crit" (and above) are directed to the console, you
-shouldn't have that problem.
+> The kfree() function tests whether its argument is NULL and then
+> returns immediately. Thus the test around the call is not needed.
 
-But that's just a guess.  I don't know whether the message you're
-talking about is from pppd or from the kernel or is possibly from
-something unrelated to PPP.
+> This issue was detected by using the Coccinelle software.
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+> Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
+> ---
+>   drivers/net/ppp/ppp_mppe.c | 14 ++++++--------
+>   1 file changed, 6 insertions(+), 8 deletions(-)
+
+> diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+> index 911b216..7e44212 100644
+> --- a/drivers/net/ppp/ppp_mppe.c
+> +++ b/drivers/net/ppp/ppp_mppe.c
+> @@ -238,8 +238,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+>   	return (void *)state;
+>
+>   	out_free:
+> -	    if (state->sha1_digest)
+> -		kfree(state->sha1_digest);
+> +	kfree(state->sha1_digest);
+
+    Please keep this line aligned to the others.
+
+>   	    if (state->sha1)
+>   		crypto_free_hash(state->sha1);
+>   	    if (state->arc4)
+
+[...]
+
+WBR, Sergei
+
