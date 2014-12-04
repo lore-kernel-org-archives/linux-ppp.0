@@ -1,27 +1,47 @@
 From: SF Markus Elfring <elfring@users.sourceforge.net>
-Date: Fri, 05 Dec 2014 21:00:27 +0000
-Subject: Re: [PATCH v2 5/6] net-PPP: Delete an unnecessary assignment in mppe_alloc()
-Message-Id: <54821CEB.2020002@users.sourceforge.net>
+Date: Thu, 04 Dec 2014 22:10:38 +0000
+Subject: [PATCH v2 1/6] net-PPP: Replacement of a printk() call by pr_warn() in mppe_rekey()
+Message-Id: <5480DBDE.7040604@users.sourceforge.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <5317A59D.4@users.sourceforge.net> <547B4886.4080406@users.sourceforge.net> <547B496E.604@users.sourceforge.net> <547C5CBC.6060607@cogentembedded.com> <547C82A6.2030808@users.sourceforge.net> <547CA157.1080401@cogentembedded.com> <5480DA32.8000201@users.sourceforge.net> <5480DDC1.6040101@users.sourceforge.net> <20141205122214.GB4912@mwanda> <5481A8AE.9050506@users.sourceforge.net> <20141205135723.GE4912@mwanda>
-In-Reply-To: <20141205135723.GE4912@mwanda>
+References: <5307CAA2.8060406@users.sourceforge.net> <530A086E.8010901@users.sourceforge.net> <alpine.DEB.2.02.1402231635510.1985@localhost6.localdomain6> <530A72AA.3000601@users.sourceforge.net> <alpine.DEB.2.02.1402240658210.2090@localhost6.localdomain6> <530B5FB6.6010207@users.sourceforge.net> <alpine.DEB.2.10.1402241710370.2074@hadrien> <530C5E18.1020800@users.sourceforge.net> <alpine.DEB.2.10.1402251014170.2080@hadrien> <530CD2C4.4050903@users.sourceforge.net> <alpine.DEB.2.10.1402251840450.7035@hadrien> <530CF8FF.8080600@users.sourceforge.net> <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6> <530DD06F.4090703@users.sourceforge.net> <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6> <5317A59D.4@users.sourceforge.net> <547B4886.4080406@users.sourceforge.net> <547B496E.604@users.sourceforge.net> <547C5CBC.6060607@cogentembedded.com> <547C82A6.2030808@users.sourceforge.net> <547CA157.1080401@cogentembedded.com> <5480DA32.8000201@users.sourceforge.net>
+In-Reply-To: <5480DA32.8000201@users.sourceforge.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Dan Carpenter <dan.carpenter@oracle.com>
-Cc: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
+To: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 
->> That is true.
-> 
-> In that case, I misunderstood what you wrote.
+From: Markus Elfring <elfring@users.sourceforge.net>
+Date: Thu, 4 Dec 2014 18:28:52 +0100
 
-I find it a bit interesting how this misunderstanding could happen here somehow.
+The mppe_rekey() function contained a few update candidates.
+* Curly brackets were still used around a single function call "printk".
+* Unwanted space characters
 
+Let us improve these implementation details according to the current Linux
+coding style convention.
 
-> Looking at it now, this patch is actually ok.
+Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
+---
+ drivers/net/ppp/ppp_mppe.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-Does that mean that you would like to add any tag like "Acked-by" or "Reviewed-by"
-to any of the proposed six update steps?
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index 911b216..84b7bce 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -172,9 +172,8 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
+ 		setup_sg(sg_in, state->sha1_digest, state->keylen);
+ 		setup_sg(sg_out, state->session_key, state->keylen);
+ 		if (crypto_blkcipher_encrypt(&desc, sg_out, sg_in,
+-					     state->keylen) != 0) {
+-    		    printk(KERN_WARNING "mppe_rekey: cipher_encrypt failed\n");
+-		}
++					     state->keylen) != 0)
++			pr_warn("mppe_rekey: cipher_encrypt failed\n");
+ 	} else {
+ 		memcpy(state->session_key, state->sha1_digest, state->keylen);
+ 	}
+-- 
+2.1.3
 
-Regards,
-Markus
