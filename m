@@ -1,35 +1,53 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 23 Dec 2014 12:11:07 +0000
-Subject: Re: pppd 2.4.7 for bsd
-Message-Id: <54995BDB.1070500@workingcode.com>
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Date: Thu, 04 Dec 2014 22:15:10 +0000
+Subject: [PATCH v2 3/6] net-PPP: Deletion of unnecessary checks before the function call "kfree"
+Message-Id: <5480DCEE.4070803@users.sourceforge.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20141223090657.a126d12db17e3a931dfe978a@openbsd.se>
-In-Reply-To: <20141223090657.a126d12db17e3a931dfe978a@openbsd.se>
+References: <5307CAA2.8060406@users.sourceforge.net> <530A086E.8010901@users.sourceforge.net> <alpine.DEB.2.02.1402231635510.1985@localhost6.localdomain6> <530A72AA.3000601@users.sourceforge.net> <alpine.DEB.2.02.1402240658210.2090@localhost6.localdomain6> <530B5FB6.6010207@users.sourceforge.net> <alpine.DEB.2.10.1402241710370.2074@hadrien> <530C5E18.1020800@users.sourceforge.net> <alpine.DEB.2.10.1402251014170.2080@hadrien> <530CD2C4.4050903@users.sourceforge.net> <alpine.DEB.2.10.1402251840450.7035@hadrien> <530CF8FF.8080600@users.sourceforge.net> <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6> <530DD06F.4090703@users.sourceforge.net> <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6> <5317A59D.4@users.sourceforge.net> <547B4886.4080406@users.sourceforge.net> <547B496E.604@users.sourceforge.net> <547C5CBC.6060607@cogentembedded.com> <547C82A6.2030808@users.sourceforge.net> <547CA157.1080401@cogentembedded.com> <5480DA32.8000201@users.sourceforge.net>
+In-Reply-To: <5480DA32.8000201@users.sourceforge.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 
-On 12/23/14 03:06, oht@openbsd.se wrote:
-> Hi
-> I'm using pppd to connect to my ip provider via umts.
-> In the present OpenBSD there is a very old version of pppd included, 2.3.5.
-> In order to have my resolve.conf updated after switching to some wifi provider I needed the "usepeerdns".
-> It is not included in version 2.3.5.
-> Finding out that NetBSD is using a patched version of 2.4.4, I modified that for my OpenBSD. 
-> It worked for my purpose.
-> After that it was quite easy to upgrade it to your 2.4.7 level.
-> If it is of any use for you, I can provide diffs, new sys-bsd.c and new Makefile.bsd for 2.4.7
-> It works on OpenBSD and compiles on FreeBSD and NetBSD.
+From: Markus Elfring <elfring@users.sourceforge.net>
+Date: Thu, 4 Dec 2014 22:22:23 +0100
 
-I can't speak for Paul, but I do think that's a welcome addition.
-Besides the usual administrivia regarding copyrights and attribution,
-the main issue in platform support is with on-going maintenance.  There
-usually isn't a great deal of this work -- it's a rather mature software
-package -- but when a new release is cut, we like to make sure that it
-works on all of the supported packages.
+The kfree() function tests whether its argument is NULL and then
+returns immediately. Thus the test around the call is not needed.
 
-Are you willing (or do you know someone willing) to play that role for BSD?
+This issue was detected by using the Coccinelle software.
 
+Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
+---
+ drivers/net/ppp/ppp_mppe.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index b80af29..94ff216 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -237,8 +237,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+ 	return (void *)state;
+ 
+ out_free:
+-	if (state->sha1_digest)
+-		kfree(state->sha1_digest);
++	kfree(state->sha1_digest);
+ 	if (state->sha1)
+ 		crypto_free_hash(state->sha1);
+ 	if (state->arc4)
+@@ -255,8 +254,7 @@ static void mppe_free(void *arg)
+ {
+ 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
+ 	if (state) {
+-		if (state->sha1_digest)
+-			kfree(state->sha1_digest);
++		kfree(state->sha1_digest);
+ 		if (state->sha1)
+ 			crypto_free_hash(state->sha1);
+ 		if (state->arc4)
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+2.1.3
+
