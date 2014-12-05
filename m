@@ -1,43 +1,69 @@
 From: Joe Perches <joe@perches.com>
-Date: Fri, 05 Dec 2014 07:41:27 +0000
+Date: Fri, 05 Dec 2014 07:57:35 +0000
 Subject: Re: [PATCH v2 1/6] net-PPP: Replacement of a printk() call by pr_warn() in mppe_rekey()
-Message-Id: <1417765287.2721.39.camel@perches.com>
+Message-Id: <1417766255.2721.43.camel@perches.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1417731809.2721.17.camel@perches.com>
-	 <alpine.DEB.2.02.1412050820290.2059@localhost6.localdomain6>
-In-Reply-To: <alpine.DEB.2.02.1412050820290.2059@localhost6.localdomain6>
+References: <5307CAA2.8060406@users.sourceforge.net>
+	 <530B5FB6.6010207@users.sourceforge.net>
+	 <alpine.DEB.2.10.1402241710370.2074@hadrien>
+	 <530C5E18.1020800@users.sourceforge.net>
+	 <alpine.DEB.2.10.1402251014170.2080@hadrien>
+	 <530CD2C4.4050903@users.sourceforge.net>
+	 <alpine.DEB.2.10.1402251840450.7035@hadrien>
+	 <530CF8FF.8080600@users.sourceforge.net>
+	 <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6>
+	 <530DD06F.4090703@users.sourceforge.net>
+	 <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6>
+	 <5317A59D.4@users.sourceforge.net> <547B4886.4080406@users.sourceforge.net>
+	 <547B496E.604@users.sourceforge.net> <547C5CBC.6060607@cogentembedded.com>
+	 <547C82A6.2030808@users.sourceforge.net>
+	 <547CA157.1080401@cogentembedded.com>
+	 <5480DA32.8000201@users.sourceforge.net>
+	 <5480DBDE.7040604@users.sourceforge.net>
+	 <1417731809.2721.17.camel@perches.com>
+	 <5480DFB5.4090708@users.sourceforge.net>
+	 <1417733101.2721.20.camel@perches.com>
+	 <54815C5F.8090702@users.sourceforge.net>
+In-Reply-To: <54815C5F.8090702@users.sourceforge.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Julia Lawall <julia.lawall@lip6.fr>
-Cc: SF Markus Elfring <elfring@users.sourceforge.net>, Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org
+To: SF Markus Elfring <elfring@users.sourceforge.net>
+Cc: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 
-On Fri, 2014-12-05 at 08:21 +0100, Julia Lawall wrote:
-> On Thu, 4 Dec 2014, Joe Perches wrote:
-> > It's generally nicer to replace embedded function names
-> > with "%s: ", __func__
+On Fri, 2014-12-05 at 08:18 +0100, SF Markus Elfring wrote:
+> >>> It's generally nicer to replace embedded function names
+> >>> with "%s: ", __func__
+> >>>
+> >>> 			pr_warn("%s: cipher_encrypt failed\n", __func__);
+> >>
+> >> Do you want that I send a third patch series for the fine-tuning of these parameters?
 > > 
-> > 			pr_warn("%s: cipher_encrypt failed\n", __func__);
+> > If you want.
 > 
-> Doing so may potentially allow some strings to be shared, thus saving a 
-> little space.  Perhaps not in this case, though.
+> Would "a committer" fix such a small source code adjustment also without a resend of
+> a patch series?
 
-It's not necessarily a code size savings in any case.
+Depends on the committer.  Some might, most wouldn't.
 
-It can be, but the real benefits are stylistic
-consistency and lack of mismatch between function
-name and message.
+drivers/net/ppp doesn't have a specific maintainer.
 
-If the code is refactored or copy/pasted into another
-function, a moderately common defect is not modifying
-the embedded function name in the message.
+The networking maintainer generally asks for resends
+of patches that don't suit his taste, but lots of
+non-perfect patches still get applied there.
 
-There may be some smallish savings if ever these
-__func__ uses were converted to use %pf via some
-internal standardized mechanism.
+It's a process, and it's not immediate.  Wait to see
+if these get applied as-is.  If the embedded function
+name use, which is trivial, bothers you, send another
+patch later on that changes it.
 
-A negative to that approach is inlined functions would
-take the function name of the parent not keep the
-inlined function name.
+> Does it make sense to express such implementation details in the Linux coding
+> style documentation more explicitly (besides the fact that this update suggestion
+> was also triggered by a warning from the script "checkpatch.pl").
+
+Probably not.
+
+Overly formalized coding style rules are perhaps
+more of a barrier to entry than most want.
 
 
