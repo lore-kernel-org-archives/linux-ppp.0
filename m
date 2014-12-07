@@ -1,52 +1,48 @@
-From: terry white <twhite@aniota.com>
-Date: Fri, 05 Dec 2014 22:35:54 +0000
+From: Julia Lawall <julia.lawall@lip6.fr>
+Date: Sun, 07 Dec 2014 10:44:42 +0000
 Subject: Re: [PATCH v2 1/6] net-PPP: Replacement of a printk() call by pr_warn() in mppe_rekey()
-Message-Id: <Pine.LNX.4.64.1412051403160.20522@yossarian>
+Message-Id: <alpine.DEB.2.02.1412071140290.2044@localhost6.localdomain6>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <5307CAA2.8060406@users.sourceforge.net>  <530B5FB6.6010207@users.sourceforge.net>
-  <alpine.DEB.2.10.1402241710370.2074@hadrien>  <530C5E18.1020800@users.sourceforge.net>
-  <alpine.DEB.2.10.1402251014170.2080@hadrien>  <530CD2C4.4050903@users.sourceforge.net>
-  <alpine.DEB.2.10.1402251840450.7035@hadrien>  <530CF8FF.8080600@users.sourceforge.net>
-  <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6> 
- <530DD06F.4090703@users.sourceforge.net>  <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6>
-  <5317A59D.4@users.sourceforge.net> <547C5CBC.6060607@cogentembedded.com> 
- <547C82A6.2030808@users.sourceforge.net>  <547CA157.1080401@cogentembedded.com>
-  <5480DA32.8000201@users.sourceforge.net>  <5480DBDE.7040604@users.sourceforge.net>
-  <1417731809.2721.17.camel@perches.com>  <5480DFB5.4090708@users.sourceforge.net>
-  <1417733101.2721.20.camel@perches.com>  <54815C5F.8090702@users.sourceforge.net>
- <1417766255.2721.43.camel@perches.com>
-In-Reply-To: <1417766255.2721.43.camel@perches.com>
+References: <1417731809.2721.17.camel@perches.com>  <alpine.DEB.2.02.1412050820290.2059@localhost6.localdomain6> <1417765287.2721.39.camel@perches.com>
+In-Reply-To: <1417765287.2721.39.camel@perches.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: joe@perches.com
-Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
+To: Joe Perches <joe@perches.com>
+Cc: SF Markus Elfring <elfring@users.sourceforge.net>, Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org
 
-... ciao:
+> A negative to that approach is inlined functions would
+> take the function name of the parent not keep the
+> inlined function name.
 
-: on "12-4-2014" "Joe Perches" writ:
-: > Does it make sense to express such implementation details in the Linux 
-: > coding style documentation more explicitly (besides the fact that this 
-: > update suggestion was also triggered by a warning from the script 
-: > "checkpatch.pl".
-: 
-: Probably not.
-: 
-: Overly formalized coding style rules are perhaps
-: more of a barrier to entry than most want.
- 
-   funny you should mention that.  as nothing more than a casual observer, 
-i'm noticing a "TIRED" sensation reading this thread.  i have "0" 
-confidence a "SERIOUS" participant's enthusiasm would remain untested.
- 
-   however, the "checkpatch.pl" warning suggests an assumed 'custom'. i 
-can't tell if this a 'serious' issue, or "pickin' fly shit out of pepper".
- 
-   but from my reading of it, the "CODE" , and the "logic" driving it, is 
-not the problem.
+I tried the following:
 
-    season's best ...
+#include <stdio.h>
 
--- 
-... it's not what you see ,
-    but in stead , notice ...
+inline int foo() {
+  printf("%s %x\n",__func__,0x12345);
+}
+
+int main () {
+  foo();
+}
+
+The assembly code generated for main is:
+
+0000000000400470 <main>:
+  400470:       b9 45 23 01 00          mov    $0x12345,%ecx
+  400475:       ba 4b 06 40 00          mov    $0x40064b,%edx
+  40047a:       be 44 06 40 00          mov    $0x400644,%esi
+  40047f:       bf 01 00 00 00          mov    $0x1,%edi
+  400484:       31 c0                   xor    %eax,%eax
+  400486:       e9 d5 ff ff ff          jmpq   400460 <__printf_chk@plt>
+
+That is, the call to foo seems tom be inlined.
+
+But the output is:
+
+foo 12345
+
+So it seems that __func__ is determined before inlining.
+
+julia
