@@ -1,49 +1,44 @@
-From: SF Markus Elfring <elfring@users.sourceforge.net>
-Date: Sat, 13 Dec 2014 06:17:53 +0000
+From: terry white <twhite@aniota.com>
+Date: Sat, 13 Dec 2014 08:12:19 +0000
 Subject: Re: [PATCH v2 0/6] net-PPP: Deletion of a few unnecessary checks
-Message-Id: <548BDA11.1030707@users.sourceforge.net>
+Message-Id: <Pine.LNX.4.64.1412122320150.9095@yossarian>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <548B1E44.6050005@users.sourceforge.net>	<20141212.115922.687789059853236747.davem@davemloft.net>	<548B2468.5050402@users.sourceforge.net> <20141212.150741.2169710971698369167.davem@davemloft.net>
-In-Reply-To: <20141212.150741.2169710971698369167.davem@davemloft.net>
+References: <5480DA32.8000201@users.sourceforge.net>
+In-Reply-To: <5480DA32.8000201@users.sourceforge.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: David Miller <davem@davemloft.net>
-Cc: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
-
-> I'd like to honestly ask why you are being so difficult?
-
-There are several factors which contribute to your perception of
-difficulty here.
-
-1. I try to extract from every feedback the information about the amount
-of acceptance or rejection for a specific update suggestion.
-   A terse feedback (like yours for this issue) makes it occasionally
-harder to see the next useful steps. So another constructive discussion
-is evolving around the clarification of some implementation details.
-
-2. I prefer also different communication styles at some points.
-
-3. I reached a point where the desired software updates were not
-immediately obvious for me while other contributors might have achieved
-a better understanding for the affected issues already.
-
-4. I am on the way at the moment to get my Linux software development
-system running again.
-  
-https://forums.opensuse.org/showthread.php/503327-System-startup-does-not-continue-after-hard-disk-detection
+To: linux-ppp@vger.kernel.org
 
 
-> Everyone gets their code reviewed, everyone has to modify their
-> changes to adhere to the subsystem maintainer's wishes.
+... ciao:
 
-That is fine as usual.
+: on "12-12-2014" "SF Markus Elfring" writ:
+
+:> I don't want error pointers left in data structure members.
+:> I cannot describe my requirements any more precisely than that.
+
+    to me, "error pointers 'left' in data structure members", seems a
+little cavalier.  objection to their existence tends to suggest that not
+a function of the design, or logic involved.
+
+ 
+: I hope that a bit more constructive suggestions will be contributed by
+: involved software developers around the affected source code. 
+ 
+    so, this 'error pointers' issue fails to meet your 'constructive' 
+suggestion threshold.  to my mind, what i choose to ignore, imposes a 
+dangerous minimum. what are you willing to ignore.
 
 
-> You are not being treated specially, and quite frankly nobody
-> is asking anything unreasonable of you.
+: Now it seems that a small code clean-up becomes a more challenging 
+: development task.
+ 
+    first, if you've EVER dealt with imperfect code, that should be a 
+given.  but more importantly to me, i never knew "code clean-up", wasn't 
+"REQUIRED" ...
 
-That is also true as the software development process will be continued.
 
-Regards,
-Markus
+-- 
+... it's not what you see ,
+    but in stead , notice ...
