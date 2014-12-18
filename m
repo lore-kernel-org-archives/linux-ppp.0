@@ -1,30 +1,54 @@
-From: SF Markus Elfring <elfring@users.sourceforge.net>
-Date: Sun, 30 Nov 2014 16:40:38 +0000
-Subject: [PATCH 0/3] net-PPP: Deletion of a few unnecessary checks
-Message-Id: <547B4886.4080406@users.sourceforge.net>
+From: arthurpaulino <arthurpaulino@great.ufc.br>
+Date: Thu, 18 Dec 2014 20:49:25 +0000
+Subject: PPP compression
+Message-Id: <3b4526880d737ed5094d632636e6fef8@great.ufc.br>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <5307CAA2.8060406@users.sourceforge.net> <alpine.DEB.2.02.1402212321410.2043@localhost6.localdomain6> <530A086E.8010901@users.sourceforge.net> <alpine.DEB.2.02.1402231635510.1985@localhost6.localdomain6> <530A72AA.3000601@users.sourceforge.net> <alpine.DEB.2.02.1402240658210.2090@localhost6.localdomain6> <530B5FB6.6010207@users.sourceforge.net> <alpine.DEB.2.10.1402241710370.2074@hadrien> <530C5E18.1020800@users.sourceforge.net> <alpine.DEB.2.10.1402251014170.2080@hadrien> <530CD2C4.4050903@users.sourceforge.net> <alpine.DEB.2.10.1402251840450.7035@hadrien> <530CF8FF.8080600@users.sourceforge.net> <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6> <530DD06F.4090703@users.sourceforge.net> <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6> <5317A59D.4@users.sourceforge.net>
-In-Reply-To: <5317A59D.4@users.sourceforge.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
-Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
+To: linux-ppp@vger.kernel.org
 
-From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Sun, 30 Nov 2014 17:25:40 +0100
+Hello,
 
-Further update suggestions were taken into account after a patch was applied
-from static source code analysis.
+I saw this e-mall address at http://ppp.samba.org/resources.html.
+We do have some questions about ppp. About ppp compression, to be more
+specific.
 
-Markus Elfring (3):
-  Deletion of unnecessary checks before the function call "kfree"
-  Less function calls in mppe_alloc() after error detection
-  Delete an unnecessary assignment
+We need to decompress the payload of some packets to verify if they are
+encrypted on Android devices.
 
- drivers/net/ppp/ppp_mppe.c | 32 +++++++++++++-------------------
- 1 file changed, 13 insertions(+), 19 deletions(-)
+We configured a PPTP VPN server with no encryption. The compression
+algorithm negotiated during the connection phase is Deflate.
 
--- 
-2.1.3
+For instance, in these packets
 
+19:59:09.883213 IP 191.10.97.74 > 200.129.43.196: GREv1, call 1152, seq
+106, length 51: compressed PPP data
+	0x0000:  4500 0047 cc42 4000 402f 59ab bf0a 614a
+	0x0010:  c881 2bc4 3001 880b 0027 0480 0000 006a
+	0x0020:  ff03 00fd 005c 02f7 1e3f 8327 ce85 cfc1
+	0x0030:  13e8 4b86 80ff 8d1c 6eb0 dee3 7f23 e4de
+	0x0040:  e3ef 4258 ef11 00
+19:59:09.884437 IP 191.10.97.74 > 200.129.43.196: GREv1, call 1152, seq
+107, length 43: compressed PPP data
+	0x0000:  4500 003f cc43 4000 402f 59b2 bf0a 614a
+	0x0010:  c881 2bc4 3001 880b 001f 0480 0000 006b
+	0x0020:  ff03 00fd 005d 026b 5e04 4edd 294b e09a
+	0x0030:  5f31 04e8 0547 0ac0 34d7 4fc3 ae19 00
+19:59:09.885609 IP 191.10.97.74 > 200.129.43.196: GREv1, call 1152, seq
+108, length 44: compressed PPP data
+	0x0000:  4500 0040 cc44 4000 402f 59b0 bf0a 614a
+	0x0010:  c881 2bc4 3001 880b 0020 0480 0000 006c
+	0x0020:  ff03 00fd 005e 026b 3e06 ae27 1c56 c035
+	0x0030:  bf66 0858 c168 ab03 d3ac 781a bb66 0000
+
+We figured out that hex FD means that the payload is compressed. Then
+comes a coherency counter (fd 005c, fd 005d, fd 005e). And then, the
+compressed payload itself.
+
+Is there a way to call the deflate algorithm implemented on the linux
+kernel? Are we following the right path? We're trying to avoid
+implementing
+Deflate from zero.
+
+Thank you
