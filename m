@@ -1,44 +1,37 @@
-From: terry white <twhite@aniota.com>
-Date: Sat, 13 Dec 2014 08:12:19 +0000
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Date: Thu, 18 Dec 2014 17:23:08 +0000
 Subject: Re: [PATCH v2 0/6] net-PPP: Deletion of a few unnecessary checks
-Message-Id: <Pine.LNX.4.64.1412122320150.9095@yossarian>
+Message-Id: <54930D7C.3000901@users.sourceforge.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <5480DA32.8000201@users.sourceforge.net>
-In-Reply-To: <5480DA32.8000201@users.sourceforge.net>
+References: <548B0A29.8050503@users.sourceforge.net>	<20141212.105106.1162681032492664308.davem@davemloft.net>	<548B1E44.6050005@users.sourceforge.net> <20141212.115922.687789059853236747.davem@davemloft.net>
+In-Reply-To: <20141212.115922.687789059853236747.davem@davemloft.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
 
+>> Where should "the error pointers" be stored instead?
+> 
+> A local variable, before you assign it into the datastructure.
 
-... ciao:
+I have looked at the affected software infrastructure once more.
+Now I find still that your data reorgansisation wish can not be resolved
+in a simple way.
 
-: on "12-12-2014" "SF Markus Elfring" writ:
+I imagine that your update suggestion would mean that the corresponding
+pointers will be passed around by function parameters instead,
+wouldn't it?
 
-:> I don't want error pointers left in data structure members.
-:> I cannot describe my requirements any more precisely than that.
+Two pointers were stored as the members "arc4" and "sha1" of the
+data structure "ppp_mppe_state" for a specific reason. A pointer to
+this structure is passed to the ppp_register_compressor() function.
+https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include/linux/ppp-comp.h?id`7ca46e97a1b6594b29647d98a32d545c24bdff#n32
 
-    to me, "error pointers 'left' in data structure members", seems a
-little cavalier.  objection to their existence tends to suggest that not
-a function of the design, or logic involved.
+The data structure "compressor" manages some function pointers.
+I assume that this interface should not be changed at the moment, should it?
 
- 
-: I hope that a bit more constructive suggestions will be contributed by
-: involved software developers around the affected source code. 
- 
-    so, this 'error pointers' issue fails to meet your 'constructive' 
-suggestion threshold.  to my mind, what i choose to ignore, imposes a 
-dangerous minimum. what are you willing to ignore.
+Are further ideas needed here?
 
-
-: Now it seems that a small code clean-up becomes a more challenging 
-: development task.
- 
-    first, if you've EVER dealt with imperfect code, that should be a 
-given.  but more importantly to me, i never knew "code clean-up", wasn't 
-"REQUIRED" ...
-
-
--- 
-... it's not what you see ,
-    but in stead , notice ...
+Regards,
+Markus
