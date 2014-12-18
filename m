@@ -1,37 +1,41 @@
-From: SF Markus Elfring <elfring@users.sourceforge.net>
-Date: Thu, 18 Dec 2014 17:23:08 +0000
+From: David Miller <davem@davemloft.net>
+Date: Thu, 18 Dec 2014 17:25:56 +0000
 Subject: Re: [PATCH v2 0/6] net-PPP: Deletion of a few unnecessary checks
-Message-Id: <54930D7C.3000901@users.sourceforge.net>
+Message-Id: <20141218.122556.2148647081075440879.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <548B0A29.8050503@users.sourceforge.net>	<20141212.105106.1162681032492664308.davem@davemloft.net>	<548B1E44.6050005@users.sourceforge.net> <20141212.115922.687789059853236747.davem@davemloft.net>
-In-Reply-To: <20141212.115922.687789059853236747.davem@davemloft.net>
+References: <548B1E44.6050005@users.sourceforge.net>
+	<20141212.115922.687789059853236747.davem@davemloft.net>
+	<54930D7C.3000901@users.sourceforge.net>
+In-Reply-To: <54930D7C.3000901@users.sourceforge.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: David Miller <davem@davemloft.net>
-Cc: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
+To: elfring@users.sourceforge.net
+Cc: sergei.shtylyov@cogentembedded.com, paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, eric.dumazet@gmail.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org, julia.lawall@lip6.fr
 
->> Where should "the error pointers" be stored instead?
+From: SF Markus Elfring <elfring@users.sourceforge.net>
+Date: Thu, 18 Dec 2014 18:23:08 +0100
+
+>>> Where should "the error pointers" be stored instead?
+>> 
+>> A local variable, before you assign it into the datastructure.
 > 
-> A local variable, before you assign it into the datastructure.
+> I have looked at the affected software infrastructure once more.
+> Now I find still that your data reorgansisation wish can not be resolved
+> in a simple way.
 
-I have looked at the affected software infrastructure once more.
-Now I find still that your data reorgansisation wish can not be resolved
-in a simple way.
+I'm saying to leave the code alone.
 
-I imagine that your update suggestion would mean that the corresponding
-pointers will be passed around by function parameters instead,
-wouldn't it?
+If it goes:
 
-Two pointers were stored as the members "arc4" and "sha1" of the
-data structure "ppp_mppe_state" for a specific reason. A pointer to
-this structure is passed to the ppp_register_compressor() function.
-https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include/linux/ppp-comp.h?id`7ca46e97a1b6594b29647d98a32d545c24bdff#n32
+	var = foo_that_returns_ptr_err()
+	if (IS_ERR(var))
+		return PTR_ERR(var);
 
-The data structure "compressor" manages some function pointers.
-I assume that this interface should not be changed at the moment, should it?
+	p->bar = var;
 
-Are further ideas needed here?
+or whatever, simply keep it that way!
 
-Regards,
-Markus
+I'm not engaging in this conversation any further, you have already
+consumed way too much of my limited time on this incredibly trivial
+matter.
