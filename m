@@ -1,26 +1,22 @@
-From: Joe Perches <joe@perches.com>
-Date: Sun, 07 Dec 2014 12:42:10 +0000
-Subject: Re: [PATCH v2 1/6] net-PPP: Replacement of a printk() call by pr_warn() in mppe_rekey()
-Message-Id: <1417956130.31745.27.camel@perches.com>
+From: "oht@openbsd.se" <ole.hellqvist@openbsd.se>
+Date: Tue, 23 Dec 2014 08:06:57 +0000
+Subject: pppd 2.4.7 for bsd
+Message-Id: <20141223090657.a126d12db17e3a931dfe978a@openbsd.se>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1417731809.2721.17.camel@perches.com>
-	 <alpine.DEB.2.02.1412050820290.2059@localhost6.localdomain6>
-	 <1417765287.2721.39.camel@perches.com>
-	 <alpine.DEB.2.02.1412071140290.2044@localhost6.localdomain6>
-	 <1417955413.31745.25.camel@perches.com>
-	 <alpine.DEB.2.02.1412071335140.2030@localhost6.localdomain6>
-In-Reply-To: <alpine.DEB.2.02.1412071335140.2030@localhost6.localdomain6>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Julia Lawall <julia.lawall@lip6.fr>
-Cc: SF Markus Elfring <elfring@users.sourceforge.net>, Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>, LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-On Sun, 2014-12-07 at 13:36 +0100, Julia Lawall wrote:
-> the semantic patch is only using __func__ and only in cases where 
-> the string wanted is similar to the name of the current function, so I 
-> think it should be OK?
-
-Yes, it'd be a good thing.
-
-
+Hi
+I'm using pppd to connect to my ip provider via umts.
+In the present OpenBSD there is a very old version of pppd included, 2.3.5.
+In order to have my resolve.conf updated after switching to some wifi provider I needed the "usepeerdns".
+It is not included in version 2.3.5.
+Finding out that NetBSD is using a patched version of 2.4.4, I modified that for my OpenBSD. 
+It worked for my purpose.
+After that it was quite easy to upgrade it to your 2.4.7 level.
+If it is of any use for you, I can provide diffs, new sys-bsd.c and new Makefile.bsd for 2.4.7
+It works on OpenBSD and compiles on FreeBSD and NetBSD.
+ -- 
+oht@openbsd.se <ole.hellqvist@openbsd.se>
