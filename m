@@ -1,39 +1,59 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Wed, 28 Jan 2015 14:39:24 +0000
-Subject: Re: multiple pppd instances -- resolv.conf challenges and suggested improvement
-Message-Id: <54C8F49C.30104@workingcode.com>
+From: Matthias-Christian Ott <ott@mirix.org>
+Date: Tue, 13 Jan 2015 17:33:04 +0000
+Subject: ppp_async: ioctl to set MTU needed
+Message-Id: <54B556D0.5090204@mirix.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <68DDEA33-3E3A-456B-BFF4-14209A181864@nowonline.co.uk>
-In-Reply-To: <68DDEA33-3E3A-456B-BFF4-14209A181864@nowonline.co.uk>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-On 01/26/15 13:32, Lee Essen wrote:
-> Hi Bill,
-> 
-> Thanks for the reply, I acknowledge that the buildroot approach is suboptimal, however it doesn't seem right that every instance of pppd will write to the same file regardless or what you choose to do with it!
-> 
-> In order to get clever (prioritise for example) with multiple instances I need to use either separate resolv.conf files, or do the work in the ppp-up script. The latter approach is perfectly acceptable, however having all the pppd processes overwriting the same resolv.conf file in a completely non-deterministic way seems wrong to me??
-> 
-> I realise that my particular problem with buildroot is more problematic than non-buildroot people would experience (and I'm quite happy to solve it with my proposed patch) but I thought it worth suggesting.
+Some months ago I filed the following bug report (with some sentences
+corrected) on the Kernel Bug Tracker but have received no reaction
+reaction so far:
 
-(Note: I'm a maintainer on the Solaris side, I haven't a clue what
-"buildroot" might be.)
+Summary: ppp_async: ioctl to set MTU needed
 
-What you're asking for already exists.  Let them overwrite
-/etc/ppp/resolv.conf, and just ignore that file.  It doesn't matter and
-its contents are irrelevant.
+The MTU of a channel of a Multilink PPP link is set from the MRU of a
+Configure-Ack LCP packet. However, just because the is able to receive
+packets of a certain size it doesn't mean that the link or the sender
+are able to transmit packets of that size, so the received MTU of the
+channel should not be set to the MRU of the peer.
 
-Create an /etc/ppp/ip-up script, and put all of your clever logic there.
- The DNS server addresses will be given to you as $DNS1 and $DNS2, and
-you can use this to create or modify the real /etc/resolv.conf as
-desired.  The variables will be left unset if an address wasn't given.
-(This weird Microsoft extension gives you two addresses.  No, I don't
-know why it's specifically two addresses and not a list, nor why this
-was done down at the link layer rather than a simple stateless DHCP
-INFORM message.)
+A practical example is PPP encapsulated in GRE or L2TP over IPv6
+(without fragmentation). Peer A sets its MRU to the link MTU minus
+maximum IP header length minus GRE/L2TP header length to be able to
+receive packets of maximum length over PPP. Peer B connects to peer A
+and the maximum payload size, which is derived from the Path MTU, of the
+tunnel between peers A and B is lower than the MRU of peer A. If peer B
+sends a packet P smaller than the MRU of peer A and larger than the
+maximum payload size of the IP packet encapsulating P, it will exceed
+the Path MTU and thus will be rejected and never arrive at peer A. Such
+scenario is common for VPNs that use PPP or to transport PPP sessions of
+broadband/Internet subscribers (e.g. if one ISP manages the physical
+network and another ISP provides Internet access and is the endpoint of
+the PPP session that runs over the physical network and the PPP session
+is transported over IPv6). IPv4 was able to fragment IP packets larger
+than the Path MTU, so setting the MTU to the MRU of peer a worked. With
+IPv6 (without fragmentation) this no longer works.
 
--- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+As a workaround I patched pppd and sent a Configure-Nak with the correct
+MRU in the options of the packet in the hope that the remote peer would
+adjust its MRU to the MRU suggested in the Configure-Nak and that the
+PPP driver would in turn set the MTU of the channel correctly. However,
+this didn't work because the remote peer simply sent the original
+Configure-Request again and again without adjusting its MRU.
+Unfortunately, I don't know which PPP implementation the remote peer uses.
+
+
+I understand that PPP is not as interesting as in the 1990s any longer.
+Nonetheless I would like to have this issue fixed and I would be happy
+to create a provide for the kernel module and pppd if I'm certain that
+the patch would get accepted (with minor modifications). So it would
+help if somebody in charge of pppd or the kernel module comment on my
+proposal to introduce an ioctl for this. Thanks!
+
+Regards,
+Matthias-Christian
+
+[1] https://bugzilla.kernel.org/show_bug.cgi?id=88101
