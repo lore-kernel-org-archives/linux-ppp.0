@@ -1,7 +1,7 @@
-From: Matthias-Christian Ott <ott@mirix.org>
-Date: Tue, 13 Jan 2015 23:39:38 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 14 Jan 2015 00:10:35 +0000
 Subject: Re: ppp_async: ioctl to set MTU needed
-Message-Id: <54B5ACBA.80502@mirix.org>
+Message-Id: <54B5B3FB.8010801@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <54B556D0.5090204@mirix.org>
 In-Reply-To: <54B556D0.5090204@mirix.org>
@@ -10,31 +10,30 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 2015-01-14 00:24, Matthias-Christian Ott wrote:
-> It seems that I read over this than and what I wanted to achieve is
-> impossible with PPP. I think setting the channel MTU to the MRU is
-> unaffected by this and is still wrong though. From RFC 1661:
+On 1/13/2015 6:04 PM, Christoph Schulz wrote:
+> Hello!
 > 
-> 6.1.  Maximum-Receive-Unit (MRU)
+> Christoph Schulz schrieb am Tue, 13 Jan 2015 23:56:25 +0100:
 > 
-> [...]
+>> By the way, how does Solaris solve this problem? [...]
 > 
->     This option is used to indicate an implementation capability.
->     The peer is not required to maximize the use of the capacity.
->     For example, when a MRU is indicated which is 2048 octets, the
->     peer is not required to send any packet with 2048 octets.  The
->     peer need not Configure-Nak to indicate that it will only send
->     smaller packets, since the implementation will always require
->     support for at least 1500 octets.
+> Never mind, I forgot that pppd supports multilink PPP only under Linux.
 
-Another aspect is that if Multilink PPP is used, it might be wrong to
-set the MTU based on the MRU. If both peers know that the link MTU is
-smaller than 1500 octets and want to encapsulate payloads larger than
-the link MTU (that is the interface MTU is bigger than the channel MTU
-and Multilink PPP fragments payloads larger the channel MTU), they can
-adjust their MRRU and channel MTU accordingly and thus never send PPP
-packets larger than the link MTU. If the channel MTU is set from the
-MRU, this is not possible.
+Yes, exactly.  At Sun, we had a multilink implementation, but there
+wasn't much call for it.  The best reason to use MP is to bond together
+the two B channels in Basic-Rate ISDN or two or more B channels in
+Primary-Rate ISDN.  Those links tend to be tightly controlled in terms
+of delay and error rate, so they work well for MP.
 
-Regards,
-Matthias-Christian
+And not many people ended up caring too much about ISDN.  (Yeah, I know
+there are still aficionados out there ...)
+
+If because the segmentation/reassembly process in MP works only as well
+as the worst-performing link, it tends to be an overall loss if you have
+links that differ.
+
+A better plan is to use multipath IP routes -- ECMP across multiple
+independent ordinary (non-MP) PPP links -- if you have links that differ.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
