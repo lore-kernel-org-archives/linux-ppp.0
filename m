@@ -1,76 +1,61 @@
-From: SF Markus Elfring <elfring@users.sourceforge.net>
-Date: Thu, 04 Dec 2014 22:13:24 +0000
-Subject: [PATCH v2 2/6] net-PPP: Fix indentation
-Message-Id: <5480DC84.1020601@users.sourceforge.net>
+From: Lee Essen <lee.essen@nowonline.co.uk>
+Date: Mon, 26 Jan 2015 16:29:36 +0000
+Subject: multiple pppd instances -- resolv.conf challenges and suggested improvement
+Message-Id: <68DDEA33-3E3A-456B-BFF4-14209A181864@nowonline.co.uk>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <5307CAA2.8060406@users.sourceforge.net> <530A086E.8010901@users.sourceforge.net> <alpine.DEB.2.02.1402231635510.1985@localhost6.localdomain6> <530A72AA.3000601@users.sourceforge.net> <alpine.DEB.2.02.1402240658210.2090@localhost6.localdomain6> <530B5FB6.6010207@users.sourceforge.net> <alpine.DEB.2.10.1402241710370.2074@hadrien> <530C5E18.1020800@users.sourceforge.net> <alpine.DEB.2.10.1402251014170.2080@hadrien> <530CD2C4.4050903@users.sourceforge.net> <alpine.DEB.2.10.1402251840450.7035@hadrien> <530CF8FF.8080600@users.sourceforge.net> <alpine.DEB.2.02.1402252117150.2047@localhost6.localdomain6> <530DD06F.4090703@users.sourceforge.net> <alpine.DEB.2.02.1402262129250.2221@localhost6.localdomain6> <5317A59D.4@users.sourceforge.net> <547B4886.4080406@users.sourceforge.net> <547B496E.604@users.sourceforge.net> <547C5CBC.6060607@cogentembedded.com> <547C82A6.2030808@users.sourceforge.net> <547CA157.1080401@cogentembedded.com> <5480DA32.8000201@users.sourceforge.net>
-In-Reply-To: <5480DA32.8000201@users.sourceforge.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Sergei Shtylyov <sergei.shtylyov@cogentembedded.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, Eric Dumazet <eric.dumazet@gmail.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: linux-ppp@vger.kernel.org
 
-From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Thu, 4 Dec 2014 22:15:20 +0100
+Hi,
 
-The implementations of the functions "mppe_alloc" and "mppe_free" contained
-unwanted space characters.
+I’ve hit a bit of a challenge with the way that pppd creates the resolv.conf file.
 
-Let us improve the indentation according to the Linux coding style convention.
+Basically if you want to get dns servers from the other side you need ‘usepeerdns’ set.
 
-Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
----
- drivers/net/ppp/ppp_mppe.c | 26 +++++++++++++-------------
- 1 file changed, 13 insertions(+), 13 deletions(-)
+If you set ‘usepeerdns’ then pppd will create resolve.conf (/etc/ppp/resolv.conf as standard, although changed in many dists)
 
-diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-index 84b7bce..b80af29 100644
---- a/drivers/net/ppp/ppp_mppe.c
-+++ b/drivers/net/ppp/ppp_mppe.c
-@@ -236,15 +236,15 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+The challenge is that if you have two pppd’s running, both getting DNS entries, then there is no way to specify a different file (so that you can be clever later) and the given file will be overwritten by the most recent connection. Also, with buiildroot builds the path is set to /etc/resolv.conf which causes even more of a problem since you can’t ‘usepeerdns’ without making your system use the provided resolvers.
+
+It does feel wrong that just about every other aspect of pppd supports isolated multiple connections, but the resolv.conf file is a single path that will get overwritten by the last connection, and then, of course, if that connection drops the file is then incorrect!
+
+Could I suggest a ‘noresolv’ config option that simply suppresses the creation of the resolve.conf file?  It’s a very simple patch, has no compatibility issues with existing configuration and makes it possible to use ppp-up scripts to do the heavy lifting with no conflicting resolv.conf creations. This would also allow buildroot users to avoid the “forced use of peer dns”.
+
+(The other option would be to have a configurable path for resolv.conf)
+
+Cheers,
+
+Lee.
+
+
+diff -Naur pppd-orig/pppd/ipcp.c pppd-2.4.7/pppd/ipcp.c
+--- pppd-orig/pppd/ipcp.c	2014-08-09 13:31:39.000000000 +0100
++++ pppd-2.4.7/pppd/ipcp.c	2015-01-26 07:27:04.758264172 +0000
+@@ -91,6 +91,7 @@
+ static int default_route_set[NUM_PPP];	/* Have set up a default route */
+ static int proxy_arp_set[NUM_PPP];	/* Have created proxy arp entry */
+ static bool usepeerdns;			/* Ask peer for DNS addrs */
++static bool noresolv;			/* Don't write resolv.conf */
+ static int ipcp_is_up;			/* have called np_up() */
+ static int ipcp_is_open;		/* haven't called np_finished() */
+ static bool ask_for_local;		/* request our address from peer */
+@@ -209,6 +210,8 @@
  
- 	return (void *)state;
+     { "usepeerdns", o_bool, &usepeerdns,
+       "Ask peer for DNS address(es)", 1 },
++    { "noresolv", o_bool, &noresolv,
++      "disable creation of the resolv.conf file", 1 },
  
--	out_free:
--	    if (state->sha1_digest)
-+out_free:
-+	if (state->sha1_digest)
- 		kfree(state->sha1_digest);
--	    if (state->sha1)
-+	if (state->sha1)
- 		crypto_free_hash(state->sha1);
--	    if (state->arc4)
-+	if (state->arc4)
- 		crypto_free_blkcipher(state->arc4);
--	    kfree(state);
--	out:
-+	kfree(state);
-+out:
- 	return NULL;
- }
- 
-@@ -255,13 +255,13 @@ static void mppe_free(void *arg)
- {
- 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
- 	if (state) {
--	    if (state->sha1_digest)
--		kfree(state->sha1_digest);
--	    if (state->sha1)
--		crypto_free_hash(state->sha1);
--	    if (state->arc4)
--		crypto_free_blkcipher(state->arc4);
--	    kfree(state);
-+		if (state->sha1_digest)
-+			kfree(state->sha1_digest);
-+		if (state->sha1)
-+			crypto_free_hash(state->sha1);
-+		if (state->arc4)
-+			crypto_free_blkcipher(state->arc4);
-+		kfree(state);
- 	}
- }
- 
--- 
-2.1.3
+     { "netmask", o_special, (void *)setnetmask,
+       "set netmask", OPT_PRIO | OPT_A2STRVAL | OPT_STATIC, netmask_str },
+@@ -1827,6 +1830,7 @@
+ 	script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
+     if (usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
+ 	script_setenv("USEPEERDNS", "1", 0);
++	if (!noresolv)
+ 	create_resolv(go->dnsaddr[0], go->dnsaddr[1]);
+     }
+
+
 
