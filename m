@@ -1,42 +1,48 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 02 Mar 2015 05:17:49 +0000
-Subject: Re: [PATCH net-next v2] pppoe: Use workqueue to die properly when a PADT is received
-Message-Id: <20150302.001749.1494675361394874315.davem@davemloft.net>
+From: ck@conrad-kostecki.de
+Date: Fri, 27 Mar 2015 21:42:37 +0000
+Subject: PADO answer incoming wrong VLAN since new linecard
+Message-Id: <6a9afa782078cc73baeab500ddd86537@conrad-kostecki.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1425207279-4822-1-git-send-email-simon@farnz.org.uk>
-In-Reply-To: <1425207279-4822-1-git-send-email-simon@farnz.org.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: simon@farnz.org.uk
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, mostrows@gmail.com
+To: linux-ppp@vger.kernel.org
 
-From: Simon Farnsworth <simon@farnz.org.uk>
-Date: Sun,  1 Mar 2015 10:54:39 +0000
+Hi There!
+I've been running pppd for years with my PPPoE connection. That was 
+working perfectly fine until yesterday.
+I am not able to connect via PPPoE anymore, because after I am sending 
+an PADI, the received PADO is incoming on a wrong VLAN.
 
-> When a PADT frame is received, the socket may not be in a good state to
-> close down the PPP interface. The current implementation handles this by
-> simply blocking all further PPP traffic, and hoping that the lack of traffic
-> will trigger the user to investigate.
-> 
-> Use schedule_work to get to a process context from which we clear down the
-> PPP interface, in a fashion analogous to hangup on a TTY-based PPP
-> interface. This causes pppd to disconnect immediately, and allows tools to
-> take immediate corrective action.
-> 
-> Note that pppd's rp_pppoe.so plugin has code in it to disable the session
-> when it disconnects; however, as a consequence of this patch, the session is
-> already disabled before rp_pppoe.so is asked to disable the session. The
-> result is a harmless error message:
-> 
-> Failed to disconnect PPPoE socket: 114 Operation already in progress
-> 
-> This message is safe to ignore, as long as the error is 114 Operation
-> already in progress; in that specific case, it means that the PPPoE session
-> has already been disabled before pppd tried to disable it.
-> 
-> Signed-off-by: Simon Farnsworth <simon@farnz.org.uk>
-> Tested-by: Dan Williams <dcbw@redhat.com>
-> Tested-by: Christoph Schulz <develop@kristov.de>
+That happend, after the linecard outside has been changed by my ISP. It 
+was an Infineon 11.5.3, when it was working and stopped working, after 
+it has been changed to a Broadcom 164.34.
 
-Applied, thanks Simon.
+Basically, my setup is, that I've to connect via vlan7. I am sending my 
+requests on that specific vlan7. But now, after that, I am getting the 
+PADO on vlan8, which now causes the problem, that pppd thinks, that 
+there is no answer to the PADI request.
+
+That also seems not to be a distribution problem. I am using Gentoo, but 
+I've tried also Ubuntu and OpenSUSE. All distributions showed the same 
+error. I've tried pppd 2.4.5, 2.4.6 and 2.4.7.
+
+BUT!
+If I am using a BSD-Distribution (like pfSense) or an external hardware 
+router (like Fritz!Box), those are perfectly working fine. Those systems 
+can connect via PPPoE, the PADO answer is getting there on the correct 
+VLAN back (7).
+
+So, what is going? Why does Linux PPP seems to have problems, where 
+other systems do not have a problem?
+Can anybody help? After my tests, I am just thinking, that there is some 
+sort if a bug.. I mean, if was working for years fine and now stopped?
+
+Here is an example paket file:
+No VLAN: http://www.bl4ckb0x.de/ppp32/eth3.bin
+VLAN7: http://www.bl4ckb0x.de/ppp32/eth3.7.bin
+VLAN8: http://www.bl4ckb0x.de/ppp32/eth3.8.bin
+
+Thanks!
+Conrad
+
