@@ -1,33 +1,88 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 27 Apr 2015 03:26:16 +0000
-Subject: Re: [PATCH 0/2] ppp: mppe: fixes MPPE desync on links which don't guarantee packet ordering
-Message-Id: <20150426.232616.353503560380309931.davem@davemloft.net>
+From: Sylvain Rochet <sylvain.rochet@finsecur.com>
+Date: Sun, 26 Apr 2015 18:40:52 +0000
+Subject: [PATCH 1/2] ppp: mppe: sanity error path rework
+Message-Id: <1430073653-22131-2-git-send-email-sylvain.rochet@finsecur.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1430073653-22131-1-git-send-email-sylvain.rochet@finsecur.com>
 In-Reply-To: <1430073653-22131-1-git-send-email-sylvain.rochet@finsecur.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: sylvain.rochet@finsecur.com
-Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>
+Cc: Sylvain Rochet <sylvain.rochet@finsecur.com>
 
-From: Sylvain Rochet <sylvain.rochet@finsecur.com>
-Date: Sun, 26 Apr 2015 20:40:51 +0200
+We are going to need sanity error path a little further, rework to be
+able to use the sanity error path anywhere in decompressor.
 
-> I am currently having an issue with PPP over L2TP (UDP) and MPPE in
-> stateless mode (default mode), UDP does not guarantee packet ordering so
-> we might get out of order packet. MPPE needs to be continuously synched
-> so we should drop late UDP packet.
-> 
-> I added a printk on the number of time we rekeyed in MPPE decompressor,
-> this is what we currently have if we receive a slightly out of order UDP
-> packet:
- ...
-> This is obviously wrong, we missed packet 1561 and we already rekeyed 2
-> times for 1562 we previously received, we can't recover the decryption
-> key we need for 1561, we should drop it instead of rekeying 4095 times.
-> 
-> This patch series drop any packet with are not within the 4096/2 forward
-> window.
+Signed-off-by: Sylvain Rochet <sylvain.rochet@finsecur.com>
+---
+ drivers/net/ppp/ppp_mppe.c | 29 +++++++++++++----------------
+ 1 file changed, 13 insertions(+), 16 deletions(-)
 
-Series applied, thanks Sylvain.
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index 911b216..692ee0f 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -478,7 +478,6 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	struct blkcipher_desc desc = { .tfm = state->arc4 };
+ 	unsigned ccount;
+ 	int flushed = MPPE_BITS(ibuf) & MPPE_BIT_FLUSHED;
+-	int sanity = 0;
+ 	struct scatterlist sg_in[1], sg_out[1];
+ 
+ 	if (isize <= PPP_HDRLEN + MPPE_OVHD) {
+@@ -514,31 +513,19 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 		       "mppe_decompress[%d]: ENCRYPTED bit not set!\n",
+ 		       state->unit);
+ 		state->sanity_errors += 100;
+-		sanity = 1;
++		goto sanity_error;
+ 	}
+ 	if (!state->stateful && !flushed) {
+ 		printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit not set in "
+ 		       "stateless mode!\n", state->unit);
+ 		state->sanity_errors += 100;
+-		sanity = 1;
++		goto sanity_error;
+ 	}
+ 	if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed) {
+ 		printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit not set on "
+ 		       "flag packet!\n", state->unit);
+ 		state->sanity_errors += 100;
+-		sanity = 1;
+-	}
+-
+-	if (sanity) {
+-		if (state->sanity_errors < SANITY_MAX)
+-			return DECOMP_ERROR;
+-		else
+-			/*
+-			 * Take LCP down if the peer is sending too many bogons.
+-			 * We don't want to do this for a single or just a few
+-			 * instances since it could just be due to packet corruption.
+-			 */
+-			return DECOMP_FATALERROR;
++		goto sanity_error;
+ 	}
+ 
+ 	/*
+@@ -649,6 +636,16 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	state->sanity_errors >>= 1;
+ 
+ 	return osize;
++
++sanity_error:
++	if (state->sanity_errors < SANITY_MAX)
++		return DECOMP_ERROR;
++	else
++		/* Take LCP down if the peer is sending too many bogons.
++		 * We don't want to do this for a single or just a few
++		 * instances since it could just be due to packet corruption.
++		 */
++		return DECOMP_FATALERROR;
+ }
+ 
+ /*
+-- 
+2.1.4
+
