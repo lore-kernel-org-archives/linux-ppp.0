@@ -1,48 +1,32 @@
-From: Sylvain Rochet <sylvain.rochet@finsecur.com>
-Date: Sun, 26 Apr 2015 18:40:53 +0000
-Subject: [PATCH 2/2] ppp: mppe: discard late packet in stateless mode
-Message-Id: <1430073653-22131-3-git-send-email-sylvain.rochet@finsecur.com>
+From: <salix@opencores.org>
+Date: Tue, 05 May 2015 08:06:34 +0000
+Subject: PPP over PCIe
+Message-Id: <33cf3cfabb7f5bdd6ea2c37df77eac1d@sarv.net>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1430073653-22131-1-git-send-email-sylvain.rochet@finsecur.com>
-In-Reply-To: <1430073653-22131-1-git-send-email-sylvain.rochet@finsecur.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>
-Cc: Sylvain Rochet <sylvain.rochet@finsecur.com>
+To: linux-ppp@vger.kernel.org
 
-When PPP is used over a link which does not guarantee packet ordering,
-we might get late MPPE packets. This is a problem because MPPE must be
-kept synchronized and the current implementation does not drop them and
-rekey 4095 times instead of 0, which is wrong.
+hi,
 
-In order to prevent rekeying about a whole count space times (~ 4095
-times), drop packets which are not within the forward 4096/2 window and
-increase sanity error counter.
+I want to send ppp packets generated in linux ppp module over PCIe 
+instead of serial port. and then through FPGA send packets out.
 
-Signed-off-by: Sylvain Rochet <sylvain.rochet@finsecur.com>
----
- drivers/net/ppp/ppp_mppe.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+I using RIFFA architecture for send and receive data to/from FPGA via 
+PCIe, RIFFA has library in user space to communicate with it's driver.
+RIFFA site: https://sites.google.com/a/eng.ucsd.edu/matt-jacobsen/riffa
+and: http://riffa.ucsd.edu/
+also it use IOCTL for communications.
+and riffa driver generate /dev/riffa
 
-diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-index 692ee0f..05005c6 100644
---- a/drivers/net/ppp/ppp_mppe.c
-+++ b/drivers/net/ppp/ppp_mppe.c
-@@ -533,6 +533,13 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
- 	 */
- 
- 	if (!state->stateful) {
-+		/* Discard late packet */
-+		if ((ccount - state->ccount) % MPPE_CCOUNT_SPACE
-+						> MPPE_CCOUNT_SPACE / 2) {
-+			state->sanity_errors++;
-+			goto sanity_error;
-+		}
-+
- 		/* RFC 3078, sec 8.1.  Rekey for every packet. */
- 		while (state->ccount != ccount) {
- 			mppe_rekey(state, 0);
--- 
-2.1.4
+Is it possible to send PPP packets over any hardware channel?
+can anyone give me a point to how can I do this? how can I send ppp 
+packets to my PCIe driver?
+
+is it enough to change ppp_generic.c and ppp_channel.h and tty.c?
+
+
+Best Regards
+salix
 
