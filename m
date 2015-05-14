@@ -1,39 +1,37 @@
-From: Michael Richardson <mcr@sandelman.ca>
-Date: Tue, 05 May 2015 14:04:54 +0000
-Subject: Re: PPP over PCIe
-Message-Id: <26171.1430834694@sandelman.ca>
+From: Douglas Gilbert <dgilbert@interlog.com>
+Date: Thu, 14 May 2015 00:30:15 +0000
+Subject: ppp over serial problems in lk 4.0.x
+Message-Id: <5553EC97.7040001@interlog.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <33cf3cfabb7f5bdd6ea2c37df77eac1d@sarv.net>
-In-Reply-To: <33cf3cfabb7f5bdd6ea2c37df77eac1d@sarv.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
+Since lk 4.0.0 came out running ppp connected to a serial
+port (GPRS) has failed on my hardware (at91sam9g25 based ARM
+system). It works in lk 3.19-rc4 which is the last kernel I
+tried prior to lk 4.0.0 . The fix to ppp_generic.c in lk
+4.0.2 did not help.
 
-<salix@opencores.org> wrote:
-    > I want to send ppp packets generated in linux ppp module over PCIe
-    > instead of serial port. and then through FPGA send packets out.
+With older kernels I see:
 
-The kernel PPP system supports sending it out over Ethernet or ATM.
-Note that there is a difference between async ppp (HDLC stuffing), and
-sync ppp (no stuffing).
+...
+chat[1760]: ATD*99***1#^M^M
+chat[1760]: CONNECT
+chat[1760]:  -- got it
+chat[1760]: send (^M)
+pppd[1758]: Serial connection established.
+pppd[1758]: Using interface ppp0
+...
 
-    > I using RIFFA architecture for send and receive data to/from FPGA via
-    > PCIe,
-    > RIFFA has library in user space to communicate with it's driver.
-    > RIFFA site: https://sites.google.com/a/eng.ucsd.edu/matt-jacobsen/riffa
+and about 5 ppp related modules loaded including ppp_async.
 
-If you want to do this at some speed, you don't want to take a trip through
-userspace.  I don't know what RIFFA is, but I suggest you want to use an
-in-kernel interface.
+With lk 4.0.x the "Serial connection established" line never
+appears and only the ppp_generic module is loaded.
 
-    > is it enough to change ppp_generic.c and ppp_channel.h and tty.c?
+I get the same results (i.e. depends on the kernel version)
+with both an up to date Debian 7 (wheezy) and a freshly
+minted Debian 8 (jessie) system.
 
-No, as the packets don't really go through userspace even for serial.
-
---
-]               Never tell me the odds!                 | ipv6 mesh networks [
-]   Michael Richardson, Sandelman Software Works        | network architect  [
-]     mcr@sandelman.ca  http://www.sandelman.ca/        |   ruby on rails    [
-
+Doug Gilbert
