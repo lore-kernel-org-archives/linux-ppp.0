@@ -1,215 +1,69 @@
-From: Gustavo <ghreyes71@gmail.com>
-Date: Thu, 04 Jun 2015 13:54:00 +0000
-Subject: LCP terminated by peer [LCP TermReq id=0x1]
-Message-Id: <CAF10NHhDYez3+puJNmoDoBCoB3RoHakiS2+WH2ppon+cEdudwA@mail.gmail.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="e89a8f923c22f2d8cc0517b181a5"
+From: James Carlson <carlsonj@workingcode.com>
+Date: Thu, 04 Jun 2015 17:37:36 +0000
+Subject: Re: LCP terminated by peer [LCP TermReq id=0x1]
+Message-Id: <55708CE0.5030806@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <CAF10NHhDYez3+puJNmoDoBCoB3RoHakiS2+WH2ppon+cEdudwA@mail.gmail.com>
+In-Reply-To: <CAF10NHhDYez3+puJNmoDoBCoB3RoHakiS2+WH2ppon+cEdudwA@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
---e89a8f923c22f2d8cc0517b181a5
-Content-Type: text/plain; charset=UTF-8
+On 06/04/15 09:54, Gustavo wrote:
+> I am trying to get a mobile scanner Motorola MC32N0 (next generation
+> in MC3000 Series) working on a PC which is running Ubuntu 8.04, and
+> another PC with Ubuntu 14.04. But I have not succeeded after trying
+> and investigating a long time.
 
-Hi All.
+I don't have access to a manual for this device, but if it has some kind
+of debugging or troubleshooting mode in it, this would probably be a
+good reason to try it out.
 
-I am trying to get a mobile scanner Motorola MC32N0 (next generation
-in MC3000 Series) working on a PC which is running Ubuntu 8.04, and
-another PC with Ubuntu 14.04. But I have not succeeded after trying
-and investigating a long time.
+> No errors in output command. No erros in syslog.
+> And I have no idea what happens or how to find the cause.
+> Files involved are attached.
 
-I have two oldest models of Motorola mobile scanner working fine:
-MC3090 and MC3190.
+The peer system is obviously upset about something; that's why it sent
+LCP Terminate-Request.  Unfortunately, it didn't bother to include the
+optional text explanation of the problem, a feature of that message
+that's all too often ignored, so it's a little hard to see what
+happened.  Whoever built that system should probably fix that defect.
 
-MC3090 with Windows CE 5.0
-MC3190 with Windows Mobile 6.5
-MC32N0 with Microsoft Embedded Compact 7.
+One thing that stands out in your log is the pointless haggling over
+CCP.  You're asking for compression via the freely available algorithms,
+and he's asking for compression via Microsoft's proprietary MPPC.  (It
+negotiates MPPE, but Microsoft's encryption algorithm has flags that can
+[and in this case do] say "use data compression only" -- which is MPPC.)
 
-File PPP options (optionsttyUSB0.ce):
+Based on that, I'd start by adding "noccp" to the configuration.  It's
+certainly not doing you any good, and may be hurting.
 
-/dev/ttyUSB0
-10.1.20.1:10.1.20.2
-asyncmap 0
-local
-lock
-lcp-echo-interval 3
-lcp-echo-failure 3
-lcp-restart 1
-lcp-max-terminate 4
-unit 0
-mtu 168
-mru 168
-connect "/usr/sbin/chat -v -t 5 'CLIENT' 'CLIENTSERVER\\c'"
-noauth
--detach
-debug dump
-kdebug 7
+It also looks like you're asking him to give you DNS server addresses
+using Microsoft's proprietary extensions via the "usepeerdns" option.  I
+don't see this option in the configuration you supplied, but sending
+IPCP Configure-Request with "ms-dns1" and "ms-dns3" is a giveaway.
+That's probably not useful here, assuming that this hand-held scanner is
+not going to be used as your connection to the global Internet, but it's
+probably not harmful.
 
-Command:
+The peer is asking for DNS server addresses from you.  If you have some
+to offer, it might be nice to do so.  You can do that by adding one or
+two "ms-dns" options to your configuration.
 
-/usr/sbin/pppd ttyUSB0 file /etc/ppp/peers/optionsttyUSB0.ce
+The peer pretty obviously doesn't support the Magic Number option.
+That's baffling -- why would someone not support it?! -- but that does
+prompt at least two questions.  The first is whether "nomagic" has any
+effect here.  The second is whether you want to talk to someone who has
+design flaws like that -- who knows what else is wrong?
 
-The output is identical for all models to the time the devices
-incorporate its IP address -> (*)
+I don't know if an MTU of 168 octets is meaningful (!), but I'm guessing
+that's something for you to work out.
 
-MC3090 output
+For what it's worth, I'd start with the simplest possible configuration,
+and disable options as I go on the assumption that an implementation
+ought to support at least the defaults.  Then get fancy with VJ Header
+Compression and the rest.  :-/
 
-...
-rcvd [IPCP ConfAck id=0x2 <compress VJ 0f 01> <addr 10.1.20.1>]
-rcvd [IPCP ConfReq id=0x4 <compress VJ 0f 00> <addr 10.1.20.2>]
-sent [IPCP ConfAck id=0x4 <compress VJ 0f 00> <addr 10.1.20.2>]
-local  IP address 10.1.20.1
-remote IP address 10.1.20.2
-rcvd [CCP ConfAck id=0x3]
-(*)
-sent [LCP EchoReq id=0x1 magic=0x76ec1483]
-rcvd [LCP EchoRep id=0x1 magic=0x0]
-sent [LCP EchoReq id=0x2 magic=0x76ec1483]
-rcvd [LCP EchoRep id=0x2 magic=0x0]
-
-
-MC32N0 output
-
-...
-rcvd [IPCP ConfAck id=0x2 <compress VJ 0f 01> <addr 10.1.20.1>]
-rcvd [IPCP ConfReq id=0x4 <compress VJ 0f 00> <addr 10.1.20.2>]
-sent [IPCP ConfAck id=0x4 <compress VJ 0f 00> <addr 10.1.20.2>]
-Cannot determine ethernet address for proxy ARP
-local  IP address 10.1.20.1
-remote IP address 10.1.20.2
-rcvd [CCP ConfAck id=0x3]
-(*)
-rcvd [LCP TermReq id=0x1]
-LCP terminated by peer
-Connect time 0.1 minutes.
-Sent 0 bytes, received 825 bytes.
-sent [LCP TermAck id=0x1]
-Connection terminated.
-Modem hangup
-
-No errors in output command. No erros in syslog.
-And I have no idea what happens or how to find the cause.
-Files involved are attached.
-
-Please !!! Help me.
-
-Gus
-
---e89a8f923c22f2d8cc0517b181a5
-Content-Type: application/octet-stream; name="optionsttyUSB0.ce"
-Content-Disposition: attachment; filename="optionsttyUSB0.ce"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_iai8t2cp0
-
-L2Rldi90dHlVU0IwCjEwLjEuMjAuMToxMC4xLjIwLjIKYXN5bmNtYXAgMApsb2NhbApsb2NrCmxj
-cC1lY2hvLWludGVydmFsIDMKbGNwLWVjaG8tZmFpbHVyZSAzCmxjcC1yZXN0YXJ0IDEKbGNwLW1h
-eC10ZXJtaW5hdGUgNAp1bml0IDAKbXR1IDE2OAojbXJ1IDE2OApjb25uZWN0ICIvdXNyL3NiaW4v
-Y2hhdCAtdiAtdCA1ICdDTElFTlQnICdDTElFTlRTRVJWRVJcXGMnIgojcHJveHlhcnAKbm9hdXRo
-Ci1kZXRhY2gKZGVidWcgZHVtcAprZGVidWcgNwo=
---e89a8f923c22f2d8cc0517b181a5
-Content-Type: application/octet-stream; name="ppp_3090.log"
-Content-Disposition: attachment; filename="ppp_3090.log"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_iai8tc4z1
-
-cm9vdEBtZXNhdWJ1On4kIC91c3Ivc2Jpbi9wcHBkIGRlYnVnIHR0eVVTQjAgZmlsZSAvdG1wL29w
-dGlvbnN0dHlVU0IwLmNlIApTZXJpYWwgY29ubmVjdGlvbiBlc3RhYmxpc2hlZC4KdXNpbmcgY2hh
-bm5lbCAzNgpVc2luZyBpbnRlcmZhY2UgcHBwMApDb25uZWN0OiBwcHAwIDwtLT4gL2Rldi90dHlV
-U0IwCnJjdmQgW0xDUCBDb25mUmVxIGlkPTB4MCA8YXN5bmNtYXAgMHgwPiA8cGNvbXA+IDxhY2Nv
-bXA+XQpzZW50IFtMQ1AgQ29uZlJlcSBpZD0weDEgPG1ydSAxNjg+IDxhc3luY21hcCAweDA+IDxt
-YWdpYyAweDc2ZWMxNDgzPiA8cGNvbXA+IDxhY2NvbXA+XQpzZW50IFtMQ1AgQ29uZkFjayBpZD0w
-eDAgPGFzeW5jbWFwIDB4MD4gPHBjb21wPiA8YWNjb21wPl0KcmN2ZCBbTENQIENvbmZBY2sgaWQ9
-MHgxIDxtcnUgMTY4PiA8YXN5bmNtYXAgMHgwPiA8bWFnaWMgMHg3NmVjMTQ4Mz4gPHBjb21wPiA8
-YWNjb21wPl0Kc2VudCBbTENQIEVjaG9SZXEgaWQ9MHgwIG1hZ2ljPTB4NzZlYzE0ODNdCnNlbnQg
-W0NDUCBDb25mUmVxIGlkPTB4MSA8ZGVmbGF0ZSAxNT4gPGRlZmxhdGUob2xkIykgMTU+IDxic2Qg
-djEgMTU+XQpzZW50IFtJUENQIENvbmZSZXEgaWQ9MHgxIDxjb21wcmVzcyBWSiAwZiAwMT4gPGFk
-ZHIgMTAuMS4yMC4xPiA8bXMtZG5zMSAwLjAuMC4wPiA8bXMtZG5zMyAwLjAuMC4wPl0KcmN2ZCBb
-Q0NQIENvbmZSZXEgaWQ9MHgwIDxtcHBlIC1IIC1NIC1TIC1MIC1EICtDPl0Kc2VudCBbQ0NQIENv
-bmZSZWogaWQ9MHgwIDxtcHBlIC1IIC1NIC1TIC1MIC1EICtDPl0KcmN2ZCBbSVBDUCBDb25mUmVx
-IGlkPTB4MiA8Y29tcHJlc3MgVkogMGYgMDA+IDxhZGRyIDAuMC4wLjA+IDxtcy1kbnMxIDAuMC4w
-LjA+IDxtcy13aW5zIDAuMC4wLjA+IDxtcy1kbnMzIDAuMC4wLjA+IDxtcy13aW5zIDAuMC4wLjA+
-XQpzZW50IFtJUENQIENvbmZSZWogaWQ9MHgyIDxtcy1kbnMxIDAuMC4wLjA+IDxtcy13aW5zIDAu
-MC4wLjA+IDxtcy1kbnMzIDAuMC4wLjA+IDxtcy13aW5zIDAuMC4wLjA+XQpyY3ZkIFtJUFY2Q1Ag
-Q29uZlJlcSBpZD0weDAgPGFkZHIgZmU4MDo6MTliMTowNjNlOmY5ZGU6ZjliZj5dClVuc3VwcG9y
-dGVkIHByb3RvY29sICdJUHY2IENvbnRyb2wgUHJvdG92b2wnICgweDgwNTcpIHJlY2VpdmVkCnNl
-bnQgW0xDUCBQcm90UmVqIGlkPTB4MiA4MCA1NyAwMSAwMCAwMCAwZSAwMSAwYSAxOSBiMSAwNiAz
-ZSBmOSBkZSBmOSBiZl0KcmN2ZCBbTENQIEVjaG9SZXAgaWQ9MHgwIG1hZ2ljPTB4MF0KcmN2ZCBb
-Q0NQIENvbmZSZWogaWQ9MHgxIDxkZWZsYXRlIDE1PiA8ZGVmbGF0ZShvbGQjKSAxNT4gPGJzZCB2
-MSAxNT5dCnNlbnQgW0NDUCBDb25mUmVxIGlkPTB4Ml0KcmN2ZCBbSVBDUCBDb25mUmVqIGlkPTB4
-MSA8bXMtZG5zMSAwLjAuMC4wPiA8bXMtZG5zMyAwLjAuMC4wPl0Kc2VudCBbSVBDUCBDb25mUmVx
-IGlkPTB4MiA8Y29tcHJlc3MgVkogMGYgMDE+IDxhZGRyIDEwLjEuMjAuMT5dCnJjdmQgW0NDUCBD
-b25mUmVxIGlkPTB4MV0Kc2VudCBbQ0NQIENvbmZBY2sgaWQ9MHgxXQpyY3ZkIFtJUENQIENvbmZS
-ZXEgaWQ9MHgzIDxjb21wcmVzcyBWSiAwZiAwMD4gPGFkZHIgMC4wLjAuMD5dCnNlbnQgW0lQQ1Ag
-Q29uZk5hayBpZD0weDMgPGFkZHIgMTAuMS4yMC4yPl0KcmN2ZCBbQ0NQIENvbmZOYWsgaWQ9MHgy
-IDxtcHBlIC1IIC1NIC1TIC1MIC1EICtDPl0Kc2VudCBbQ0NQIENvbmZSZXEgaWQ9MHgzXQpyY3Zk
-IFtJUENQIENvbmZBY2sgaWQ9MHgyIDxjb21wcmVzcyBWSiAwZiAwMT4gPGFkZHIgMTAuMS4yMC4x
-Pl0KcmN2ZCBbSVBDUCBDb25mUmVxIGlkPTB4NCA8Y29tcHJlc3MgVkogMGYgMDA+IDxhZGRyIDEw
-LjEuMjAuMj5dCnNlbnQgW0lQQ1AgQ29uZkFjayBpZD0weDQgPGNvbXByZXNzIFZKIDBmIDAwPiA8
-YWRkciAxMC4xLjIwLjI+XQpDYW5ub3QgZGV0ZXJtaW5lIGV0aGVybmV0IGFkZHJlc3MgZm9yIHBy
-b3h5IEFSUApsb2NhbCAgSVAgYWRkcmVzcyAxMC4xLjIwLjEKcmVtb3RlIElQIGFkZHJlc3MgMTAu
-MS4yMC4yCnJjdmQgW0NDUCBDb25mQWNrIGlkPTB4M10Kc2VudCBbTENQIEVjaG9SZXEgaWQ9MHgx
-IG1hZ2ljPTB4NzZlYzE0ODNdCnJjdmQgW0xDUCBFY2hvUmVwIGlkPTB4MSBtYWdpYz0weDBdCnNl
-bnQgW0xDUCBFY2hvUmVxIGlkPTB4MiBtYWdpYz0weDc2ZWMxNDgzXQpyY3ZkIFtMQ1AgRWNob1Jl
-cCBpZD0weDIgbWFnaWM9MHgwXQpzZW50IFtMQ1AgRWNob1JlcSBpZD0weDMgbWFnaWM9MHg3NmVj
-MTQ4M10KcmN2ZCBbTENQIEVjaG9SZXAgaWQ9MHgzIG1hZ2ljPTB4MF0Kc2VudCBbTENQIEVjaG9S
-ZXEgaWQ9MHg0IG1hZ2ljPTB4NzZlYzE0ODNdCnJjdmQgW0xDUCBFY2hvUmVwIGlkPTB4NCBtYWdp
-Yz0weDBdCnNlbnQgW0xDUCBFY2hvUmVxIGlkPTB4NSBtYWdpYz0weDc2ZWMxNDgzXQpyY3ZkIFtM
-Q1AgRWNob1JlcCBpZD0weDUgbWFnaWM9MHgwXQpzZW50IFtMQ1AgRWNob1JlcSBpZD0weDYgbWFn
-aWM9MHg3NmVjMTQ4M10KcmN2ZCBbTENQIEVjaG9SZXAgaWQ9MHg2IG1hZ2ljPTB4MF0Kc2VudCBb
-TENQIEVjaG9SZXEgaWQ9MHg3IG1hZ2ljPTB4NzZlYzE0ODNdCnJjdmQgW0xDUCBFY2hvUmVwIGlk
-PTB4NyBtYWdpYz0weDBdCnNlbnQgW0xDUCBFY2hvUmVxIGlkPTB4OCBtYWdpYz0weDc2ZWMxNDgz
-XQpyY3ZkIFtMQ1AgRWNob1JlcCBpZD0weDggbWFnaWM9MHgwXQpzZW50IFtMQ1AgRWNob1JlcSBp
-ZD0weDkgbWFnaWM9MHg3NmVjMTQ4M10KcmN2ZCBbTENQIEVjaG9SZXAgaWQ9MHg5IG1hZ2ljPTB4
-MF0Kc2VudCBbTENQIEVjaG9SZXEgaWQ9MHhhIG1hZ2ljPTB4NzZlYzE0ODNdCnJjdmQgW0xDUCBF
-Y2hvUmVwIGlkPTB4YSBtYWdpYz0weDBdCnNlbnQgW0xDUCBFY2hvUmVxIGlkPTB4YiBtYWdpYz0w
-eDc2ZWMxNDgzXQpyY3ZkIFtMQ1AgRWNob1JlcCBpZD0weGIgbWFnaWM9MHgwXQpzZW50IFtMQ1Ag
-RWNob1JlcSBpZD0weGMgbWFnaWM9MHg3NmVjMTQ4M10KcmN2ZCBbTENQIEVjaG9SZXAgaWQ9MHhj
-IG1hZ2ljPTB4MF0Kc2VudCBbTENQIEVjaG9SZXEgaWQ9MHhkIG1hZ2ljPTB4NzZlYzE0ODNdCnJj
-dmQgW0xDUCBFY2hvUmVwIGlkPTB4ZCBtYWdpYz0weDBdCk1vZGVtIGhhbmd1cApDb25uZWN0IHRp
-bWUgMC43IG1pbnV0ZXMuClNlbnQgMzYwNCBieXRlcywgcmVjZWl2ZWQgMjk2MCBieXRlcy4KQ29u
-bmVjdGlvbiB0ZXJtaW5hdGVkLgoK
---e89a8f923c22f2d8cc0517b181a5
-Content-Type: application/octet-stream; name="ppp_32N0.log"
-Content-Disposition: attachment; filename="ppp_32N0.log"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_iai8tltc2
-
-cm9vdEBtZXNhdWJ1On4kIC91c3Ivc2Jpbi9wcHBkIGRlYnVnIHR0eVVTQjAgZmlsZSAvdG1wL29w
-dGlvbnN0dHlVU0IwLmNlIApTZXJpYWwgY29ubmVjdGlvbiBlc3RhYmxpc2hlZC4KdXNpbmcgY2hh
-bm5lbCAyMgpVc2luZyBpbnRlcmZhY2UgcHBwMApDb25uZWN0OiBwcHAwIDwtLT4gL2Rldi90dHlV
-U0IwCnJjdmQgW0xDUCBDb25mUmVxIGlkPTB4MCA8bXJ1IDE1MDA+IDxhc3luY21hcCAweDA+IDxw
-Y29tcD4gPGFjY29tcD5dCnNlbnQgW0xDUCBDb25mUmVxIGlkPTB4MSA8bXJ1IDE2OD4gPGFzeW5j
-bWFwIDB4MD4gPG1hZ2ljIDB4Zjc5YzUyOTU+IDxwY29tcD4gPGFjY29tcD5dCnNlbnQgW0xDUCBD
-b25mQWNrIGlkPTB4MCA8bXJ1IDE1MDA+IDxhc3luY21hcCAweDA+IDxwY29tcD4gPGFjY29tcD5d
-CnJjdmQgW0xDUCBDb25mQWNrIGlkPTB4MSA8bXJ1IDE2OD4gPGFzeW5jbWFwIDB4MD4gPG1hZ2lj
-IDB4Zjc5YzUyOTU+IDxwY29tcD4gPGFjY29tcD5dCnNlbnQgW0xDUCBFY2hvUmVxIGlkPTB4MCBt
-YWdpYz0weGY3OWM1Mjk1XQpzZW50IFtDQ1AgQ29uZlJlcSBpZD0weDEgPGRlZmxhdGUgMTU+IDxk
-ZWZsYXRlKG9sZCMpIDE1PiA8YnNkIHYxIDE1Pl0Kc2VudCBbSVBDUCBDb25mUmVxIGlkPTB4MSA8
-Y29tcHJlc3MgVkogMGYgMDE+IDxhZGRyIDEwLjEuMjAuMT4gPG1zLWRuczEgMC4wLjAuMD4gPG1z
-LWRuczMgMC4wLjAuMD5dCnJjdmQgW0NDUCBDb25mUmVxIGlkPTB4MCA8bXBwZSAtSCAtTSAtUyAt
-TCAtRCArQz5dCnNlbnQgW0NDUCBDb25mUmVqIGlkPTB4MCA8bXBwZSAtSCAtTSAtUyAtTCAtRCAr
-Qz5dCnJjdmQgW0lQQ1AgQ29uZlJlcSBpZD0weDIgPGNvbXByZXNzIFZKIDBmIDAwPiA8YWRkciAw
-LjAuMC4wPiA8bXMtZG5zMSAwLjAuMC4wPiA8bXMtd2lucyAwLjAuMC4wPiA8bXMtZG5zMyAwLjAu
-MC4wPiA8bXMtd2lucyAwLjAuMC4wPl0Kc2VudCBbSVBDUCBDb25mUmVqIGlkPTB4MiA8bXMtZG5z
-MSAwLjAuMC4wPiA8bXMtd2lucyAwLjAuMC4wPiA8bXMtZG5zMyAwLjAuMC4wPiA8bXMtd2lucyAw
-LjAuMC4wPl0KcmN2ZCBbSVBWNkNQIENvbmZSZXEgaWQ9MHgwIDxhZGRyIGZlODA6OjQyODM6ZGVm
-ZjpmZTY3OmUyYWE+XQpVbnN1cHBvcnRlZCBwcm90b2NvbCAnSVB2NiBDb250cm9sIFByb3Rvdm9s
-JyAoMHg4MDU3KSByZWNlaXZlZApzZW50IFtMQ1AgUHJvdFJlaiBpZD0weDIgODAgNTcgMDEgMDAg
-MDAgMGUgMDEgMGEgNDIgODMgZGUgZmYgZmUgNjcgZTIgYWFdCnJjdmQgW0xDUCBFY2hvUmVwIGlk
-PTB4MCBtYWdpYz0weDBdCnJjdmQgW0NDUCBDb25mUmVqIGlkPTB4MSA8ZGVmbGF0ZSAxNT4gPGRl
-ZmxhdGUob2xkIykgMTU+IDxic2QgdjEgMTU+XQpzZW50IFtDQ1AgQ29uZlJlcSBpZD0weDJdCnJj
-dmQgW0lQQ1AgQ29uZlJlaiBpZD0weDEgPG1zLWRuczEgMC4wLjAuMD4gPG1zLWRuczMgMC4wLjAu
-MD5dCnNlbnQgW0lQQ1AgQ29uZlJlcSBpZD0weDIgPGNvbXByZXNzIFZKIDBmIDAxPiA8YWRkciAx
-MC4xLjIwLjE+XQpyY3ZkIFtDQ1AgQ29uZlJlcSBpZD0weDFdCnNlbnQgW0NDUCBDb25mQWNrIGlk
-PTB4MV0KcmN2ZCBbSVBDUCBDb25mUmVxIGlkPTB4MyA8Y29tcHJlc3MgVkogMGYgMDA+IDxhZGRy
-IDAuMC4wLjA+XQpzZW50IFtJUENQIENvbmZOYWsgaWQ9MHgzIDxhZGRyIDEwLjEuMjAuMj5dCnJj
-dmQgW0NDUCBDb25mTmFrIGlkPTB4MiA8bXBwZSAtSCAtTSAtUyAtTCAtRCArQz5dCnNlbnQgW0ND
-UCBDb25mUmVxIGlkPTB4M10KcmN2ZCBbSVBDUCBDb25mQWNrIGlkPTB4MiA8Y29tcHJlc3MgVkog
-MGYgMDE+IDxhZGRyIDEwLjEuMjAuMT5dCnJjdmQgW0lQQ1AgQ29uZlJlcSBpZD0weDQgPGNvbXBy
-ZXNzIFZKIDBmIDAwPiA8YWRkciAxMC4xLjIwLjI+XQpzZW50IFtJUENQIENvbmZBY2sgaWQ9MHg0
-IDxjb21wcmVzcyBWSiAwZiAwMD4gPGFkZHIgMTAuMS4yMC4yPl0KQ2Fubm90IGRldGVybWluZSBl
-dGhlcm5ldCBhZGRyZXNzIGZvciBwcm94eSBBUlAKbG9jYWwgIElQIGFkZHJlc3MgMTAuMS4yMC4x
-CnJlbW90ZSBJUCBhZGRyZXNzIDEwLjEuMjAuMgpyY3ZkIFtDQ1AgQ29uZkFjayBpZD0weDNdCnJj
-dmQgW0xDUCBUZXJtUmVxIGlkPTB4MV0KTENQIHRlcm1pbmF0ZWQgYnkgcGVlcgpDb25uZWN0IHRp
-bWUgMC4xIG1pbnV0ZXMuClNlbnQgMCBieXRlcywgcmVjZWl2ZWQgODI1IGJ5dGVzLgpzZW50IFtM
-Q1AgVGVybUFjayBpZD0weDFdCkNvbm5lY3Rpb24gdGVybWluYXRlZC4KTW9kZW0gaGFuZ3VwCgo=
---e89a8f923c22f2d8cc0517b181a5--
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
