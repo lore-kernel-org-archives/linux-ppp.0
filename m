@@ -1,57 +1,41 @@
 From: Maninder Singh <maninder1.s@samsung.com>
-Date: Wed, 24 Jun 2015 09:51:42 +0000
-Subject: [PATCH 1/1] ppp: remove NULL check before kfree
-Message-Id: <1435138782-48477-1-git-send-email-maninder1.s@samsung.com>
+Date: Wed, 24 Jun 2015 11:05:55 +0000
+Subject: Re: [PATCH 1/1] ppp: remove NULL check before kfree
+Message-Id: <595072132.187031435143954821.JavaMail.weblogic@ep2mlwas03a>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1435138782-48477-1-git-send-email-maninder1.s@samsung.com>
+In-Reply-To: <1435138782-48477-1-git-send-email-maninder1.s@samsung.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
-Cc: pankaj.m@samsung.com, Maninder Singh <maninder1.s@samsung.com>
+To: "paulus@samba.org" <paulus@samba.org>, "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>
+Cc: PANKAJ MISHRA <pankaj.m@samsung.com>
 
-No need of explicit NULL check before kfree,
-removing the same and little coding style changes.
+DQo+Tm8gbmVlZCBvZiBleHBsaWNpdCBOVUxMIGNoZWNrIGJlZm9yZSBrZnJlZSwNCj5yZW1vdmlu
+ZyB0aGUgc2FtZSBhbmQgbGl0dGxlIGNvZGluZyBzdHlsZSBjaGFuZ2VzLg0KPg0KPlNpZ25lZC1v
+ZmYtYnk6IE1hbmluZGVyIFNpbmdoIDxtYW5pbmRlcjEuc0BzYW1zdW5nLmNvbT4NCj5SZXZpZXdl
+ZC1ieTogVmFuZWV0IG5hcmFuZyA8di5uYXJhbmdAc2Ftc3VuZy5jb20+DQo+LS0tDQo+IGRyaXZl
+cnMvbmV0L3BwcC9wcHBfbXBwZS5jIHwgICAxMCArKysrLS0tLS0tDQo+IDEgZmlsZSBjaGFuZ2Vk
+LCA0IGluc2VydGlvbnMoKyksIDYgZGVsZXRpb25zKC0pDQo+DQo+ZGlmZiAtLWdpdCBhL2RyaXZl
+cnMvbmV0L3BwcC9wcHBfbXBwZS5jIGIvZHJpdmVycy9uZXQvcHBwL3BwcF9tcHBlLmMNCj5pbmRl
+eCAwNTAwNWM2Li4wNmY2MGIxIDEwMDY0NA0KPi0tLSBhL2RyaXZlcnMvbmV0L3BwcC9wcHBfbXBw
+ZS5jDQo+KysrIGIvZHJpdmVycy9uZXQvcHBwL3BwcF9tcHBlLmMNCj5AQCAtMjM4LDEyICsyMzgs
+MTEgQEAgc3RhdGljIHZvaWQgKm1wcGVfYWxsb2ModW5zaWduZWQgY2hhciAqb3B0aW9ucywgaW50
+IG9wdGxlbikNCj4gCXJldHVybiAodm9pZCAqKXN0YXRlOw0KPiANCj4gCW91dF9mcmVlOg0KPi0J
+ICAgIGlmIChzdGF0ZS0+c2hhMV9kaWdlc3QpDQo+IAkJa2ZyZWUoc3RhdGUtPnNoYTFfZGlnZXN0
+KTsNCj4gCSAgICBpZiAoc3RhdGUtPnNoYTEpDQo+LQkJY3J5cHRvX2ZyZWVfaGFzaChzdGF0ZS0+
+c2hhMSk7DQo+KwkJCWNyeXB0b19mcmVlX2hhc2goc3RhdGUtPnNoYTEpOw0KPiAJICAgIGlmIChz
+dGF0ZS0+YXJjNCkNCj4tCQljcnlwdG9fZnJlZV9ibGtjaXBoZXIoc3RhdGUtPmFyYzQpOw0KPisJ
+CQljcnlwdG9fZnJlZV9ibGtjaXBoZXIoc3RhdGUtPmFyYzQpOw0KPiAJICAgIGtmcmVlKHN0YXRl
+KTsNCj4gCW91dDoNCj4gCXJldHVybiBOVUxMOw0KPkBAIC0yNTYsMTIgKzI1NSwxMSBAQCBzdGF0
+aWMgdm9pZCBtcHBlX2ZyZWUodm9pZCAqYXJnKQ0KPiB7DQo+IAlzdHJ1Y3QgcHBwX21wcGVfc3Rh
+dGUgKnN0YXRlID0gKHN0cnVjdCBwcHBfbXBwZV9zdGF0ZSAqKSBhcmc7DQo+IAlpZiAoc3RhdGUp
+IHsNCj4tCSAgICBpZiAoc3RhdGUtPnNoYTFfZGlnZXN0KQ0KPiAJCWtmcmVlKHN0YXRlLT5zaGEx
+X2RpZ2VzdCk7DQo+IAkgICAgaWYgKHN0YXRlLT5zaGExKQ0KPi0JCWNyeXB0b19mcmVlX2hhc2go
+c3RhdGUtPnNoYTEpOw0KPisJCQljcnlwdG9fZnJlZV9oYXNoKHN0YXRlLT5zaGExKTsNCj4gCSAg
+ICBpZiAoc3RhdGUtPmFyYzQpDQo+LQkJY3J5cHRvX2ZyZWVfYmxrY2lwaGVyKHN0YXRlLT5hcmM0
+KTsNCj4rCQkJY3J5cHRvX2ZyZWVfYmxrY2lwaGVyKHN0YXRlLT5hcmM0KTsNCj4gCSAgICBrZnJl
+ZShzdGF0ZSk7DQo+IAl9DQo+IH0NCj4tLSANCj4xLjcuOS41DQpTZW5kIFYyIG9mIHBhdGNoIHdp
+dGggc29tZSBtb3JlIGNoYW5nZXMuDQpUaGFua3MNCk1hbmluZGVyDQotLS0tLS0tDQoNCg=
 
-Signed-off-by: Maninder Singh <maninder1.s@samsung.com>
-Reviewed-by: Vaneet narang <v.narang@samsung.com>
----
- drivers/net/ppp/ppp_mppe.c |   10 ++++------
- 1 file changed, 4 insertions(+), 6 deletions(-)
-
-diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-index 05005c6..06f60b1 100644
---- a/drivers/net/ppp/ppp_mppe.c
-+++ b/drivers/net/ppp/ppp_mppe.c
-@@ -238,12 +238,11 @@ static void *mppe_alloc(unsigned char *options, int optlen)
- 	return (void *)state;
- 
- 	out_free:
--	    if (state->sha1_digest)
- 		kfree(state->sha1_digest);
- 	    if (state->sha1)
--		crypto_free_hash(state->sha1);
-+			crypto_free_hash(state->sha1);
- 	    if (state->arc4)
--		crypto_free_blkcipher(state->arc4);
-+			crypto_free_blkcipher(state->arc4);
- 	    kfree(state);
- 	out:
- 	return NULL;
-@@ -256,12 +255,11 @@ static void mppe_free(void *arg)
- {
- 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
- 	if (state) {
--	    if (state->sha1_digest)
- 		kfree(state->sha1_digest);
- 	    if (state->sha1)
--		crypto_free_hash(state->sha1);
-+			crypto_free_hash(state->sha1);
- 	    if (state->arc4)
--		crypto_free_blkcipher(state->arc4);
-+			crypto_free_blkcipher(state->arc4);
- 	    kfree(state);
- 	}
- }
--- 
-1.7.9.5
 
