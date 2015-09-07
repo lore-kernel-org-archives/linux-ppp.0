@@ -1,7 +1,7 @@
-From: Edwardo Garcia <wdgarc88@gmail.com>
-Date: Mon, 07 Sep 2015 06:46:36 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 07 Sep 2015 14:26:38 +0000
 Subject: Re: pppd, pptpd and radius DNS assigns
-Message-Id: <CANso6eEW3=v2Bs08KG_gyRagwpL3ArxW+wArZT+OFpP731uA3Q@mail.gmail.com>
+Message-Id: <55ED9E9E.6090206@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <CANso6eGvSYC8WdCD5d7ZXVqb+RQhS4BXz69ZxQX2QQ8YuQ1Yew@mail.gmail.com>
 In-Reply-To: <CANso6eGvSYC8WdCD5d7ZXVqb+RQhS4BXz69ZxQX2QQ8YuQ1Yew@mail.gmail.com>
@@ -10,57 +10,27 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Nobody?
+On 9/7/2015 2:46 AM, Edwardo Garcia wrote:
+> Nobody?
 
+I delayed responding because I'm not using freeradius.  I don't know who
+might be.  If there's a support list for that software, you might have
+better luck over there.  If not, you might be on your own.
 
-On 9/3/15, Edwardo Garcia <wdgarc88@gmail.com> wrote:
-> Hello,
->
-> Trying to get DNS assignments from radius for remote users, I have verified
-> that
-> freeradius is sending the MS-Primary/Secondary-DNS-Server attributes
-> along with all other attributes so I satisfy not a freeradius
-> problem.
->
-> I have include dictionary.microsoft and dictionary.merit in
-> radiusclient from freeradius-client 1.1.7, pptpd v1.4 and pppd 2.4.7,
->
-> if I use ms-dns in options file it assigns DNS servers, but for our
-> new network project we need radius to assign them for project reasons,
-> but the poptop client/pppd ignores, so not sure how to get ppptd/pppd
-> to accept this value and send it to remote userrs, apparently pppd
-> source code shows it know these attributes but does not take/use?
->
-> I try strace but it not too helpful, maybe  I miss an option to make
-> pppd do this?
->
-> /etc/ppp/options.ppptd contain:
-> name pptpd
-> lock
-> refuse-pap
-> refuse-chap
-> refuse-mschap
-> require-mschap-v2
-> require-mppe-128
-> proxyarp
-> nobsdcomp
-> novj
-> novjccomp
-> nologfd
-> mtu 1300
-> mru 1300
-> plugin radius.so
-> plugin radattr.so
->
->
-> and /etc/pptpd.conf
-> localip x.x.x.x
-> option /etc/ppp/options.pptpd
-> ppp /usr/sbin/pppd
-> noipparam
-> delegate
-> connections 2000
->
->
-> Willy
->
+>> I try strace but it not too helpful, maybe  I miss an option to make
+>> pppd do this?
+
+strace doesn't sound like the right sort of tool for this problem.
+Instead, have you tried the pppd "debug" option?
+
+Looking at the RADIUS source (and knowing nothing about it), it looks
+like it needs to be compiled with "MSDNS" defined and that you need
+RADIUS attributes 28 and 29 set.  Have you done that?
+
+If it works with the ms-dns option from the pppd command line, then I'd
+suggest that this is not a problem with pppd itself, but rather with the
+RADIUS plug-in.  I'm not sure who supports that, but it looks like it
+came from Roaring Penguin.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
