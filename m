@@ -1,61 +1,45 @@
 From: Edwardo Garcia <wdgarc88@gmail.com>
-Date: Tue, 08 Sep 2015 11:39:53 +0000
-Subject: Re: pppd, pptpd and radius DNS assigns
-Message-Id: <CANso6eFqHU-2YLr6C-GeDVR9Va6NYX12s2L=9skVSGenHNVk+A@mail.gmail.com>
+Date: Wed, 09 Sep 2015 05:28:56 +0000
+Subject: RESOLEVE: pppd, pptpd and radius DNS assigns
+Message-Id: <CANso6eH5Ap1ynk2bKNbZyBQdbZ-B=vnxDkX7BzvTWGvVgM8yvw@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <CANso6eGvSYC8WdCD5d7ZXVqb+RQhS4BXz69ZxQX2QQ8YuQ1Yew@mail.gmail.com>
-In-Reply-To: <CANso6eGvSYC8WdCD5d7ZXVqb+RQhS4BXz69ZxQX2QQ8YuQ1Yew@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 9/8/15, Jan Just Keijser <jan.just.keijser@gmail.com> wrote:
-> Edwardo Garcia wrote:
->> On 9/8/15, James Carlson <carlsonj@workingcode.com> wrote:
->>
->>> On 9/7/2015 2:46 AM, Edwardo Garcia wrote:
->>>
->>>> Nobody?
->>>>
->>> I delayed responding because I'm not using freeradius.  I don't know who
->>> might be.  If there's a support list for that software, you might have
->>> better luck over there.  If not, you might be on your own.
 >>>
 >>>
->>>>> I try strace but it not too helpful, maybe  I miss an option to make
->>>>> pppd do this?
->>>>>
->>> strace doesn't sound like the right sort of tool for this problem.
->>> Instead, have you tried the pppd "debug" option?
->>>
+>> did you read/follow
+>>   http://wiki.freeradius.org/guide/PopTop-HOWTO
 >>
->> strace using  -ff  show far more information than ppp debug which we also
->> try.
+>> ?  the radius server *must* respond with the Microsoft vendor id (311)
+>> set, otherwise the plugin will not pick up the supplied DNS values.
 >>
 >>
->>> Looking at the RADIUS source (and knowing nothing about it), it looks
->>> like it needs to be compiled with "MSDNS" defined and that you need
->>> RADIUS attributes 28 and 29 set.  Have you done that?
->>>
->>>
+>> JJK
 >>
->> Yes, this is default and is not freeradius problem as freeradius send
->> the information in accept packet, just pppd ignore it, my colleuge has
->> email someone at roaring penguin about it, but will not be available
->> until next couple hours so do not know if he has receive answer or not
->>
->>
-> did you read/follow
->   http://wiki.freeradius.org/guide/PopTop-HOWTO
 >
-> ?  the radius server *must* respond with the Microsoft vendor id (311)
-> set, otherwise the plugin will not pick up the supplied DNS values.
+> yes, and yes but it does not
 >
->
-> JJK
->
+>>
 
-yes, and yes but it does not
 
->
+The problem is fix, the dicitonary file everybody has on web is wrong,
+include freeradius website wiki
+
+From: Noel Butler	Wed, Sep 9, 2015 at 11:06 AM
+To: wdgarc88@gmail.com
+
+Willy,
+
+The radius plugin has the code, the problem lies with the broken
+dictionary.microsoft file
+find attributes 28 and 29, you'll see the rest of the file has 5
+entries, the last being the word microsoft, now look at 28 and 29,
+youll see theres only 4 values, the 5th, being the term Microsoft is
+missing, but for radius to work it *needs* them, so edit the file
+adding them, restart pptp and you should see it dishing them out by
+checking with your client, and by /var/run/radattr.pppn
+
+I'll try correct the wiki entry soon, if I cant I'll nudge Arran to change it.
