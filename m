@@ -1,214 +1,77 @@
-From: Matteo Croce <matteo@openwrt.org>
-Date: Fri, 20 Nov 2015 17:16:10 +0000
-Subject: Re: [PATCH v2] hostapd: add command to ban a station
-Message-Id: <CAFnufp3GPzkyDvBY61kOiRG5Gn0iL7PfCHmiyEH-tR8+Cnx44A@mail.gmail.com>
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sun, 01 Nov 2015 16:21:24 +0000
+Subject: [PATCH v2 net 1/2] isdn_ppp: Add checks for allocation failure in isdn_ppp_open()
+Message-Id: <20151101162123.GA9478@decadent.org.uk>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="Q68bSM7Ycu6FN28Q"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1448039669-19997-1-git-send-email-matteo@openwrt.org>
-In-Reply-To: <1448039669-19997-1-git-send-email-matteo@openwrt.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
-
-sorry, sent the wrong patch
-
-2015-11-20 18:14 GMT+01:00 Matteo Croce <matteo@openwrt.org>:
-> When a station gets disassociated usually it will rejoin the AP.
-> Add a `ban' command that adds the station in the ACL exclude list
-> and disassociates it, to prevent it from automatically rejoin the AP.
->
-> Signed-off-by: Matteo Croce <matteo@openwrt.org>
-> ---
->  hostapd/config_file.c  |  8 --------
->  hostapd/ctrl_iface.c   |  3 +++
->  hostapd/hostapd_cli.c  | 19 +++++++++++++++++++
->  src/ap/ap_config.c     | 10 ++++++++--
->  src/ap/ap_config.h     |  1 +
->  src/ap/ctrl_iface_ap.c | 25 +++++++++++++++++++++++++
->  src/ap/ctrl_iface_ap.h |  2 ++
->  7 files changed, 58 insertions(+), 10 deletions(-)
->
-> diff --git a/hostapd/config_file.c b/hostapd/config_file.c
-> index bf42466..36432f4 100644
-> --- a/hostapd/config_file.c
-> +++ b/hostapd/config_file.c
-> @@ -109,14 +109,6 @@ static int hostapd_config_read_vlan_file(struct hostapd_bss_config *bss,
->  #endif /* CONFIG_NO_VLAN */
->
->
-> -static int hostapd_acl_comp(const void *a, const void *b)
-> -{
-> -       const struct mac_acl_entry *aa = a;
-> -       const struct mac_acl_entry *bb = b;
-> -       return os_memcmp(aa->addr, bb->addr, sizeof(macaddr));
-> -}
-> -
-> -
->  static int hostapd_config_read_maclist(const char *fname,
->                                        struct mac_acl_entry **acl, int *num)
->  {
-> diff --git a/hostapd/ctrl_iface.c b/hostapd/ctrl_iface.c
-> index cb6fb17..5ad29c8 100644
-> --- a/hostapd/ctrl_iface.c
-> +++ b/hostapd/ctrl_iface.c
-> @@ -2122,6 +2122,9 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
->         } else if (os_strncmp(buf, "DISASSOCIATE ", 13) = 0) {
->                 if (hostapd_ctrl_iface_disassociate(hapd, buf + 13))
->                         reply_len = -1;
-> +       } else if (os_strncmp(buf, "BAN ", 4) = 0) {
-> +               if (hostapd_ctrl_iface_ban(hapd, buf + 4))
-> +                       reply_len = -1;
->         } else if (os_strcmp(buf, "STOP_AP") = 0) {
->                 if (hostapd_ctrl_iface_stop_ap(hapd))
->                         reply_len = -1;
-> diff --git a/hostapd/hostapd_cli.c b/hostapd/hostapd_cli.c
-> index 46c2f37..f063a90 100644
-> --- a/hostapd/hostapd_cli.c
-> +++ b/hostapd/hostapd_cli.c
-> @@ -65,6 +65,7 @@ static const char *const commands_help >  "   new_sta <addr>       add a new station\n"
->  "   deauthenticate <addr>  deauthenticate a station\n"
->  "   disassociate <addr>  disassociate a station\n"
-> +"   ban <addr>           ban a station\n"
->  #ifdef CONFIG_IEEE80211W
->  "   sa_query <addr>      send SA Query to a station\n"
->  #endif /* CONFIG_IEEE80211W */
-> @@ -348,6 +349,23 @@ static int hostapd_cli_cmd_disassociate(struct wpa_ctrl *ctrl, int argc,
->  }
->
->
-> +static int hostapd_cli_cmd_ban(struct wpa_ctrl *ctrl, int argc,
-> +                                         char *argv[])
-> +{
-> +       char buf[64];
-> +       if (argc < 1) {
-> +               printf("Invalid 'ban' command - exactly one "
-> +                      "argument, STA address, is required.\n");
-> +               return -1;
-> +       }
-> +       if (argc > 1)
-> +               os_snprintf(buf, sizeof(buf), "BAN %s %s",
-> +                           argv[0], argv[1]);
-> +       else
-> +               os_snprintf(buf, sizeof(buf), "BAN %s", argv[0]);
-> +       return wpa_ctrl_command(ctrl, buf);
-> +}
-> +
->  #ifdef CONFIG_IEEE80211W
->  static int hostapd_cli_cmd_sa_query(struct wpa_ctrl *ctrl, int argc,
->                                     char *argv[])
-> @@ -1083,6 +1101,7 @@ static const struct hostapd_cli_cmd hostapd_cli_commands[] = {
->         { "new_sta", hostapd_cli_cmd_new_sta },
->         { "deauthenticate", hostapd_cli_cmd_deauthenticate },
->         { "disassociate", hostapd_cli_cmd_disassociate },
-> +       { "ban", hostapd_cli_cmd_ban },
->  #ifdef CONFIG_IEEE80211W
->         { "sa_query", hostapd_cli_cmd_sa_query },
->  #endif /* CONFIG_IEEE80211W */
-> diff --git a/src/ap/ap_config.c b/src/ap/ap_config.c
-> index cf9b2ce..0b0c93c 100644
-> --- a/src/ap/ap_config.c
-> +++ b/src/ap/ap_config.c
-> @@ -201,11 +201,17 @@ int hostapd_mac_comp(const void *a, const void *b)
->         return os_memcmp(a, b, sizeof(macaddr));
->  }
->
-> -
->  int hostapd_mac_comp_empty(const void *a)
->  {
->         macaddr empty = { 0 };
-> -       return os_memcmp(a, empty, sizeof(macaddr));
-> +       return hostapd_mac_comp(a, empty);
-> +}
-> +
-> +int hostapd_acl_comp(const void *a, const void *b)
-> +{
-> +       const struct mac_acl_entry *aa = a;
-> +       const struct mac_acl_entry *bb = b;
-> +       return hostapd_mac_comp(aa->addr, bb->addr);
->  }
->
->
-> diff --git a/src/ap/ap_config.h b/src/ap/ap_config.h
-> index ff9dcb0..e165408 100644
-> --- a/src/ap/ap_config.h
-> +++ b/src/ap/ap_config.h
-> @@ -680,6 +680,7 @@ struct hostapd_config {
->
->  int hostapd_mac_comp(const void *a, const void *b);
->  int hostapd_mac_comp_empty(const void *a);
-> +int hostapd_acl_comp(const void *a, const void *b);
->  struct hostapd_config * hostapd_config_defaults(void);
->  void hostapd_config_defaults_bss(struct hostapd_bss_config *bss);
->  void hostapd_config_free_eap_user(struct hostapd_eap_user *user);
-> diff --git a/src/ap/ctrl_iface_ap.c b/src/ap/ctrl_iface_ap.c
-> index c98978f..b804661 100644
-> --- a/src/ap/ctrl_iface_ap.c
-> +++ b/src/ap/ctrl_iface_ap.c
-> @@ -408,6 +408,31 @@ int hostapd_ctrl_iface_disassociate(struct hostapd_data *hapd,
->         return 0;
->  }
->
-> +int hostapd_ctrl_iface_ban(struct hostapd_data *hapd,
-> +                          const char *txtaddr)
-> +{
-> +       u8 addr[ETH_ALEN];
-> +       struct mac_acl_entry *acl = hapd->conf->deny_mac;
-> +       int num_acl = hapd->conf->num_deny_mac + 1;
-> +
-> +       wpa_dbg(hapd->msg_ctx, MSG_DEBUG, "CTRL_IFACE BAN %s",
-> +               txtaddr);
-> +
-> +       if (hwaddr_aton(txtaddr, addr))
-> +               return -1;
-> +
-> +       hapd->conf->macaddr_acl = 0;
-> +
-> +       acl = os_realloc_array(acl, num_acl, sizeof(*acl));
-> +       os_memcpy(acl[num_acl - 1].addr, addr, ETH_ALEN);
-> +       acl[num_acl - 1].vlan_id = 0;
-> +       qsort(acl, num_acl, sizeof(*acl), hostapd_acl_comp);
-> +
-> +       hapd->conf->deny_mac = acl;
-> +       hapd->conf->num_deny_mac = num_acl;
-> +
-> +       return hostapd_ctrl_iface_disassociate(hapd, txtaddr);
-> +}
->
->  int hostapd_ctrl_iface_status(struct hostapd_data *hapd, char *buf,
->                               size_t buflen)
-> diff --git a/src/ap/ctrl_iface_ap.h b/src/ap/ctrl_iface_ap.h
-> index e5297d0..c6801bf 100644
-> --- a/src/ap/ctrl_iface_ap.h
-> +++ b/src/ap/ctrl_iface_ap.h
-> @@ -19,6 +19,8 @@ int hostapd_ctrl_iface_deauthenticate(struct hostapd_data *hapd,
->                                       const char *txtaddr);
->  int hostapd_ctrl_iface_disassociate(struct hostapd_data *hapd,
->                                     const char *txtaddr);
-> +int hostapd_ctrl_iface_ban(struct hostapd_data *hapd,
-> +                                   const char *txtaddr);
->  int hostapd_ctrl_iface_status(struct hostapd_data *hapd, char *buf,
->                               size_t buflen);
->  int hostapd_parse_csa_settings(const char *pos,
-> --
-> 2.5.0
->
+To: David Miller <davem@davemloft.net>
+Cc: Karsten Keil <isdn@linux-pingi.de>, linux-ppp@vger.kernel.org, netdev <netdev@vger.kernel.org>
 
 
+--Q68bSM7Ycu6FN28Q
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
--- 
-Matteo Croce
-OpenWrt Developer
-  _______                     ________        __
- |       |.-----.-----.-----.|  |  |  |.----.|  |_
- |   -   ||  _  |  -__|     ||  |  |  ||   _||   _|
- |_______||   __|_____|__|__||________||__|  |____|
-          |__| W I R E L E S S   F R E E D O M
- -----------------------------------------------------
- CHAOS CALMER (15.05)
- -----------------------------------------------------
-  * 1 1/2 oz Gin            Shake with a glassful
-  * 1/4 oz Triple Sec       of broken ice and pour
-  * 3/4 oz Lime Juice       unstrained into a goblet.
-  * 1 1/2 oz Orange Juice
-  * 1 tsp. Grenadine Syrup
- -----------------------------------------------------
+Compile-tested only.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+Re-sent using mutt since Evolution 3.18 mangles patches.
+
+Ben.
+
+ drivers/isdn/i4l/isdn_ppp.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/isdn/i4l/isdn_ppp.c b/drivers/isdn/i4l/isdn_ppp.c
+index c4198fa..86f9abe 100644
+--- a/drivers/isdn/i4l/isdn_ppp.c
++++ b/drivers/isdn/i4l/isdn_ppp.c
+@@ -301,6 +301,8 @@ isdn_ppp_open(int min, struct file *file)
+ 	is->compflags =3D 0;
+=20
+ 	is->reset =3D isdn_ppp_ccp_reset_alloc(is);
++	if (!is->reset)
++		return -ENOMEM;
+=20
+ 	is->lp =3D NULL;
+ 	is->mp_seqno =3D 0;       /* MP sequence number */
+@@ -320,6 +322,10 @@ isdn_ppp_open(int min, struct file *file)
+ 	 * VJ header compression init
+ 	 */
+ 	is->slcomp =3D slhc_init(16, 16);	/* not necessary for 2. link in bundle =
+*/
++	if (!is->slcomp) {
++		isdn_ppp_ccp_reset_free(is);
++		return -ENOMEM;
++	}
+ #endif
+ #ifdef CONFIG_IPPP_FILTER
+ 	is->pass_filter =3D NULL;
+
+
+--Q68bSM7Ycu6FN28Q
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIVAwUBVjY8A+e/yOyVhhEJAQrRPQ//e7mTCsl37oBPnQYTuo7PHivzBy1i4+eB
+WhVBhETrjmz8sACU8lnEr5v0P/Anpz6DSk8ldCQMJp7gOmN+hWxjZRY6cLKNo4wx
+sjrNeRW44WgQUDWZJOLT3T4/QUVRYFYqUNl302luw/Qz+zmqb3pnx+6wBb+NUpkM
+pBUzqeEPXAR9puOhDW+sxtq2XXCbvpi0Tc6kXuQiCnD/bF/J8cO4J6mTvj7ZmtO/
+EEzJCEIZ993HqZoqa/VSkis49WYrLRZJ+bkvQOLDrf99VlDqf0wx0RY9DWy256a+
+EMBb4Vn17JRImOv+sAd7OrZhnwebhSkrC060Sdz/w9aFLct/mQAMStHAtOtg0tzi
+lhJIpDsqZOwXSynGG8n1ovKQisI71UjiYuoZvSSWvYsEtHeK5FnVlfDjZTQ+/Z0X
+3Xw8ESFAAx3PtI4CskeTFQ1wfEczfK0PNfKWn5+nARgJHkMyAhO1Rh1gtjTXXFzd
+WgA5qnHF7+XrSoGb1UnW20vnlbwCX3byHG3zIl+8YJZDsFRtc0gv9ANFEgn1v9aD
+D2k4wIiXhFJ2e/HLAxhwlBOEQrNrYcAZc/PdNS34X5/DEZJ0IAoNOkj93FcS6Hv0
+gc61/S1vLa/QsD+XWuxkEVeku/0Goxz3PLL2grt/CGE8P/IgZXWemfvK2r2DRYB5
+Og3FmivceEo=
+=3fnT
+-----END PGP SIGNATURE-----
+
+--Q68bSM7Ycu6FN28Q--
