@@ -1,7 +1,7 @@
-From: Thomas Bergholz <ThomasBergholz@web.de>
-Date: Wed, 18 Nov 2015 21:11:28 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 18 Nov 2015 21:19:04 +0000
 Subject: Re: Problems with pppd option: record file
-Message-Id: <564CE980.2090102@web.de>
+Message-Id: <564CEB48.2040605@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <564CBFC6.4090409@web.de>
 In-Reply-To: <564CBFC6.4090409@web.de>
@@ -10,72 +10,45 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hey James - thanks for the input,
+On 11/18/15 16:11, Thomas Bergholz wrote:
+> Hey James - thanks for the input,
+> 
+> Starting over at top :-)
+> 
+> Trying to find out why the capture file does not show up. I am
+> interested in the parts which tshark does not display.
+> https://wiki.wireshark.org/CaptureSetup/PPP#Linux
 
-Starting over at top :-)
+That page isn't entirely accurate in this particular case.
 
-Trying to find out why the capture file does not show up. I am
-interested in the parts which tshark does not display.
-https://wiki.wireshark.org/CaptureSetup/PPP#Linux
+If you use wireshark (or tshark) on a PPP device -- say, interface
+"ppp0" on your system -- then you will see only the network layer
+traffic.  That's the problem that this web page is documenting.
 
-I activated "debug" and "kdebug 4" to track down probable causes for the
-missing capture file (well yes, kdebug may not make much sense).
+However, you're running PPP over PPPoE, and that's running on Ethernet.
+ If you run wireshark on the underlying Ethernet interface -- "eth0" on
+your system -- then you will see ALL of the traffic.  That we page
+doesn't apply, because "eth0" is Ethernet, not PPP.
 
-I have to admit that I went the lazy way and did not compile pppd myself
-yet.
+The web page should probably be updated to make things a little clearer.
 
+> I activated "debug" and "kdebug 4" to track down probable causes for the
+> missing capture file (well yes, kdebug may not make much sense).
 
------ Original Message -----
-*From:* James Carlson
-*To:* Thomas Bergholz, Problems With Pppd Option: Record File
-*CC:*
-*Sent:* Wed, 18 Nov 2015 14:42:41 -0500
-*Subject:* Re: Problems with pppd option: record file
+Neither of those make sense here.  "debug" shows (primarily) the PPP
+negotiation details.  It won't show you why a command line option isn't
+implemented.  "kdebug" sends flags into the /dev/ppp kernel driver to
+tell it to print things to the system console.  Generally, that's not
+too useful unless you have kernel driver issues to work out.
 
- 
+> I have to admit that I went the lazy way and did not compile pppd myself
+> yet.
 
-> On 11/18/15 13:13, Thomas Bergholz wrote:
->> kdebug 4
-> kdebug almost never does what you want, unless you're hacking the kernel
-> modules themselves.  Are you sure you need this?
->
->> record /tmp/pppd_capture.pcap
-> This looks to me like a bad idea.  First of all, the "record" option,
-> besides being quite brutal (it uses a pty pair and passes all data back
-> and forth in and out of the kernel multiple times), does not create pcap
-> format files.  It creates async data files in a special format that only
-> pppdump normally reads.  It's very hard to use, and is definitely NOT an
-> accurate recording if you're using anything other than PPP on an
-> asynchronous line.  Even then, it's appropriate only if you're debugging
-> a problem in AHDLC encoding or flow control or something like that.
-> It's close to worthless for higher level (PPP negotiation or IP data)
-> debugging.
->
-> And this isn't configured as PPP on an asynchronous line.  So, even if
-> you could make it work, it wouldn't give you accurate results for
-> debugging, because it passes the data through an asynchronous
-> pseudo-terminal, and Ethernet is anything but that.
->
-> I suggest just running wireshark on eth0 instead.  Since this is a PPPoE
-> connection, that will capture everything, and wireshark is great at
-> decoding PPPoE (and PPP) negotiation.
->
->> unit 0
-> Not sure why this appears here.
->
->> I recongnized that the raspi prints "unrecognized option 'record'", even
->> though the "record file" option is mentioned in the pppd manpage.
->> Ubuntu does not print this message.
-> Is this a copy of pppd that you compiled from source or one that you got
-> from someone else?
->
-> If it's one that you compiled from source, I'd suggest looking at
-> pppd/tty.c to see why that option is missing.
->
-> If it's one that you got from someone else, then you need to ask them
-> what's been done to it.  Some distributors make changes, and it's
-> possible they just removed this (mostly useless) option.
->
-> I suggest starting over at the top: what problem are you trying to solve?
->
+My guess would be that the person who did compile it took it on himself
+to delete some useless options.
 
+Just a guess, though.  You'd have to look upstream for that information.
+ It's mostly useless, but "record" works fine for me.  :-/
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
