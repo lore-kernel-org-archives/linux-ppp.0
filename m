@@ -1,180 +1,189 @@
-From: Ben Hutchings <ben@decadent.org.uk>
-Date: Wed, 14 Oct 2015 17:53:30 +0000
-Subject: [PATCH 2/2] ppp, slip: Validate VJ compression slot parameters completely
-Message-Id: <1444845210.31451.23.camel@decadent.org.uk>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="=-eZzlr/htYWPtrTuS5PAs"
+From: Matteo Croce <matteo@openwrt.org>
+Date: Fri, 20 Nov 2015 17:14:29 +0000
+Subject: [PATCH v2] hostapd: add command to ban a station
+Message-Id: <1448039669-19997-1-git-send-email-matteo@openwrt.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1444845074.31451.21.camel@decadent.org.uk>
-In-Reply-To: <1444845074.31451.21.camel@decadent.org.uk>
-To: David Miller <davem@davemloft.net>
-Cc: Karsten Keil <isdn@linux-pingi.de>, linux-ppp@vger.kernel.org, netdev <netdev@vger.kernel.org>, =?UTF-8?Q?=E9=83=AD=E6=B0=B8=E5=88=9A?= <guoyonggang@360.cn>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-ppp@vger.kernel.org
 
+When a station gets disassociated usually it will rejoin the AP.
+Add a `ban' command that adds the station in the ACL exclude list
+and disassociates it, to prevent it from automatically rejoin the AP.
 
---=-eZzlr/htYWPtrTuS5PAs
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-Currently slhc_init() treats out-of-range values of rslots and tslots
-as equivalent to 0, except that if tslots is too large it will
-dereference a null pointer (CVE-2015-7799).
-
-Add a range-check at the top of the function and make it return an
-ERR_PTR() on error instead of NULL.=C2=A0=C2=A0Change the callers according=
-ly.
-
-Compile-tested only.
-
-Reported-by: =E9=83=AD=E6=B0=B8=E5=88=9A <guoyonggang@360.cn>
-References: http://article.gmane.org/gmane.comp.security.oss.general/17908
-Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+Signed-off-by: Matteo Croce <matteo@openwrt.org>
 ---
-=C2=A0drivers/isdn/i4l/isdn_ppp.c=C2=A0=C2=A0=C2=A0| 10 ++++------
-=C2=A0drivers/net/ppp/ppp_generic.c |=C2=A0=C2=A06 ++----
-=C2=A0drivers/net/slip/slhc.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0| 12=
- ++++++++----
-=C2=A0drivers/net/slip/slip.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0|=C2=
-=A0=C2=A02 +-
-=C2=A04 files changed, 15 insertions(+), 15 deletions(-)
+ hostapd/config_file.c  |  8 --------
+ hostapd/ctrl_iface.c   |  3 +++
+ hostapd/hostapd_cli.c  | 19 +++++++++++++++++++
+ src/ap/ap_config.c     | 10 ++++++++--
+ src/ap/ap_config.h     |  1 +
+ src/ap/ctrl_iface_ap.c | 25 +++++++++++++++++++++++++
+ src/ap/ctrl_iface_ap.h |  2 ++
+ 7 files changed, 58 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/isdn/i4l/isdn_ppp.c b/drivers/isdn/i4l/isdn_ppp.c
-index 86f9abe..9c1e8ad 100644
---- a/drivers/isdn/i4l/isdn_ppp.c
-+++ b/drivers/isdn/i4l/isdn_ppp.c
-@@ -322,9 +322,9 @@ isdn_ppp_open(int min, struct file *file)
-=C2=A0	=C2=A0* VJ header compression init
-=C2=A0	=C2=A0*/
-=C2=A0	is->slcomp =3D slhc_init(16, 16);	/* not necessary for 2. link in bu=
-ndle */
--	if (!is->slcomp) {
-+	if (IS_ERR(is->slcomp)) {
-=C2=A0		isdn_ppp_ccp_reset_free(is);
--		return -ENOMEM;
-+		return PTR_ERR(is->slcomp);
-=C2=A0	}
-=C2=A0#endif
-=C2=A0#ifdef CONFIG_IPPP_FILTER
-@@ -573,10 +573,8 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned in=
-t cmd, unsigned long arg)
-=C2=A0			is->maxcid =3D val;
-=C2=A0#ifdef CONFIG_ISDN_PPP_VJ
-=C2=A0			sltmp =3D slhc_init(16, val);
--			if (!sltmp) {
--				printk(KERN_ERR "ippp, can't realloc slhc struct\n");
--				return -ENOMEM;
--			}
-+			if (IS_ERR(sltmp))
-+				return PTR_ERR(sltmp);
-=C2=A0			if (is->slcomp)
-=C2=A0				slhc_free(is->slcomp);
-=C2=A0			is->slcomp =3D sltmp;
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index ed00446..9a863c6 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -721,10 +721,8 @@ static long ppp_ioctl(struct file *file, unsigned int =
-cmd, unsigned long arg)
-=C2=A0			val &=3D 0xffff;
-=C2=A0		}
-=C2=A0		vj =3D slhc_init(val2+1, val+1);
--		if (!vj) {
--			netdev_err(ppp->dev,
--				=C2=A0=C2=A0=C2=A0"PPP: no memory (VJ compressor)\n");
--			err =3D -ENOMEM;
-+		if (IS_ERR(vj)) {
-+			err =3D PTR_ERR(vj);
-=C2=A0			break;
-=C2=A0		}
-=C2=A0		ppp_lock(ppp);
-diff --git a/drivers/net/slip/slhc.c b/drivers/net/slip/slhc.c
-index 079f7ad..27ed252 100644
---- a/drivers/net/slip/slhc.c
-+++ b/drivers/net/slip/slhc.c
-@@ -84,8 +84,9 @@ static long decode(unsigned char **cpp);
-=C2=A0static unsigned char * put16(unsigned char *cp, unsigned short x);
-=C2=A0static unsigned short pull16(unsigned char **cpp);
-=C2=A0
--/* Initialize compression data structure
-+/* Allocate compression data structure
-=C2=A0 *	slots must be in range 0 to 255 (zero meaning no compression)
-+ * Returns pointer to structure or ERR_PTR() on error.
-=C2=A0 */
-=C2=A0struct slcompress *
-=C2=A0slhc_init(int rslots, int tslots)
-@@ -94,11 +95,14 @@ slhc_init(int rslots, int tslots)
-=C2=A0	register struct cstate *ts;
-=C2=A0	struct slcompress *comp;
-=C2=A0
-+	if (rslots < 0 || rslots > 255 || tslots < 0 || tslots > 255)
-+		return ERR_PTR(-EINVAL);
+diff --git a/hostapd/config_file.c b/hostapd/config_file.c
+index bf42466..36432f4 100644
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -109,14 +109,6 @@ static int hostapd_config_read_vlan_file(struct hostapd_bss_config *bss,
+ #endif /* CONFIG_NO_VLAN */
+ 
+ 
+-static int hostapd_acl_comp(const void *a, const void *b)
+-{
+-	const struct mac_acl_entry *aa = a;
+-	const struct mac_acl_entry *bb = b;
+-	return os_memcmp(aa->addr, bb->addr, sizeof(macaddr));
+-}
+-
+-
+ static int hostapd_config_read_maclist(const char *fname,
+ 				       struct mac_acl_entry **acl, int *num)
+ {
+diff --git a/hostapd/ctrl_iface.c b/hostapd/ctrl_iface.c
+index cb6fb17..5ad29c8 100644
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -2122,6 +2122,9 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
+ 	} else if (os_strncmp(buf, "DISASSOCIATE ", 13) = 0) {
+ 		if (hostapd_ctrl_iface_disassociate(hapd, buf + 13))
+ 			reply_len = -1;
++	} else if (os_strncmp(buf, "BAN ", 4) = 0) {
++		if (hostapd_ctrl_iface_ban(hapd, buf + 4))
++			reply_len = -1;
+ 	} else if (os_strcmp(buf, "STOP_AP") = 0) {
+ 		if (hostapd_ctrl_iface_stop_ap(hapd))
+ 			reply_len = -1;
+diff --git a/hostapd/hostapd_cli.c b/hostapd/hostapd_cli.c
+index 46c2f37..f063a90 100644
+--- a/hostapd/hostapd_cli.c
++++ b/hostapd/hostapd_cli.c
+@@ -65,6 +65,7 @@ static const char *const commands_help  "   new_sta <addr>       add a new station\n"
+ "   deauthenticate <addr>  deauthenticate a station\n"
+ "   disassociate <addr>  disassociate a station\n"
++"   ban <addr>           ban a station\n"
+ #ifdef CONFIG_IEEE80211W
+ "   sa_query <addr>      send SA Query to a station\n"
+ #endif /* CONFIG_IEEE80211W */
+@@ -348,6 +349,23 @@ static int hostapd_cli_cmd_disassociate(struct wpa_ctrl *ctrl, int argc,
+ }
+ 
+ 
++static int hostapd_cli_cmd_ban(struct wpa_ctrl *ctrl, int argc,
++					  char *argv[])
++{
++	char buf[64];
++	if (argc < 1) {
++		printf("Invalid 'ban' command - exactly one "
++		       "argument, STA address, is required.\n");
++		return -1;
++	}
++	if (argc > 1)
++		os_snprintf(buf, sizeof(buf), "BAN %s %s",
++			    argv[0], argv[1]);
++	else
++		os_snprintf(buf, sizeof(buf), "BAN %s", argv[0]);
++	return wpa_ctrl_command(ctrl, buf);
++}
 +
-=C2=A0	comp =3D kzalloc(sizeof(struct slcompress), GFP_KERNEL);
-=C2=A0	if (! comp)
-=C2=A0		goto out_fail;
-=C2=A0
--	if ( rslots > 0=C2=A0=C2=A0&&=C2=A0=C2=A0rslots < 256 ) {
-+	if (rslots > 0) {
-=C2=A0		size_t rsize =3D rslots * sizeof(struct cstate);
-=C2=A0		comp->rstate =3D kzalloc(rsize, GFP_KERNEL);
-=C2=A0		if (! comp->rstate)
-@@ -106,7 +110,7 @@ slhc_init(int rslots, int tslots)
-=C2=A0		comp->rslot_limit =3D rslots - 1;
-=C2=A0	}
-=C2=A0
--	if ( tslots > 0=C2=A0=C2=A0&&=C2=A0=C2=A0tslots < 256 ) {
-+	if (tslots > 0) {
-=C2=A0		size_t tsize =3D tslots * sizeof(struct cstate);
-=C2=A0		comp->tstate =3D kzalloc(tsize, GFP_KERNEL);
-=C2=A0		if (! comp->tstate)
-@@ -141,7 +145,7 @@ out_free2:
-=C2=A0out_free:
-=C2=A0	kfree(comp);
-=C2=A0out_fail:
--	return NULL;
-+	return ERR_PTR(-ENOMEM);
-=C2=A0}
-=C2=A0
-=C2=A0
-diff --git a/drivers/net/slip/slip.c b/drivers/net/slip/slip.c
-index 05387b1..a17d86a 100644
---- a/drivers/net/slip/slip.c
-+++ b/drivers/net/slip/slip.c
-@@ -164,7 +164,7 @@ static int sl_alloc_bufs(struct slip *sl, int mtu)
-=C2=A0	if (cbuff =3D=3D NULL)
-=C2=A0		goto err_exit;
-=C2=A0	slcomp =3D slhc_init(16, 16);
--	if (slcomp =3D=3D NULL)
-+	if (IS_ERR(slcomp))
-=C2=A0		goto err_exit;
-=C2=A0#endif
-=C2=A0	spin_lock_bh(&sl->lock);
---=20
-Ben Hutchings
-[W]e found...that it wasn't as easy to get programs right as we had thought=
-.
-... I realized that a large part of my life from then on was going to be sp=
-ent
-in finding mistakes in my own programs. - Maurice Wilkes, 1949
---=-eZzlr/htYWPtrTuS5PAs
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+ #ifdef CONFIG_IEEE80211W
+ static int hostapd_cli_cmd_sa_query(struct wpa_ctrl *ctrl, int argc,
+ 				    char *argv[])
+@@ -1083,6 +1101,7 @@ static const struct hostapd_cli_cmd hostapd_cli_commands[] = {
+ 	{ "new_sta", hostapd_cli_cmd_new_sta },
+ 	{ "deauthenticate", hostapd_cli_cmd_deauthenticate },
+ 	{ "disassociate", hostapd_cli_cmd_disassociate },
++	{ "ban", hostapd_cli_cmd_ban },
+ #ifdef CONFIG_IEEE80211W
+ 	{ "sa_query", hostapd_cli_cmd_sa_query },
+ #endif /* CONFIG_IEEE80211W */
+diff --git a/src/ap/ap_config.c b/src/ap/ap_config.c
+index cf9b2ce..0b0c93c 100644
+--- a/src/ap/ap_config.c
++++ b/src/ap/ap_config.c
+@@ -201,11 +201,17 @@ int hostapd_mac_comp(const void *a, const void *b)
+ 	return os_memcmp(a, b, sizeof(macaddr));
+ }
+ 
+-
+ int hostapd_mac_comp_empty(const void *a)
+ {
+ 	macaddr empty = { 0 };
+-	return os_memcmp(a, empty, sizeof(macaddr));
++	return hostapd_mac_comp(a, empty);
++}
++
++int hostapd_acl_comp(const void *a, const void *b)
++{
++	const struct mac_acl_entry *aa = a;
++	const struct mac_acl_entry *bb = b;
++	return hostapd_mac_comp(aa->addr, bb->addr);
+ }
+ 
+ 
+diff --git a/src/ap/ap_config.h b/src/ap/ap_config.h
+index ff9dcb0..e165408 100644
+--- a/src/ap/ap_config.h
++++ b/src/ap/ap_config.h
+@@ -680,6 +680,7 @@ struct hostapd_config {
+ 
+ int hostapd_mac_comp(const void *a, const void *b);
+ int hostapd_mac_comp_empty(const void *a);
++int hostapd_acl_comp(const void *a, const void *b);
+ struct hostapd_config * hostapd_config_defaults(void);
+ void hostapd_config_defaults_bss(struct hostapd_bss_config *bss);
+ void hostapd_config_free_eap_user(struct hostapd_eap_user *user);
+diff --git a/src/ap/ctrl_iface_ap.c b/src/ap/ctrl_iface_ap.c
+index c98978f..b804661 100644
+--- a/src/ap/ctrl_iface_ap.c
++++ b/src/ap/ctrl_iface_ap.c
+@@ -408,6 +408,31 @@ int hostapd_ctrl_iface_disassociate(struct hostapd_data *hapd,
+ 	return 0;
+ }
+ 
++int hostapd_ctrl_iface_ban(struct hostapd_data *hapd,
++			   const char *txtaddr)
++{
++	u8 addr[ETH_ALEN];
++	struct mac_acl_entry *acl = hapd->conf->deny_mac;
++	int num_acl = hapd->conf->num_deny_mac + 1;
++
++	wpa_dbg(hapd->msg_ctx, MSG_DEBUG, "CTRL_IFACE BAN %s",
++		txtaddr);
++
++	if (hwaddr_aton(txtaddr, addr))
++		return -1;
++
++	hapd->conf->macaddr_acl = 0;
++
++	acl = os_realloc_array(acl, num_acl, sizeof(*acl));
++	os_memcpy(acl[num_acl - 1].addr, addr, ETH_ALEN);
++	acl[num_acl - 1].vlan_id = 0;
++	qsort(acl, num_acl, sizeof(*acl), hostapd_acl_comp);
++
++	hapd->conf->deny_mac = acl;
++	hapd->conf->num_deny_mac = num_acl;
++
++	return hostapd_ctrl_iface_disassociate(hapd, txtaddr);
++}
+ 
+ int hostapd_ctrl_iface_status(struct hostapd_data *hapd, char *buf,
+ 			      size_t buflen)
+diff --git a/src/ap/ctrl_iface_ap.h b/src/ap/ctrl_iface_ap.h
+index e5297d0..c6801bf 100644
+--- a/src/ap/ctrl_iface_ap.h
++++ b/src/ap/ctrl_iface_ap.h
+@@ -19,6 +19,8 @@ int hostapd_ctrl_iface_deauthenticate(struct hostapd_data *hapd,
+ 				      const char *txtaddr);
+ int hostapd_ctrl_iface_disassociate(struct hostapd_data *hapd,
+ 				    const char *txtaddr);
++int hostapd_ctrl_iface_ban(struct hostapd_data *hapd,
++				    const char *txtaddr);
+ int hostapd_ctrl_iface_status(struct hostapd_data *hapd, char *buf,
+ 			      size_t buflen);
+ int hostapd_parse_csa_settings(const char *pos,
+-- 
+2.5.0
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIVAwUAVh6Wmue/yOyVhhEJAQpVLRAAgaA3Dr3FwCJOYck0U/vpVUtinstNZrG4
-JqTfOw4wEebkf+11LTQrsp2P/fSIBADwGGYElfkTqjwQJ5Ps6mmZNp41c/4JkG7M
-eQMvN//Qf8oCT5YISlegqTT0RZI4huR5vj16TnipWPQbfcxhTiuIPVJ7af2aYaoD
-spQAWUxzxASpvLV+9c09YT2+ziuHh3+zwFS2anhHvxIh77odS7+YWE1TjjmAH7hs
-2PgKM8WgOvTe3D8QxSwibI14E+XW37e+gNa33nlh/MvTtm9lkaYjpiL5WHv5cxfU
-zAkKPr0UpKM8oAFZMrE8h01h5WyN5S+YUGu/37zKSUM2dvqkTb6i12TsAK52mJAm
-F1BlTZe9hHkLluZ4JN6ah8wKkcf6HfXbF4iegp4zpvkteENjErQlZPoSxfd5LTPc
-qCjvqSaNKTbwDRp8t9VEDYzJQCfYaPvOgcILjAOmXFMofsKVhaUliwQ1nc4KQHtM
-fzFdgOZvHHQLKoZ8HKJewWFZwJ86E+k3cZCNcYejyMn2BcU6Z6uJ4I8xkCAm7deU
-iB5O8B2qNqRj3Ky+sng0inbQ3eC4c5fExPacFZRbA+RZJjZwMFBY9xYtB1NfG3Qa
-BGmTyxy3zYLHGmCv20/bHWApBOVoKgGIXKjt9bwLEm+/k6HZ4xEb5nvA626XrnKs
-Uyd3uC4zWYk=
-=EVPe
------END PGP SIGNATURE-----
-
---=-eZzlr/htYWPtrTuS5PAs--
