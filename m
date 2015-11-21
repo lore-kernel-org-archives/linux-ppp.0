@@ -1,7 +1,7 @@
 From: Matteo Croce <matteo@openwrt.org>
-Date: Fri, 20 Nov 2015 00:34:43 +0000
-Subject: [PATCH] pppoe: custom host-uniq tag
-Message-Id: <1447979683-11439-1-git-send-email-matteo@openwrt.org>
+Date: Sat, 21 Nov 2015 17:48:56 +0000
+Subject: [PATCH v2] pppoe: custom host-uniq tag
+Message-Id: <1448128136-11974-1-git-send-email-matteo@openwrt.org>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -10,108 +10,137 @@ To: linux-ppp@vger.kernel.org
 
 Add pppoe 'host-uniq' option to set an arbitrary
 host-uniq tag instead of the pppd pid.
+Some ISPs use such tag to authenticate the CPE,
+so it must be set to a proper value to connect.
+
+Signed-off-by: Matteo Croce <matteo@openwrt.org>
+Signed-off-by: Jo-Philipp Wich <jow@openwrt.org>
 ---
- pppd/plugins/rp-pppoe/common.c          | 12 ++++++------
- pppd/plugins/rp-pppoe/discovery.c       | 34 ++++++++++++++++-----------------
- pppd/plugins/rp-pppoe/plugin.c          |  8 +++++++-
- pppd/plugins/rp-pppoe/pppoe-discovery.c | 16 ++++++++++++++--
- pppd/plugins/rp-pppoe/pppoe.h           |  2 +-
- 5 files changed, 45 insertions(+), 27 deletions(-)
+specify tag in hex format, use PPPoETag struct
+
+ pppd/plugins/rp-pppoe/common.c          | 14 ++++-----
+ pppd/plugins/rp-pppoe/discovery.c       | 51 +++++++++++++--------------------
+ pppd/plugins/rp-pppoe/plugin.c          |  7 ++++-
+ pppd/plugins/rp-pppoe/pppoe-discovery.c | 38 +++++++++++++++---------
+ pppd/plugins/rp-pppoe/pppoe.h           | 31 +++++++++++++++++++-
+ 5 files changed, 86 insertions(+), 55 deletions(-)
 
 diff --git a/pppd/plugins/rp-pppoe/common.c b/pppd/plugins/rp-pppoe/common.c
-index 89c633c..ea1c651 100644
+index 89c633c..8f175ec 100644
 --- a/pppd/plugins/rp-pppoe/common.c
 +++ b/pppd/plugins/rp-pppoe/common.c
-@@ -121,13 +121,13 @@ sendPADT(PPPoEConnection *conn, char const *msg)
+@@ -119,15 +119,11 @@ sendPADT(PPPoEConnection *conn, char const *msg)
+     conn->session = 0;
+ 
      /* If we're using Host-Uniq, copy it over */
-     if (conn->useHostUniq) {
- 	PPPoETag hostUniq;
+-    if (conn->useHostUniq) {
+-	PPPoETag hostUniq;
 -	pid_t pid = getpid();
-+	int len = strlen(conn->useHostUniq);
- 	hostUniq.type = htons(TAG_HOST_UNIQ);
+-	hostUniq.type = htons(TAG_HOST_UNIQ);
 -	hostUniq.length = htons(sizeof(pid));
 -	memcpy(hostUniq.payload, &pid, sizeof(pid));
 -	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
 -	cursor += sizeof(pid) + TAG_HDR_SIZE;
 -	plen += sizeof(pid) + TAG_HDR_SIZE;
-+	hostUniq.length = htons(len);
-+	memcpy(hostUniq.payload, conn->useHostUniq, len);
-+	memcpy(cursor, &hostUniq, len + TAG_HDR_SIZE);
++    if (conn->hostUniq.length) {
++	int len = ntohs(conn->hostUniq.length);
++	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
 +	cursor += len + TAG_HDR_SIZE;
 +	plen += len + TAG_HDR_SIZE;
      }
  
      /* Copy error message */
 diff --git a/pppd/plugins/rp-pppoe/discovery.c b/pppd/plugins/rp-pppoe/discovery.c
-index 04877cb..0bce013 100644
+index 04877cb..5db8d0d 100644
 --- a/pppd/plugins/rp-pppoe/discovery.c
 +++ b/pppd/plugins/rp-pppoe/discovery.c
-@@ -104,7 +104,7 @@ parseForHostUniq(UINT16_t type, UINT16_t len, unsigned char *data,
+@@ -80,13 +80,10 @@ static void
+ parseForHostUniq(UINT16_t type, UINT16_t len, unsigned char *data,
+ 		 void *extra)
+ {
+-    int *val = (int *) extra;
+-    if (type = TAG_HOST_UNIQ && len = sizeof(pid_t)) {
+-	pid_t tmp;
+-	memcpy(&tmp, data, len);
+-	if (tmp = getpid()) {
+-	    *val = 1;
+-	}
++    PPPoETag *tag = extra;
++
++    if (type = TAG_HOST_UNIQ && len = ntohs(tag->length)) {
++	tag->length = memcmp(data, tag->payload, len);
+     }
+ }
+ 
+@@ -104,16 +101,16 @@ parseForHostUniq(UINT16_t type, UINT16_t len, unsigned char *data,
  static int
  packetIsForMe(PPPoEConnection *conn, PPPoEPacket *packet)
  {
 -    int forMe = 0;
-+    char *uniq = conn->useHostUniq;
++    PPPoETag hostUniq = conn->hostUniq;
  
      /* If packet is not directed to our MAC address, forget it */
      if (memcmp(packet->ethHdr.h_dest, conn->myEth, ETH_ALEN)) return 0;
-@@ -112,8 +112,8 @@ packetIsForMe(PPPoEConnection *conn, PPPoEPacket *packet)
+ 
      /* If we're not using the Host-Unique tag, then accept the packet */
-     if (!conn->useHostUniq) return 1;
+-    if (!conn->useHostUniq) return 1;
++    if (!conn->hostUniq.length) return 1;
  
 -    parsePacket(packet, parseForHostUniq, &forMe);
 -    return forMe;
-+    parsePacket(packet, parseForHostUniq, &uniq);
-+    return uniq != 0;
++    parsePacket(packet, parseForHostUniq, &hostUniq);
++    return !hostUniq.length;
  }
  
  /**********************************************************************
-@@ -303,14 +303,14 @@ sendPADI(PPPoEConnection *conn)
+@@ -301,16 +298,12 @@ sendPADI(PPPoEConnection *conn)
+     }
+ 
      /* If we're using Host-Uniq, copy it over */
-     if (conn->useHostUniq) {
- 	PPPoETag hostUniq;
+-    if (conn->useHostUniq) {
+-	PPPoETag hostUniq;
 -	pid_t pid = getpid();
-+	int len = strlen(conn->useHostUniq);
- 	hostUniq.type = htons(TAG_HOST_UNIQ);
+-	hostUniq.type = htons(TAG_HOST_UNIQ);
 -	hostUniq.length = htons(sizeof(pid));
 -	memcpy(hostUniq.payload, &pid, sizeof(pid));
 -	CHECK_ROOM(cursor, packet.payload, sizeof(pid) + TAG_HDR_SIZE);
 -	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
 -	cursor += sizeof(pid) + TAG_HDR_SIZE;
 -	plen += sizeof(pid) + TAG_HDR_SIZE;
-+	hostUniq.length = htons(len);
-+	memcpy(hostUniq.payload, conn->useHostUniq, len);
++    if (conn->hostUniq.length) {
++	int len = ntohs(conn->hostUniq.length);
 +	CHECK_ROOM(cursor, packet.payload, len + TAG_HDR_SIZE);
-+	memcpy(cursor, &hostUniq, len + TAG_HDR_SIZE);
++	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
 +	cursor += len + TAG_HDR_SIZE;
 +	plen += len + TAG_HDR_SIZE;
      }
  
      /* Add our maximum MTU/MRU */
-@@ -480,14 +480,14 @@ sendPADR(PPPoEConnection *conn)
+@@ -478,16 +471,12 @@ sendPADR(PPPoEConnection *conn)
+     cursor += namelen + TAG_HDR_SIZE;
+ 
      /* If we're using Host-Uniq, copy it over */
-     if (conn->useHostUniq) {
- 	PPPoETag hostUniq;
+-    if (conn->useHostUniq) {
+-	PPPoETag hostUniq;
 -	pid_t pid = getpid();
-+	int len = strlen(conn->useHostUniq);
- 	hostUniq.type = htons(TAG_HOST_UNIQ);
+-	hostUniq.type = htons(TAG_HOST_UNIQ);
 -	hostUniq.length = htons(sizeof(pid));
 -	memcpy(hostUniq.payload, &pid, sizeof(pid));
 -	CHECK_ROOM(cursor, packet.payload, sizeof(pid)+TAG_HDR_SIZE);
 -	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
 -	cursor += sizeof(pid) + TAG_HDR_SIZE;
 -	plen += sizeof(pid) + TAG_HDR_SIZE;
-+	hostUniq.length = htons(len);
-+	memcpy(hostUniq.payload, conn->useHostUniq, len);
++    if (conn->hostUniq.length) {
++	int len = ntohs(conn->hostUniq.length);
 +	CHECK_ROOM(cursor, packet.payload, len+TAG_HDR_SIZE);
-+	memcpy(cursor, &hostUniq, len + TAG_HDR_SIZE);
++	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
 +	cursor += len + TAG_HDR_SIZE;
 +	plen += len + TAG_HDR_SIZE;
      }
  
      /* Add our maximum MTU/MRU */
 diff --git a/pppd/plugins/rp-pppoe/plugin.c b/pppd/plugins/rp-pppoe/plugin.c
-index a8c2bb4..1ce2d8b 100644
+index a8c2bb4..5f13978 100644
 --- a/pppd/plugins/rp-pppoe/plugin.c
 +++ b/pppd/plugins/rp-pppoe/plugin.c
 @@ -68,6 +68,7 @@ static char *existingSession = NULL;
@@ -131,30 +160,61 @@ index a8c2bb4..1ce2d8b 100644
      { NULL }
  };
  int (*OldDevnameHook)(char *cmd, char **argv, int doit) = NULL;
-@@ -110,7 +113,7 @@ PPPOEInitDevice(void)
+@@ -110,7 +113,6 @@ PPPOEInitDevice(void)
      conn->ifName = devnam;
      conn->discoverySocket = -1;
      conn->sessionSocket = -1;
 -    conn->useHostUniq = 1;
-+    conn->useHostUniq = NULL;
      conn->printACNames = printACNames;
      conn->discoveryTimeout = PADI_TIMEOUT;
      return 1;
-@@ -166,6 +169,9 @@ PPPOEConnectDevice(void)
+@@ -166,6 +168,9 @@ PPPOEConnectDevice(void)
      if (lcp_wantoptions[0].mru > ifr.ifr_mtu - TOTAL_OVERHEAD)
  	lcp_wantoptions[0].mru = ifr.ifr_mtu - TOTAL_OVERHEAD;
  
-+    if(host_uniq)
-+	conn->useHostUniq = host_uniq;
++    if (host_uniq && !parseHostUniq(host_uniq, &conn->hostUniq))
++	fatal("Illegal value for host-uniq option");
 +
      conn->acName = acName;
      conn->serviceName = pppd_pppoe_service;
      strlcpy(ppp_devnam, devnam, sizeof(ppp_devnam));
 diff --git a/pppd/plugins/rp-pppoe/pppoe-discovery.c b/pppd/plugins/rp-pppoe/pppoe-discovery.c
-index 3d3bf4e..36cca88 100644
+index 3d3bf4e..f4f5271 100644
 --- a/pppd/plugins/rp-pppoe/pppoe-discovery.c
 +++ b/pppd/plugins/rp-pppoe/pppoe-discovery.c
-@@ -644,7 +644,7 @@ int main(int argc, char *argv[])
+@@ -347,7 +347,7 @@ packetIsForMe(PPPoEConnection *conn, PPPoEPacket *packet)
+     if (memcmp(packet->ethHdr.h_dest, conn->myEth, ETH_ALEN)) return 0;
+ 
+     /* If we're not using the Host-Unique tag, then accept the packet */
+-    if (!conn->useHostUniq) return 1;
++    if (!conn->hostUniq.length) return 1;
+ 
+     parsePacket(packet, parseForHostUniq, &forMe);
+     return forMe;
+@@ -473,16 +473,12 @@ sendPADI(PPPoEConnection *conn)
+     cursor += namelen + TAG_HDR_SIZE;
+ 
+     /* If we're using Host-Uniq, copy it over */
+-    if (conn->useHostUniq) {
+-	PPPoETag hostUniq;
+-	pid_t pid = getpid();
+-	hostUniq.type = htons(TAG_HOST_UNIQ);
+-	hostUniq.length = htons(sizeof(pid));
+-	memcpy(hostUniq.payload, &pid, sizeof(pid));
+-	CHECK_ROOM(cursor, packet.payload, sizeof(pid) + TAG_HDR_SIZE);
+-	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
+-	cursor += sizeof(pid) + TAG_HDR_SIZE;
+-	plen += sizeof(pid) + TAG_HDR_SIZE;
++    if (conn->hostUniq.length) {
++	int len = ntohs(conn->hostUniq.length);
++	CHECK_ROOM(cursor, packet.payload, len + TAG_HDR_SIZE);
++	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
++	cursor += len + TAG_HDR_SIZE;
++	plen += len + TAG_HDR_SIZE;
+     }
+ 
+     packet.length = htons(plen);
+@@ -644,7 +640,7 @@ int main(int argc, char *argv[])
  
      memset(conn, 0, sizeof(PPPoEConnection));
  
@@ -163,40 +223,87 @@ index 3d3bf4e..36cca88 100644
  	switch(opt) {
  	case 'S':
  	    conn->serviceName = xstrdup(optarg);
-@@ -653,7 +653,19 @@ int main(int argc, char *argv[])
+@@ -653,7 +649,23 @@ int main(int argc, char *argv[])
  	    conn->acName = xstrdup(optarg);
  	    break;
  	case 'U':
 -	    conn->useHostUniq = 1;
-+	    if(conn->useHostUniq) {
++	    if(conn->hostUniq.length) {
 +		fprintf(stderr, "-U and -W are mutually exclusive\n");
 +		exit(EXIT_FAILURE);
 +	    }
-+	    conn->useHostUniq = malloc(12);
-+	    snprintf(conn->useHostUniq, 12, "%d", getpid());
++            char pidbuf[5];
++            snprintf(pidbuf, sizeof(pidbuf), "%04x", getpid());
++            parseHostUniq(pidbuf, &conn->hostUniq);
 +	    break;
 +	case 'W':
-+	    if(conn->useHostUniq) {
++	    if(conn->hostUniq.length) {
 +		fprintf(stderr, "-U and -W are mutually exclusive\n");
 +		exit(EXIT_FAILURE);
 +	    }
-+	    conn->useHostUniq = xstrdup(optarg);
++	    if (!parseHostUniq(optarg, &conn->hostUniq)) {
++                fprintf(stderr, "Invalid host-uniq argument: %s\n", optarg);
++                exit(EXIT_FAILURE);
++            }
  	    break;
  	case 'D':
  	    conn->debugFile = fopen(optarg, "w");
 diff --git a/pppd/plugins/rp-pppoe/pppoe.h b/pppd/plugins/rp-pppoe/pppoe.h
-index 9ab2eee..c79232d 100644
+index 9ab2eee..86d2b1e 100644
 --- a/pppd/plugins/rp-pppoe/pppoe.h
 +++ b/pppd/plugins/rp-pppoe/pppoe.h
-@@ -235,7 +235,7 @@ typedef struct PPPoEConnectionStruct {
+@@ -21,6 +21,8 @@
+ 
+ #include <stdio.h>		/* For FILE */
+ #include <sys/types.h>		/* For pid_t */
++#include <ctype.h>
++#include <string.h>
+ 
+ /* How do we access raw Ethernet devices? */
+ #undef USE_LINUX_PACKET
+@@ -235,7 +237,7 @@ typedef struct PPPoEConnectionStruct {
      char *serviceName;		/* Desired service name, if any */
      char *acName;		/* Desired AC name, if any */
      int synchronous;		/* Use synchronous PPP */
 -    int useHostUniq;		/* Use Host-Uniq tag */
-+    char *useHostUniq;		/* Use Host-Uniq tag */
++    PPPoETag hostUniq;		/* Use Host-Uniq tag */
      int printACNames;		/* Just print AC names */
      FILE *debugFile;		/* Debug file for dumping packets */
      int numPADOs;		/* Number of PADO packets received */
+@@ -291,6 +293,33 @@ void pppoe_printpkt(PPPoEPacket *packet,
+ 		    void (*printer)(void *, char *, ...), void *arg);
+ void pppoe_log_packet(const char *prefix, PPPoEPacket *packet);
+ 
++static inline int parseHostUniq(const char *uniq, PPPoETag *tag)
++{
++    int i, len = strlen(uniq);
++
++#define hex(x) \
++    (((x) <= '9') ? ((x) - '0') : \
++        (((x) <= 'F') ? ((x) - 'A' + 10) : \
++            ((x) - 'a' + 10)))
++
++    if (len % 2)
++        return 0;
++
++    for (i = 0; i < len; i += 2)
++    {
++        if (!isxdigit(uniq[i]) || !isxdigit(uniq[i+1]))
++            return 0;
++
++        tag->payload[i / 2] = (char)(16 * hex(uniq[i]) + hex(uniq[i+1]));
++    }
++
++#undef hex
++
++    tag->type = htons(TAG_HOST_UNIQ);
++    tag->length = htons(len / 2);
++    return 1;
++}
++
+ #define SET_STRING(var, val) do { if (var) free(var); var = strDup(val); } while(0);
+ 
+ #define CHECK_ROOM(cursor, start, len) \
 -- 
 2.5.0
 
