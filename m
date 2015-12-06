@@ -1,42 +1,55 @@
-From: Guillaume Nault <g.nault@alphalink.fr>
-Date: Wed, 16 Dec 2015 15:39:17 +0000
-Subject: Re: [PATCH net-next] pppoe: optional deactivation of PADT packet handling
-Message-Id: <20151216153917.GJ18510@alphalink.fr>
+From: Yan Seiner <yan@seiner.com>
+Date: Sun, 06 Dec 2015 16:27:42 +0000
+Subject: Netflix and pppd
+Message-Id: <566461FE.4090003@seiner.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <712ac4d53ca9fb8621164a1b72c74eae8c8529aa.1450194732.git.g.nault@alphalink.fr>
- <1450198205.3851.6.camel@redhat.com>
-In-Reply-To: <1450198205.3851.6.camel@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Dan Williams <dcbw@redhat.com>
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, David Miller <davem@davemloft.net>
+To: linux-ppp@vger.kernel.org
 
-On Tue, Dec 15, 2015 at 10:50:05AM -0600, Dan Williams wrote:
-> On Tue, 2015-12-15 at 17:06 +0100, Guillaume Nault wrote:
-> > Kernel space shouldn't handle PADT packets since PADT belongs to
-> > PPPoE's control plane.
-> > With "handle_padt" module option, user space can now decide to avoid
-> > kernel interpretation of PADT packets and be responsible for session
-> > disconnection.
-> 
-> In general, module options like this kinda suck.  How about a new PPPoE
-> ioctl so the option can be toggled for a given socket/session instead? 
->  Then at least you're not locked into a specific PPPoE implementation
-> for all sessions on the machine.
-> 
-I've considered this approach too, but by using per session option,
-we still have to register pppoed_ptype in pppoe_init() and thus call
-pppoe_disc_recv() for any ETH_P_PPP_DISC frame, just in case a session
-needs kernel space PADT handling. This makes the approach much less
-interesting IMO, hence the original choice for module wide behaviour.
-On the other hand, I understand the need for minimising module options.
+I've been chasing a weird issue with Netflix and pppd.  Basically, the 
+Netflix apps in my Roku and Samsung TV will not play reliably when using 
+pppoe.  Using tcpdump I can see packets flow, but the app will either 
+stop at 25% or 99% and eventually time out with the "We're having 
+trouble playing this title right now".
 
-Thinking a bit more about it, we could drop dev_add_pack() from
-pppoe_init() and let pppoe_connect() register ETH_P_PPP_DISC when
-necessary. We could even do it per device, as pppoe_connect() knows the
-lower device.
-The problem is to know when unregistering ETH_P_PPP_DISC. We could
-probably use a reference counter, but I'd prefer to avoid complicating
-pppoe's connection and disconnection code given that recent history
-has shown its relative fragility.
+If I set up my modem to handle the pppoe connection and do double NAT, 
+it works fine.  The problem only comes up when I set up the modem to act 
+as a dumb modem and use pppd to complete the connection.  The problem 
+only happens when I am running pppd to set up the connection.
+
+Netflix through a browser works fine.
+
+I am running pppd 2.4.7.
+
+Here's what I've done:
+
+Enabled icmp fully (I don't block any icmp messges)
+Enabled arp by default
+Set up the TV and the Roku to use google DNS instead of dnsmasq DNS 
+forwarding
+Set up dnsmasq to tell dhcp clients to use a shorter packet length
+Disabled QOS
+Disabled dns-rebind protection.
+Snippet of tcpdump when the whirlygig is stuck at 99%
+
+07:42:47.464150 IP samsungtv.lan.41108 > 
+ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www: Flags [.], ack 174241, 
+win 6200, options [nop,nop,TS val 229009 ecr 175479014], length 0
+07:42:47.464577 IP ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www > 
+samsungtv.lan.41108: Flags [.], seq 174241:175681, ack 286, win 2050, 
+options [nop,nop,TS val 175479056 ecr 228993], length 1440
+07:42:47.466836 IP ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www > 
+samsungtv.lan.41108: Flags [.], seq 175681:177121, ack 286, win 2050, 
+options [nop,nop,TS val 175479056 ecr 228993], length 1440
+07:42:47.468982 IP ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www > 
+samsungtv.lan.41108: Flags [.], seq 177121:178561, ack 286, win 2050, 
+options [nop,nop,TS val 175479056 ecr 228993], length 1440
+07:42:47.471442 IP ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www > 
+samsungtv.lan.41108: Flags [.], seq 178561:180001, ack 286, win 2050, 
+options [nop,nop,TS val 175479056 ecr 228993], length 1440
+07:42:47.505174 IP samsungtv.lan.41108 > 
+ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www: Flags [.], ack 180001, 
+win 5320, options [nop,nop,TS val 229020 ecr 175479056]
+
