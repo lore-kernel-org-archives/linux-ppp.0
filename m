@@ -1,55 +1,62 @@
-From: Yan Seiner <yan@seiner.com>
-Date: Sun, 06 Dec 2015 16:27:42 +0000
-Subject: Netflix and pppd
-Message-Id: <566461FE.4090003@seiner.com>
+From: James Carlson <carlsonj@workingcode.com>
+Date: Sun, 06 Dec 2015 16:53:02 +0000
+Subject: Re: Netflix and pppd
+Message-Id: <566467EE.2080204@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <566461FE.4090003@seiner.com>
+In-Reply-To: <566461FE.4090003@seiner.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-I've been chasing a weird issue with Netflix and pppd.  Basically, the 
-Netflix apps in my Roku and Samsung TV will not play reliably when using 
-pppoe.  Using tcpdump I can see packets flow, but the app will either 
-stop at 25% or 99% and eventually time out with the "We're having 
-trouble playing this title right now".
+On 12/6/2015 11:27 AM, Yan Seiner wrote:
+> I've been chasing a weird issue with Netflix and pppd.  Basically, the
+> Netflix apps in my Roku and Samsung TV will not play reliably when using
+> pppoe.  Using tcpdump I can see packets flow, but the app will either
+> stop at 25% or 99% and eventually time out with the "We're having
+> trouble playing this title right now".
+> 
+> If I set up my modem to handle the pppoe connection and do double NAT,
+> it works fine.  The problem only comes up when I set up the modem to act
+> as a dumb modem and use pppd to complete the connection.  The problem
+> only happens when I am running pppd to set up the connection.
 
-If I set up my modem to handle the pppoe connection and do double NAT, 
-it works fine.  The problem only comes up when I set up the modem to act 
-as a dumb modem and use pppd to complete the connection.  The problem 
-only happens when I am running pppd to set up the connection.
+Based on the terms you're using, I'm guessing that the hardware
+configuration looks like this:
 
-Netflix through a browser works fine.
+  <--wan--> "modem" <--lan1--> Linux <--lan2--> Samsung/Roku
 
-I am running pppd 2.4.7.
+(Is this correct?  Is there a Linux box in here or something else?  Are
+there other devices involved?)
 
-Here's what I've done:
+In the working case, the "modem" device is configured to terminate
+PPPoE, PPP, and to provide NAT functionality, and the Linux device
+separately also provides NAT functionality.  So, native TCP/IP is seen
+on both lan1 and lan2.  In the non-working case, the raw PPPoE frames
+are passed on lan1, and the Linux box is configured for NAT.
 
-Enabled icmp fully (I don't block any icmp messges)
-Enabled arp by default
-Set up the TV and the Roku to use google DNS instead of dnsmasq DNS 
-forwarding
-Set up dnsmasq to tell dhcp clients to use a shorter packet length
-Disabled QOS
-Disabled dns-rebind protection.
-Snippet of tcpdump when the whirlygig is stuck at 99%
+Is this much right?
 
-07:42:47.464150 IP samsungtv.lan.41108 > 
-ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www: Flags [.], ack 174241, 
-win 6200, options [nop,nop,TS val 229009 ecr 175479014], length 0
-07:42:47.464577 IP ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www > 
-samsungtv.lan.41108: Flags [.], seq 174241:175681, ack 286, win 2050, 
-options [nop,nop,TS val 175479056 ecr 228993], length 1440
-07:42:47.466836 IP ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www > 
-samsungtv.lan.41108: Flags [.], seq 175681:177121, ack 286, win 2050, 
-options [nop,nop,TS val 175479056 ecr 228993], length 1440
-07:42:47.468982 IP ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www > 
-samsungtv.lan.41108: Flags [.], seq 177121:178561, ack 286, win 2050, 
-options [nop,nop,TS val 175479056 ecr 228993], length 1440
-07:42:47.471442 IP ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www > 
-samsungtv.lan.41108: Flags [.], seq 178561:180001, ack 286, win 2050, 
-options [nop,nop,TS val 175479056 ecr 228993], length 1440
-07:42:47.505174 IP samsungtv.lan.41108 > 
-ipv4_1.lagg0.c023.iad001.ix.nflxvideo.net.www: Flags [.], ack 180001, 
-win 5320, options [nop,nop,TS val 229020 ecr 175479056]
+At a guess, it sounds like the "modem" is doing a better job of dealing
+with the unbelievable horror show that is PPPoE and NAT, and when the
+Linux box steps into that role, it isn't well-configured by default to
+deal with it.
 
+What I cannot tell is what you may have tried to do to get this to work.
+ Have you read through this documentation?
+
+http://www.tldp.org/HOWTO/IP-Masquerade-HOWTO/mtu-issues.html
+http://lartc.org/howto/lartc.cookbook.mtu-mss.html
+http://unix.stackexchange.com/questions/56308/problem-with-path-mtu-discovery-over-pppd
+
+In short, I'm not seeing what this problem has to do with PPP itself --
+in most cases, PPP just negotiates link parameters and then steps out of
+the way -- or the details of the problem you're encountering or what you
+might have already tried to do to solve the problem.
+
+(Sure, it's possible there's a PPP problem buried in here somewhere.
+Based on the data provided so far, though, I just don't see it.)
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
