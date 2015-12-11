@@ -1,39 +1,43 @@
-From: Kirill Smirnov <kirill.k.smirnov@gmail.com>
-Date: Fri, 04 Dec 2015 13:28:13 +0000
-Subject: [PATCH] ppp: avoid hard-coded magic constants
-Message-Id: <CAFbyWyeVfGJqKpaQBhdV6B_4ENPYYMuQWujjfJ_fsMM34HAi4w@mail.gmail.com>
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Fri, 11 Dec 2015 18:54:49 +0000
+Subject: [PATCH net-next 1/2] ppp: define "ppp" device type
+Message-Id: <a88a45cd8b3a37873eef4d09f5adb1ff02a6649a.1449859708.git.g.nault@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <cover.1449859708.git.g.nault@alphalink.fr>
+In-Reply-To: <cover.1449859708.git.g.nault@alphalink.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, "David S. Miller" <davem@davemloft.net>
 
-Use predefined macros for PPP address and control
-instead of the hard-coded constants.
+Let PPP devices be identified as such in /sys/class/net/<iface>/uevent.
 
-Signed-off-by: Kirill Smirnov <kirill.k.smirnov@gmail.com>
+Signed-off-by: Guillaume Nault <g.nault@alphalink.fr>
 ---
- drivers/net/ppp/ppp_async.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/net/ppp/ppp_generic.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
-index 9c889e0..d1eefef 100644
---- a/drivers/net/ppp/ppp_async.c
-+++ b/drivers/net/ppp/ppp_async.c
-@@ -571,10 +571,10 @@ ppp_async_encode(struct asyncppp *ap)
-                 * Put in the address/control bytes if necessary
-                 */
-                if ((ap->flags & SC_COMP_AC) = 0 || islcp) {
--                       PUT_BYTE(ap, buf, 0xff, islcp);
--                       fcs = PPP_FCS(fcs, 0xff);
--                       PUT_BYTE(ap, buf, 0x03, islcp);
--                       fcs = PPP_FCS(fcs, 0x03);
-+                       PUT_BYTE(ap, buf, PPP_ALLSTATIONS, islcp);
-+                       fcs = PPP_FCS(fcs, PPP_ALLSTATIONS);
-+                       PUT_BYTE(ap, buf, PPP_UI, islcp);
-+                       fcs = PPP_FCS(fcs, PPP_UI);
-                }
-        }
-
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 9a863c6..1cd7651 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -1138,9 +1138,15 @@ static const struct net_device_ops ppp_netdev_ops = {
+ 	.ndo_get_stats64 = ppp_get_stats64,
+ };
+ 
++static struct device_type ppp_type = {
++	.name = "ppp",
++};
++
+ static void ppp_setup(struct net_device *dev)
+ {
+ 	dev->netdev_ops = &ppp_netdev_ops;
++	SET_NETDEV_DEVTYPE(dev, &ppp_type);
++
+ 	dev->hard_header_len = PPP_HDRLEN;
+ 	dev->mtu = PPP_MRU;
+ 	dev->addr_len = 0;
 -- 
-2.6.3
+2.6.4
+
