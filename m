@@ -1,24 +1,20 @@
-From: Guillaume Nault <g.nault@alphalink.fr>
-Date: Fri, 11 Dec 2015 18:54:47 +0000
-Subject: [PATCH net-next 0/2] Minor PPP devices improvements
-Message-Id: <cover.1449859708.git.g.nault@alphalink.fr>
+From: David Miller <davem@davemloft.net>
+Date: Mon, 14 Dec 2015 21:21:23 +0000
+Subject: Re: [PATCH net-next 0/2] Minor PPP devices improvements
+Message-Id: <20151214.162123.1224487737448145823.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <cover.1449859708.git.g.nault@alphalink.fr>
+In-Reply-To: <cover.1449859708.git.g.nault@alphalink.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: netdev@vger.kernel.org
-Cc: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, "David S. Miller" <davem@davemloft.net>
+To: g.nault@alphalink.fr
+Cc: netdev@vger.kernel.org, paulus@samba.org, linux-ppp@vger.kernel.org
 
-Let PPP devices be friendlier to user space by registering their device
-type and reporting their interface naming scheme.
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Fri, 11 Dec 2015 19:54:47 +0100
 
-Guillaume Nault (2):
-  ppp: define "ppp" device type
-  ppp: declare ppp devices as enumerated interfaces
+> Let PPP devices be friendlier to user space by registering their device
+> type and reporting their interface naming scheme.
 
- drivers/net/ppp/ppp_generic.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
-
--- 
-2.6.4
-
+Series applied, thanks.
