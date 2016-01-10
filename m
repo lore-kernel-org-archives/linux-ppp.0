@@ -1,151 +1,50 @@
-From: Charlie Brady <charlieb-linux-ppp@budge.apana.org.au>
-Date: Sat, 09 Jan 2016 00:49:22 +0000
+From: Michael Richardson <mcr@sandelman.ca>
+Date: Sun, 10 Jan 2016 19:03:51 +0000
 Subject: Re: Add support for IPv6 RADIUS attributes
-Message-Id: <Pine.LNX.4.64.1601081945580.23328@e-smith.charliebrady.org>
+Message-Id: <21899.1452452631@obiwan.sandelman.ca>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="=-=-="
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20160108142012.GL19014@drscott.swordarmor.fr>
 In-Reply-To: <20160108142012.GL19014@drscott.swordarmor.fr>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-
-On Fri, 8 Jan 2016, Alarig Le Lay wrote:
-
-> Hi,
-> 
-> This patch aims to handle IPv6 RADIUS attributes. The current ppp does
-> not handle them and raise an error that looks like 'rc_read_dictionary:
-
-The error() is a design flaw. The radius plugin for ppp should just ignore 
-(or at most warn about) attributes which it doesn't care about.
-
-> invalid type on line 89 of dictionary /etc/radiusclient/dictionary'.
+--=-=-=
+Content-Type: text/plain
 
 
-> I use those attributes to put it into the radvd conf from
-> /run/vpn/radvd-user.${PPP_IFACE}.conf.
-> 
-> From 5c0cac0eeecc32e5023d353a8420633827800e8e Mon Sep 17 00:00:00 2001
-> From: Benjamin Cama <benoar@dolka.fr>
-> Date: Sun, 11 Oct 2015 18:08:11 +0200
-> Subject: [PATCH] Handle IPv6 RADIUS attributes
-> 
-> ---
->  pppd/plugins/radius/avpair.c       | 26 +++++++++++++++++++++++++-
->  pppd/plugins/radius/dict.c         | 12 ++++++++++++
->  pppd/plugins/radius/radiusclient.h | 11 +++++++++++
->  3 files changed, 48 insertions(+), 1 deletion(-)
-> 
-> diff --git a/pppd/plugins/radius/avpair.c b/pppd/plugins/radius/avpair.c
-> index 716d23f..7536941 100644
-> --- a/pppd/plugins/radius/avpair.c
-> +++ b/pppd/plugins/radius/avpair.c
-> @@ -222,6 +222,9 @@ VALUE_PAIR *rc_avpair_gen (AUTH_HDR *auth)
->  			{
->  
->  			    case PW_TYPE_STRING:
-> +			    case PW_TYPE_IFID:
-> +			    case PW_TYPE_IPV6ADDR:
-> +			    case PW_TYPE_IPV6PREFIX:
->  				memcpy (pair->strvalue, (char *) ptr,
-> (size_t) attrlen);
->  				pair->strvalue[attrlen] = '\0';
->  				pair->lvalue = attrlen;
-> @@ -692,9 +695,10 @@ int rc_avpair_parse (char *buffer, VALUE_PAIR
-> **first_pair)
->  int rc_avpair_tostr (VALUE_PAIR *pair, char *name, int ln, char *value,
-> int lv)
->  {
->  	DICT_VALUE     *dval;
-> -	char            buffer[32];
-> +	char            buffer[INET6_ADDRSTRLEN + 4]; // for a prefix:
-> addr + '/' + prefixlen
->  	struct in_addr  inad;
->  	unsigned char         *ptr;
-> +	char		*str;
->  
->  	*name = *value = '\0';
->  
-> @@ -753,6 +757,26 @@ int rc_avpair_tostr (VALUE_PAIR *pair, char *name,
-> int ln, char *value, int lv)
->  		strncpy(value, buffer, lv-1);
->  		break;
->  
-> +	    case PW_TYPE_IFID:
-> +		ptr = pair->strvalue;
-> +		snprintf(buffer, sizeof (buffer), "%x:%x:%x:%x",
-> +			 (ptr[0] << 8) + ptr[1], (ptr[2] << 8) + ptr[3],
-> +			 (ptr[4] << 8) + ptr[5], (ptr[6] << 8) +
-> ptr[7]);
-> +		strncpy(value, buffer, lv-1);
-> +		break;
-> +
-> +	    case PW_TYPE_IPV6ADDR:
-> +		inet_ntop(AF_INET6, pair->strvalue, buffer, sizeof
-> (buffer));
-> +		strncpy(value, buffer, lv-1);
-> +		break;
-> +
-> +	    case PW_TYPE_IPV6PREFIX:
-> +		inet_ntop(AF_INET6, pair->strvalue + 2, buffer, sizeof
-> (buffer));
-> +		str = buffer + strlen(buffer);
-> +		snprintf(str, sizeof (buffer) - (str - buffer), "/%d",
-> *(pair->strvalue + 1));
-> +		strncpy(value, buffer, lv-1);
-> +		break;
-> +
->  	    default:
->  		error("rc_avpair_tostr: unknown attribute type %d",
-> pair->type);
->  		return (-1);
-> diff --git a/pppd/plugins/radius/dict.c b/pppd/plugins/radius/dict.c
-> index 72b3e70..3b2add2 100644
-> --- a/pppd/plugins/radius/dict.c
-> +++ b/pppd/plugins/radius/dict.c
-> @@ -158,6 +158,18 @@ int rc_read_dictionary (char *filename)
->  			{
->  				type = PW_TYPE_DATE;
->  			}
-> +			else if (strcmp (typestr, "ifid") = 0)
-> +			{
-> +				type = PW_TYPE_IFID;
-> +			}
-> +			else if (strcmp (typestr, "ipv6addr") = 0)
-> +			{
-> +				type = PW_TYPE_IPV6ADDR;
-> +			}
-> +			else if (strcmp (typestr, "ipv6prefix") = 0)
-> +			{
-> +				type = PW_TYPE_IPV6PREFIX;
-> +			}
->  			else
->  			{
->  				error("rc_read_dictionary: invalid type
-> on line %d of dictionary %s",
-> diff --git a/pppd/plugins/radius/radiusclient.h
-> b/pppd/plugins/radius/radiusclient.h
-> index 51b959a..ab4ef2d 100644
-> --- a/pppd/plugins/radius/radiusclient.h
-> +++ b/pppd/plugins/radius/radiusclient.h
-> @@ -77,6 +77,17 @@ typedef struct pw_auth_hdr
->  #define PW_TYPE_INTEGER			1
->  #define PW_TYPE_IPADDR			2
->  #define PW_TYPE_DATE			3
-> +#define PW_TYPE_ABINARY			4
-> +#define PW_TYPE_OCTETS			5
-> +#define PW_TYPE_IFID			6
-> +#define PW_TYPE_IPV6ADDR		7
-> +#define PW_TYPE_IPV6PREFIX		8
-> +#define PW_TYPE_BYTE			9
-> +#define PW_TYPE_SHORT			10
-> +#define PW_TYPE_ETHERNET	       	11
-> +#define PW_TYPE_SIGNED			12
-> +#define PW_TYPE_COMBO_IP	       	13
-> +#define PW_TYPE_TLV	       		14
->  
->  /* standard RADIUS codes */
->  
-> 
+I also have patches to the radius module to use the latest (and maintained)
+radcli client library at:  https://github.com/nmav/radcli
+
+What is your application? As I read your patches, they just make ppp ignore
+the attributes.  Do you intend to do more with the data?
+
+I have patches on both radcli and pppd sides, which haven't all settled yet,
+so I haven't pushed them anywhere yet.
+
+I'm not sure what the ultimate point of your patches are though.
+Non-LL IPv6 addresses are not assigned through IP6CP, but rather through RA
+and/or DHCPv6.   I have a daemon, called rfc6204d, which does this at scale,
+but it is not yet sufficiently field tested to release.
+
+--
+]               Never tell me the odds!                 | ipv6 mesh networks [
+]   Michael Richardson, Sandelman Software Works        | network architect  [
+]     mcr@sandelman.ca  http://www.sandelman.ca/        |   ruby on rails    [
+
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQEVAwUBVpKrE4CLcPvd0N1lAQLV9wf/Ttb4ynkGlGP/sCO2NhnceqyLsDiaD0ie
+i6hsEpzZTeRXDoKYUH/4UygCIMwaW/G5fq6eAC1N8HXFsdhkKfV16hZY7De7Z5qp
+1YikqSAZ09pJnuOeWPJN71Lxp2Pgq9njwPhuWuzy3g8bq5LsA9K7QWUib8nr1S7q
+stydGJ2Ie/i9KHqUgYjjnDYJP955Xsm1Uls/1/iaJSHZsqGWEYZxaCRCqEWWMZJm
+Ih1LTW0aeWZkv4tj8EVjKMea+QTed88M+wD8+oKX6GQWFtapKXYxulUA4yWz3+6J
+VnUU0qVV/wnAvcQDLjGJuK49vasxaAByaXBP3PWcTp//QBAUOsuRNw==
+=YGPp
+-----END PGP SIGNATURE-----
+--=-=-=--
