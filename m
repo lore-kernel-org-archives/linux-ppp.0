@@ -1,41 +1,90 @@
-From: David Miller <davem@davemloft.net>
-Date: Fri, 29 Apr 2016 20:10:11 +0000
-Subject: Re: [PATCH v4 net-next 2/2] ppp: add rtnetlink device creation support
-Message-Id: <20160429.161011.1162718802493722811.davem@davemloft.net>
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Tue, 05 Apr 2016 00:56:17 +0000
+Subject: [RFC PATCH 0/6] ppp: add rtnetlink support
+Message-Id: <cover.1459807527.git.g.nault@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <cover.1461854990.git.g.nault@alphalink.fr>
-	<20160428155530.GA24359@alphalink.fr>
-In-Reply-To: <20160428155530.GA24359@alphalink.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: g.nault@alphalink.fr
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org, stephen@networkplumber.org, wharms@bfs.de
+To: netdev@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>, David Miller <davem@davemloft.net>
 
-From: Guillaume Nault <g.nault@alphalink.fr>
-Date: Thu, 28 Apr 2016 17:55:30 +0200
+PPP devices lack the ability to be customised at creation time. In
+particular they can't be created in a given netns or with a particular
+name. Moving or renaming the device after creation is possible, but
+creates undesirable transient effects on servers where PPP devices are
+constantly created and removed, as users connect and disconnect.
+Implementing rtnetlink support solves this problem.
 
-> Define PPP device handler for use with rtnetlink.
-> The only PPP specific attribute is IFLA_PPP_DEV_FD. It is mandatory and
-> contains the file descriptor of the associated /dev/ppp instance (the
-> file descriptor which would have been used for ioctl(PPPIOCNEWUNIT) in
-> the ioctl-based API). The PPP device is removed when this file
-> descriptor is released (same behaviour as with ioctl based PPP
-> devices).
-> 
-> PPP devices created with the rtnetlink API behave like the ones created
-> with ioctl(PPPIOCNEWUNIT). In particular existing ioctls work the same
-> way, no matter how the PPP device was created.
-> The rtnl callbacks are also assigned to ioctl based PPP devices. This
-> way, rtnl messages have the same effect on any PPP devices.
-> The immediate effect is that all PPP devices, even ioctl-based
-> ones, can now be removed with "ip link del".
-> 
-> A minor difference still exists between ioctl and rtnl based PPP
-> interfaces: in the device name, the number following the "ppp" prefix
-> corresponds to the PPP unit number for ioctl based devices, while it is
-> just an unrelated incrementing index for rtnl ones.
-> 
-> Signed-off-by: Guillaume Nault <g.nault@alphalink.fr>
+The rtnetlink handlers implemented in this series are minimal, and can
+only replace the PPPIOCNEWUNIT ioctl. The rest of PPP ioctls remains
+necessary for any other operation on channels and units.
+It is perfectly to possible to mix PPP devices created by rtnl
+and by ioctl(PPPIOCNEWUNIT). Devices will behave in the same way,
+except for a few specific cases (as detailed in patch #6).
 
-Series applied, thanks for doing this work!
+
+I'm sending the series only as RFC this time, because there are a few
+points I'm unsatisfied with.
+
+First, I'm not fond of passing file descriptors as netlink attributes,
+as done with IFLA_PPP_DEV_FD (which is filled with a /dev/ppp fd). But
+given how PPP units work, we have to associate a /dev/ppp fd somehow.
+
+More importantly, the locking constraints of PPP are quite problematic.
+The rtnetlink handler has to associate the new PPP unit with the
+/dev/ppp file descriptor passed as parameter. This requires holding the
+ppp_mutex (see e8e56ffd9d29 "ppp: ensure file->private_data can't be
+overridden"), while the rtnetlink callback is already protected by
+rtnl_lock(). Since other parts of the module take these locks in
+reverse order, most of this series deals with preparing the code for
+inverting the dependency between rtnl_lock and ppp_mutex. Some more
+work is needed on that part (see patch #4 for details), but I wanted
+to be sure that approach it worth it before spending some more time on
+it.
+
+
+Other approach
+
+I've considered another approach where no /dev/ppp file descriptor
+is associated to the PPP unit at creation time. This removes all the
+problems described above. The PPP interface that is created behaves
+mostly like a dummy device until it gets associated with a /dev/ppp
+file descriptor (using the PPPIOCATTACH ioctl).
+The problem here is that, AFAIK, we can't return the unit identifier of
+the new PPP device to the user space program having issued the
+RTM_NEWLINK message. This identifier is required for the
+ioctl(PPPIOCATTACH) call. Of course we could return such information
+in an RTM_GETLINK message, but the user would need to query the device
+name that was created. This would only work for users that can set the
+IFLA_IFNAME attribute in their original RTM_NEWLINK message.
+
+
+Patch series
+
+Patches 1 to 3 prepare the code for inverting lock ordering between
+ppp_mutex and rtnl_lock. Patch #4 does the lock inversion.
+The actual infrastructure is implemented in patches #5 and #6.
+
+
+Changes since v1:
+  - Rebase on net-next.
+  - Invert locking order wrt. ppp_mutex and rtnl_lock and protect
+    file->private_data with ppp_mutex.
+
+
+Guillaume Nault (6):
+  ppp: simplify usage of ppp_create_interface()
+  ppp: don't hold ppp_mutex before calling ppp_unattached_ioctl()
+  ppp: don't lock ppp_mutex while handling PPPIOCDETACH
+  ppp: invert lock ordering between ppp_mutex and rtnl_lock
+  ppp: define reusable device creation functions
+  ppp: add rtnetlink device creation support
+
+ drivers/net/ppp/ppp_generic.c | 385 ++++++++++++++++++++++++++++++------------
+ include/uapi/linux/if_link.h  |   8 +
+ 2 files changed, 286 insertions(+), 107 deletions(-)
+
+-- 
+2.8.0.rc3
+
