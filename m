@@ -1,7 +1,7 @@
 From: Guillaume Nault <g.nault@alphalink.fr>
-Date: Tue, 05 Apr 2016 00:56:27 +0000
-Subject: [RFC PATCH 4/6] ppp: invert lock ordering between ppp_mutex and rtnl_lock
-Message-Id: <ca8fe7c647b3122d54520c0c07f0e3f32f4a922f.1459807527.git.g.nault@alphalink.fr>
+Date: Tue, 05 Apr 2016 00:56:25 +0000
+Subject: [RFC PATCH 3/6] ppp: don't lock ppp_mutex while handling PPPIOCDETACH
+Message-Id: <df33707939a7caaad78548b76e08916624b11741.1459807527.git.g.nault@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <cover.1459807527.git.g.nault@alphalink.fr>
 In-Reply-To: <cover.1459807527.git.g.nault@alphalink.fr>
@@ -11,56 +11,65 @@ Content-Transfer-Encoding: 7bit
 To: netdev@vger.kernel.org
 Cc: linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>, David Miller <davem@davemloft.net>
 
-Since ppp_create_interface() is the only place[1] holding both ppp_mutex
-and rtnl_lock(), we can reverse lock ordering to allow taking ppp_mutex
-when rtnl_lock is already held.
-This will be necessary for creating PPP interfaces from an rtnetlink
-callback.
+Once set, file->private_data remains constant. So it's safe to access
+it without holding ppp_mutex.
+The PPP unit fields accessed while handling PPPIOCDETACH (pf->kind and
+ppp->owner) are also constant and have been set before
+file->private_data got assigned. So these too can be read without
+holding ppp_mutex.
+Finally, ppp_release() is called only if we're the only user of the
+unit.
 
-[1]: There may actually be exceptions. When operating on PPP channels,
-ppp_ioctl() can call lower level ioctl callbacks (chan->ops->ioctl())
-with ppp_mutex locked. More review would be necessary to ensure no such
-callback would ever call rtnl_lock(). OTOH, with proper locking inside
-the ->ioctl() callbacks, ppp_mutex might be removed entirely from this
-part of the code.
+Therefore, we can avoid locking ppp_mutex completely for handling
+PPPIOCDETACH. This removes locking dependency between ppp_mutex and
+rtnl_mutex, which will allow holding ppp_mutex from an rtnetlink
+context.
 
 Signed-off-by: Guillaume Nault <g.nault@alphalink.fr>
 ---
- drivers/net/ppp/ppp_generic.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/net/ppp/ppp_generic.c | 21 +++++++++++++--------
+ 1 file changed, 13 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index c81e257..8aaedb8 100644
+index 7329c72..c81e257 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -2796,8 +2796,8 @@ static int ppp_create_interface(struct net *net, struct file *file, int *unit)
- 	 */
- 	dev_net_set(dev, net);
+@@ -592,15 +592,11 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 					    cmd, arg);
+ 	}
  
 -	mutex_lock(&ppp_mutex);
- 	rtnl_lock();
+-
+-	pf = file->private_data;
+-	if (!pf) {
+-		err = -ENOTTY;
+-		goto out;
+-	}
+-
+ 	if (cmd = PPPIOCDETACH) {
++		pf = file->private_data;
++		if (!pf)
++			return -ENOTTY;
++
+ 		/*
+ 		 * We have to be careful here... if the file descriptor
+ 		 * has been dup'd, we could have another process in the
+@@ -626,6 +622,15 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		} else
+ 			pr_warn("PPPIOCDETACH file->f_count=%ld\n",
+ 				atomic_long_read(&file->f_count));
++
++		return err;
++	}
++
 +	mutex_lock(&ppp_mutex);
- 	mutex_lock(&pn->all_ppp_mutex);
++
++	pf = file->private_data;
++	if (!pf) {
++		err = -ENOTTY;
+ 		goto out;
+ 	}
  
- 	if (file->private_data) {
-@@ -2847,15 +2847,15 @@ static int ppp_create_interface(struct net *net, struct file *file, int *unit)
- 	atomic_inc(&ppp_unit_count);
- 
- 	mutex_unlock(&pn->all_ppp_mutex);
--	rtnl_unlock();
- 	mutex_unlock(&ppp_mutex);
-+	rtnl_unlock();
- 
- 	return 0;
- 
- out2:
- 	mutex_unlock(&pn->all_ppp_mutex);
--	rtnl_unlock();
- 	mutex_unlock(&ppp_mutex);
-+	rtnl_unlock();
- 	free_netdev(dev);
- out1:
- 	return ret;
 -- 
 2.8.0.rc3
 
