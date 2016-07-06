@@ -1,54 +1,50 @@
-From: Cong Wang <xiyou.wangcong@gmail.com>
-Date: Tue, 05 Jul 2016 20:36:53 +0000
+From: Matt Bennett <Matt.Bennett@alliedtelesis.co.nz>
+Date: Wed, 06 Jul 2016 00:05:05 +0000
 Subject: Re: Problem: BUG_ON hit in ppp_pernet() when re-connect after changing shared key on LAC
-Message-Id: <CAM_iQpUEKrcuQvcXO_Rembgk_ZKc-v9Pe2ZEuZ5W_QxdcYDDNQ@mail.gmail.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="001a113eca18eb582a0536e96a61"
+Message-Id: <6e0b17d147054867ac0f80978ccf91b2@svr-chch-ex1.atlnz.lc>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <7fabf4defe2f468bbcc829247de956c0@svr-chch-ex1.atlnz.lc> <CAM_iQpVyNghNJHES5-npZgYGFXps0-XTwJyJ-9pLDAuYJ_syWw@mail.gmail.com>
-In-Reply-To: <CAM_iQpVyNghNJHES5-npZgYGFXps0-XTwJyJ-9pLDAuYJ_syWw@mail.gmail.com>
-To: Matt Bennett <Matt.Bennett@alliedtelesis.co.nz>
-Cc: "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "g.nault@alphalink.fr" <g.nault@alphalink.fr>
+References: <7fabf4defe2f468bbcc829247de956c0@svr-chch-ex1.atlnz.lc>
+ <CAM_iQpVyNghNJHES5-npZgYGFXps0-XTwJyJ-9pLDAuYJ_syWw@mail.gmail.com>
+ <CAM_iQpUEKrcuQvcXO_Rembgk_ZKc-v9Pe2ZEuZ5W_QxdcYDDNQ@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Cong Wang <xiyou.wangcong@gmail.com>
+Cc: "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "g.nault@alphalink.fr" <g.nault@alphalink.fr>, "g.nault@alphalink.fr" <g.nault@alphalink.fr>
 
---001a113eca18eb582a0536e96a61
-Content-Type: text/plain; charset=UTF-8
-
-On Tue, Jul 5, 2016 at 10:59 AM, Cong Wang <xiyou.wangcong@gmail.com> wrote:
-> On Mon, Jul 4, 2016 at 7:50 PM, Matt Bennett
-> <Matt.Bennett@alliedtelesis.co.nz> wrote:
->> Using printk I have confirmed that ppp_pernet() is called from
->> ppp_connect_channel() when the BUG occurs (i.e. pch->chan_net is NULL).
+On 07/06/2016 08:37 AM, Cong Wang wrote:
+> On Tue, Jul 5, 2016 at 10:59 AM, Cong Wang <xiyou.wangcong@gmail.com> wrote:
+>> On Mon, Jul 4, 2016 at 7:50 PM, Matt Bennett
+>> <Matt.Bennett@alliedtelesis.co.nz> wrote:
+>>> Using printk I have confirmed that ppp_pernet() is called from
+>>> ppp_connect_channel() when the BUG occurs (i.e. pch->chan_net is NULL).
+>>>
+>>> This behavior appears to have been introduced in commit 1f461dc ("ppp:
+>>> take reference on channels netns").
 >>
->> This behavior appears to have been introduced in commit 1f461dc ("ppp:
->> take reference on channels netns").
+>> We have some race condition here, where a parallel ppp_unregister_channel()
+>> could happen while we are in ppp_connect_channel().
+>>
+>> We need some synchronization for them. I am not sure what is the right lock
+>> here since ppp locking looks crazy.
 >
-> We have some race condition here, where a parallel ppp_unregister_channel()
-> could happen while we are in ppp_connect_channel().
+> Matt, could you try if the attached patch helps?
 >
-> We need some synchronization for them. I am not sure what is the right lock
-> here since ppp locking looks crazy.
+> Thanks!
+>
+I have given that patch a good amount of testing and the BUG_ON() no 
+longer is hit. Whether that is the best fix or not I am unsure?
 
-Matt, could you try if the attached patch helps?
+Either way, the following comment in ppp_unregister_channel() seems 
+incorrect to me and should probably be deleted unless it is fixed?
 
-Thanks!
+/*
+  * This ensures that we have returned from any calls into the
+  * the channel's start_xmit or ioctl routine before we proceed.
+  */
 
---001a113eca18eb582a0536e96a61
-Content-Type: text/plain; charset=US-ASCII; name="ppp.diff"
-Content-Disposition: attachment; filename="ppp.diff"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_iq9x1rnr0
+It appears mutex_lock(&ppp_mutex) what locks ppp_ioctl. ppp_xmit uses 
+ppp_xmit_lock(ppp) in ppp_xmit_process.
 
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvbmV0L3BwcC9wcHBfZ2VuZXJpYy5jIGIvZHJpdmVycy9uZXQv
-cHBwL3BwcF9nZW5lcmljLmMKaW5kZXggOGRlZGFmYS4uMDdmMGU0OSAxMDA2NDQKLS0tIGEvZHJp
-dmVycy9uZXQvcHBwL3BwcF9nZW5lcmljLmMKKysrIGIvZHJpdmVycy9uZXQvcHBwL3BwcF9nZW5l
-cmljLmMKQEAgLTI2MDEsOCArMjYwMSw2IEBAIHBwcF91bnJlZ2lzdGVyX2NoYW5uZWwoc3RydWN0
-IHBwcF9jaGFubmVsICpjaGFuKQogCXNwaW5fbG9ja19iaCgmcG4tPmFsbF9jaGFubmVsc19sb2Nr
-KTsKIAlsaXN0X2RlbCgmcGNoLT5saXN0KTsKIAlzcGluX3VubG9ja19iaCgmcG4tPmFsbF9jaGFu
-bmVsc19sb2NrKTsKLQlwdXRfbmV0KHBjaC0+Y2hhbl9uZXQpOwotCXBjaC0+Y2hhbl9uZXQgPSBO
-VUxMOwogCiAJcGNoLT5maWxlLmRlYWQgPSAxOwogCXdha2VfdXBfaW50ZXJydXB0aWJsZSgmcGNo
-LT5maWxlLnJ3YWl0KTsKQEAgLTMxMzYsNiArMzEzNCwxMSBAQCBwcHBfZGlzY29ubmVjdF9jaGFu
-bmVsKHN0cnVjdCBjaGFubmVsICpwY2gpCiAgKi8KIHN0YXRpYyB2b2lkIHBwcF9kZXN0cm95X2No
-YW5uZWwoc3RydWN0IGNoYW5uZWwgKnBjaCkKIHsKKwlpZiAocGNoLT5jaGFuX25ldCkgeworCQlw
-dXRfbmV0KHBjaC0+Y2hhbl9uZXQpOworCQlwY2gtPmNoYW5fbmV0ID0gTlVMTDsKKwl9CisKIAlh
-dG9taWNfZGVjKCZjaGFubmVsX2NvdW50KTsKIAogCWlmICghcGNoLT5maWxlLmRlYWQpIHsK
---001a113eca18eb582a0536e96a61--
+
+
