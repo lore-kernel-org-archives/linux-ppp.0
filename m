@@ -1,57 +1,59 @@
 From: Cong Wang <xiyou.wangcong@gmail.com>
-Date: Wed, 06 Jul 2016 02:02:03 +0000
-Subject: Re: Problem: BUG_ON hit in ppp_pernet() when re-connect after changing shared key on LAC
-Message-Id: <CAM_iQpWTjnFZS6LgW8CBJ_hPdmu+yTgFycfo42VJ32u4onTxBQ@mail.gmail.com>
+Date: Wed, 06 Jul 2016 05:12:36 +0000
+Subject: [Patch net] ppp: defer netns reference release for ppp channel
+Message-Id: <1467781956-2229-1-git-send-email-xiyou.wangcong@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <7fabf4defe2f468bbcc829247de956c0@svr-chch-ex1.atlnz.lc>
- <CAM_iQpVyNghNJHES5-npZgYGFXps0-XTwJyJ-9pLDAuYJ_syWw@mail.gmail.com>
- <CAM_iQpUEKrcuQvcXO_Rembgk_ZKc-v9Pe2ZEuZ5W_QxdcYDDNQ@mail.gmail.com> <6e0b17d147054867ac0f80978ccf91b2@svr-chch-ex1.atlnz.lc>
-In-Reply-To: <6e0b17d147054867ac0f80978ccf91b2@svr-chch-ex1.atlnz.lc>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Matt Bennett <Matt.Bennett@alliedtelesis.co.nz>
-Cc: "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "g.nault@alphalink.fr" <g.nault@alphalink.fr>
+To: netdev@vger.kernel.org
+Cc: Matt.Bennett@alliedtelesis.co.nz, Cong Wang <xiyou.wangcong@gmail.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, Guillaume Nault <g.nault@alphalink.fr>, Cyrill Gorcunov <gorcunov@openvz.org>
 
-On Tue, Jul 5, 2016 at 5:05 PM, Matt Bennett
-<Matt.Bennett@alliedtelesis.co.nz> wrote:
-> On 07/06/2016 08:37 AM, Cong Wang wrote:
->> On Tue, Jul 5, 2016 at 10:59 AM, Cong Wang <xiyou.wangcong@gmail.com> wrote:
->>> On Mon, Jul 4, 2016 at 7:50 PM, Matt Bennett
->>> <Matt.Bennett@alliedtelesis.co.nz> wrote:
->>>> Using printk I have confirmed that ppp_pernet() is called from
->>>> ppp_connect_channel() when the BUG occurs (i.e. pch->chan_net is NULL).
->>>>
->>>> This behavior appears to have been introduced in commit 1f461dc ("ppp:
->>>> take reference on channels netns").
->>>
->>> We have some race condition here, where a parallel ppp_unregister_channel()
->>> could happen while we are in ppp_connect_channel().
->>>
->>> We need some synchronization for them. I am not sure what is the right lock
->>> here since ppp locking looks crazy.
->>
->> Matt, could you try if the attached patch helps?
->>
->> Thanks!
->>
-> I have given that patch a good amount of testing and the BUG_ON() no
-> longer is hit. Whether that is the best fix or not I am unsure?
+Matt reported that we have a NULL pointer dereference
+in ppp_pernet() from ppp_connect_channel(),
+i.e. pch->chan_net is NULL.
 
-At least my patch makes the net refcnt sync with pch life-time:
-we grab a net refcnt when we allocate a pch, and release it when
-we are going to destroy a pch. Makes sense to you?
+This is due to that a parallel ppp_unregister_channel()
+could happen while we are in ppp_connect_channel(), during
+which pch->chan_net set to NULL. Since we need a reference
+to net per channel, it makes sense to sync the refcnt
+with the life time of the channel, therefore we should
+release this reference when we destroy it.
 
->
-> Either way, the following comment in ppp_unregister_channel() seems
-> incorrect to me and should probably be deleted unless it is fixed?
->
-> /*
->   * This ensures that we have returned from any calls into the
->   * the channel's start_xmit or ioctl routine before we proceed.
->   */
+Fixes: 1f461dcdd296 ("ppp: take reference on channels netns")
+Reported-by: Matt Bennett <Matt.Bennett@alliedtelesis.co.nz>
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org
+Cc: Guillaume Nault <g.nault@alphalink.fr>
+Cc: Cyrill Gorcunov <gorcunov@openvz.org>
+Signed-off-by: Cong Wang <xiyou.wangcong@gmail.com>
+---
+ drivers/net/ppp/ppp_generic.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-This comment is pretty old, I think it refers to the pch->ppp
-check in ppp_connect_channel().
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 8dedafa..a30ee42 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -2601,8 +2601,6 @@ ppp_unregister_channel(struct ppp_channel *chan)
+ 	spin_lock_bh(&pn->all_channels_lock);
+ 	list_del(&pch->list);
+ 	spin_unlock_bh(&pn->all_channels_lock);
+-	put_net(pch->chan_net);
+-	pch->chan_net = NULL;
+ 
+ 	pch->file.dead = 1;
+ 	wake_up_interruptible(&pch->file.rwait);
+@@ -3136,6 +3134,9 @@ ppp_disconnect_channel(struct channel *pch)
+  */
+ static void ppp_destroy_channel(struct channel *pch)
+ {
++	put_net(pch->chan_net);
++	pch->chan_net = NULL;
++
+ 	atomic_dec(&channel_count);
+ 
+ 	if (!pch->file.dead) {
+-- 
+1.8.4.5
 
-Thanks.
