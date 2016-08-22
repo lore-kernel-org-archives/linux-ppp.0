@@ -1,289 +1,175 @@
-From: fgao@ikuai8.com
-Date: Mon, 22 Aug 2016 01:20:14 +0000
-Subject: [PATCH v4 net-next] ppp: Fix one deadlock issue of PPP when reentrant
-Message-Id: <1471828814-19187-1-git-send-email-fgao@ikuai8.com>
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Mon, 22 Aug 2016 12:35:25 +0000
+Subject: Re: [PATCH v4 net-next] ppp: Fix one deadlock issue of PPP when reentrant
+Message-Id: <20160822123525.ycymv43cdaoykuqt@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1471828814-19187-1-git-send-email-fgao@ikuai8.com>
+In-Reply-To: <1471828814-19187-1-git-send-email-fgao@ikuai8.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: paulus@samba.org, g.nault@alphalink.fr, philipp@redfish-solutions.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
-Cc: gfree.wind@gmail.com, Gao Feng <fgao@ikuai8.com>
+To: fgao@ikuai8.com
+Cc: paulus@samba.org, philipp@redfish-solutions.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, gfree.wind@gmail.com
 
-From: Gao Feng <fgao@ikuai8.com>
+On Mon, Aug 22, 2016 at 09:20:14AM +0800, fgao@ikuai8.com wrote:
+> From: Gao Feng <fgao@ikuai8.com>
+> 
+> PPP channel holds one spinlock before send frame. But the skb may
+> select the same PPP channel with wrong route policy. As a result,
+> the skb reaches the same channel path. It tries to get the same
+> spinlock which is held before. Bang, the deadlock comes out.
+>
+Thanks for following up on this case.
+On my side, I've thought a bit more about it in the weekend and cooked
+this patch.
+It's experimental and requires cleanup and further testing, but it
+should fix all issues I could think of (at least for PPP over L2TP).
 
-PPP channel holds one spinlock before send frame. But the skb may
-select the same PPP channel with wrong route policy. As a result,
-the skb reaches the same channel path. It tries to get the same
-spinlock which is held before. Bang, the deadlock comes out.
+The main idea is to use a per-cpu variable to detect recursion in
+selected points of PPP and L2TP xmit path.
 
-Now add one lock owner to avoid it like xmit_lock_owner of
-netdev_queue. Check the lock owner before try to get the spinlock.
-If the current cpu is already the owner, it means ppp finds there is
-one reentrant and returns directly. If not owner and hold the spinlock
-successfully, it sets owner with current CPU ID.
-
-The following is the panic stack of 3.3.8. But the same issue
-should be in the upstream too.
-
-[<ffffffff81568131>] ? _raw_spin_lock_bh+0x11/0x40
-[<ffffffffa006a2b7>] ppp_unregister_channel+0x1347/0x2170 [ppp_generic]
-[<ffffffff810a2827>] ? kmem_cache_free+0xa7/0xc0
-[<ffffffffa006ad27>] ppp_unregister_channel+0x1db7/0x2170 [ppp_generic]
-[<ffffffffa006afd5>] ppp_unregister_channel+0x2065/0x2170 [ppp_generic]
-[<ffffffff8148f1dd>] dev_hard_start_xmit+0x4cd/0x620
-[<ffffffff814a6254>] sch_direct_xmit+0x74/0x1d0
-[<ffffffff8148f88d>] dev_queue_xmit+0x1d/0x30
-[<ffffffff81496a4c>] neigh_direct_output+0xc/0x10
-[<ffffffff814d9dae>] ip_finish_output+0x25e/0x2b0
-[<ffffffff814da688>] ip_output+0x88/0x90
-[<ffffffff814d9e9f>] ? __ip_local_out+0x9f/0xb0
-[<ffffffff814d9ed4>] ip_local_out+0x24/0x30
-[<ffffffffa00b9745>] 0xffffffffa00b9744
-[<ffffffffa006b068>] ppp_unregister_channel+0x20f8/0x2170 [ppp_generic]
-[<ffffffffa006b202>] ppp_output_wakeup+0x122/0x11d0 [ppp_generic]
-[<ffffffff810a7978>] vfs_write+0xb8/0x160
-[<ffffffff810a7c55>] sys_write+0x45/0x90
-[<ffffffff815689e2>] system_call_fastpath+0x16/0x1b
-
-The call flow is like this.
-ppp_write->ppp_channel_push->start_xmit->select inappropriate route
-.... -> dev_hard_start_xmit->ppp_start_xmit->ppp_xmit_process->
-ppp_push. Now ppp_push tries to get the same spinlock which is held
-in ppp_channel_push.
-
-Although the PPP deadlock is caused by inappropriate route policy
-with L2TP, I think it is not accepted the PPP module would cause kernel
-deadlock with wrong route policy.
-
-Signed-off-by: Gao Feng <fgao@ikuai8.com>
 ---
- v4: 1) Remove the inline; 
-     2) Add _ppp_channel_lock/unlock_bh for non-xmit path;
-     3) Move local_bh_enable before print log;
- v3: Change the fix solution. Giveup the send chance instead of recursive lock
- v2: Fix recursive unlock issue
- v1: Initial patch
-
- drivers/net/ppp/ppp_generic.c | 104 +++++++++++++++++++++++++++++++++---------
- 1 file changed, 82 insertions(+), 22 deletions(-)
+ drivers/net/ppp/ppp_generic.c | 49 ++++++++++++++++++++++++++++++++-----------
+ net/l2tp/l2tp_core.c          | 28 +++++++++++++++++++++----
+ 2 files changed, 61 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 70cfa06..48a957a 100644
+index f226db4..c33036bf 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -162,6 +162,58 @@ struct ppp {
- 			 |SC_MULTILINK|SC_MP_SHORTSEQ|SC_MP_XSHORTSEQ \
- 			 |SC_COMP_TCP|SC_REJ_COMP_TCP|SC_MUST_COMP)
+@@ -1354,6 +1354,8 @@ static void ppp_setup(struct net_device *dev)
+ 	dev->netdev_ops = &ppp_netdev_ops;
+ 	SET_NETDEV_DEVTYPE(dev, &ppp_type);
  
-+struct channel_lock {
-+	spinlock_t lock;
-+	int owner;
-+};
++	dev->features |= NETIF_F_LLTX;
 +
-+static void ppp_channel_lock_init(struct channel_lock *cl)
+ 	dev->hard_header_len = PPP_HDRLEN;
+ 	dev->mtu = PPP_MRU;
+ 	dev->addr_len = 0;
+@@ -1367,12 +1369,7 @@ static void ppp_setup(struct net_device *dev)
+  * Transmit-side routines.
+  */
+ 
+-/*
+- * Called to do any work queued up on the transmit side
+- * that can now be done.
+- */
+-static void
+-ppp_xmit_process(struct ppp *ppp)
++static void __ppp_xmit_process(struct ppp *ppp)
+ {
+ 	struct sk_buff *skb;
+ 
+@@ -1392,6 +1389,23 @@ ppp_xmit_process(struct ppp *ppp)
+ 	ppp_xmit_unlock(ppp);
+ }
+ 
++static DEFINE_PER_CPU(int, ppp_xmit_recursion);
++
++/* Called to do any work queued up on the transmit side that can now be done */
++static void ppp_xmit_process(struct ppp *ppp)
 +{
-+	cl->owner = -1;
-+	spin_lock_init(&cl->lock);
-+}
-+
-+/* Used in non-xmit path */
-+static void _ppp_channel_lock_bh(struct channel_lock *cl)
-+{
-+	spin_lock_bh(&cl->lock);
-+}
-+
-+/* Used in non-xmit path */
-+static void _ppp_channel_unlock_bh(struct channel_lock *cl)
-+{
-+	spin_unlock_bh(&cl->lock);
-+}
-+
-+static bool ppp_channel_lock_bh(struct channel_lock *cl)
-+{
-+	int cpu;
-+
-+	local_bh_disable();
-+	cpu = smp_processor_id();
-+	if (cpu = cl->owner) {
-+		local_bh_enable();
-+		/* The CPU already holds this channel lock and sends. But the
-+		 * channel is selected after inappropriate route. It causes
-+		 * reenter the channel again. It is forbidden by PPP module.
-+		 */
-+		if (net_ratelimit())
-+			pr_err("PPP detects one recursive channel send\n");
-+		return false;
++	if (unlikely(__this_cpu_read(ppp_xmit_recursion))) {
++		WARN(1, "recursion detected\n");
++		return;
 +	}
-+	spin_lock(&cl->lock);
-+	cl->owner = cpu;
 +
-+	return true;
++	__this_cpu_inc(ppp_xmit_recursion);
++	local_bh_disable();
++	__ppp_xmit_process(ppp);
++	local_bh_enable();
++	__this_cpu_dec(ppp_xmit_recursion);
 +}
 +
-+static void ppp_channel_unlock_bh(struct channel_lock *cl)
+ static inline struct sk_buff *
+ pad_compress_skb(struct ppp *ppp, struct sk_buff *skb)
+ {
+@@ -1847,11 +1861,7 @@ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb)
+ }
+ #endif /* CONFIG_PPP_MULTILINK */
+ 
+-/*
+- * Try to send data out on a channel.
+- */
+-static void
+-ppp_channel_push(struct channel *pch)
++static void __ppp_channel_push(struct channel *pch)
+ {
+ 	struct sk_buff *skb;
+ 	struct ppp *ppp;
+@@ -1876,11 +1886,26 @@ ppp_channel_push(struct channel *pch)
+ 		read_lock_bh(&pch->upl);
+ 		ppp = pch->ppp;
+ 		if (ppp)
+-			ppp_xmit_process(ppp);
++			__ppp_xmit_process(ppp);
+ 		read_unlock_bh(&pch->upl);
+ 	}
+ }
+ 
++/* Try to send data out on a channel */
++static void ppp_channel_push(struct channel *pch)
 +{
-+	cl->owner = -1;
-+	spin_unlock(&cl->lock);
++	if (unlikely(__this_cpu_read(ppp_xmit_recursion))) {
++		WARN(1, "recursion detected\n");
++		return;
++	}
++
++	__this_cpu_inc(ppp_xmit_recursion);
++	local_bh_disable();
++	__ppp_channel_push(pch);
 +	local_bh_enable();
++	__this_cpu_dec(ppp_xmit_recursion);
 +}
 +
  /*
-  * Private data structure for each channel.
-  * This includes the data structure used for multilink.
-@@ -171,7 +223,7 @@ struct channel {
- 	struct list_head list;		/* link in all/new_channels list */
- 	struct ppp_channel *chan;	/* public channel data structure */
- 	struct rw_semaphore chan_sem;	/* protects `chan' during chan ioctl */
--	spinlock_t	downl;		/* protects `chan', file.xq dequeue */
-+	struct channel_lock downl;	/* protects `chan', file.xq dequeue */
- 	struct ppp	*ppp;		/* ppp unit we're connected to */
- 	struct net	*chan_net;	/* the net channel belongs to */
- 	struct list_head clist;		/* link in list of channels per unit */
-@@ -1587,9 +1639,7 @@ ppp_push(struct ppp *ppp)
- 	list = &ppp->channels;
- 	if (list_empty(list)) {
- 		/* nowhere to send the packet, just drop it */
--		ppp->xmit_pending = NULL;
--		kfree_skb(skb);
--		return;
-+		goto drop;
- 	}
- 
- 	if ((ppp->flags & SC_MULTILINK) = 0) {
-@@ -1597,16 +1647,19 @@ ppp_push(struct ppp *ppp)
- 		list = list->next;
- 		pch = list_entry(list, struct channel, clist);
- 
--		spin_lock_bh(&pch->downl);
-+		if (unlikely(!ppp_channel_lock_bh(&pch->downl))) {
-+			/* Fail to hold channel lock */
-+			goto drop;
-+		}
- 		if (pch->chan) {
- 			if (pch->chan->ops->start_xmit(pch->chan, skb))
- 				ppp->xmit_pending = NULL;
- 		} else {
- 			/* channel got unregistered */
--			kfree_skb(skb);
--			ppp->xmit_pending = NULL;
-+			ppp_channel_unlock_bh(&pch->downl);
-+			goto drop;
- 		}
--		spin_unlock_bh(&pch->downl);
-+		ppp_channel_unlock_bh(&pch->downl);
- 		return;
- 	}
- 
-@@ -1617,6 +1670,7 @@ ppp_push(struct ppp *ppp)
- 		return;
- #endif /* CONFIG_PPP_MULTILINK */
- 
-+drop:
- 	ppp->xmit_pending = NULL;
- 	kfree_skb(skb);
+  * Receive-side routines.
+  */
+diff --git a/net/l2tp/l2tp_core.c b/net/l2tp/l2tp_core.c
+index 1e40dac..bdfb1be 100644
+--- a/net/l2tp/l2tp_core.c
++++ b/net/l2tp/l2tp_core.c
+@@ -1096,10 +1096,8 @@ static int l2tp_xmit_core(struct l2tp_session *session, struct sk_buff *skb,
+ 	return 0;
  }
-@@ -1645,6 +1699,7 @@ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb)
- 	struct channel *pch;
- 	struct sk_buff *frag;
- 	struct ppp_channel *chan;
-+	bool locked;
  
- 	totspeed = 0; /*total bitrate of the bundle*/
- 	nfree = 0; /* # channels which have no packet already queued */
-@@ -1735,17 +1790,21 @@ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb)
- 			pch->avail = 1;
- 		}
+-/* If caller requires the skb to have a ppp header, the header must be
+- * inserted in the skb data before calling this function.
+- */
+-int l2tp_xmit_skb(struct l2tp_session *session, struct sk_buff *skb, int hdr_len)
++static int __l2tp_xmit_skb(struct l2tp_session *session, struct sk_buff *skb,
++			   int hdr_len)
+ {
+ 	int data_len = skb->len;
+ 	struct l2tp_tunnel *tunnel = session->tunnel;
+@@ -1178,6 +1176,28 @@ out_unlock:
  
--		/* check the channel's mtu and whether it is still attached. */
--		spin_lock_bh(&pch->downl);
--		if (pch->chan = NULL) {
--			/* can't use this channel, it's being deregistered */
-+		locked = ppp_channel_lock_bh(&pch->downl);
-+		if (!locked || !pch->chan) {
-+			/* can't use this channel, it's being deregistered
-+			 * or fail to lock the channel
-+			 */
- 			if (pch->speed = 0)
- 				nzero--;
- 			else
- 				totspeed -= pch->speed;
+ 	return ret;
+ }
++
++static DEFINE_PER_CPU(int, l2tp_xmit_recursion);
++
++/* If caller requires the skb to have a ppp header, the header must be
++ * inserted in the skb data before calling this function.
++ */
++int l2tp_xmit_skb(struct l2tp_session *session, struct sk_buff *skb,
++		  int hdr_len)
++{
++	int ret;
++
++	if (unlikely(__this_cpu_read(l2tp_xmit_recursion))) {
++		WARN(1, "recursion detected\n");
++		return NET_XMIT_DROP;
++	}
++
++	__this_cpu_inc(l2tp_xmit_recursion);
++	ret = __l2tp_xmit_skb(session, skb, hdr_len);
++	__this_cpu_dec(l2tp_xmit_recursion);
++
++	return ret;
++}
+ EXPORT_SYMBOL_GPL(l2tp_xmit_skb);
  
--			spin_unlock_bh(&pch->downl);
--			pch->avail = 0;
-+			if (locked) {
-+				/* channel is deregistered */
-+				ppp_channel_unlock_bh(&pch->downl);
-+				pch->avail = 0;
-+			}
- 			totlen = len;
- 			totfree--;
- 			nfree--;
-@@ -1795,7 +1854,7 @@ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb)
- 		 */
- 		if (flen <= 0) {
- 			pch->avail = 2;
--			spin_unlock_bh(&pch->downl);
-+			ppp_channel_unlock_bh(&pch->downl);
- 			continue;
- 		}
- 
-@@ -1840,14 +1899,14 @@ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb)
- 		len -= flen;
- 		++ppp->nxseq;
- 		bits = 0;
--		spin_unlock_bh(&pch->downl);
-+		ppp_channel_unlock_bh(&pch->downl);
- 	}
- 	ppp->nxchan = i;
- 
- 	return 1;
- 
-  noskb:
--	spin_unlock_bh(&pch->downl);
-+	ppp_channel_unlock_bh(&pch->downl);
- 	if (ppp->debug & 1)
- 		netdev_err(ppp->dev, "PPP: no memory (fragment)\n");
- 	++ppp->dev->stats.tx_errors;
-@@ -1865,7 +1924,8 @@ ppp_channel_push(struct channel *pch)
- 	struct sk_buff *skb;
- 	struct ppp *ppp;
- 
--	spin_lock_bh(&pch->downl);
-+	if (unlikely(!ppp_channel_lock_bh(&pch->downl)))
-+		return;
- 	if (pch->chan) {
- 		while (!skb_queue_empty(&pch->file.xq)) {
- 			skb = skb_dequeue(&pch->file.xq);
-@@ -1879,7 +1939,7 @@ ppp_channel_push(struct channel *pch)
- 		/* channel got deregistered */
- 		skb_queue_purge(&pch->file.xq);
- 	}
--	spin_unlock_bh(&pch->downl);
-+	ppp_channel_unlock_bh(&pch->downl);
- 	/* see if there is anything from the attached unit to be sent */
- 	if (skb_queue_empty(&pch->file.xq)) {
- 		read_lock_bh(&pch->upl);
-@@ -2520,7 +2580,7 @@ int ppp_register_net_channel(struct net *net, struct ppp_channel *chan)
- 	pch->lastseq = -1;
- #endif /* CONFIG_PPP_MULTILINK */
- 	init_rwsem(&pch->chan_sem);
--	spin_lock_init(&pch->downl);
-+	ppp_channel_lock_init(&pch->downl);
- 	rwlock_init(&pch->upl);
- 
- 	spin_lock_bh(&pn->all_channels_lock);
-@@ -2599,9 +2659,9 @@ ppp_unregister_channel(struct ppp_channel *chan)
- 	 * the channel's start_xmit or ioctl routine before we proceed.
- 	 */
- 	down_write(&pch->chan_sem);
--	spin_lock_bh(&pch->downl);
-+	_ppp_channel_lock_bh(&pch->downl);
- 	pch->chan = NULL;
--	spin_unlock_bh(&pch->downl);
-+	_ppp_channel_unlock_bh(&pch->downl);
- 	up_write(&pch->chan_sem);
- 	ppp_disconnect_channel(pch);
- 
+ /*****************************************************************************
 -- 
-1.9.1
-
+2.9.3
