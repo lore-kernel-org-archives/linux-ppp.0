@@ -1,19 +1,20 @@
 From: Jiri Slaby <jslaby@suse.cz>
-Date: Mon, 17 Oct 2016 07:51:17 +0000
-Subject: [PATCH 3.12 30/84] ppp: defer netns reference release for ppp channel
-Message-Id: <e550951c8b8b1acb30e31c22ac3404648c9aa213.1476690493.git.jslaby@suse.cz>
+Date: Thu, 06 Oct 2016 06:22:58 +0000
+Subject: [patch added to 3.12-stable] ppp: defer netns reference release for ppp channel
+Message-Id: <20161006062305.26935-27-jslaby@suse.cz>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <2d291fde5f706ac081e8cfc0ebe7e31dd534dfe7.1476690493.git.jslaby@suse.cz>
-In-Reply-To: <2d291fde5f706ac081e8cfc0ebe7e31dd534dfe7.1476690493.git.jslaby@suse.cz>
+References: <20161006062305.26935-1-jslaby@suse.cz>
+In-Reply-To: <20161006062305.26935-1-jslaby@suse.cz>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: stable@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, WANG Cong <xiyou.wangcong@gmail.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, Guillaume Nault <g.nault@alphalink.fr>, Cyrill Gorcunov <gorcunov@openvz.org>, "David S . Miller" <davem@davemloft.net>, Jiri Slaby <jslaby@suse.cz>
+Cc: WANG Cong <xiyou.wangcong@gmail.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, Guillaume Nault <g.nault@alphalink.fr>, Cyrill Gorcunov <gorcunov@openvz.org>, "David S . Miller" <davem@davemloft.net>, Jiri Slaby <jslaby@suse.cz>
 
 From: WANG Cong <xiyou.wangcong@gmail.com>
 
-3.12-stable review patch.  If anyone has any objections, please let me know.
+This patch has been added to the 3.12 stable tree. If you have any
+objections, please let us know.
 
 =======
 commit 205e1e255c479f3fd77446415706463b282f94e4 upstream.
