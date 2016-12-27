@@ -1,67 +1,89 @@
-From: Ben Hutchings <ben@decadent.org.uk>
-Date: Mon, 14 Nov 2016 00:14:07 +0000
-Subject: [PATCH 3.2 014/152] ppp: defer netns reference release for ppp channel
-Message-Id: <lsq.1479082447.892658526@decadent.org.uk>
+From: Sven Kirmess <sven.kirmess@kzone.ch>
+Date: Tue, 27 Dec 2016 23:26:57 +0000
+Subject: Starting dhcpcd terminates the established PPPoE connection
+Message-Id: <CAMBnWDj4zppEWV4i0ekcNmgbEDP_eVENBkKDEjFHUP8ZJYZi=w@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-In-Reply-To: <lsq.1479082446.271293126@decadent.org.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: akpm@linux-foundation.org, Matt Bennett <Matt.Bennett@alliedtelesis.co.nz>, Guillaume Nault <g.nault@alphalink.fr>, Cyrill Gorcunov <gorcunov@openvz.org>, "David S. Miller" <davem@davemloft.net>, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>, WANG Cong <xiyou.wangcong@gmail.com>
+To: linux-ppp@vger.kernel.org
 
-3.2.84-rc1 review patch.  If anyone has any objections, please let me know.
+My firewall runs LEAF Bering-uClibc 6.0.0, which comes with pppd 2.4.7
+and dhcpcd 6.11.5. Most of the time IPv6 is working, but from time to
+time I have the following really strange problem. The PPPoE connection
+is established (with +ipv6 in /etc/ppp/options). But whenever I start
+the dhcpcd, which should obtain IPv6 adresses through DHCPv6-PD, the
+connection gets terminated.
 
-------------------
+From the logs it looks like the ISP terminates the connection (LCP
+terminated by peer) because it wasn't able to serve me an IPv6 range
+(DHCPv6 REPLY: NOPREFIX-AVAIL).
 
-From: WANG Cong <xiyou.wangcong@gmail.com>
+Does that make sense?
 
-commit 205e1e255c479f3fd77446415706463b282f94e4 upstream.
+Is that a problem with my ISP?
 
-Matt reported that we have a NULL pointer dereference
-in ppp_pernet() from ppp_connect_channel(),
-i.e. pch->chan_net is NULL.
+Or is that a problem on my side? The problem started after I've
+rebooted the firewall, maybe some state file did not survive the
+reboot.
 
-This is due to that a parallel ppp_unregister_channel()
-could happen while we are in ppp_connect_channel(), during
-which pch->chan_net set to NULL. Since we need a reference
-to net per channel, it makes sense to sync the refcnt
-with the life time of the channel, therefore we should
-release this reference when we destroy it.
+Sven
 
-Fixes: 1f461dcdd296 ("ppp: take reference on channels netns")
-Reported-by: Matt Bennett <Matt.Bennett@alliedtelesis.co.nz>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linux-ppp@vger.kernel.org
-Cc: Guillaume Nault <g.nault@alphalink.fr>
-Cc: Cyrill Gorcunov <gorcunov@openvz.org>
-Signed-off-by: Cong Wang <xiyou.wangcong@gmail.com>
-Reviewed-by: Cyrill Gorcunov <gorcunov@openvz.org>
-Signed-off-by: David S. Miller <davem@davemloft.net>
-Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
----
- drivers/net/ppp/ppp_generic.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
 
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -2275,8 +2275,6 @@ ppp_unregister_channel(struct ppp_channe
- 	spin_lock_bh(&pn->all_channels_lock);
- 	list_del(&pch->list);
- 	spin_unlock_bh(&pn->all_channels_lock);
--	put_net(pch->chan_net);
--	pch->chan_net = NULL;
- 
- 	pch->file.dead = 1;
- 	wake_up_interruptible(&pch->file.rwait);
-@@ -2883,6 +2881,9 @@ ppp_disconnect_channel(struct channel *p
-  */
- static void ppp_destroy_channel(struct channel *pch)
- {
-+	put_net(pch->chan_net);
-+	pch->chan_net = NULL;
-+
- 	atomic_dec(&channel_count);
- 
- 	if (!pch->file.dead) {
+From /var/log/daemon.log:
 
+Dec 25 02:26:55 kaldra dhcpcd[9062]: ppp0: unsupported interface family 00
+Dec 25 02:26:55 kaldra dhcpcd[9062]: forked to background, child pid 9083
+Dec 25 02:26:55 kaldra dhcpcd[9083]: DUID
+00:01:00:01:1e:92:58:a5:00:0d:b9:40:7f:ec
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.100: IAID b9:40:7f:ee
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.100: IAID conflicts with one
+assigned to em2.170
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.170: IAID b9:40:7f:ee
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.170: IAID conflicts with one
+assigned to em2.100
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.191: IAID b9:40:7f:ee
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.191: IAID conflicts with one
+assigned to em2.100
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.192: IAID b9:40:7f:ee
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.192: IAID conflicts with one
+assigned to em2.100
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.193: IAID b9:40:7f:ee
+Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.193: IAID conflicts with one
+assigned to em2.100
+Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: IAID 70:70:70:30
+Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: IAID 00:00:00:01
+Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: soliciting a DHCPv6 lease
+Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: soliciting an IPv6 router
+Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: Router Advertisement from
+fe80::20e:d6ff:fea6:ec1b
+Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: adding address
+2a02:200:2f00:91d:dd04:a113:6f76:82f4/64
+Dec 25 02:26:56 kaldra dhcpcd[9083]: ppp0: DHCPv6 REPLY: NOPREFIX-AVAIL
+Dec 25 02:26:56 kaldra dhcpcd[9083]: ppp0: carrier lost
+Dec 25 02:26:56 kaldra dhcpcd[9083]: ppp0: deleting address
+2a02:200:2f00:91d:dd04:a113:6f76:82f4/64
+Dec 25 02:26:57 kaldra dhcpcd[9083]: ppp0: removing interface
+
+
+From /var/log/ppp.log:
+
+Dec 25 02:26:56 kaldra pppd[8185]: rcvd [LCP TermReq id=0x2]
+Dec 25 02:26:56 kaldra pppd[8185]: LCP terminated by peer
+Dec 25 02:26:56 kaldra pppd[8185]: Connect time 1.0 minutes.
+Dec 25 02:26:56 kaldra pppd[8185]: Sent 470280 bytes, received 513340 bytes.
+Dec 25 02:26:56 kaldra pppd[8185]: Script /etc/ppp/ip-down started (pid 9097)
+Dec 25 02:26:56 kaldra pppd[8185]: Script /etc/ppp/ipv6-down started (pid 9100)
+Dec 25 02:26:56 kaldra pppd[8185]: sent [LCP TermAck id=0x2]
+Dec 25 02:26:56 kaldra pppd[8185]: Script /etc/ppp/ip-down finished
+(pid 9097), status = 0x1
+Dec 25 02:26:56 kaldra pppd[8185]: Script /etc/ppp/ipv6-down finished
+(pid 9100), status = 0x1
+Dec 25 02:26:57 kaldra pppd[8185]: rcvd [LCP TermReq id=0x8f]
+Dec 25 02:26:57 kaldra pppd[8185]: sent [LCP TermAck id=0x8f]
+Dec 25 02:26:57 kaldra pppd[8185]: Modem hangup
+Dec 25 02:26:57 kaldra pppd[8185]: Connection terminated.
+Dec 25 02:26:57 kaldra pppd[8185]: Connect time 1.0 minutes.
+Dec 25 02:26:57 kaldra pppd[8185]: Sent 470280 bytes, received 513520 bytes.
+Dec 25 02:26:57 kaldra pppd[8185]: Failed to disconnect PPPoE socket:
+114 Operation already in progress
