@@ -1,89 +1,46 @@
-From: Sven Kirmess <sven.kirmess@kzone.ch>
-Date: Tue, 27 Dec 2016 23:26:57 +0000
-Subject: Starting dhcpcd terminates the established PPPoE connection
-Message-Id: <CAMBnWDj4zppEWV4i0ekcNmgbEDP_eVENBkKDEjFHUP8ZJYZi=w@mail.gmail.com>
+From: James Carlson <carlsonj@workingcode.com>
+Date: Wed, 28 Dec 2016 17:20:01 +0000
+Subject: Re: Starting dhcpcd terminates the established PPPoE connection
+Message-Id: <a9a696d3-a3b3-0693-98fa-72c2e31be436@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <CAMBnWDj4zppEWV4i0ekcNmgbEDP_eVENBkKDEjFHUP8ZJYZi=w@mail.gmail.com>
+In-Reply-To: <CAMBnWDj4zppEWV4i0ekcNmgbEDP_eVENBkKDEjFHUP8ZJYZi=w@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-My firewall runs LEAF Bering-uClibc 6.0.0, which comes with pppd 2.4.7
-and dhcpcd 6.11.5. Most of the time IPv6 is working, but from time to
-time I have the following really strange problem. The PPPoE connection
-is established (with +ipv6 in /etc/ppp/options). But whenever I start
-the dhcpcd, which should obtain IPv6 adresses through DHCPv6-PD, the
-connection gets terminated.
+On 12/27/2016 6:26 PM, Sven Kirmess wrote:
+>>From /var/log/ppp.log:
+> 
+> Dec 25 02:26:56 kaldra pppd[8185]: rcvd [LCP TermReq id=0x2]
+> Dec 25 02:26:56 kaldra pppd[8185]: LCP terminated by peer
+> Dec 25 02:26:56 kaldra pppd[8185]: Connect time 1.0 minutes.
 
-From the logs it looks like the ISP terminates the connection (LCP
-terminated by peer) because it wasn't able to serve me an IPv6 range
-(DHCPv6 REPLY: NOPREFIX-AVAIL).
+It wouldn't be a bad thing to see what led up to this point, but I
+suspect there isn't much more information available on this side.  A
+good implementation of PPP uses the optional disconnection message in
+LCP Terminate-Request to report the reason why the connection is being
+dropped.  Unfortunately, the PPP implementation used by your peer isn't
+good, and it doesn't do that.
 
-Does that make sense?
+It's remotely possible that the disconnection is unrelated to DHCP and
+that it's just coincidence.  That's why I suggested posting more of the
+logs.  But I think it's just a very remote possibility.
 
-Is that a problem with my ISP?
+I'm afraid that most likely means that you need to talk with your ISP
+and find out if they have logs or error messages to share with you.  My
+experience with most of these ISPs, though, is that there's nobody home
+at the other end, and the only thing you can really do is quit and find
+a better one.
 
-Or is that a problem on my side? The problem started after I've
-rebooted the firewall, maybe some state file did not survive the
-reboot.
+Your mileage may vary.
 
-Sven
+> Dec 25 02:26:57 kaldra pppd[8185]: Failed to disconnect PPPoE socket:
+> 114 Operation already in progress
 
+Besides this apparently spurious error message, did the PPPoE client log
+any sort of message about the disconnection?
 
-From /var/log/daemon.log:
-
-Dec 25 02:26:55 kaldra dhcpcd[9062]: ppp0: unsupported interface family 00
-Dec 25 02:26:55 kaldra dhcpcd[9062]: forked to background, child pid 9083
-Dec 25 02:26:55 kaldra dhcpcd[9083]: DUID
-00:01:00:01:1e:92:58:a5:00:0d:b9:40:7f:ec
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.100: IAID b9:40:7f:ee
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.100: IAID conflicts with one
-assigned to em2.170
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.170: IAID b9:40:7f:ee
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.170: IAID conflicts with one
-assigned to em2.100
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.191: IAID b9:40:7f:ee
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.191: IAID conflicts with one
-assigned to em2.100
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.192: IAID b9:40:7f:ee
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.192: IAID conflicts with one
-assigned to em2.100
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.193: IAID b9:40:7f:ee
-Dec 25 02:26:55 kaldra dhcpcd[9083]: em2.193: IAID conflicts with one
-assigned to em2.100
-Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: IAID 70:70:70:30
-Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: IAID 00:00:00:01
-Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: soliciting a DHCPv6 lease
-Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: soliciting an IPv6 router
-Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: Router Advertisement from
-fe80::20e:d6ff:fea6:ec1b
-Dec 25 02:26:55 kaldra dhcpcd[9083]: ppp0: adding address
-2a02:200:2f00:91d:dd04:a113:6f76:82f4/64
-Dec 25 02:26:56 kaldra dhcpcd[9083]: ppp0: DHCPv6 REPLY: NOPREFIX-AVAIL
-Dec 25 02:26:56 kaldra dhcpcd[9083]: ppp0: carrier lost
-Dec 25 02:26:56 kaldra dhcpcd[9083]: ppp0: deleting address
-2a02:200:2f00:91d:dd04:a113:6f76:82f4/64
-Dec 25 02:26:57 kaldra dhcpcd[9083]: ppp0: removing interface
-
-
-From /var/log/ppp.log:
-
-Dec 25 02:26:56 kaldra pppd[8185]: rcvd [LCP TermReq id=0x2]
-Dec 25 02:26:56 kaldra pppd[8185]: LCP terminated by peer
-Dec 25 02:26:56 kaldra pppd[8185]: Connect time 1.0 minutes.
-Dec 25 02:26:56 kaldra pppd[8185]: Sent 470280 bytes, received 513340 bytes.
-Dec 25 02:26:56 kaldra pppd[8185]: Script /etc/ppp/ip-down started (pid 9097)
-Dec 25 02:26:56 kaldra pppd[8185]: Script /etc/ppp/ipv6-down started (pid 9100)
-Dec 25 02:26:56 kaldra pppd[8185]: sent [LCP TermAck id=0x2]
-Dec 25 02:26:56 kaldra pppd[8185]: Script /etc/ppp/ip-down finished
-(pid 9097), status = 0x1
-Dec 25 02:26:56 kaldra pppd[8185]: Script /etc/ppp/ipv6-down finished
-(pid 9100), status = 0x1
-Dec 25 02:26:57 kaldra pppd[8185]: rcvd [LCP TermReq id=0x8f]
-Dec 25 02:26:57 kaldra pppd[8185]: sent [LCP TermAck id=0x8f]
-Dec 25 02:26:57 kaldra pppd[8185]: Modem hangup
-Dec 25 02:26:57 kaldra pppd[8185]: Connection terminated.
-Dec 25 02:26:57 kaldra pppd[8185]: Connect time 1.0 minutes.
-Dec 25 02:26:57 kaldra pppd[8185]: Sent 470280 bytes, received 513520 bytes.
-Dec 25 02:26:57 kaldra pppd[8185]: Failed to disconnect PPPoE socket:
-114 Operation already in progress
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
