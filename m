@@ -1,7 +1,7 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Tue, 28 Mar 2017 08:56:43 +0000
-Subject: [PATCH 16/16] drivers, net, intersil: convert request_context.refcount from atomic_t to refcount_t
-Message-Id: <1490691403-4016-17-git-send-email-elena.reshetova@intel.com>
+Date: Tue, 28 Mar 2017 08:56:33 +0000
+Subject: [PATCH 06/16] drivers, net, mlx5: convert mlx5_cq.refcount from atomic_t to refcount_t
+Message-Id: <1490691403-4016-7-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
 In-Reply-To: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
@@ -9,7 +9,7 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: netdev@vger.kernel.org
-Cc: peterz@infradead.org, matanb@mellanox.com, paulus@samba.org, Elena Reshetova <elena.reshetova@intel.com>, nbd@openwrt.org, linux-rdma@vger.kernel.org, saeedm@mellanox.com, ganeshgr@chelsio.com, Hans Liljestrand <ishkamiel@gmail.com>, David Windsor <dwindsor@gmail.com>, keescook@chromium.org, j@w1.fi, ajk@comnets.uni-bremen.de, leonro@mellanox.com, matthias.bgg@gmail.com, linux-hams@vger.kernel.org, kvalo@codeaurora.org, blogic@openwrt.org, linux-arm-kernel@lists.infradead.org, linux-ppp@vger.kernel.org, yishaih@mellanox.com, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org, gregkh@linuxfoundation.org
+Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-rdma@vger.kernel.org, linux-hams@vger.kernel.org, linux-ppp@vger.kernel.org, linux-wireless@vger.kernel.org, ganeshgr@chelsio.com, nbd@openwrt.org, blogic@openwrt.org, matthias.bgg@gmail.com, yishaih@mellanox.com, saeedm@mellanox.com, matanb@mellanox.com, leonro@mellanox.com, ajk@comnets.uni-bremen.de, paulus@samba.org, j@w1.fi, kvalo@codeaurora.org, peterz@infradead.org, keescook@chromium.org, gregkh@linuxfoundation.org, Elena Reshetova <elena.reshetova@intel.com>, Hans Liljestrand <ishkamiel@gmail.com>, David Windsor <dwindsor@gmail.com>
 
 refcount_t type and corresponding API should be
 used instead of atomic_t when the variable is used as
@@ -22,84 +22,108 @@ Signed-off-by: Hans Liljestrand <ishkamiel@gmail.com>
 Signed-off-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: David Windsor <dwindsor@gmail.com>
 ---
- drivers/net/wireless/intersil/orinoco/orinoco_usb.c | 15 ++++++++-------
- 1 file changed, 8 insertions(+), 7 deletions(-)
+ drivers/net/ethernet/mellanox/mlx5/core/cq.c | 16 ++++++++--------
+ include/linux/mlx5/cq.h                      |  4 ++--
+ 2 files changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/net/wireless/intersil/orinoco/orinoco_usb.c b/drivers/net/wireless/intersil/orinoco/orinoco_usb.c
-index 98e1380..95dd03e 100644
---- a/drivers/net/wireless/intersil/orinoco/orinoco_usb.c
-+++ b/drivers/net/wireless/intersil/orinoco/orinoco_usb.c
-@@ -64,6 +64,7 @@
- #include <linux/etherdevice.h>
- #include <linux/wireless.h>
- #include <linux/firmware.h>
+diff --git a/drivers/net/ethernet/mellanox/mlx5/core/cq.c b/drivers/net/ethernet/mellanox/mlx5/core/cq.c
+index 336d473..1016e05 100644
+--- a/drivers/net/ethernet/mellanox/mlx5/core/cq.c
++++ b/drivers/net/ethernet/mellanox/mlx5/core/cq.c
+@@ -58,7 +58,7 @@ void mlx5_cq_tasklet_cb(unsigned long data)
+ 				 tasklet_ctx.list) {
+ 		list_del_init(&mcq->tasklet_ctx.list);
+ 		mcq->tasklet_ctx.comp(mcq);
+-		if (atomic_dec_and_test(&mcq->refcount))
++		if (refcount_dec_and_test(&mcq->refcount))
+ 			complete(&mcq->free);
+ 		if (time_after(jiffies, end))
+ 			break;
+@@ -80,7 +80,7 @@ static void mlx5_add_cq_to_tasklet(struct mlx5_core_cq *cq)
+ 	 * still arrive.
+ 	 */
+ 	if (list_empty_careful(&cq->tasklet_ctx.list)) {
+-		atomic_inc(&cq->refcount);
++		refcount_inc(&cq->refcount);
+ 		list_add_tail(&cq->tasklet_ctx.list, &tasklet_ctx->list);
+ 	}
+ 	spin_unlock_irqrestore(&tasklet_ctx->lock, flags);
+@@ -94,7 +94,7 @@ void mlx5_cq_completion(struct mlx5_core_dev *dev, u32 cqn)
+ 	spin_lock(&table->lock);
+ 	cq = radix_tree_lookup(&table->tree, cqn);
+ 	if (likely(cq))
+-		atomic_inc(&cq->refcount);
++		refcount_inc(&cq->refcount);
+ 	spin_unlock(&table->lock);
+ 
+ 	if (!cq) {
+@@ -106,7 +106,7 @@ void mlx5_cq_completion(struct mlx5_core_dev *dev, u32 cqn)
+ 
+ 	cq->comp(cq);
+ 
+-	if (atomic_dec_and_test(&cq->refcount))
++	if (refcount_dec_and_test(&cq->refcount))
+ 		complete(&cq->free);
+ }
+ 
+@@ -119,7 +119,7 @@ void mlx5_cq_event(struct mlx5_core_dev *dev, u32 cqn, int event_type)
+ 
+ 	cq = radix_tree_lookup(&table->tree, cqn);
+ 	if (cq)
+-		atomic_inc(&cq->refcount);
++		refcount_inc(&cq->refcount);
+ 
+ 	spin_unlock(&table->lock);
+ 
+@@ -130,7 +130,7 @@ void mlx5_cq_event(struct mlx5_core_dev *dev, u32 cqn, int event_type)
+ 
+ 	cq->event(cq, event_type);
+ 
+-	if (atomic_dec_and_test(&cq->refcount))
++	if (refcount_dec_and_test(&cq->refcount))
+ 		complete(&cq->free);
+ }
+ 
+@@ -159,7 +159,7 @@ int mlx5_core_create_cq(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq,
+ 	cq->cqn = MLX5_GET(create_cq_out, out, cqn);
+ 	cq->cons_index = 0;
+ 	cq->arm_sn     = 0;
+-	atomic_set(&cq->refcount, 1);
++	refcount_set(&cq->refcount, 1);
+ 	init_completion(&cq->free);
+ 	if (!cq->comp)
+ 		cq->comp = mlx5_add_cq_to_tasklet;
+@@ -222,7 +222,7 @@ int mlx5_core_destroy_cq(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq)
+ 	synchronize_irq(cq->irqn);
+ 
+ 	mlx5_debug_cq_remove(dev, cq);
+-	if (atomic_dec_and_test(&cq->refcount))
++	if (refcount_dec_and_test(&cq->refcount))
+ 		complete(&cq->free);
+ 	wait_for_completion(&cq->free);
+ 
+diff --git a/include/linux/mlx5/cq.h b/include/linux/mlx5/cq.h
+index 9589884..6a57ec2 100644
+--- a/include/linux/mlx5/cq.h
++++ b/include/linux/mlx5/cq.h
+@@ -35,7 +35,7 @@
+ 
+ #include <rdma/ib_verbs.h>
+ #include <linux/mlx5/driver.h>
+-
 +#include <linux/refcount.h>
  
- #include "mic.h"
- #include "orinoco.h"
-@@ -268,7 +269,7 @@ enum ezusb_state {
- 
- struct request_context {
- 	struct list_head list;
--	atomic_t refcount;
-+	refcount_t refcount;
- 	struct completion done;	/* Signals that CTX is dead */
- 	int killed;
- 	struct urb *outurb;	/* OUT for req pkt */
-@@ -298,7 +299,7 @@ static inline u8 ezusb_reply_inc(u8 count)
- 
- static void ezusb_request_context_put(struct request_context *ctx)
- {
--	if (!atomic_dec_and_test(&ctx->refcount))
-+	if (!refcount_dec_and_test(&ctx->refcount))
- 		return;
- 
- 	WARN_ON(!ctx->done.done);
-@@ -328,7 +329,7 @@ static void ezusb_request_timerfn(u_long _ctx)
- 	} else {
- 		ctx->state = EZUSB_CTX_RESP_TIMEOUT;
- 		dev_dbg(&ctx->outurb->dev->dev, "couldn't unlink\n");
--		atomic_inc(&ctx->refcount);
-+		refcount_inc(&ctx->refcount);
- 		ctx->killed = 1;
- 		ezusb_ctx_complete(ctx);
- 		ezusb_request_context_put(ctx);
-@@ -361,7 +362,7 @@ static struct request_context *ezusb_alloc_ctx(struct ezusb_priv *upriv,
- 	ctx->out_rid = out_rid;
- 	ctx->in_rid = in_rid;
- 
--	atomic_set(&ctx->refcount, 1);
-+	refcount_set(&ctx->refcount, 1);
- 	init_completion(&ctx->done);
- 
- 	setup_timer(&ctx->timer, ezusb_request_timerfn, (u_long)ctx);
-@@ -469,7 +470,7 @@ static void ezusb_req_queue_run(struct ezusb_priv *upriv)
- 	list_move_tail(&ctx->list, &upriv->req_active);
- 
- 	if (ctx->state = EZUSB_CTX_QUEUED) {
--		atomic_inc(&ctx->refcount);
-+		refcount_inc(&ctx->refcount);
- 		result = usb_submit_urb(ctx->outurb, GFP_ATOMIC);
- 		if (result) {
- 			ctx->state = EZUSB_CTX_REQSUBMIT_FAIL;
-@@ -507,7 +508,7 @@ static void ezusb_req_enqueue_run(struct ezusb_priv *upriv,
- 		spin_unlock_irqrestore(&upriv->req_lock, flags);
- 		goto done;
- 	}
--	atomic_inc(&ctx->refcount);
-+	refcount_inc(&ctx->refcount);
- 	list_add_tail(&ctx->list, &upriv->req_pending);
- 	spin_unlock_irqrestore(&upriv->req_lock, flags);
- 
-@@ -1464,7 +1465,7 @@ static inline void ezusb_delete(struct ezusb_priv *upriv)
- 		int err;
- 
- 		ctx = list_entry(item, struct request_context, list);
--		atomic_inc(&ctx->refcount);
-+		refcount_inc(&ctx->refcount);
- 
- 		ctx->outurb->transfer_flags |= URB_ASYNC_UNLINK;
- 		err = usb_unlink_urb(ctx->outurb);
+ struct mlx5_core_cq {
+ 	u32			cqn;
+@@ -43,7 +43,7 @@ struct mlx5_core_cq {
+ 	__be32		       *set_ci_db;
+ 	__be32		       *arm_db;
+ 	struct mlx5_uars_page  *uar;
+-	atomic_t		refcount;
++	refcount_t		refcount;
+ 	struct completion	free;
+ 	unsigned		vector;
+ 	unsigned int		irqn;
 -- 
 2.7.4
 
