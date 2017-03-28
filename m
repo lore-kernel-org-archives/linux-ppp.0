@@ -1,71 +1,87 @@
-From: Woody Wu <narkewoody@gmail.com>
-Date: Tue, 21 Mar 2017 03:16:46 +0000
-Subject: Re: Setup pppd over rs-485 point-to-point
-Message-Id: <CAAsE_ueBiMsFmP7RbMmu9SjHmcpNwg7Qb37VqTREviPKQcsDCQ@mail.gmail.com>
+From: Elena Reshetova <elena.reshetova@intel.com>
+Date: Tue, 28 Mar 2017 08:56:29 +0000
+Subject: [PATCH 02/16] drivers, net, ethernet: convert mtk_eth.dma_refcnt from atomic_t to refcount_t
+Message-Id: <1490691403-4016-3-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <2d19b2f1-bb0f-9a09-6d40-f05388c66af5@gmail.com>
-In-Reply-To: <2d19b2f1-bb0f-9a09-6d40-f05388c66af5@gmail.com>
+References: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
+In-Reply-To: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: peterz@infradead.org, matanb@mellanox.com, paulus@samba.org, Elena Reshetova <elena.reshetova@intel.com>, nbd@openwrt.org, linux-rdma@vger.kernel.org, saeedm@mellanox.com, ganeshgr@chelsio.com, Hans Liljestrand <ishkamiel@gmail.com>, David Windsor <dwindsor@gmail.com>, keescook@chromium.org, j@w1.fi, ajk@comnets.uni-bremen.de, leonro@mellanox.com, matthias.bgg@gmail.com, linux-hams@vger.kernel.org, kvalo@codeaurora.org, blogic@openwrt.org, linux-arm-kernel@lists.infradead.org, linux-ppp@vger.kernel.org, yishaih@mellanox.com, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org, gregkh@linuxfoundation.org
 
-On 03/17/2017 08:05 PM, James Carlson wrote:
-> On 03/16/17 23:18, Woody Wu wrote:
->> Hi,
->>
->> I want to setup pppd to connect a Linux laptop to an embedded Linux
->> device. The Linux box connected to a rs-232 to rs485 converter, then the
->> convert connected via a two-wire rs-485 cable to the embedded Linux
->> device's rs-485 port.
-> [...]
->> On the otherhand, I can make success with similar commands when two
->> devices connected with rs-232.  So I guess, this failure was because the
->> rs-485 is half-duplex.  But I searched google, people seemed say pppd
->> should work over a point-to-point rs-485 connection.  So I want to get
->> help from your experts.
->
-> I see evidence of other problems in your trace as well.  The PC is
-> receiving its own transmissions, which is very bad, and is the proximate
-> cause of the failure.  It means that the converter device you're using
-> has local echo enabled.  If there's some way to turn off local echo, you
-> may get a little further.  Check the manufacturer's documentation for
-> that converter.  This shouldn't happen:
->
-> sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb3a3da0c> <pcomp> <accomp>]
-> rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xb3a3da0c> <pcomp> <accomp>]
+refcount_t type and corresponding API should be
+used instead of atomic_t when the variable is used as
+a reference counter. This allows to avoid accidental
+refcounter overflows that might lead to use-after-free
+situations.
 
-Thank you James.  I think the converter should be fine, without echo,
-since I remembered before the ppp setup, I tested it with mimicom on
-both devices and did not recognized any 'echo' behavior.  But I like to
-double check it when I come to office next Monday.
+Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
+Signed-off-by: Hans Liljestrand <ishkamiel@gmail.com>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: David Windsor <dwindsor@gmail.com>
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 8 +++++---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.h | 4 +++-
+ 2 files changed, 8 insertions(+), 4 deletions(-)
 
->
-> But even though that caused this failure, I don't think it's the root
-> problem.  As another poster said, it's not going to work like this.
->
-> Two-wire TIA-485 is indeed half-duplex.  There are protocols designed
-> for use on it (MODBUS is one example), but right in the introduction to
-> RFC 1661 (PPP), it says that you need full-duplex by design.
->
-> I think it would be possible to make it work on a half-duplex link, but
-> it wouldn't be simple or terribly efficient.  The two schemes I can
-> imagine are:
->
->   - Use a master-slave type of relationship.  This means having one end
->     (perhaps the PC in this case) sending some sort of signal (I suggest
->     using back-to-back flags; two 0x7E in a row) to let the slave side
->     know it should send something if it has it, or to send an empty
->     packet.  The master then just periodically polls for data or sends
->     what it has.
+diff --git a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+index bf6317e..d27f9d9 100644
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -1725,7 +1725,7 @@ static int mtk_open(struct net_device *dev)
+ 	struct mtk_eth *eth = mac->hw;
+ 
+ 	/* we run 2 netdevs on the same dma ring so we only bring it up once */
+-	if (!atomic_read(&eth->dma_refcnt)) {
++	if (!refcount_read(&eth->dma_refcnt)) {
+ 		int err = mtk_start_dma(eth);
+ 
+ 		if (err)
+@@ -1735,8 +1735,10 @@ static int mtk_open(struct net_device *dev)
+ 		napi_enable(&eth->rx_napi);
+ 		mtk_irq_enable(eth, MTK_QDMA_INT_MASK, MTK_TX_DONE_INT);
+ 		mtk_irq_enable(eth, MTK_PDMA_INT_MASK, MTK_RX_DONE_INT);
++		refcount_set(&eth->dma_refcnt, 1);
+ 	}
+-	atomic_inc(&eth->dma_refcnt);
++	else
++		refcount_inc(&eth->dma_refcnt);
+ 
+ 	phy_start(dev->phydev);
+ 	netif_start_queue(dev);
+@@ -1776,7 +1778,7 @@ static int mtk_stop(struct net_device *dev)
+ 	phy_stop(dev->phydev);
+ 
+ 	/* only shutdown DMA if this is the last user */
+-	if (!atomic_dec_and_test(&eth->dma_refcnt))
++	if (!refcount_dec_and_test(&eth->dma_refcnt))
+ 		return 0;
+ 
+ 	mtk_irq_disable(eth, MTK_QDMA_INT_MASK, MTK_TX_DONE_INT);
+diff --git a/drivers/net/ethernet/mediatek/mtk_eth_soc.h b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+index 99b1c8e..e5b99b7 100644
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+@@ -15,6 +15,8 @@
+ #ifndef MTK_ETH_H
+ #define MTK_ETH_H
+ 
++#include <linux/refcount.h>
++
+ #define MTK_QDMA_PAGE_SIZE	2048
+ #define	MTK_MAX_RX_LENGTH	1536
+ #define MTK_TX_DMA_BUF_LEN	0x3fff
+@@ -541,7 +543,7 @@ struct mtk_eth {
+ 	struct regmap			*pctl;
+ 	u32				chip_id;
+ 	bool				hwlro;
+-	atomic_t			dma_refcnt;
++	refcount_t			dma_refcnt;
+ 	struct mtk_tx_ring		tx_ring;
+ 	struct mtk_rx_ring		rx_ring[MTK_MAX_RX_RING_NUM];
+ 	struct napi_struct		tx_napi;
+-- 
+2.7.4
 
-Does this mean I hava to change the pppd source code or even the Linux
-kernel?
-
-
->
->   - Use something like ALOHA or CSMA.  Both of these require some means
->     of knowing that your transmitted message has been garbled by a
->     collision so that you can back off and retry.  That might require
->     some electrical work on your part.
->
