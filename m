@@ -1,7 +1,7 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Tue, 28 Mar 2017 08:56:28 +0000
-Subject: [PATCH 01/16] drivers, net, ethernet: convert clip_entry.refcnt from atomic_t to refcount_t
-Message-Id: <1490691403-4016-2-git-send-email-elena.reshetova@intel.com>
+Date: Tue, 28 Mar 2017 08:56:40 +0000
+Subject: [PATCH 13/16] drivers, net, ppp: convert ppp_file.refcnt from atomic_t to refcount_t
+Message-Id: <1490691403-4016-14-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
 In-Reply-To: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
@@ -22,79 +22,93 @@ Signed-off-by: Hans Liljestrand <ishkamiel@gmail.com>
 Signed-off-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: David Windsor <dwindsor@gmail.com>
 ---
- drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c | 13 ++++++-------
- drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h |  4 +++-
- 2 files changed, 9 insertions(+), 8 deletions(-)
+ drivers/net/ppp/ppp_generic.c | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
-index 3103ef9..2900390 100644
---- a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
-+++ b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
-@@ -96,7 +96,8 @@ int cxgb4_clip_get(const struct net_device *dev, const u32 *lip, u8 v6)
- 		if (!ret) {
- 			ce = cte;
- 			read_unlock_bh(&ctbl->lock);
--			goto found;
-+			refcount_inc(&ce->refcnt);
-+			return 0;
- 		}
- 	}
- 	read_unlock_bh(&ctbl->lock);
-@@ -108,7 +109,7 @@ int cxgb4_clip_get(const struct net_device *dev, const u32 *lip, u8 v6)
- 		list_del(&ce->list);
- 		INIT_LIST_HEAD(&ce->list);
- 		spin_lock_init(&ce->lock);
--		atomic_set(&ce->refcnt, 0);
-+		refcount_set(&ce->refcnt, 0);
- 		atomic_dec(&ctbl->nfree);
- 		list_add_tail(&ce->list, &ctbl->hash_list[hash]);
- 		if (v6) {
-@@ -138,9 +139,7 @@ int cxgb4_clip_get(const struct net_device *dev, const u32 *lip, u8 v6)
- 		return -ENOMEM;
- 	}
- 	write_unlock_bh(&ctbl->lock);
--found:
--	atomic_inc(&ce->refcnt);
--
-+	refcount_set(&ce->refcnt, 1);
- 	return 0;
- }
- EXPORT_SYMBOL(cxgb4_clip_get);
-@@ -179,7 +178,7 @@ void cxgb4_clip_release(const struct net_device *dev, const u32 *lip, u8 v6)
- found:
- 	write_lock_bh(&ctbl->lock);
- 	spin_lock_bh(&ce->lock);
--	if (atomic_dec_and_test(&ce->refcnt)) {
-+	if (refcount_dec_and_test(&ce->refcnt)) {
- 		list_del(&ce->list);
- 		INIT_LIST_HEAD(&ce->list);
- 		list_add_tail(&ce->list, &ctbl->ce_free_head);
-@@ -266,7 +265,7 @@ int clip_tbl_show(struct seq_file *seq, void *v)
- 			ip[0] = '\0';
- 			sprintf(ip, "%pISc", &ce->addr);
- 			seq_printf(seq, "%-25s   %u\n", ip,
--				   atomic_read(&ce->refcnt));
-+				   refcount_read(&ce->refcnt));
- 		}
- 	}
- 	seq_printf(seq, "Free clip entries : %d\n", atomic_read(&ctbl->nfree));
-diff --git a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h
-index 35eb43c..a0e0ae1 100644
---- a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h
-+++ b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h
-@@ -10,9 +10,11 @@
-  *  release for licensing terms and conditions.
-  */
- 
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index f9c0e62..7b1352c 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -51,6 +51,7 @@
+ #include <asm/unaligned.h>
+ #include <net/slhc_vj.h>
+ #include <linux/atomic.h>
 +#include <linux/refcount.h>
-+
- struct clip_entry {
- 	spinlock_t lock;	/* Hold while modifying clip reference */
--	atomic_t refcnt;
-+	refcount_t refcnt;
- 	struct list_head list;
- 	union {
- 		struct sockaddr_in addr;
+ 
+ #include <linux/nsproxy.h>
+ #include <net/net_namespace.h>
+@@ -84,7 +85,7 @@ struct ppp_file {
+ 	struct sk_buff_head xq;		/* pppd transmit queue */
+ 	struct sk_buff_head rq;		/* receive queue for pppd */
+ 	wait_queue_head_t rwait;	/* for poll on reading /dev/ppp */
+-	atomic_t	refcnt;		/* # refs (incl /dev/ppp attached) */
++	refcount_t	refcnt;		/* # refs (incl /dev/ppp attached) */
+ 	int		hdrlen;		/* space to leave for headers */
+ 	int		index;		/* interface unit / channel number */
+ 	int		dead;		/* unit/channel has been shut down */
+@@ -407,7 +408,7 @@ static int ppp_release(struct inode *unused, struct file *file)
+ 				unregister_netdevice(ppp->dev);
+ 			rtnl_unlock();
+ 		}
+-		if (atomic_dec_and_test(&pf->refcnt)) {
++		if (refcount_dec_and_test(&pf->refcnt)) {
+ 			switch (pf->kind) {
+ 			case INTERFACE:
+ 				ppp_destroy_interface(PF_TO_PPP(pf));
+@@ -880,7 +881,7 @@ static int ppp_unattached_ioctl(struct net *net, struct ppp_file *pf,
+ 		mutex_lock(&pn->all_ppp_mutex);
+ 		ppp = ppp_find_unit(pn, unit);
+ 		if (ppp) {
+-			atomic_inc(&ppp->file.refcnt);
++			refcount_inc(&ppp->file.refcnt);
+ 			file->private_data = &ppp->file;
+ 			err = 0;
+ 		}
+@@ -895,7 +896,7 @@ static int ppp_unattached_ioctl(struct net *net, struct ppp_file *pf,
+ 		spin_lock_bh(&pn->all_channels_lock);
+ 		chan = ppp_find_channel(pn, unit);
+ 		if (chan) {
+-			atomic_inc(&chan->file.refcnt);
++			refcount_inc(&chan->file.refcnt);
+ 			file->private_data = &chan->file;
+ 			err = 0;
+ 		}
+@@ -2641,7 +2642,7 @@ ppp_unregister_channel(struct ppp_channel *chan)
+ 
+ 	pch->file.dead = 1;
+ 	wake_up_interruptible(&pch->file.rwait);
+-	if (atomic_dec_and_test(&pch->file.refcnt))
++	if (refcount_dec_and_test(&pch->file.refcnt))
+ 		ppp_destroy_channel(pch);
+ }
+ 
+@@ -3011,7 +3012,7 @@ init_ppp_file(struct ppp_file *pf, int kind)
+ 	pf->kind = kind;
+ 	skb_queue_head_init(&pf->xq);
+ 	skb_queue_head_init(&pf->rq);
+-	atomic_set(&pf->refcnt, 1);
++	refcount_set(&pf->refcnt, 1);
+ 	init_waitqueue_head(&pf->rwait);
+ }
+ 
+@@ -3128,7 +3129,7 @@ ppp_connect_channel(struct channel *pch, int unit)
+ 	list_add_tail(&pch->clist, &ppp->channels);
+ 	++ppp->n_channels;
+ 	pch->ppp = ppp;
+-	atomic_inc(&ppp->file.refcnt);
++	refcount_inc(&ppp->file.refcnt);
+ 	ppp_unlock(ppp);
+ 	ret = 0;
+ 
+@@ -3159,7 +3160,7 @@ ppp_disconnect_channel(struct channel *pch)
+ 		if (--ppp->n_channels = 0)
+ 			wake_up_interruptible(&ppp->file.rwait);
+ 		ppp_unlock(ppp);
+-		if (atomic_dec_and_test(&ppp->file.refcnt))
++		if (refcount_dec_and_test(&ppp->file.refcnt))
+ 			ppp_destroy_interface(ppp);
+ 		err = 0;
+ 	}
 -- 
 2.7.4
 
