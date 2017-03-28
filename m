@@ -1,7 +1,7 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Tue, 28 Mar 2017 08:56:30 +0000
-Subject: [PATCH 03/16] drivers, net, mlx4: convert mlx4_cq.refcount from atomic_t to refcount_t
-Message-Id: <1490691403-4016-4-git-send-email-elena.reshetova@intel.com>
+Date: Tue, 28 Mar 2017 08:56:41 +0000
+Subject: [PATCH 14/16] drivers, net, ppp: convert syncppp.refcnt from atomic_t to refcount_t
+Message-Id: <1490691403-4016-15-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
 In-Reply-To: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
@@ -22,71 +22,65 @@ Signed-off-by: Hans Liljestrand <ishkamiel@gmail.com>
 Signed-off-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: David Windsor <dwindsor@gmail.com>
 ---
- drivers/net/ethernet/mellanox/mlx4/cq.c | 8 ++++----
- include/linux/mlx4/device.h             | 4 ++--
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ drivers/net/ppp/ppp_synctty.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/ethernet/mellanox/mlx4/cq.c b/drivers/net/ethernet/mellanox/mlx4/cq.c
-index fa6d235..c58e8b7 100644
---- a/drivers/net/ethernet/mellanox/mlx4/cq.c
-+++ b/drivers/net/ethernet/mellanox/mlx4/cq.c
-@@ -69,7 +69,7 @@ void mlx4_cq_tasklet_cb(unsigned long data)
- 	list_for_each_entry_safe(mcq, temp, &ctx->process_list, tasklet_ctx.list) {
- 		list_del_init(&mcq->tasklet_ctx.list);
- 		mcq->tasklet_ctx.comp(mcq);
--		if (atomic_dec_and_test(&mcq->refcount))
-+		if (refcount_dec_and_test(&mcq->refcount))
- 			complete(&mcq->free);
- 		if (time_after(jiffies, end))
- 			break;
-@@ -92,7 +92,7 @@ static void mlx4_add_cq_to_tasklet(struct mlx4_cq *cq)
- 	 * still arrive.
- 	 */
- 	if (list_empty_careful(&cq->tasklet_ctx.list)) {
--		atomic_inc(&cq->refcount);
-+		refcount_inc(&cq->refcount);
- 		kick = list_empty(&tasklet_ctx->list);
- 		list_add_tail(&cq->tasklet_ctx.list, &tasklet_ctx->list);
- 		if (kick)
-@@ -343,7 +343,7 @@ int mlx4_cq_alloc(struct mlx4_dev *dev, int nent,
- 	cq->cons_index = 0;
- 	cq->arm_sn     = 1;
- 	cq->uar        = uar;
--	atomic_set(&cq->refcount, 1);
-+	refcount_set(&cq->refcount, 1);
- 	init_completion(&cq->free);
- 	cq->comp = mlx4_add_cq_to_tasklet;
- 	cq->tasklet_ctx.priv @@ -385,7 +385,7 @@ void mlx4_cq_free(struct mlx4_dev *dev, struct mlx4_cq *cq)
- 	    priv->eq_table.eq[MLX4_EQ_ASYNC].irq)
- 		synchronize_irq(priv->eq_table.eq[MLX4_EQ_ASYNC].irq);
- 
--	if (atomic_dec_and_test(&cq->refcount))
-+	if (refcount_dec_and_test(&cq->refcount))
- 		complete(&cq->free);
- 	wait_for_completion(&cq->free);
- 
-diff --git a/include/linux/mlx4/device.h b/include/linux/mlx4/device.h
-index 7e66e4f..5fea001 100644
---- a/include/linux/mlx4/device.h
-+++ b/include/linux/mlx4/device.h
-@@ -40,7 +40,7 @@
- #include <linux/cpu_rmap.h>
- #include <linux/crash_dump.h>
- 
--#include <linux/atomic.h>
+diff --git a/drivers/net/ppp/ppp_synctty.c b/drivers/net/ppp/ppp_synctty.c
+index 9ae5398..4a643f8 100644
+--- a/drivers/net/ppp/ppp_synctty.c
++++ b/drivers/net/ppp/ppp_synctty.c
+@@ -46,6 +46,7 @@
+ #include <linux/init.h>
+ #include <linux/interrupt.h>
+ #include <linux/slab.h>
 +#include <linux/refcount.h>
+ #include <asm/unaligned.h>
+ #include <linux/uaccess.h>
  
- #include <linux/timecounter.h>
+@@ -72,7 +73,7 @@ struct syncppp {
  
-@@ -738,7 +738,7 @@ struct mlx4_cq {
- 	int			cqn;
- 	unsigned		vector;
+ 	struct tasklet_struct tsk;
  
--	atomic_t		refcount;
-+	refcount_t		refcount;
- 	struct completion	free;
- 	struct {
- 		struct list_head list;
+-	atomic_t	refcnt;
++	refcount_t	refcnt;
+ 	struct completion dead_cmp;
+ 	struct ppp_channel chan;	/* interface to generic ppp layer */
+ };
+@@ -141,14 +142,14 @@ static struct syncppp *sp_get(struct tty_struct *tty)
+ 	read_lock(&disc_data_lock);
+ 	ap = tty->disc_data;
+ 	if (ap != NULL)
+-		atomic_inc(&ap->refcnt);
++		refcount_inc(&ap->refcnt);
+ 	read_unlock(&disc_data_lock);
+ 	return ap;
+ }
+ 
+ static void sp_put(struct syncppp *ap)
+ {
+-	if (atomic_dec_and_test(&ap->refcnt))
++	if (refcount_dec_and_test(&ap->refcnt))
+ 		complete(&ap->dead_cmp);
+ }
+ 
+@@ -182,7 +183,7 @@ ppp_sync_open(struct tty_struct *tty)
+ 	skb_queue_head_init(&ap->rqueue);
+ 	tasklet_init(&ap->tsk, ppp_sync_process, (unsigned long) ap);
+ 
+-	atomic_set(&ap->refcnt, 1);
++	refcount_set(&ap->refcnt, 1);
+ 	init_completion(&ap->dead_cmp);
+ 
+ 	ap->chan.private = ap;
+@@ -232,7 +233,7 @@ ppp_sync_close(struct tty_struct *tty)
+ 	 * our channel ops (i.e. ppp_sync_send/ioctl) are in progress
+ 	 * by the time it returns.
+ 	 */
+-	if (!atomic_dec_and_test(&ap->refcnt))
++	if (!refcount_dec_and_test(&ap->refcnt))
+ 		wait_for_completion(&ap->dead_cmp);
+ 	tasklet_kill(&ap->tsk);
+ 
 -- 
 2.7.4
 
