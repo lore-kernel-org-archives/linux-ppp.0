@@ -1,68 +1,105 @@
-From: Willy Tarreau <w@1wt.eu>
-Date: Sun, 05 Feb 2017 19:20:18 +0000
-Subject: [PATCH 3.10 031/319] ppp: defer netns reference release for ppp channel
-Message-Id: <1486322486-8024-2-git-send-email-w@1wt.eu>
+From: Elena Reshetova <elena.reshetova@intel.com>
+Date: Tue, 28 Mar 2017 08:56:43 +0000
+Subject: [PATCH 16/16] drivers, net, intersil: convert request_context.refcount from atomic_t to refcount_t
+Message-Id: <1490691403-4016-17-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1486322486-8024-1-git-send-email-w@1wt.eu>
-In-Reply-To: <1486322486-8024-1-git-send-email-w@1wt.eu>
+References: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
+In-Reply-To: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org, linux@roeck-us.net
-Cc: WANG Cong <xiyou.wangcong@gmail.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, Guillaume Nault <g.nault@alphalink.fr>, Cyrill Gorcunov <gorcunov@openvz.org>, "David S . Miller" <davem@davemloft.net>, Willy Tarreau <w@1wt.eu>
+To: netdev@vger.kernel.org
+Cc: peterz@infradead.org, matanb@mellanox.com, paulus@samba.org, Elena Reshetova <elena.reshetova@intel.com>, nbd@openwrt.org, linux-rdma@vger.kernel.org, saeedm@mellanox.com, ganeshgr@chelsio.com, Hans Liljestrand <ishkamiel@gmail.com>, David Windsor <dwindsor@gmail.com>, keescook@chromium.org, j@w1.fi, ajk@comnets.uni-bremen.de, leonro@mellanox.com, matthias.bgg@gmail.com, linux-hams@vger.kernel.org, kvalo@codeaurora.org, blogic@openwrt.org, linux-arm-kernel@lists.infradead.org, linux-ppp@vger.kernel.org, yishaih@mellanox.com, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org, gregkh@linuxfoundation.org
 
-From: WANG Cong <xiyou.wangcong@gmail.com>
+refcount_t type and corresponding API should be
+used instead of atomic_t when the variable is used as
+a reference counter. This allows to avoid accidental
+refcounter overflows that might lead to use-after-free
+situations.
 
-commit 205e1e255c479f3fd77446415706463b282f94e4 upstream
-
-Matt reported that we have a NULL pointer dereference
-in ppp_pernet() from ppp_connect_channel(),
-i.e. pch->chan_net is NULL.
-
-This is due to that a parallel ppp_unregister_channel()
-could happen while we are in ppp_connect_channel(), during
-which pch->chan_net set to NULL. Since we need a reference
-to net per channel, it makes sense to sync the refcnt
-with the life time of the channel, therefore we should
-release this reference when we destroy it.
-
-Fixes: 1f461dcdd296 ("ppp: take reference on channels netns")
-Reported-by: Matt Bennett <Matt.Bennett@alliedtelesis.co.nz>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linux-ppp@vger.kernel.org
-Cc: Guillaume Nault <g.nault@alphalink.fr>
-Cc: Cyrill Gorcunov <gorcunov@openvz.org>
-Signed-off-by: Cong Wang <xiyou.wangcong@gmail.com>
-Reviewed-by: Cyrill Gorcunov <gorcunov@openvz.org>
-Signed-off-by: David S. Miller <davem@davemloft.net>
-Signed-off-by: Willy Tarreau <w@1wt.eu>
+Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
+Signed-off-by: Hans Liljestrand <ishkamiel@gmail.com>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: David Windsor <dwindsor@gmail.com>
 ---
- drivers/net/ppp/ppp_generic.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ drivers/net/wireless/intersil/orinoco/orinoco_usb.c | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 14a8d29..ab79c0f 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -2317,8 +2317,6 @@ ppp_unregister_channel(struct ppp_channel *chan)
- 	spin_lock_bh(&pn->all_channels_lock);
- 	list_del(&pch->list);
- 	spin_unlock_bh(&pn->all_channels_lock);
--	put_net(pch->chan_net);
--	pch->chan_net = NULL;
+diff --git a/drivers/net/wireless/intersil/orinoco/orinoco_usb.c b/drivers/net/wireless/intersil/orinoco/orinoco_usb.c
+index 98e1380..95dd03e 100644
+--- a/drivers/net/wireless/intersil/orinoco/orinoco_usb.c
++++ b/drivers/net/wireless/intersil/orinoco/orinoco_usb.c
+@@ -64,6 +64,7 @@
+ #include <linux/etherdevice.h>
+ #include <linux/wireless.h>
+ #include <linux/firmware.h>
++#include <linux/refcount.h>
  
- 	pch->file.dead = 1;
- 	wake_up_interruptible(&pch->file.rwait);
-@@ -2925,6 +2923,9 @@ ppp_disconnect_channel(struct channel *pch)
-  */
- static void ppp_destroy_channel(struct channel *pch)
+ #include "mic.h"
+ #include "orinoco.h"
+@@ -268,7 +269,7 @@ enum ezusb_state {
+ 
+ struct request_context {
+ 	struct list_head list;
+-	atomic_t refcount;
++	refcount_t refcount;
+ 	struct completion done;	/* Signals that CTX is dead */
+ 	int killed;
+ 	struct urb *outurb;	/* OUT for req pkt */
+@@ -298,7 +299,7 @@ static inline u8 ezusb_reply_inc(u8 count)
+ 
+ static void ezusb_request_context_put(struct request_context *ctx)
  {
-+	put_net(pch->chan_net);
-+	pch->chan_net = NULL;
-+
- 	atomic_dec(&channel_count);
+-	if (!atomic_dec_and_test(&ctx->refcount))
++	if (!refcount_dec_and_test(&ctx->refcount))
+ 		return;
  
- 	if (!pch->file.dead) {
+ 	WARN_ON(!ctx->done.done);
+@@ -328,7 +329,7 @@ static void ezusb_request_timerfn(u_long _ctx)
+ 	} else {
+ 		ctx->state = EZUSB_CTX_RESP_TIMEOUT;
+ 		dev_dbg(&ctx->outurb->dev->dev, "couldn't unlink\n");
+-		atomic_inc(&ctx->refcount);
++		refcount_inc(&ctx->refcount);
+ 		ctx->killed = 1;
+ 		ezusb_ctx_complete(ctx);
+ 		ezusb_request_context_put(ctx);
+@@ -361,7 +362,7 @@ static struct request_context *ezusb_alloc_ctx(struct ezusb_priv *upriv,
+ 	ctx->out_rid = out_rid;
+ 	ctx->in_rid = in_rid;
+ 
+-	atomic_set(&ctx->refcount, 1);
++	refcount_set(&ctx->refcount, 1);
+ 	init_completion(&ctx->done);
+ 
+ 	setup_timer(&ctx->timer, ezusb_request_timerfn, (u_long)ctx);
+@@ -469,7 +470,7 @@ static void ezusb_req_queue_run(struct ezusb_priv *upriv)
+ 	list_move_tail(&ctx->list, &upriv->req_active);
+ 
+ 	if (ctx->state = EZUSB_CTX_QUEUED) {
+-		atomic_inc(&ctx->refcount);
++		refcount_inc(&ctx->refcount);
+ 		result = usb_submit_urb(ctx->outurb, GFP_ATOMIC);
+ 		if (result) {
+ 			ctx->state = EZUSB_CTX_REQSUBMIT_FAIL;
+@@ -507,7 +508,7 @@ static void ezusb_req_enqueue_run(struct ezusb_priv *upriv,
+ 		spin_unlock_irqrestore(&upriv->req_lock, flags);
+ 		goto done;
+ 	}
+-	atomic_inc(&ctx->refcount);
++	refcount_inc(&ctx->refcount);
+ 	list_add_tail(&ctx->list, &upriv->req_pending);
+ 	spin_unlock_irqrestore(&upriv->req_lock, flags);
+ 
+@@ -1464,7 +1465,7 @@ static inline void ezusb_delete(struct ezusb_priv *upriv)
+ 		int err;
+ 
+ 		ctx = list_entry(item, struct request_context, list);
+-		atomic_inc(&ctx->refcount);
++		refcount_inc(&ctx->refcount);
+ 
+ 		ctx->outurb->transfer_flags |= URB_ASYNC_UNLINK;
+ 		err = usb_unlink_urb(ctx->outurb);
 -- 
-2.8.0.rc2.1.gbe9624a
+2.7.4
 
