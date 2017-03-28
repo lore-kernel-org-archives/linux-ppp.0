@@ -1,7 +1,7 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Tue, 28 Mar 2017 08:56:35 +0000
-Subject: [PATCH 08/16] drivers, net, hamradio: convert sixpack.refcnt from atomic_t to refcount_t
-Message-Id: <1490691403-4016-9-git-send-email-elena.reshetova@intel.com>
+Date: Tue, 28 Mar 2017 08:56:31 +0000
+Subject: [PATCH 04/16] drivers, net, mlx4: convert mlx4_qp.refcount from atomic_t to refcount_t
+Message-Id: <1490691403-4016-5-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
 In-Reply-To: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
@@ -9,7 +9,7 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: netdev@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-rdma@vger.kernel.org, linux-hams@vger.kernel.org, linux-ppp@vger.kernel.org, linux-wireless@vger.kernel.org, ganeshgr@chelsio.com, nbd@openwrt.org, blogic@openwrt.org, matthias.bgg@gmail.com, yishaih@mellanox.com, saeedm@mellanox.com, matanb@mellanox.com, leonro@mellanox.com, ajk@comnets.uni-bremen.de, paulus@samba.org, j@w1.fi, kvalo@codeaurora.org, peterz@infradead.org, keescook@chromium.org, gregkh@linuxfoundation.org, Elena Reshetova <elena.reshetova@intel.com>, Hans Liljestrand <ishkamiel@gmail.com>, David Windsor <dwindsor@gmail.com>
+Cc: peterz@infradead.org, matanb@mellanox.com, paulus@samba.org, Elena Reshetova <elena.reshetova@intel.com>, nbd@openwrt.org, linux-rdma@vger.kernel.org, saeedm@mellanox.com, ganeshgr@chelsio.com, Hans Liljestrand <ishkamiel@gmail.com>, David Windsor <dwindsor@gmail.com>, keescook@chromium.org, j@w1.fi, ajk@comnets.uni-bremen.de, leonro@mellanox.com, matthias.bgg@gmail.com, linux-hams@vger.kernel.org, kvalo@codeaurora.org, blogic@openwrt.org, linux-arm-kernel@lists.infradead.org, linux-ppp@vger.kernel.org, yishaih@mellanox.com, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org, gregkh@linuxfoundation.org
 
 refcount_t type and corresponding API should be
 used instead of atomic_t when the variable is used as
@@ -22,67 +22,63 @@ Signed-off-by: Hans Liljestrand <ishkamiel@gmail.com>
 Signed-off-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: David Windsor <dwindsor@gmail.com>
 ---
- drivers/net/hamradio/6pack.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ drivers/net/ethernet/mellanox/mlx4/qp.c | 8 ++++----
+ include/linux/mlx4/device.h             | 2 +-
+ 2 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/hamradio/6pack.c b/drivers/net/hamradio/6pack.c
-index 922bf44..ea6c975 100644
---- a/drivers/net/hamradio/6pack.c
-+++ b/drivers/net/hamradio/6pack.c
-@@ -35,7 +35,7 @@
- #include <linux/tcp.h>
- #include <linux/semaphore.h>
- #include <linux/compat.h>
--#include <linux/atomic.h>
-+#include <linux/refcount.h>
+diff --git a/drivers/net/ethernet/mellanox/mlx4/qp.c b/drivers/net/ethernet/mellanox/mlx4/qp.c
+index 2d6abd4..6017316 100644
+--- a/drivers/net/ethernet/mellanox/mlx4/qp.c
++++ b/drivers/net/ethernet/mellanox/mlx4/qp.c
+@@ -55,7 +55,7 @@ void mlx4_qp_event(struct mlx4_dev *dev, u32 qpn, int event_type)
  
- #define SIXPACK_VERSION    "Revision: 0.3.0"
+ 	qp = __mlx4_qp_lookup(dev, qpn);
+ 	if (qp)
+-		atomic_inc(&qp->refcount);
++		refcount_inc(&qp->refcount);
  
-@@ -120,7 +120,7 @@ struct sixpack {
+ 	spin_unlock(&qp_table->lock);
  
- 	struct timer_list	tx_t;
- 	struct timer_list	resync_t;
--	atomic_t		refcnt;
-+	refcount_t		refcnt;
- 	struct semaphore	dead_sem;
- 	spinlock_t		lock;
- };
-@@ -381,7 +381,7 @@ static struct sixpack *sp_get(struct tty_struct *tty)
- 	read_lock(&disc_data_lock);
- 	sp = tty->disc_data;
- 	if (sp)
--		atomic_inc(&sp->refcnt);
-+		refcount_inc(&sp->refcnt);
- 	read_unlock(&disc_data_lock);
+@@ -66,7 +66,7 @@ void mlx4_qp_event(struct mlx4_dev *dev, u32 qpn, int event_type)
  
- 	return sp;
-@@ -389,7 +389,7 @@ static struct sixpack *sp_get(struct tty_struct *tty)
+ 	qp->event(qp, event_type);
  
- static void sp_put(struct sixpack *sp)
- {
--	if (atomic_dec_and_test(&sp->refcnt))
-+	if (refcount_dec_and_test(&sp->refcnt))
- 		up(&sp->dead_sem);
+-	if (atomic_dec_and_test(&qp->refcount))
++	if (refcount_dec_and_test(&qp->refcount))
+ 		complete(&qp->free);
  }
  
-@@ -580,7 +580,7 @@ static int sixpack_open(struct tty_struct *tty)
- 	sp->dev = dev;
+@@ -406,7 +406,7 @@ int mlx4_qp_alloc(struct mlx4_dev *dev, int qpn, struct mlx4_qp *qp, gfp_t gfp)
+ 	if (err)
+ 		goto err_icm;
  
- 	spin_lock_init(&sp->lock);
--	atomic_set(&sp->refcnt, 1);
-+	refcount_set(&sp->refcnt, 1);
- 	sema_init(&sp->dead_sem, 0);
+-	atomic_set(&qp->refcount, 1);
++	refcount_set(&qp->refcount, 1);
+ 	init_completion(&qp->free);
  
- 	/* !!! length of the buffers. MTU is IP MTU, not PACLEN!  */
-@@ -676,7 +676,7 @@ static void sixpack_close(struct tty_struct *tty)
- 	 * We have now ensured that nobody can start using ap from now on, but
- 	 * we have to wait for all existing users to finish.
- 	 */
--	if (!atomic_dec_and_test(&sp->refcnt))
-+	if (!refcount_dec_and_test(&sp->refcnt))
- 		down(&sp->dead_sem);
+ 	return 0;
+@@ -500,7 +500,7 @@ EXPORT_SYMBOL_GPL(mlx4_qp_remove);
  
- 	/* We must stop the queue to avoid potentially scribbling
+ void mlx4_qp_free(struct mlx4_dev *dev, struct mlx4_qp *qp)
+ {
+-	if (atomic_dec_and_test(&qp->refcount))
++	if (refcount_dec_and_test(&qp->refcount))
+ 		complete(&qp->free);
+ 	wait_for_completion(&qp->free);
+ 
+diff --git a/include/linux/mlx4/device.h b/include/linux/mlx4/device.h
+index 5fea001..756ca22 100644
+--- a/include/linux/mlx4/device.h
++++ b/include/linux/mlx4/device.h
+@@ -754,7 +754,7 @@ struct mlx4_qp {
+ 
+ 	int			qpn;
+ 
+-	atomic_t		refcount;
++	refcount_t		refcount;
+ 	struct completion	free;
+ };
+ 
 -- 
 2.7.4
 
