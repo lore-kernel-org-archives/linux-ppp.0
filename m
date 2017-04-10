@@ -1,46 +1,143 @@
-From: Kalle Valo <kvalo@codeaurora.org>
-Date: Wed, 05 Apr 2017 10:33:12 +0000
-Subject: Re: [PATCH 16/16] drivers, net, intersil: convert request_context.refcount from atomic_t to refcount
-Message-Id: <87k26zi1p3.fsf@kamboji.qca.qualcomm.com>
+From: Thomas Glanzmann <thomas@glanzmann.de>
+Date: Mon, 10 Apr 2017 18:38:51 +0000
+Subject: pppoe encapsulated udp packets which appear on ethernet disappear between pppoe and ppp0 after pppoe
+Message-Id: <20170410183851.GA4442@glanzmann.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1490691403-4016-1-git-send-email-elena.reshetova@intel.com>
-        <1490691403-4016-17-git-send-email-elena.reshetova@intel.com>
-        <87zifxn2gb.fsf@kamboji.qca.qualcomm.com>
-        <2236FBA76BA1254E88B949DDB74E612B41C8741B@IRSMSX102.ger.corp.intel.com>
-In-Reply-To: <2236FBA76BA1254E88B949DDB74E612B41C8741B@IRSMSX102.ger.corp.intel.com>
-        (Elena Reshetova's message of "Tue, 4 Apr 2017 10:07:55 +0000")
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: "Reshetova, Elena" <elena.reshetova@intel.com>
-Cc: "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-rdma@vger.kernel.org" <linux-rdma@vger.kernel.org>, "linux-hams@vger.kernel.org" <linux-hams@vger.kernel.org>, "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "linux-wireless@vger.kernel.org" <linux-wireless@vger.kernel.org>, "ganeshgr@chelsio.com" <ganeshgr@chelsio.com>, "nbd@openwrt.org" <nbd@openwrt.org>, "blogic@openwrt.org" <blogic@openwrt.org>, "matthias.bgg@gmail.com" <matthias.bgg@gmail.com>, "yishaih@mellanox.com" <yishaih@mellanox.com>, "saeedm@mellanox.com" <saeedm@mellanox.com>, "matanb@mellanox.com" <matanb@mellanox.com>, leonro@me
+To: linux-ppp@vger.kernel.org
 
-"Reshetova, Elena" <elena.reshetova@intel.com> writes:
+Hello,
+I have a openvpn connection using port 5000 udp. One openvpn endpoint
+uses pppoe, the otherone is connected using ethernet. After a reboot the
+openvpn works. However if the pppoe session is manually or due to 24
+hour disconnect terminated, the openvpn connection stops working.
+Strange is that I can see the inbound udp packets on the ethernet device
+inside the pppoe session, but I can no longer see them on ppp0. When I
+reboot the system, it continues working till the next hangup.
 
->> Elena Reshetova <elena.reshetova@intel.com> writes:
->> 
->> > refcount_t type and corresponding API should be
->> > used instead of atomic_t when the variable is used as
->> > a reference counter. This allows to avoid accidental
->> > refcounter overflows that might lead to use-after-free
->> > situations.
->> >
->> > Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
->> > Signed-off-by: Hans Liljestrand <ishkamiel@gmail.com>
->> > Signed-off-by: Kees Cook <keescook@chromium.org>
->> > Signed-off-by: David Windsor <dwindsor@gmail.com>
->> > ---
->> >  drivers/net/wireless/intersil/orinoco/orinoco_usb.c | 15 ++++++++-------
->> >  1 file changed, 8 insertions(+), 7 deletions(-)
->> 
->> The prefix should be "orinoco_usb:", I'll fix that.
->
-> Thanks for both! Will you take the patches in?
+        I tried so far the following:
 
-You mean patches 15 and 16? I didn't even look rest of the patches.
+                - I'm running debian stable, upgraded the kernel to:
+                  '4.9.0-0.bpo.2-amd64', no change
+                - I upgraded pppd to 'ppp_2.4.7-1+4_amd64.deb', no
+                  change
+                - I tried to flush the conntrack table, no change
+                - I tried to change the udp port, no change.
+                - I tried to enable debug and kdebug 4 in ppp without any
+                  additional logging.
+                - Sniffed the pppoe traffic and verified the ipv4 and udp header
+                  checksums using wireshark, they're correct.
+                - net.ipv4.conf.ppp0.log_martians = 1 and looked in dmesg, nothing.
 
-But not sure yet because Dave doesn't seem to like the interface and I
-want to follow the discussion first.
+Sniffing on 217.92.232.50 eth1 (connection to the dsl modem) I can see packets
+orginating from 217.92.232.50 as well as from 88.198.215.20. [1]
 
--- 
-Kalle Valo
+infra) [~/.www/tmp/ppp] tcpdump -r eth1.pcap -s 0 -n | grep UDP | grep 5000
+reading from file eth1.pcap, link-type EN10MB (Ethernet)
+20:30:53.439370 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 68
+20:30:53.439391 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:53.439406 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:54.438912 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:55.438919 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:56.438919 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:57.438945 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:58.438914 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:59.438910 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:00.438912 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:01.438911 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:02.438945 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:03.438935 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:03.438954 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 68
+--
+20:31:03.680762 PPPoE  [ses 0xb5e0] IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+--
+20:31:04.438845 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:05.438913 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:06.438917 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:07.438922 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:08.438914 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:09.438925 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:10.438914 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:11.438909 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:12.438911 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:13.438938 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:13.438955 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 68
+--
+20:31:13.456015 PPPoE  [ses 0xb5e0] IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+20:31:13.456521 PPPoE  [ses 0xb5e0] IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+--
+20:31:14.438915 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:15.438916 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:16.438934 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:17.438946 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:18.438913 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:19.438913 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:20.438883 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:21.438913 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:22.438912 PPPoE  [ses 0xb7b3] IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+--
+20:31:23.145767 PPPoE  [ses 0xb5e0] IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+20:31:23.146251 PPPoE  [ses 0xb5e0] IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+
+Sniffing on 217.92.232.50 at the same time on ppp0, I can only see packets
+originating 217.92.232.50, but not from 88.198.215.20: [2]
+
+(infra) [~/.www/tmp/ppp] tcpdump -r ppp0.pcap -s 0 -n
+reading from file ppp0.pcap, link-type LINUX_SLL (Linux cooked)
+20:30:54.438907 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:55.438914 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:56.438914 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:57.438939 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:58.438908 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:30:59.438905 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:00.438907 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:01.438906 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:02.438938 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:03.438930 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:03.438952 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 68
+20:31:04.438841 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:05.438908 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:06.438912 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:07.438917 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:08.438909 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:09.438920 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:10.438909 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:11.438904 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:12.438906 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:13.438933 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:13.438953 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 68
+20:31:14.438910 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:15.438911 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:16.438929 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:17.438941 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:18.438908 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:19.438909 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:20.438878 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+20:31:21.438908 IP 217.92.232.50.5000 > 88.198.215.20.5000: UDP, length 148
+
+Sniffing at the same time on 88.198.215.20, I can see the packets going out,
+but no packets going in. All other traffic (tcp; icmp) works like a charm: [3]
+
+(infra) [~/.www/tmp/ppp] tcpdump -r bond0.997.pcap -s 0 -n
+reading from file bond0.997.pcap, link-type EN10MB (Ethernet)
+20:30:51.432023 IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+20:30:51.432053 IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+20:31:03.653245 IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+20:31:13.428410 IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+20:31:13.428443 IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+20:31:23.118177 IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+20:31:23.118204 IP 88.198.215.20.5000 > 217.92.232.50.5000: UDP, length 68
+
+I'm grateful for any pointers how to debug this problem further or for ideas
+which can be used to resolve the issue. Currently I switched to tcp, which is
+working perfectly fine. All other traffic appears to work fine over the link
+(http, https, dns, ssh, pop3s, imaps, ...).
+
+[1] https://thomas.glanzmann.de/tmp/ppp/eth1.pcap (6 MB)
+[2] https://thomas.glanzmann.de/tmp/ppp/ppp0.pcap
+[3] https://thomas.glanzmann.de/tmp/ppp/bond0.997.pcap
+
+Cheers,
+        Thomas
