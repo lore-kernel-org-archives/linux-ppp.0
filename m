@@ -1,7 +1,7 @@
-From: Thomas Glanzmann <thomas@glanzmann.de>
-Date: Tue, 11 Apr 2017 04:34:32 +0000
+From: Michael Richardson <mcr@sandelman.ca>
+Date: Tue, 11 Apr 2017 13:36:13 +0000
 Subject: Re: pppoe encapsulated udp packets which appear on ethernet disappear between pppoe and ppp0 after p
-Message-Id: <20170411043432.GA20678@glanzmann.de>
+Message-Id: <24667.1491917773@obiwan.sandelman.ca>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20170410183851.GA4442@glanzmann.de>
 In-Reply-To: <20170410183851.GA4442@glanzmann.de>
@@ -10,32 +10,16 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-Hello Michael,
+Thomas Glanzmann <thomas@glanzmann.de> wrote:
+    > The real interesting question is, why do perfectly healthy ip/udp
+    > packets from within the pppoe session drop before reaching ppp0? Why
+    > does it only happen after one hangup?
 
-* Michael Richardson <mcr@sandelman.ca> [2017-04-10 22:02]:
+It sounds like they aren't part of the correct PPPoE session to me.
+As if the other end is not killing it's PPP session when the new one forms.
 
-> Are you using openvpn with a 0.0.0.0/0 route?
+--
+]               Never tell me the odds!                 | ipv6 mesh networks [
+]   Michael Richardson, Sandelman Software Works        | network architect  [
+]     mcr@sandelman.ca  http://www.sandelman.ca/        |   ruby on rails    [
 
-no, I don't.
-
-> Can you post your routing table when it is working, and when it is
-> not?
-
-The routing table is the same:
-
-(generate-03) [~] ip r s
-default dev ppp0  scope link
-172.17.0.0/24 via 172.17.0.254 dev falkenstein
-172.17.0.254 dev falkenstein  proto kernel  scope link  src 192.168.168.1
-172.19.0.0/24 via 172.19.0.254 dev eclogicnew
-172.19.0.254 dev eclogicnew  proto kernel  scope link  src 192.168.168.1
-172.20.0.0/24 via 172.19.0.254 dev eclogicnew
-192.168.168.0/24 dev eth0  proto kernel  scope link  src 192.168.168.1
-217.5.98.12 dev ppp0  proto kernel  scope link  src 217.92.232.50
-
-The real interesting question is, why do perfectly healthy ip/udp packets from
-within the pppoe session drop before reaching ppp0? Why does it only happen
-after one hangup?
-
-Cheers,
-        Thomas
