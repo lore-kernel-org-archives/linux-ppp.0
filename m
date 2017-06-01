@@ -1,7 +1,7 @@
-From: Guillaume Nault <g.nault@alphalink.fr>
-Date: Thu, 01 Jun 2017 09:07:55 +0000
-Subject: Re: [PATCH] driver: ppp: Remove unnecessary bh disable in xmit path
-Message-Id: <20170601090755.cxmwqt6nwbumev5w@alphalink.fr>
+From: "Gao Feng" <gfree.wind@vip.163.com>
+Date: Thu, 01 Jun 2017 09:48:45 +0000
+Subject: Re:Re: [PATCH] driver: ppp: Remove unnecessary bh disable in xmit path
+Message-Id: <28d598b9.9c5d.15c630eafb0.Coremail.gfree.wind@vip.163.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1496281758-27671-1-git-send-email-gfree.wind@vip.163.com>
 In-Reply-To: <1496281758-27671-1-git-send-email-gfree.wind@vip.163.com>
@@ -10,19 +10,18 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Thu, Jun 01, 2017 at 09:49:18AM +0800, gfree.wind@vip.163.com wrote:
-> From: Gao Feng <gfree.wind@vip.163.com>
-> 
-> Since the commit 55454a565836 ("ppp: avoid dealock on recursive xmit"),
-> the PPP xmit path is protected by wrapper functions which disable the
-> bh already. So it is unnecessary to disable the bh again in the real
-> xmit path.
-> 
-Looks good, thanks!
-But it seems you forgot to Cc. netdev@vger.kernel.org.
-Please resubmit there.
-
-You can also fix the subject to make clear this patch is for net-next.
-Also, the "driver:" prefix isn't necessary.
-Something like
-[PATCH net-next] ppp: remove unnecessary bh disable in xmit path
+QXQgMjAxNy0wNi0wMSAxNzowNzo1NSwgIkd1aWxsYXVtZSBOYXVsdCIgPGcubmF1bHRAYWxwaGFs
+aW5rLmZyPiB3cm90ZToKPk9uIFRodSwgSnVuIDAxLCAyMDE3IGF0IDA5OjQ5OjE4QU0gKzA4MDAs
+IGdmcmVlLndpbmRAdmlwLjE2My5jb20gd3JvdGU6Cj4+IEZyb206IEdhbyBGZW5nIDxnZnJlZS53
+aW5kQHZpcC4xNjMuY29tPgo+PiAKPj4gU2luY2UgdGhlIGNvbW1pdCA1NTQ1NGE1NjU4MzYgKCJw
+cHA6IGF2b2lkIGRlYWxvY2sgb24gcmVjdXJzaXZlIHhtaXQiKSwKPj4gdGhlIFBQUCB4bWl0IHBh
+dGggaXMgcHJvdGVjdGVkIGJ5IHdyYXBwZXIgZnVuY3Rpb25zIHdoaWNoIGRpc2FibGUgdGhlCj4+
+IGJoIGFscmVhZHkuIFNvIGl0IGlzIHVubmVjZXNzYXJ5IHRvIGRpc2FibGUgdGhlIGJoIGFnYWlu
+IGluIHRoZSByZWFsCj4+IHhtaXQgcGF0aC4KPj4gCj5Mb29rcyBnb29kLCB0aGFua3MhCj5CdXQg
+aXQgc2VlbXMgeW91IGZvcmdvdCB0byBDYy4gbmV0ZGV2QHZnZXIua2VybmVsLm9yZy4KPlBsZWFz
+ZSByZXN1Ym1pdCB0aGVyZS4KCk9LLCBJIHJlc3VibWl0IGl0IGFnYWluLgoKPgo+WW91IGNhbiBh
+bHNvIGZpeCB0aGUgc3ViamVjdCB0byBtYWtlIGNsZWFyIHRoaXMgcGF0Y2ggaXMgZm9yIG5ldC1u
+ZXh0Lgo+QWxzbywgdGhlICJkcml2ZXI6IiBwcmVmaXggaXNuJ3QgbmVjZXNzYXJ5Lgo+U29tZXRo
+aW5nIGxpa2UKPltQQVRDSCBuZXQtbmV4dF0gcHBwOiByZW1vdmUgdW5uZWNlc3NhcnkgYmggZGlz
+YWJsZSBpbiB4bWl0IHBhdGgKCk5vIHByb2JsZW0sIEkgd291bGQgZm9sbG93IHlvdS4KClJlZ2Fy
+ZHMKRmVuZwo
