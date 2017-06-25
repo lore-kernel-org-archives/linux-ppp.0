@@ -1,21 +1,52 @@
-From: David Ahern <dsahern@gmail.com>
-Date: Mon, 26 Jun 2017 04:04:04 +0000
-Subject: Re: [PATCH net-next v2 3/5] net: add netlink_ext_ack argument to rtnl_link_ops.validate
-Message-Id: <63f019af-7ec6-490e-086a-3e4802a22e97@gmail.com>
+From: Matthias Schiffer <mschiffer@universe-factory.net>
+Date: Sun, 25 Jun 2017 21:56:03 +0000
+Subject: [PATCH net-next v2 5/5] net: add netlink_ext_ack argument to rtnl_link_ops.slave_validate
+Message-Id: <ae78184571760c3430159ea5a654e3d08ba2479d.1498425679.git.mschiffer@universe-factory.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <cover.1498425679.git.mschiffer@universe-factory.net>
- <51f1b1e0b81216ce08a2c846c7eac6fb58e9d667.1498425679.git.mschiffer@universe-factory.net>
-In-Reply-To: <51f1b1e0b81216ce08a2c846c7eac6fb58e9d667.1498425679.git.mschiffer-Nyw9WiXk/RKXhJHkyCwd5uTW4wlIGRCZ@public.gmane.org>
+In-Reply-To: <cover.1498425679.git.mschiffer@universe-factory.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Matthias Schiffer <mschiffer-Nyw9WiXk/RKXhJHkyCwd5uTW4wlIGRCZ@public.gmane.org>, dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, j.vosburgh-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, vfalico-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, andy-QlMahl40kYEqcZcGjlUOXw@public.gmane.org, wg-5Yr1BZd7O62+XT7JhA+gdA@public.gmane.org, mkl-bIcnvbaLZ9MEGnE8C9+IrQ@public.gmane.org, pablo-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, laforge-TgoAw6mPHtdg9hUCZPvPmw@public.gmane.org, paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, dsa-qUQiAmfTcIp+XZJcv9eMoEEOCMrvLtNR@public.gmane.org, shm-qUQiAmfTcIp+XZJcv9eMoEEOCMrvLtNR@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, stephen-OTpzqLSitTUnbdJkjeBofR2eb7JE58TQ@public.gmane.org, arvid.brodin-SVm98a2vdck@public.gmane.org, alex.aring-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, stefan-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org, jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org, yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org, kaber-dcUjhNyLwpNeoWH0uzbU5w@public.gmane.org, steffen.klassert-opNxpl+3fjRBDgjK7y7TUQ@public.gmane.org, herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org, johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org
-Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-can-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ppp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-wpan-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: dledford@redhat.com, sean.hefty@intel.com, hal.rosenstock@gmail.com, j.vosburgh@gmail.com, vfalico@gmail.com, andy@greyhouse.net, wg@grandegger.com, mkl@pengutronix.de, pablo@netfilter.org, laforge@gnumonks.org, paulus@samba.org, jiri@resnulli.us, dsa@cumulusnetworks.com, shm@cumulusnetworks.com, davem@davemloft.net, stephen@networkplumber.org, arvid.brodin@alten.se, alex.aring@gmail.com, stefan@osg.samsung.com, kuznet@ms2.inr.ac.ru, jmorris@namei.org, yoshfuji@linux-ipv6.org, kaber@trash.net, steffen.klassert@secunet.com, herbert@gondor.apana.org.au, johannes@sipsolutions.net
+Cc: linux-rdma@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-can@vger.kernel.org, linux-ppp@vger.kernel.org, linux-wpan@vger.kernel.org
 
-On 6/25/17 3:56 PM, Matthias Schiffer wrote:
-> Add support for extended error reporting.
-> 
-> Signed-off-by: Matthias Schiffer <mschiffer@universe-factory.net>
-> ---
+Add support for extended error reporting.
 
-Acked-by: David Ahern <dsahern@gmail.com>
+Signed-off-by: Matthias Schiffer <mschiffer@universe-factory.net>
+---
+ include/net/rtnetlink.h | 3 ++-
+ net/core/rtnetlink.c    | 3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/include/net/rtnetlink.h b/include/net/rtnetlink.h
+index baf99e173dca..abe6b733d473 100644
+--- a/include/net/rtnetlink.h
++++ b/include/net/rtnetlink.h
+@@ -91,7 +91,8 @@ struct rtnl_link_ops {
+ 	int			slave_maxtype;
+ 	const struct nla_policy	*slave_policy;
+ 	int			(*slave_validate)(struct nlattr *tb[],
+-						  struct nlattr *data[]);
++						  struct nlattr *data[],
++						  struct netlink_ext_ack *extack);
+ 	int			(*slave_changelink)(struct net_device *dev,
+ 						    struct net_device *slave_dev,
+ 						    struct nlattr *tb[],
+diff --git a/net/core/rtnetlink.c b/net/core/rtnetlink.c
+index 658a48959fc4..ed51de525a88 100644
+--- a/net/core/rtnetlink.c
++++ b/net/core/rtnetlink.c
+@@ -2601,7 +2601,8 @@ static int rtnl_newlink(struct sk_buff *skb, struct nlmsghdr *nlh,
+ 				slave_data = slave_attr;
+ 			}
+ 			if (m_ops->slave_validate) {
+-				err = m_ops->slave_validate(tb, slave_data);
++				err = m_ops->slave_validate(tb, slave_data,
++							    extack);
+ 				if (err < 0)
+ 					return err;
+ 			}
+-- 
+2.13.1
+
