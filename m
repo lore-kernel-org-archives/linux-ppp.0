@@ -1,77 +1,135 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 18 Jul 2017 12:07:02 +0000
-Subject: Re: Session 152 terminated -- received PADT from peer
-Message-Id: <0c594ed2-12cf-5783-b8dd-d133ca2f4a33@workingcode.com>
+From: gfree.wind@vip.163.com
+Date: Mon, 17 Jul 2017 10:34:42 +0000
+Subject: [PATCH] ppp: Fix false xmit recursion detect with two ppp devices
+Message-Id: <1500287682-18872-1-git-send-email-gfree.wind@vip.163.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <CAGc3wVBAcgaGFtzDVTksaLgs0CX=mirK7osVJRNM2_JjtNYM6w@mail.gmail.com>
- <CAGc3wVD85YJhKgMq-4R3T=oQLy8WM9ti-tbP6z+ApyZBw8mTdQ@mail.gmail.com>
-In-Reply-To: <CAGc3wVD85YJhKgMq-4R3T=oQLy8WM9ti-tbP6z+ApyZBw8mTdQ@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Sekar D <sekar.linux@gmail.com>, linux-ppp@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
+To: paulus@samba.org, g.nault@alphalink.fr, davem@davemloft.net, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: Gao Feng <gfree.wind@vip.163.com>
 
-On 07/18/17 07:42, Sekar D wrote:
-> Please let me know if someone can help here.
+From: Gao Feng <gfree.wind@vip.163.com>
 
-Probably not, but I'll give a try.
+The global percpu variable ppp_xmit_recursion is used to detect the ppp
+xmit recursion to avoid the deadlock, which is caused by one CPU tries to
+lock the xmit lock twice. But it would report false recursion when one CPU
+wants to send the skb from two different PPP devices, like one L2TP on the
+PPPoE. It is a normal case actually.
 
->> I am getting the following error messages through PPP connection
->> without any manual intervention.
->>
->> Session 152 terminated -- received PADT from peer
+Now use one percpu member of struct ppp instead of the gloable variable to
+detect the xmit recursion of one ppp device.
 
-PADT is the PPPoE termination message.  It means that your peer has
-decided to close the session.  It could do so for any of a wide number
-of reasons, and this doesn't seem to indicate any details.  For example,
-your peer:
+Fixes: 55454a565836 ("ppp: avoid dealock on recursive xmit")
+Signed-off-by: Gao Feng <gfree.wind@vip.163.com>
+Signed-off-by: Liu Jianying <jianying.liu@ikuai8.com>
+---
+ drivers/net/ppp/ppp_generic.c | 30 +++++++++++++++++++++---------
+ 1 file changed, 21 insertions(+), 9 deletions(-)
 
-  - may be rebooting or administratively disabled
-  - may have a session time limit that's enforced by shutdown
-  - may have a bug that causes the session to crash
-  - may have detected some configuration problem
-  - may have some other internal limitation
-
-It's really not clear without getting information from the peer.  You
-might possibly try getting a tcpdump (or wireshark) trace on the
-Ethernet interface over which PPPoE is being run, and that might help
-reveal the events surrounding the connection closure.
-
->> PADT: Generic-Error: RP-PPPoE: Child pppd process terminated
->> Sent PADT
->> Modem hangup
->> Exit
->> Connection terminated.
->> ADSL connection lost; attempting re-connection
-
-Looks like all is working as expected following a disconnect by the peer.
-
->> Please let me know if any configuration needs to be added.
->>
->> /etc/ppp/pppoe-server-options
->> # PPP options for the PPPoE server
->> # LIC: GPL
->> require-chap
->> login
->> lcp-echo-interval 10
->> lcp-echo-failure 2
-
-Are you really running a PPPoE server?  I had expected that you were
-running a client.
-
-What exactly are you doing with PPPoE?  In general, if you're trying to
-connect to your ISP, then at least "require-chap" and "login" are wholly
-inappropriate.  They demand that your peer identify itself to you --
-which ISPs almost never do -- and weirdly ask to use both CHAP and local
-authentication, a combination that's _fundamentally_ impossible because
-CHAP doesn't reveal the passphrase on the wire.  Whoever set up those
-options was probably pretty confused.
-
-If you can do so, I suggest running with "debug" and "updetach" options,
-and forwarding the complete trace output to the list.  If there's a
-problem with pppd configuration (as opposed to PPPoE or some other
-issue), that should help reveal what's going on at the PPP level.
-
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 1302883..bd43039 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -120,6 +120,7 @@ struct ppp {
+ 	int		n_channels;	/* how many channels are attached 54 */
+ 	spinlock_t	rlock;		/* lock for receive side 58 */
+ 	spinlock_t	wlock;		/* lock for transmit side 5c */
++	int		*xmit_recursion __percpu; /* xmit recursion detect */
+ 	int		mru;		/* max receive unit 60 */
+ 	unsigned int	flags;		/* control bits 64 */
+ 	unsigned int	xstate;		/* transmit state bits 68 */
+@@ -1025,6 +1026,7 @@ static int ppp_dev_configure(struct net *src_net, struct net_device *dev,
+ 	struct ppp *ppp = netdev_priv(dev);
+ 	int indx;
+ 	int err;
++	int cpu;
+ 
+ 	ppp->dev = dev;
+ 	ppp->ppp_net = src_net;
+@@ -1039,6 +1041,15 @@ static int ppp_dev_configure(struct net *src_net, struct net_device *dev,
+ 	INIT_LIST_HEAD(&ppp->channels);
+ 	spin_lock_init(&ppp->rlock);
+ 	spin_lock_init(&ppp->wlock);
++
++	ppp->xmit_recursion = alloc_percpu(int);
++	if (!ppp->xmit_recursion) {
++		err = -ENOMEM;
++		goto err1;
++	}
++	for_each_possible_cpu(cpu)
++		(*per_cpu_ptr(ppp->xmit_recursion, cpu)) = 0;
++
+ #ifdef CONFIG_PPP_MULTILINK
+ 	ppp->minseq = -1;
+ 	skb_queue_head_init(&ppp->mrq);
+@@ -1050,11 +1061,15 @@ static int ppp_dev_configure(struct net *src_net, struct net_device *dev,
+ 
+ 	err = ppp_unit_register(ppp, conf->unit, conf->ifname_is_set);
+ 	if (err < 0)
+-		return err;
++		goto err2;
+ 
+ 	conf->file->private_data = &ppp->file;
+ 
+ 	return 0;
++err2:
++	free_percpu(ppp->xmit_recursion);
++err1:
++	return err;
+ }
+ 
+ static const struct nla_policy ppp_nl_policy[IFLA_PPP_MAX + 1] = {
+@@ -1400,18 +1415,16 @@ static void __ppp_xmit_process(struct ppp *ppp)
+ 	ppp_xmit_unlock(ppp);
+ }
+ 
+-static DEFINE_PER_CPU(int, ppp_xmit_recursion);
+-
+ static void ppp_xmit_process(struct ppp *ppp)
+ {
+ 	local_bh_disable();
+ 
+-	if (unlikely(__this_cpu_read(ppp_xmit_recursion)))
++	if (unlikely(*this_cpu_ptr(ppp->xmit_recursion)))
+ 		goto err;
+ 
+-	__this_cpu_inc(ppp_xmit_recursion);
++	(*this_cpu_ptr(ppp->xmit_recursion))++;
+ 	__ppp_xmit_process(ppp);
+-	__this_cpu_dec(ppp_xmit_recursion);
++	(*this_cpu_ptr(ppp->xmit_recursion))--;
+ 
+ 	local_bh_enable();
+ 
+@@ -1905,7 +1918,7 @@ static void __ppp_channel_push(struct channel *pch)
+ 		read_lock(&pch->upl);
+ 		ppp = pch->ppp;
+ 		if (ppp)
+-			__ppp_xmit_process(ppp);
++			ppp_xmit_process(ppp);
+ 		read_unlock(&pch->upl);
+ 	}
+ }
+@@ -1914,9 +1927,7 @@ static void ppp_channel_push(struct channel *pch)
+ {
+ 	local_bh_disable();
+ 
+-	__this_cpu_inc(ppp_xmit_recursion);
+ 	__ppp_channel_push(pch);
+-	__this_cpu_dec(ppp_xmit_recursion);
+ 
+ 	local_bh_enable();
+ }
+@@ -3057,6 +3068,7 @@ static void ppp_destroy_interface(struct ppp *ppp)
+ #endif /* CONFIG_PPP_FILTER */
+ 
+ 	kfree_skb(ppp->xmit_pending);
++	free_percpu(ppp->xmit_recursion);
+ 
+ 	free_netdev(ppp->dev);
+ }
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+1.9.1
+
+
