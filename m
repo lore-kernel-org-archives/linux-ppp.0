@@ -1,27 +1,34 @@
-From: "Gao Feng" <gfree.wind@vip.163.com>
-Date: Thu, 01 Jun 2017 09:48:45 +0000
-Subject: Re:Re: [PATCH] driver: ppp: Remove unnecessary bh disable in xmit path
-Message-Id: <28d598b9.9c5d.15c630eafb0.Coremail.gfree.wind@vip.163.com>
+From: Sekar D <sekar.linux@gmail.com>
+Date: Mon, 17 Jul 2017 06:49:10 +0000
+Subject: Session 152 terminated -- received PADT from peer
+Message-Id: <CAGc3wVBAcgaGFtzDVTksaLgs0CX=mirK7osVJRNM2_JjtNYM6w@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1496281758-27671-1-git-send-email-gfree.wind@vip.163.com>
-In-Reply-To: <1496281758-27671-1-git-send-email-gfree.wind@vip.163.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-can@vger.kernel.org
 
-QXQgMjAxNy0wNi0wMSAxNzowNzo1NSwgIkd1aWxsYXVtZSBOYXVsdCIgPGcubmF1bHRAYWxwaGFs
-aW5rLmZyPiB3cm90ZToKPk9uIFRodSwgSnVuIDAxLCAyMDE3IGF0IDA5OjQ5OjE4QU0gKzA4MDAs
-IGdmcmVlLndpbmRAdmlwLjE2My5jb20gd3JvdGU6Cj4+IEZyb206IEdhbyBGZW5nIDxnZnJlZS53
-aW5kQHZpcC4xNjMuY29tPgo+PiAKPj4gU2luY2UgdGhlIGNvbW1pdCA1NTQ1NGE1NjU4MzYgKCJw
-cHA6IGF2b2lkIGRlYWxvY2sgb24gcmVjdXJzaXZlIHhtaXQiKSwKPj4gdGhlIFBQUCB4bWl0IHBh
-dGggaXMgcHJvdGVjdGVkIGJ5IHdyYXBwZXIgZnVuY3Rpb25zIHdoaWNoIGRpc2FibGUgdGhlCj4+
-IGJoIGFscmVhZHkuIFNvIGl0IGlzIHVubmVjZXNzYXJ5IHRvIGRpc2FibGUgdGhlIGJoIGFnYWlu
-IGluIHRoZSByZWFsCj4+IHhtaXQgcGF0aC4KPj4gCj5Mb29rcyBnb29kLCB0aGFua3MhCj5CdXQg
-aXQgc2VlbXMgeW91IGZvcmdvdCB0byBDYy4gbmV0ZGV2QHZnZXIua2VybmVsLm9yZy4KPlBsZWFz
-ZSByZXN1Ym1pdCB0aGVyZS4KCk9LLCBJIHJlc3VibWl0IGl0IGFnYWluLgoKPgo+WW91IGNhbiBh
-bHNvIGZpeCB0aGUgc3ViamVjdCB0byBtYWtlIGNsZWFyIHRoaXMgcGF0Y2ggaXMgZm9yIG5ldC1u
-ZXh0Lgo+QWxzbywgdGhlICJkcml2ZXI6IiBwcmVmaXggaXNuJ3QgbmVjZXNzYXJ5Lgo+U29tZXRo
-aW5nIGxpa2UKPltQQVRDSCBuZXQtbmV4dF0gcHBwOiByZW1vdmUgdW5uZWNlc3NhcnkgYmggZGlz
-YWJsZSBpbiB4bWl0IHBhdGgKCk5vIHByb2JsZW0sIEkgd291bGQgZm9sbG93IHlvdS4KClJlZ2Fy
-ZHMKRmVuZwo
+Hello All,
+
+I am getting the following error messages through PPP connection
+without any manual intervention.
+
+Session 152 terminated -- received PADT from peer
+PADT: Generic-Error: RP-PPPoE: Child pppd process terminated
+Sent PADT
+Modem hangup
+Exit
+Connection terminated.
+ADSL connection lost; attempting re-connection
+
+
+Please let me know if any configuration needs to be added.
+
+/etc/ppp/pppoe-server-options
+# PPP options for the PPPoE server
+# LIC: GPL
+require-chap
+login
+lcp-echo-interval 10
+lcp-echo-failure 2
