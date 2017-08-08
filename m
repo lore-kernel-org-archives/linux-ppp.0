@@ -1,62 +1,53 @@
-From: "Gao Feng" <gfree.wind@vip.163.com>
-Date: Tue, 08 Aug 2017 13:16:33 +0000
-Subject: Re:[PATCH net] ppp: fix xmit recursion detection on ppp channels
-Message-Id: <5a62fd3f.e0c3.15dc1fd5f1b.Coremail.gfree.wind@vip.163.com>
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Tue, 08 Aug 2017 13:58:27 +0000
+Subject: Re: [PATCH net] ppp: fix xmit recursion detection on ppp channels
+Message-Id: <20170808135827.oszy6ikqi2gw5cs7@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <e45ed6ea02e2665ec8b868279ad9afcb9b34fc81.1502185216.git.g.nault@alphalink.fr>
-In-Reply-To: <e45ed6ea02e2665ec8b868279ad9afcb9b34fc81.1502185216.git.g.nault@alphalink.fr>
+ <5a62fd3f.e0c3.15dc1fd5f1b.Coremail.gfree.wind@vip.163.com>
+In-Reply-To: <5a62fd3f.e0c3.15dc1fd5f1b.Coremail.gfree.wind@vip.163.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Guillaume Nault <g.nault@alphalink.fr>
+To: Gao Feng <gfree.wind@vip.163.com>
 Cc: netdev@vger.kernel.org, Liu Jianying <jianying.liu@ikuai8.com>, David Miller <davem@davemloft.net>, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
 
-QXQgMjAxNy0wOC0wOCAxNzo0MzoyNCwgIkd1aWxsYXVtZSBOYXVsdCIgPGcubmF1bHRAYWxwaGFs
-aW5rLmZyPiB3cm90ZToKPkNvbW1pdCBlNWRhZGM2NWY5ZTAgKCJwcHA6IEZpeCBmYWxzZSB4bWl0
-IHJlY3Vyc2lvbiBkZXRlY3Qgd2l0aCB0d28gcHBwCj5kZXZpY2VzIikgZHJvcHBlZCB0aGUgeG1p
-dF9yZWN1cnNpb24gY291bnRlciBpbmNyZW1lbnRhdGlvbiBpbgo+cHBwX2NoYW5uZWxfcHVzaCgp
-IGFuZCByZWxpZWQgb24gcHBwX3htaXRfcHJvY2VzcygpIGZvciB0aGlzIHRhc2suCj5CdXQgX19w
-cHBfY2hhbm5lbF9wdXNoKCkgY2FuIGFsc28gc2VuZCBwYWNrZXRzIGRpcmVjdGx5ICh1c2luZyB0
-aGUKPi5zdGFydF94bWl0KCkgY2hhbm5lbCBjYWxsYmFjayksIGluIHdoaWNoIGNhc2UgdGhlIHht
-aXRfcmVjdXJzaW9uCgpZb3UncmUgcmlnaHQuIFdlIGxvc3QgdGhpcyBjYXNlLgoKPmNvdW50ZXIg
-aXNuJ3QgaW5jcmVtZW50ZWQgYW55bW9yZS4gSWYgc3VjaCBwYWNrZXRzIGdldCByb3V0ZWQgYmFj
-ayB0bwo+dGhlIHBhcmVudCBwcHAgdW5pdCwgcHBwX3htaXRfcHJvY2VzcygpIHdvbid0IG5vdGlj
-ZSB0aGUgcmVjdXJzaW9uIGFuZAo+d2lsbCBjYWxsIHBwcF9jaGFubmVsX3B1c2goKSBvbiB0aGUg
-c2FtZSBjaGFubmVsLCBlZmZlY3RpdmVseSBjcmVhdGluZwo+dGhlIGRlYWRsb2NrIHNpdHVhdGlv
-biB0aGF0IHRoZSB4bWl0X3JlY3Vyc2lvbiBtZWNoYW5pc20gd2FzIHN1cHBvc2VkCj50byBwcmV2
-ZW50Lgo+Cj5UaGlzIHBhdGNoIHJlLWludHJvZHVjZXMgdGhlIHhtaXRfcmVjdXJzaW9uIGNvdW50
-ZXIgaW5jcmVtZW50YXRpb24gaW4KPnBwcF9jaGFubmVsX3B1c2goKS4gU2luY2UgdGhlIHhtaXRf
-cmVjdXJzaW9uIHZhcmlhYmxlIGlzIG5vdyBwYXJ0IG9mCj50aGUgcGFyZW50IHBwcCB1bml0LCBp
-bmNyZW1lbnRhdGlvbiBpcyBza2lwcGVkIGlmIHRoZSBjaGFubmVsIGRvZXNuJ3QKPmhhdmUgYW55
-LiBUaGlzIGlzIGZpbmUgYmVjYXVzZSBvbmx5IHBhY2tldHMgcm91dGVkIHRocm91Z2ggdGhlIHBh
-cmVudAo+dW5pdCBtYXkgZW50ZXIgdGhlIGNoYW5uZWwgcmVjdXJzaXZlbHkuCj4KPkZpbmFsbHks
-IHdlIGhhdmUgdG8gZW5zdXJlIHRoYXQgcGNoLT5wcHAgaXMgbm90IGdvaW5nIHRvIGJlIG1vZGlm
-aWVkCj53aGlsZSBleGVjdXRpbmcgcHBwX2NoYW5uZWxfcHVzaCgpLiBJbnN0ZWFkIG9mIHRha2lu
-ZyB0aGlzIGxvY2sgb25seQo+d2hpbGUgY2FsbGluZyBwcHBfeG1pdF9wcm9jZXNzKCksIHdlIG5v
-dyBoYXZlIHRvIGhvbGQgaXQgZm9yIHRoZSBmdWxsCj5wcHBfY2hhbm5lbF9wdXNoKCkgZXhlY3V0
-aW9uLiBUaGlzIHJlc3BlY3RzIHRoZSBwcHAgbG9ja3Mgb3JkZXJpbmcKPndoaWNoIHJlcXVpcmVz
-IGxvY2tpbmcgLT51cGwgYmVmb3JlIC0+ZG93bmwuCj4KPkZpeGVzOiBlNWRhZGM2NWY5ZTAgKCJw
-cHA6IEZpeCBmYWxzZSB4bWl0IHJlY3Vyc2lvbiBkZXRlY3Qgd2l0aCB0d28gcHBwIGRldmljZXMi
-KQo+U2lnbmVkLW9mZi1ieTogR3VpbGxhdW1lIE5hdWx0IDxnLm5hdWx0QGFscGhhbGluay5mcj4K
-Pi0tLQo+IGRyaXZlcnMvbmV0L3BwcC9wcHBfZ2VuZXJpYy5jIHwgMTggKysrKysrKysrKy0tLS0t
-LS0tCj4gMSBmaWxlIGNoYW5nZWQsIDEwIGluc2VydGlvbnMoKyksIDggZGVsZXRpb25zKC0pCj4K
-PmRpZmYgLS1naXQgYS9kcml2ZXJzL25ldC9wcHAvcHBwX2dlbmVyaWMuYyBiL2RyaXZlcnMvbmV0
-L3BwcC9wcHBfZ2VuZXJpYy5jCj5pbmRleCBiZDQzMDM5NDRlNDQuLmE0MDQ1NTI1NTVkNCAxMDA2
-NDQKPi0tLSBhL2RyaXZlcnMvbmV0L3BwcC9wcHBfZ2VuZXJpYy5jCj4rKysgYi9kcml2ZXJzL25l
-dC9wcHAvcHBwX2dlbmVyaWMuYwo+QEAgLTE5MTUsMjEgKzE5MTUsMjMgQEAgc3RhdGljIHZvaWQg
-X19wcHBfY2hhbm5lbF9wdXNoKHN0cnVjdCBjaGFubmVsICpwY2gpCj4gCXNwaW5fdW5sb2NrKCZw
-Y2gtPmRvd25sKTsKPiAJLyogc2VlIGlmIHRoZXJlIGlzIGFueXRoaW5nIGZyb20gdGhlIGF0dGFj
-aGVkIHVuaXQgdG8gYmUgc2VudCAqLwo+IAlpZiAoc2tiX3F1ZXVlX2VtcHR5KCZwY2gtPmZpbGUu
-eHEpKSB7Cj4tCQlyZWFkX2xvY2soJnBjaC0+dXBsKTsKPiAJCXBwcCA9IHBjaC0+cHBwOwo+IAkJ
-aWYgKHBwcCkKPi0JCQlwcHBfeG1pdF9wcm9jZXNzKHBwcCk7Cj4tCQlyZWFkX3VubG9jaygmcGNo
-LT51cGwpOwo+KwkJCV9fcHBwX3htaXRfcHJvY2VzcyhwcHApOwo+IAl9Cj4gfQo+IAo+IHN0YXRp
-YyB2b2lkIHBwcF9jaGFubmVsX3B1c2goc3RydWN0IGNoYW5uZWwgKnBjaCkKPiB7Cj4tCWxvY2Fs
-X2JoX2Rpc2FibGUoKTsKPi0KPi0JX19wcHBfY2hhbm5lbF9wdXNoKHBjaCk7Cj4tCj4tCWxvY2Fs
-X2JoX2VuYWJsZSgpOwo+KwlyZWFkX2xvY2tfYmgoJnBjaC0+dXBsKTsKPisJaWYgKHBjaC0+cHBw
-KSB7Cj4rCQkoKnRoaXNfY3B1X3B0cihwY2gtPnBwcC0+eG1pdF9yZWN1cnNpb24pKSsrOwo+KwkJ
-X19wcHBfY2hhbm5lbF9wdXNoKHBjaCk7Cj4rCQkoKnRoaXNfY3B1X3B0cihwY2gtPnBwcC0+eG1p
-dF9yZWN1cnNpb24pKS0tOwo+Kwl9IGVsc2Ugewo+KwkJX19wcHBfY2hhbm5lbF9wdXNoKHBjaCk7
-Cj4rCX0KPisJcmVhZF91bmxvY2tfYmgoJnBjaC0+dXBsKTsKCklmIGludm9rZWQgcmVhZF9sb2Nr
-X2JoIGluIHBwcF9jaGFubmVsX3B1c2gsIGl0IHdvdWxkIGJlIHVubmVjZXNzYXJ5IHRvIGludm9r
-ZSByZWFkX2xvY2soJnBjaC0+dXBsKQppbiB0aGUgX19wcHBfY2hhbm5lbF9wdXNoLgoKQmVzdCBS
-ZWdhcmRzCkZlbmcKCj4gfQo+IAo+IC8qCj4tLSAKPjIuMTQuMAo+Cg=
+On Tue, Aug 08, 2017 at 09:16:33PM +0800, Gao Feng wrote:
+> At 2017-08-08 17:43:24, "Guillaume Nault" <g.nault@alphalink.fr> wrote:
+> >--- a/drivers/net/ppp/ppp_generic.c
+> >+++ b/drivers/net/ppp/ppp_generic.c
+> >@@ -1915,21 +1915,23 @@ static void __ppp_channel_push(struct channel *pch)
+> > 	spin_unlock(&pch->downl);
+> > 	/* see if there is anything from the attached unit to be sent */
+> > 	if (skb_queue_empty(&pch->file.xq)) {
+> >-		read_lock(&pch->upl);
+> > 		ppp = pch->ppp;
+> > 		if (ppp)
+> >-			ppp_xmit_process(ppp);
+> >-		read_unlock(&pch->upl);
+> >+			__ppp_xmit_process(ppp);
+> > 	}
+> > }
+> > 
+> > static void ppp_channel_push(struct channel *pch)
+> > {
+> >-	local_bh_disable();
+> >-
+> >-	__ppp_channel_push(pch);
+> >-
+> >-	local_bh_enable();
+> >+	read_lock_bh(&pch->upl);
+> >+	if (pch->ppp) {
+> >+		(*this_cpu_ptr(pch->ppp->xmit_recursion))++;
+> >+		__ppp_channel_push(pch);
+> >+		(*this_cpu_ptr(pch->ppp->xmit_recursion))--;
+> >+	} else {
+> >+		__ppp_channel_push(pch);
+> >+	}
+> >+	read_unlock_bh(&pch->upl);
+> 
+> If invoked read_lock_bh in ppp_channel_push, it would be unnecessary to invoke read_lock(&pch->upl)
+> in the __ppp_channel_push.
+> 
+But this patch does remove read_lock(&pch->upl) from
+__ppp_channel_push(). Or have I misunderstood your point?
