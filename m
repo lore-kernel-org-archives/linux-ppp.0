@@ -1,76 +1,79 @@
-From: Thomas Glanzmann <thomas@glanzmann.de>
-Date: Wed, 02 Aug 2017 08:20:14 +0000
-Subject: Re: pppoe encapsulated udp packets which appear on ethernet disappear between pppoe and ppp0 after p
-Message-Id: <20170802082014.GA16784@glanzmann.de>
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Tue, 08 Aug 2017 09:43:24 +0000
+Subject: [PATCH net] ppp: fix xmit recursion detection on ppp channels
+Message-Id: <e45ed6ea02e2665ec8b868279ad9afcb9b34fc81.1502185216.git.g.nault@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20170410183851.GA4442@glanzmann.de>
-In-Reply-To: <20170410183851.GA4442@glanzmann.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: Gao Feng <gfree.wind@vip.163.com>, Liu Jianying <jianying.liu@ikuai8.com>, David Miller <davem@davemloft.net>, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
 
-Hello Michael,
+Commit e5dadc65f9e0 ("ppp: Fix false xmit recursion detect with two ppp
+devices") dropped the xmit_recursion counter incrementation in
+ppp_channel_push() and relied on ppp_xmit_process() for this task.
+But __ppp_channel_push() can also send packets directly (using the
+.start_xmit() channel callback), in which case the xmit_recursion
+counter isn't incremented anymore. If such packets get routed back to
+the parent ppp unit, ppp_xmit_process() won't notice the recursion and
+will call ppp_channel_push() on the same channel, effectively creating
+the deadlock situation that the xmit_recursion mechanism was supposed
+to prevent.
 
-> I'll be curious to know what product is at the other end.
+This patch re-introduces the xmit_recursion counter incrementation in
+ppp_channel_push(). Since the xmit_recursion variable is now part of
+the parent ppp unit, incrementation is skipped if the channel doesn't
+have any. This is fine because only packets routed through the parent
+unit may enter the channel recursively.
 
-After a few months we found the problem. The culprit for the wrong
-session ID is not the Providers DSLAM or PPP, but the Zyxel ZyXEL
-VMG1312-B30A or more specific:
+Finally, we have to ensure that pch->ppp is not going to be modified
+while executing ppp_channel_push(). Instead of taking this lock only
+while calling ppp_xmit_process(), we now have to hold it for the full
+ppp_channel_push() execution. This respects the ppp locks ordering
+which requires locking ->upl before ->downl.
 
-> * https://support.aa.net.uk/VMG1312-B10A:_Bugs
+Fixes: e5dadc65f9e0 ("ppp: Fix false xmit recursion detect with two ppp devices")
+Signed-off-by: Guillaume Nault <g.nault@alphalink.fr>
+---
+ drivers/net/ppp/ppp_generic.c | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
 
-> PPPoE Session-ID caching bug (In Bridge mode)
-> ======================
-> Issue Description
-> -----------------
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index bd4303944e44..a404552555d4 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -1915,21 +1915,23 @@ static void __ppp_channel_push(struct channel *pch)
+ 	spin_unlock(&pch->downl);
+ 	/* see if there is anything from the attached unit to be sent */
+ 	if (skb_queue_empty(&pch->file.xq)) {
+-		read_lock(&pch->upl);
+ 		ppp = pch->ppp;
+ 		if (ppp)
+-			ppp_xmit_process(ppp);
+-		read_unlock(&pch->upl);
++			__ppp_xmit_process(ppp);
+ 	}
+ }
+ 
+ static void ppp_channel_push(struct channel *pch)
+ {
+-	local_bh_disable();
+-
+-	__ppp_channel_push(pch);
+-
+-	local_bh_enable();
++	read_lock_bh(&pch->upl);
++	if (pch->ppp) {
++		(*this_cpu_ptr(pch->ppp->xmit_recursion))++;
++		__ppp_channel_push(pch);
++		(*this_cpu_ptr(pch->ppp->xmit_recursion))--;
++	} else {
++		__ppp_channel_push(pch);
++	}
++	read_unlock_bh(&pch->upl);
+ }
+ 
+ /*
+-- 
+2.14.0
 
-> Last year we had an problem with Huawei FTTC modems, the standard ones that
-> Openreach supply The bug appears to be that the modem manages to "blacklist"
-> some UDP packets after a PPP restart. Typically this affects VPN tunnels. The
-> short term fix is to unplugged and plugged back in!  We now have what looks to
-> be the same fault on the ZyXELs - both on ADSL and VDSL.  When a PPPoE session
-> finishes and a new one starts, ethernet frames containing IP packets with the
-> same source and destination IP and port combination that were used in the
-> previous session are received with the PPPoE Session-ID from the earlier
-> session.  This affects long running sessions using protocols which use the same
-> source port for all communications. This includes IPsec and (in some
-> circumstances) SIP.  Our understanding of this, having talked to Huawei last
-> year to get a very similar bug fixed is that the problem is with the packet
-> accelerator feature in the Broadcom chipset. It is caching frame headers
-> including the PPPoE Session-ID, but not checking if the Session-ID is the same
-> when searching for the entry in the cache for subsequent packets. Unplugging
-> the ethernet cable from the VMG1312 momentarily resolves the problem - that
-> action must trigger a cache flush in the Broadcom chipset.  Possible fixes
-> would be to either not store the Session-ID in the packet accelerator cache at
-> all, or to check the Session-ID in addition to the IP and ports when searching
-> the cache. A workaround would be to disable the packet accelerator.  (Side note
-> for other ISPs looking at this: This does not affect lines that have dynamic
-> WAN addresses, which none of our service do.)
-
-> Date Reported
-> -------------
-> 2015-05-06
-
-> Updates
-> -------
-> 2015-05-06 - Escalated with ZyXEL/Broadcom
-> 2015-05-15 - ZyXEL staff came to AAISP offices and we demonstrated and discussed the problem
-> 2015-06-02 - Still in hand with ZyXEL HQ reproducing this in their lab
-> 2016-10-01 - ZyXEL still unable to reproduce this, even though we have had customers recently seeing the issue with their VPN sessions
-
-> Resolution
-
-> None yet.
-
-We identified the ZyXEL VMG1312-B30A as culprit by doing:
-
-Telekom DSLAM <-DSL-> Older Zyxel without Vectoring support <-Ethernet Bridge Sniffer-> Allnet DSLAN <-DSL-> Zyxel VMG1312-B30A <-> Ethernet
-
-We sniffed on the Ethernet Bridge and found out that the PPPOE Session ID from
-German Telekom are correct, but the PPPOE Session ID from the Zyxel was corrupt.
-
-Thank you again for helping me identifying the issue.
-
-Cheers,
-        Thomas
