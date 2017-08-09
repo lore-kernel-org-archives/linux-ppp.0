@@ -1,42 +1,43 @@
-From: "Gao Feng" <gfree.wind@vip.163.com>
-Date: Tue, 08 Aug 2017 14:21:58 +0000
-Subject: Re:Re: [PATCH net] ppp: fix xmit recursion detection on ppp channels
-Message-Id: <22bd4c3b.1578c.15dc2394057.Coremail.gfree.wind@vip.163.com>
+From: David Miller <davem@davemloft.net>
+Date: Wed, 09 Aug 2017 04:07:06 +0000
+Subject: Re: [PATCH net] ppp: fix xmit recursion detection on ppp channels
+Message-Id: <20170808.210706.206603185784182097.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <e45ed6ea02e2665ec8b868279ad9afcb9b34fc81.1502185216.git.g.nault@alphalink.fr>
- <5a62fd3f.e0c3.15dc1fd5f1b.Coremail.gfree.wind@vip.163.com>
- <20170808135827.oszy6ikqi2gw5cs7@alphalink.fr>
-In-Reply-To: <20170808135827.oszy6ikqi2gw5cs7@alphalink.fr>
+In-Reply-To: <e45ed6ea02e2665ec8b868279ad9afcb9b34fc81.1502185216.git.g.nault@alphalink.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Guillaume Nault <g.nault@alphalink.fr>
-Cc: netdev@vger.kernel.org, Liu Jianying <jianying.liu@ikuai8.com>, David Miller <davem@davemloft.net>, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
+To: g.nault@alphalink.fr
+Cc: netdev@vger.kernel.org, gfree.wind@vip.163.com, jianying.liu@ikuai8.com, linux-ppp@vger.kernel.org, paulus@samba.org
 
-CkF0IDIwMTctMDgtMDggMjE6NTg6MjcsICJHdWlsbGF1bWUgTmF1bHQiIDxnLm5hdWx0QGFscGhh
-bGluay5mcj4gd3JvdGU6Cj5PbiBUdWUsIEF1ZyAwOCwgMjAxNyBhdCAwOToxNjozM1BNICswODAw
-LCBHYW8gRmVuZyB3cm90ZToKPj4gQXQgMjAxNy0wOC0wOCAxNzo0MzoyNCwgIkd1aWxsYXVtZSBO
-YXVsdCIgPGcubmF1bHRAYWxwaGFsaW5rLmZyPiB3cm90ZToKPj4gPi0tLSBhL2RyaXZlcnMvbmV0
-L3BwcC9wcHBfZ2VuZXJpYy5jCj4+ID4rKysgYi9kcml2ZXJzL25ldC9wcHAvcHBwX2dlbmVyaWMu
-Ywo+PiA+QEAgLTE5MTUsMjEgKzE5MTUsMjMgQEAgc3RhdGljIHZvaWQgX19wcHBfY2hhbm5lbF9w
-dXNoKHN0cnVjdCBjaGFubmVsICpwY2gpCj4+ID4gCXNwaW5fdW5sb2NrKCZwY2gtPmRvd25sKTsK
-Pj4gPiAJLyogc2VlIGlmIHRoZXJlIGlzIGFueXRoaW5nIGZyb20gdGhlIGF0dGFjaGVkIHVuaXQg
-dG8gYmUgc2VudCAqLwo+PiA+IAlpZiAoc2tiX3F1ZXVlX2VtcHR5KCZwY2gtPmZpbGUueHEpKSB7
-Cj4+ID4tCQlyZWFkX2xvY2soJnBjaC0+dXBsKTsKPj4gPiAJCXBwcCA9IHBjaC0+cHBwOwo+PiA+
-IAkJaWYgKHBwcCkKPj4gPi0JCQlwcHBfeG1pdF9wcm9jZXNzKHBwcCk7Cj4+ID4tCQlyZWFkX3Vu
-bG9jaygmcGNoLT51cGwpOwo+PiA+KwkJCV9fcHBwX3htaXRfcHJvY2VzcyhwcHApOwo+PiA+IAl9
-Cj4+ID4gfQo+PiA+IAo+PiA+IHN0YXRpYyB2b2lkIHBwcF9jaGFubmVsX3B1c2goc3RydWN0IGNo
-YW5uZWwgKnBjaCkKPj4gPiB7Cj4+ID4tCWxvY2FsX2JoX2Rpc2FibGUoKTsKPj4gPi0KPj4gPi0J
-X19wcHBfY2hhbm5lbF9wdXNoKHBjaCk7Cj4+ID4tCj4+ID4tCWxvY2FsX2JoX2VuYWJsZSgpOwo+
-PiA+KwlyZWFkX2xvY2tfYmgoJnBjaC0+dXBsKTsKPj4gPisJaWYgKHBjaC0+cHBwKSB7Cj4+ID4r
-CQkoKnRoaXNfY3B1X3B0cihwY2gtPnBwcC0+eG1pdF9yZWN1cnNpb24pKSsrOwo+PiA+KwkJX19w
-cHBfY2hhbm5lbF9wdXNoKHBjaCk7Cj4+ID4rCQkoKnRoaXNfY3B1X3B0cihwY2gtPnBwcC0+eG1p
-dF9yZWN1cnNpb24pKS0tOwo+PiA+Kwl9IGVsc2Ugewo+PiA+KwkJX19wcHBfY2hhbm5lbF9wdXNo
-KHBjaCk7Cj4+ID4rCX0KPj4gPisJcmVhZF91bmxvY2tfYmgoJnBjaC0+dXBsKTsKPj4gCj4+IElm
-IGludm9rZWQgcmVhZF9sb2NrX2JoIGluIHBwcF9jaGFubmVsX3B1c2gsIGl0IHdvdWxkIGJlIHVu
-bmVjZXNzYXJ5IHRvIGludm9rZSByZWFkX2xvY2soJnBjaC0+dXBsKQo+PiBpbiB0aGUgX19wcHBf
-Y2hhbm5lbF9wdXNoLgo+PiAKPkJ1dCB0aGlzIHBhdGNoIGRvZXMgcmVtb3ZlIHJlYWRfbG9jaygm
-cGNoLT51cGwpIGZyb20KPl9fcHBwX2NoYW5uZWxfcHVzaCgpLiBPciBoYXZlIEkgbWlzdW5kZXJz
-dG9vZCB5b3VyIHBvaW50PwoKU29ycnksIGl0J3MgbXkgZmF1bHQuCkkgZm9yZ290IHlvdXIgZm9y
-bWVyIGNoYW5nZXMgd2hlbiB0aGluayBhYm91dCB0aGUgdXBkYXRlcyBpbiBwcHBfY2hhbm5lbF9w
-dXNoCgpCZXN0IFJlZ2FyZHMKRmVuZwoK
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Tue, 8 Aug 2017 11:43:24 +0200
+
+> Commit e5dadc65f9e0 ("ppp: Fix false xmit recursion detect with two ppp
+> devices") dropped the xmit_recursion counter incrementation in
+> ppp_channel_push() and relied on ppp_xmit_process() for this task.
+> But __ppp_channel_push() can also send packets directly (using the
+> .start_xmit() channel callback), in which case the xmit_recursion
+> counter isn't incremented anymore. If such packets get routed back to
+> the parent ppp unit, ppp_xmit_process() won't notice the recursion and
+> will call ppp_channel_push() on the same channel, effectively creating
+> the deadlock situation that the xmit_recursion mechanism was supposed
+> to prevent.
+> 
+> This patch re-introduces the xmit_recursion counter incrementation in
+> ppp_channel_push(). Since the xmit_recursion variable is now part of
+> the parent ppp unit, incrementation is skipped if the channel doesn't
+> have any. This is fine because only packets routed through the parent
+> unit may enter the channel recursively.
+> 
+> Finally, we have to ensure that pch->ppp is not going to be modified
+> while executing ppp_channel_push(). Instead of taking this lock only
+> while calling ppp_xmit_process(), we now have to hold it for the full
+> ppp_channel_push() execution. This respects the ppp locks ordering
+> which requires locking ->upl before ->downl.
+> 
+> Fixes: e5dadc65f9e0 ("ppp: Fix false xmit recursion detect with two ppp devices")
+> Signed-off-by: Guillaume Nault <g.nault@alphalink.fr>
+
+Applied, thank you.
