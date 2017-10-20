@@ -1,7 +1,7 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Fri, 20 Oct 2017 07:23:44 +0000
-Subject: [PATCH 10/15] drivers, net: convert masces_rx_sc.refcnt from atomic_t to refcount_t
-Message-Id: <1508484229-19706-11-git-send-email-elena.reshetova@intel.com>
+Date: Fri, 20 Oct 2017 07:23:45 +0000
+Subject: [PATCH 11/15] drivers, net: convert masces_tx_sa.refcnt from atomic_t to refcount_t
+Message-Id: <1508484229-19706-12-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
 In-Reply-To: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
@@ -25,7 +25,7 @@ refcount_t type and API that prevents accidental counter overflows
 and underflows. This is important since overflows and underflows
 can lead to use-after-free situation and be exploitable.
 
-The variable masces_rx_sc.refcnt is used as pure reference counter.
+The variable masces_tx_sa.refcnt is used as pure reference counter.
 Convert it to refcount_t and fix up the operations.
 
 Suggested-by: Kees Cook <keescook@chromium.org>
@@ -37,42 +37,45 @@ Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/net/macsec.c b/drivers/net/macsec.c
-index 733e1c2..e0aeb51 100644
+index e0aeb51..8948b6a 100644
 --- a/drivers/net/macsec.c
 +++ b/drivers/net/macsec.c
-@@ -172,7 +172,7 @@ struct macsec_rx_sc {
- 	bool active;
- 	struct macsec_rx_sa __rcu *sa[MACSEC_NUM_AN];
- 	struct pcpu_rx_sc_stats __percpu *stats;
+@@ -188,7 +188,7 @@ struct macsec_tx_sa {
+ 	struct macsec_key key;
+ 	spinlock_t lock;
+ 	u32 next_pn;
 -	atomic_t refcnt;
 +	refcount_t refcnt;
- 	struct rcu_head rcu_head;
- };
+ 	bool active;
+ 	struct macsec_tx_sa_stats __percpu *stats;
+ 	struct rcu_head rcu;
+@@ -362,7 +362,7 @@ static struct macsec_tx_sa *macsec_txsa_get(struct macsec_tx_sa __rcu *ptr)
+ 	if (!sa || !sa->active)
+ 		return NULL;
  
-@@ -331,12 +331,12 @@ static void free_rx_sc_rcu(struct rcu_head *head)
+-	if (!atomic_inc_not_zero(&sa->refcnt))
++	if (!refcount_inc_not_zero(&sa->refcnt))
+ 		return NULL;
  
- static struct macsec_rx_sc *macsec_rxsc_get(struct macsec_rx_sc *sc)
+ 	return sa;
+@@ -379,7 +379,7 @@ static void free_txsa(struct rcu_head *head)
+ 
+ static void macsec_txsa_put(struct macsec_tx_sa *sa)
  {
--	return atomic_inc_not_zero(&sc->refcnt) ? sc : NULL;
-+	return refcount_inc_not_zero(&sc->refcnt) ? sc : NULL;
+-	if (atomic_dec_and_test(&sa->refcnt))
++	if (refcount_dec_and_test(&sa->refcnt))
+ 		call_rcu(&sa->rcu, free_txsa);
  }
  
- static void macsec_rxsc_put(struct macsec_rx_sc *sc)
- {
--	if (atomic_dec_and_test(&sc->refcnt))
-+	if (refcount_dec_and_test(&sc->refcnt))
- 		call_rcu(&sc->rcu_head, free_rx_sc_rcu);
- }
+@@ -1437,7 +1437,7 @@ static int init_tx_sa(struct macsec_tx_sa *tx_sa, char *sak, int key_len,
+ 	}
  
-@@ -1411,7 +1411,7 @@ static struct macsec_rx_sc *create_rx_sc(struct net_device *dev, sci_t sci)
+ 	tx_sa->active = false;
+-	atomic_set(&tx_sa->refcnt, 1);
++	refcount_set(&tx_sa->refcnt, 1);
+ 	spin_lock_init(&tx_sa->lock);
  
- 	rx_sc->sci = sci;
- 	rx_sc->active = true;
--	atomic_set(&rx_sc->refcnt, 1);
-+	refcount_set(&rx_sc->refcnt, 1);
- 
- 	secy = &macsec_priv(dev)->secy;
- 	rcu_assign_pointer(rx_sc->next, secy->rx_sc);
+ 	return 0;
 -- 
 2.7.4
 
