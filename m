@@ -1,15 +1,15 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Fri, 20 Oct 2017 07:23:38 +0000
-Subject: [PATCH 04/15] drivers, net, mlx4: convert mlx4_qp.refcount from atomic_t to refcount_t
-Message-Id: <1508484229-19706-5-git-send-email-elena.reshetova@intel.com>
+Date: Fri, 20 Oct 2017 07:23:35 +0000
+Subject: [PATCH 01/15] drivers, net, ethernet: convert clip_entry.refcnt from atomic_t to refcount_t
+Message-Id: <1508484229-19706-2-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
-In-Reply-To: <1508484229-19706-1-git-send-email-elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
-Cc: peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org, zbr-i6C2adt8DTjR7s880joybQ@public.gmane.org, Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, nbd-p3rKhJxN3npAfugRpC6u6w@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, ganeshgr-ut6Up61K2wZBDgjK7y7TUQ@public.gmane.org, ajk-iz34hMvxm2Hmj42eshorlhS11BummzK+@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, sean.wang-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org, leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, linux-mediatek-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org, matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-hams-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ppp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tariqt-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org
+To: davem@davemloft.net
+Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-mediatek@lists.infradead.org, linux-rdma@vger.kernel.org, linux-hams@vger.kernel.org, linux-ppp@vger.kernel.org, ganeshgr@chelsio.com, nbd@openwrt.org, john@phrozen.org, sean.wang@mediatek.com, matthias.bgg@gmail.com, yishaih@mellanox.com, saeedm@mellanox.com, matanb@mellanox.com, tariqt@mellanox.com, leonro@mellanox.com, ajk@comnets.uni-bremen.de, paulus@samba.org, zbr@ioremap.net, peterz@infradead.org, keescook@chromium.org, Elena Reshetova <elena.reshetova@intel.com>
 
 atomic_t variables are currently used to implement reference
 counters with the following properties:
@@ -25,7 +25,7 @@ refcount_t type and API that prevents accidental counter overflows
 and underflows. This is important since overflows and underflows
 can lead to use-after-free situation and be exploitable.
 
-The variable mlx4_qp.refcount is used as pure reference counter.
+The variable clip_entry.refcnt is used as pure reference counter.
 Convert it to refcount_t and fix up the operations.
 
 Suggested-by: Kees Cook <keescook@chromium.org>
@@ -33,63 +33,79 @@ Reviewed-by: David Windsor <dwindsor@gmail.com>
 Reviewed-by: Hans Liljestrand <ishkamiel@gmail.com>
 Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
 ---
- drivers/net/ethernet/mellanox/mlx4/qp.c | 8 ++++----
- include/linux/mlx4/device.h             | 2 +-
- 2 files changed, 5 insertions(+), 5 deletions(-)
+ drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c | 13 ++++++-------
+ drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h |  4 +++-
+ 2 files changed, 9 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/net/ethernet/mellanox/mlx4/qp.c b/drivers/net/ethernet/mellanox/mlx4/qp.c
-index 2033209..769598f 100644
---- a/drivers/net/ethernet/mellanox/mlx4/qp.c
-+++ b/drivers/net/ethernet/mellanox/mlx4/qp.c
-@@ -55,7 +55,7 @@ void mlx4_qp_event(struct mlx4_dev *dev, u32 qpn, int event_type)
- 
- 	qp = __mlx4_qp_lookup(dev, qpn);
- 	if (qp)
--		atomic_inc(&qp->refcount);
-+		refcount_inc(&qp->refcount);
- 
- 	spin_unlock(&qp_table->lock);
- 
-@@ -66,7 +66,7 @@ void mlx4_qp_event(struct mlx4_dev *dev, u32 qpn, int event_type)
- 
- 	qp->event(qp, event_type);
- 
--	if (atomic_dec_and_test(&qp->refcount))
-+	if (refcount_dec_and_test(&qp->refcount))
- 		complete(&qp->free);
- }
- 
-@@ -420,7 +420,7 @@ int mlx4_qp_alloc(struct mlx4_dev *dev, int qpn, struct mlx4_qp *qp)
- 	if (err)
- 		goto err_icm;
- 
--	atomic_set(&qp->refcount, 1);
-+	refcount_set(&qp->refcount, 1);
- 	init_completion(&qp->free);
- 
+diff --git a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
+index 3103ef9..2900390 100644
+--- a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
++++ b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
+@@ -96,7 +96,8 @@ int cxgb4_clip_get(const struct net_device *dev, const u32 *lip, u8 v6)
+ 		if (!ret) {
+ 			ce = cte;
+ 			read_unlock_bh(&ctbl->lock);
+-			goto found;
++			refcount_inc(&ce->refcnt);
++			return 0;
+ 		}
+ 	}
+ 	read_unlock_bh(&ctbl->lock);
+@@ -108,7 +109,7 @@ int cxgb4_clip_get(const struct net_device *dev, const u32 *lip, u8 v6)
+ 		list_del(&ce->list);
+ 		INIT_LIST_HEAD(&ce->list);
+ 		spin_lock_init(&ce->lock);
+-		atomic_set(&ce->refcnt, 0);
++		refcount_set(&ce->refcnt, 0);
+ 		atomic_dec(&ctbl->nfree);
+ 		list_add_tail(&ce->list, &ctbl->hash_list[hash]);
+ 		if (v6) {
+@@ -138,9 +139,7 @@ int cxgb4_clip_get(const struct net_device *dev, const u32 *lip, u8 v6)
+ 		return -ENOMEM;
+ 	}
+ 	write_unlock_bh(&ctbl->lock);
+-found:
+-	atomic_inc(&ce->refcnt);
+-
++	refcount_set(&ce->refcnt, 1);
  	return 0;
-@@ -520,7 +520,7 @@ EXPORT_SYMBOL_GPL(mlx4_qp_remove);
+ }
+ EXPORT_SYMBOL(cxgb4_clip_get);
+@@ -179,7 +178,7 @@ void cxgb4_clip_release(const struct net_device *dev, const u32 *lip, u8 v6)
+ found:
+ 	write_lock_bh(&ctbl->lock);
+ 	spin_lock_bh(&ce->lock);
+-	if (atomic_dec_and_test(&ce->refcnt)) {
++	if (refcount_dec_and_test(&ce->refcnt)) {
+ 		list_del(&ce->list);
+ 		INIT_LIST_HEAD(&ce->list);
+ 		list_add_tail(&ce->list, &ctbl->ce_free_head);
+@@ -266,7 +265,7 @@ int clip_tbl_show(struct seq_file *seq, void *v)
+ 			ip[0] = '\0';
+ 			sprintf(ip, "%pISc", &ce->addr);
+ 			seq_printf(seq, "%-25s   %u\n", ip,
+-				   atomic_read(&ce->refcnt));
++				   refcount_read(&ce->refcnt));
+ 		}
+ 	}
+ 	seq_printf(seq, "Free clip entries : %d\n", atomic_read(&ctbl->nfree));
+diff --git a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h
+index 35eb43c..a0e0ae1 100644
+--- a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h
++++ b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.h
+@@ -10,9 +10,11 @@
+  *  release for licensing terms and conditions.
+  */
  
- void mlx4_qp_free(struct mlx4_dev *dev, struct mlx4_qp *qp)
- {
--	if (atomic_dec_and_test(&qp->refcount))
-+	if (refcount_dec_and_test(&qp->refcount))
- 		complete(&qp->free);
- 	wait_for_completion(&qp->free);
- 
-diff --git a/include/linux/mlx4/device.h b/include/linux/mlx4/device.h
-index daac2e3..b8e19c4 100644
---- a/include/linux/mlx4/device.h
-+++ b/include/linux/mlx4/device.h
-@@ -768,7 +768,7 @@ struct mlx4_qp {
- 
- 	int			qpn;
- 
--	atomic_t		refcount;
-+	refcount_t		refcount;
- 	struct completion	free;
- 	u8			usage;
- };
++#include <linux/refcount.h>
++
+ struct clip_entry {
+ 	spinlock_t lock;	/* Hold while modifying clip reference */
+-	atomic_t refcnt;
++	refcount_t refcnt;
+ 	struct list_head list;
+ 	union {
+ 		struct sockaddr_in addr;
 -- 
 2.7.4
 
