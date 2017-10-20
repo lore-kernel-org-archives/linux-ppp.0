@@ -1,7 +1,7 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Fri, 20 Oct 2017 07:23:39 +0000
-Subject: [PATCH 05/15] drivers, net, mlx4: convert mlx4_srq.refcount from atomic_t to refcount_t
-Message-Id: <1508484229-19706-6-git-send-email-elena.reshetova@intel.com>
+Date: Fri, 20 Oct 2017 07:23:49 +0000
+Subject: [PATCH 15/15] drivers, connector: convert cn_callback_entry.refcnt from atomic_t to refcount_t
+Message-Id: <1508484229-19706-16-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
 In-Reply-To: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
@@ -25,7 +25,7 @@ refcount_t type and API that prevents accidental counter overflows
 and underflows. This is important since overflows and underflows
 can lead to use-after-free situation and be exploitable.
 
-The variable mlx4_srq.refcount is used as pure reference counter.
+The variable cn_callback_entry.refcnt is used as pure reference counter.
 Convert it to refcount_t and fix up the operations.
 
 Suggested-by: Kees Cook <keescook@chromium.org>
@@ -33,63 +33,68 @@ Reviewed-by: David Windsor <dwindsor@gmail.com>
 Reviewed-by: Hans Liljestrand <ishkamiel@gmail.com>
 Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
 ---
- drivers/net/ethernet/mellanox/mlx4/srq.c | 8 ++++----
- include/linux/mlx4/device.h              | 2 +-
- 2 files changed, 5 insertions(+), 5 deletions(-)
+ drivers/connector/cn_queue.c  | 4 ++--
+ drivers/connector/connector.c | 2 +-
+ include/linux/connector.h     | 4 ++--
+ 3 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/ethernet/mellanox/mlx4/srq.c b/drivers/net/ethernet/mellanox/mlx4/srq.c
-index bedf521..cbe4d97 100644
---- a/drivers/net/ethernet/mellanox/mlx4/srq.c
-+++ b/drivers/net/ethernet/mellanox/mlx4/srq.c
-@@ -49,7 +49,7 @@ void mlx4_srq_event(struct mlx4_dev *dev, u32 srqn, int event_type)
- 	srq = radix_tree_lookup(&srq_table->tree, srqn & (dev->caps.num_srqs - 1));
- 	rcu_read_unlock();
- 	if (srq)
--		atomic_inc(&srq->refcount);
-+		refcount_inc(&srq->refcount);
- 	else {
- 		mlx4_warn(dev, "Async event for bogus SRQ %08x\n", srqn);
+diff --git a/drivers/connector/cn_queue.c b/drivers/connector/cn_queue.c
+index 1f8bf05..9c54fdf 100644
+--- a/drivers/connector/cn_queue.c
++++ b/drivers/connector/cn_queue.c
+@@ -45,7 +45,7 @@ cn_queue_alloc_callback_entry(struct cn_queue_dev *dev, const char *name,
+ 		return NULL;
+ 	}
+ 
+-	atomic_set(&cbq->refcnt, 1);
++	refcount_set(&cbq->refcnt, 1);
+ 
+ 	atomic_inc(&dev->refcnt);
+ 	cbq->pdev = dev;
+@@ -58,7 +58,7 @@ cn_queue_alloc_callback_entry(struct cn_queue_dev *dev, const char *name,
+ 
+ void cn_queue_release_callback(struct cn_callback_entry *cbq)
+ {
+-	if (!atomic_dec_and_test(&cbq->refcnt))
++	if (!refcount_dec_and_test(&cbq->refcnt))
  		return;
-@@ -57,7 +57,7 @@ void mlx4_srq_event(struct mlx4_dev *dev, u32 srqn, int event_type)
  
- 	srq->event(srq, event_type);
+ 	atomic_dec(&cbq->pdev->refcnt);
+diff --git a/drivers/connector/connector.c b/drivers/connector/connector.c
+index 25693b0..8615594b 100644
+--- a/drivers/connector/connector.c
++++ b/drivers/connector/connector.c
+@@ -157,7 +157,7 @@ static int cn_call_callback(struct sk_buff *skb)
+ 	spin_lock_bh(&dev->cbdev->queue_lock);
+ 	list_for_each_entry(i, &dev->cbdev->queue_list, callback_entry) {
+ 		if (cn_cb_equal(&i->id.id, &msg->id)) {
+-			atomic_inc(&i->refcnt);
++			refcount_inc(&i->refcnt);
+ 			cbq = i;
+ 			break;
+ 		}
+diff --git a/include/linux/connector.h b/include/linux/connector.h
+index f8fe863..032102b 100644
+--- a/include/linux/connector.h
++++ b/include/linux/connector.h
+@@ -22,7 +22,7 @@
+ #define __CONNECTOR_H
  
--	if (atomic_dec_and_test(&srq->refcount))
-+	if (refcount_dec_and_test(&srq->refcount))
- 		complete(&srq->free);
- }
  
-@@ -203,7 +203,7 @@ int mlx4_srq_alloc(struct mlx4_dev *dev, u32 pdn, u32 cqn, u16 xrcd,
- 	if (err)
- 		goto err_radix;
+-#include <linux/atomic.h>
++#include <linux/refcount.h>
  
--	atomic_set(&srq->refcount, 1);
-+	refcount_set(&srq->refcount, 1);
- 	init_completion(&srq->free);
+ #include <linux/list.h>
+ #include <linux/workqueue.h>
+@@ -49,7 +49,7 @@ struct cn_callback_id {
  
- 	return 0;
-@@ -232,7 +232,7 @@ void mlx4_srq_free(struct mlx4_dev *dev, struct mlx4_srq *srq)
- 	radix_tree_delete(&srq_table->tree, srq->srqn);
- 	spin_unlock_irq(&srq_table->lock);
+ struct cn_callback_entry {
+ 	struct list_head callback_entry;
+-	atomic_t refcnt;
++	refcount_t refcnt;
+ 	struct cn_queue_dev *pdev;
  
--	if (atomic_dec_and_test(&srq->refcount))
-+	if (refcount_dec_and_test(&srq->refcount))
- 		complete(&srq->free);
- 	wait_for_completion(&srq->free);
- 
-diff --git a/include/linux/mlx4/device.h b/include/linux/mlx4/device.h
-index b8e19c4..a9b5fed 100644
---- a/include/linux/mlx4/device.h
-+++ b/include/linux/mlx4/device.h
-@@ -781,7 +781,7 @@ struct mlx4_srq {
- 	int			max_gs;
- 	int			wqe_shift;
- 
--	atomic_t		refcount;
-+	refcount_t		refcount;
- 	struct completion	free;
- };
- 
+ 	struct cn_callback_id id;
 -- 
 2.7.4
 
