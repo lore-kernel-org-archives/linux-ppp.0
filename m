@@ -1,7 +1,7 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Fri, 20 Oct 2017 07:23:49 +0000
-Subject: [PATCH 15/15] drivers, connector: convert cn_callback_entry.refcnt from atomic_t to refcount_t
-Message-Id: <1508484229-19706-16-git-send-email-elena.reshetova@intel.com>
+Date: Fri, 20 Oct 2017 07:23:37 +0000
+Subject: [PATCH 03/15] drivers, net, mlx4: convert mlx4_cq.refcount from atomic_t to refcount_t
+Message-Id: <1508484229-19706-4-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
 In-Reply-To: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
@@ -25,7 +25,7 @@ refcount_t type and API that prevents accidental counter overflows
 and underflows. This is important since overflows and underflows
 can lead to use-after-free situation and be exploitable.
 
-The variable cn_callback_entry.refcnt is used as pure reference counter.
+The variable mlx4_cq.refcount is used as pure reference counter.
 Convert it to refcount_t and fix up the operations.
 
 Suggested-by: Kees Cook <keescook@chromium.org>
@@ -33,68 +33,71 @@ Reviewed-by: David Windsor <dwindsor@gmail.com>
 Reviewed-by: Hans Liljestrand <ishkamiel@gmail.com>
 Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
 ---
- drivers/connector/cn_queue.c  | 4 ++--
- drivers/connector/connector.c | 2 +-
- include/linux/connector.h     | 4 ++--
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ drivers/net/ethernet/mellanox/mlx4/cq.c | 8 ++++----
+ include/linux/mlx4/device.h             | 4 ++--
+ 2 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/connector/cn_queue.c b/drivers/connector/cn_queue.c
-index 1f8bf05..9c54fdf 100644
---- a/drivers/connector/cn_queue.c
-+++ b/drivers/connector/cn_queue.c
-@@ -45,7 +45,7 @@ cn_queue_alloc_callback_entry(struct cn_queue_dev *dev, const char *name,
- 		return NULL;
- 	}
- 
--	atomic_set(&cbq->refcnt, 1);
-+	refcount_set(&cbq->refcnt, 1);
- 
- 	atomic_inc(&dev->refcnt);
- 	cbq->pdev = dev;
-@@ -58,7 +58,7 @@ cn_queue_alloc_callback_entry(struct cn_queue_dev *dev, const char *name,
- 
- void cn_queue_release_callback(struct cn_callback_entry *cbq)
- {
--	if (!atomic_dec_and_test(&cbq->refcnt))
-+	if (!refcount_dec_and_test(&cbq->refcnt))
- 		return;
- 
- 	atomic_dec(&cbq->pdev->refcnt);
-diff --git a/drivers/connector/connector.c b/drivers/connector/connector.c
-index 25693b0..8615594b 100644
---- a/drivers/connector/connector.c
-+++ b/drivers/connector/connector.c
-@@ -157,7 +157,7 @@ static int cn_call_callback(struct sk_buff *skb)
- 	spin_lock_bh(&dev->cbdev->queue_lock);
- 	list_for_each_entry(i, &dev->cbdev->queue_list, callback_entry) {
- 		if (cn_cb_equal(&i->id.id, &msg->id)) {
--			atomic_inc(&i->refcnt);
-+			refcount_inc(&i->refcnt);
- 			cbq = i;
+diff --git a/drivers/net/ethernet/mellanox/mlx4/cq.c b/drivers/net/ethernet/mellanox/mlx4/cq.c
+index 72eb50c..d8e9a32 100644
+--- a/drivers/net/ethernet/mellanox/mlx4/cq.c
++++ b/drivers/net/ethernet/mellanox/mlx4/cq.c
+@@ -69,7 +69,7 @@ void mlx4_cq_tasklet_cb(unsigned long data)
+ 	list_for_each_entry_safe(mcq, temp, &ctx->process_list, tasklet_ctx.list) {
+ 		list_del_init(&mcq->tasklet_ctx.list);
+ 		mcq->tasklet_ctx.comp(mcq);
+-		if (atomic_dec_and_test(&mcq->refcount))
++		if (refcount_dec_and_test(&mcq->refcount))
+ 			complete(&mcq->free);
+ 		if (time_after(jiffies, end))
  			break;
- 		}
-diff --git a/include/linux/connector.h b/include/linux/connector.h
-index f8fe863..032102b 100644
---- a/include/linux/connector.h
-+++ b/include/linux/connector.h
-@@ -22,7 +22,7 @@
- #define __CONNECTOR_H
+@@ -92,7 +92,7 @@ static void mlx4_add_cq_to_tasklet(struct mlx4_cq *cq)
+ 	 * still arrive.
+ 	 */
+ 	if (list_empty_careful(&cq->tasklet_ctx.list)) {
+-		atomic_inc(&cq->refcount);
++		refcount_inc(&cq->refcount);
+ 		kick = list_empty(&tasklet_ctx->list);
+ 		list_add_tail(&cq->tasklet_ctx.list, &tasklet_ctx->list);
+ 		if (kick)
+@@ -344,7 +344,7 @@ int mlx4_cq_alloc(struct mlx4_dev *dev, int nent,
+ 	cq->cons_index = 0;
+ 	cq->arm_sn     = 1;
+ 	cq->uar        = uar;
+-	atomic_set(&cq->refcount, 1);
++	refcount_set(&cq->refcount, 1);
+ 	init_completion(&cq->free);
+ 	cq->comp = mlx4_add_cq_to_tasklet;
+ 	cq->tasklet_ctx.priv @@ -386,7 +386,7 @@ void mlx4_cq_free(struct mlx4_dev *dev, struct mlx4_cq *cq)
+ 	    priv->eq_table.eq[MLX4_EQ_ASYNC].irq)
+ 		synchronize_irq(priv->eq_table.eq[MLX4_EQ_ASYNC].irq);
  
+-	if (atomic_dec_and_test(&cq->refcount))
++	if (refcount_dec_and_test(&cq->refcount))
+ 		complete(&cq->free);
+ 	wait_for_completion(&cq->free);
+ 
+diff --git a/include/linux/mlx4/device.h b/include/linux/mlx4/device.h
+index b0a57e0..daac2e3 100644
+--- a/include/linux/mlx4/device.h
++++ b/include/linux/mlx4/device.h
+@@ -40,7 +40,7 @@
+ #include <linux/cpu_rmap.h>
+ #include <linux/crash_dump.h>
  
 -#include <linux/atomic.h>
 +#include <linux/refcount.h>
  
- #include <linux/list.h>
- #include <linux/workqueue.h>
-@@ -49,7 +49,7 @@ struct cn_callback_id {
+ #include <linux/timecounter.h>
  
- struct cn_callback_entry {
- 	struct list_head callback_entry;
--	atomic_t refcnt;
-+	refcount_t refcnt;
- 	struct cn_queue_dev *pdev;
+@@ -751,7 +751,7 @@ struct mlx4_cq {
+ 	int			cqn;
+ 	unsigned		vector;
  
- 	struct cn_callback_id id;
+-	atomic_t		refcount;
++	refcount_t		refcount;
+ 	struct completion	free;
+ 	struct {
+ 		struct list_head list;
 -- 
 2.7.4
 
