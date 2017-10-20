@@ -1,7 +1,7 @@
 From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Fri, 20 Oct 2017 07:23:43 +0000
-Subject: [PATCH 09/15] drivers, net: convert masces_rx_sa.refcnt from atomic_t to refcount_t
-Message-Id: <1508484229-19706-10-git-send-email-elena.reshetova@intel.com>
+Date: Fri, 20 Oct 2017 07:23:46 +0000
+Subject: [PATCH 12/15] drivers, net, ppp: convert asyncppp.refcnt from atomic_t to refcount_t
+Message-Id: <1508484229-19706-13-git-send-email-elena.reshetova@intel.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
 In-Reply-To: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
@@ -25,7 +25,7 @@ refcount_t type and API that prevents accidental counter overflows
 and underflows. This is important since overflows and underflows
 can lead to use-after-free situation and be exploitable.
 
-The variable masces_rx_sa.refcnt is used as pure reference counter.
+The variable asyncppp.refcnt is used as pure reference counter.
 Convert it to refcount_t and fix up the operations.
 
 Suggested-by: Kees Cook <keescook@chromium.org>
@@ -33,57 +33,57 @@ Reviewed-by: David Windsor <dwindsor@gmail.com>
 Reviewed-by: Hans Liljestrand <ishkamiel@gmail.com>
 Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
 ---
- drivers/net/macsec.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ drivers/net/ppp/ppp_async.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/macsec.c b/drivers/net/macsec.c
-index ccbe4eaf..733e1c2 100644
---- a/drivers/net/macsec.c
-+++ b/drivers/net/macsec.c
-@@ -16,6 +16,7 @@
- #include <crypto/aead.h>
- #include <linux/etherdevice.h>
- #include <linux/rtnetlink.h>
-+#include <linux/refcount.h>
- #include <net/genetlink.h>
- #include <net/sock.h>
- #include <net/gro_cells.h>
-@@ -146,7 +147,7 @@ struct macsec_rx_sa {
- 	struct macsec_key key;
- 	spinlock_t lock;
- 	u32 next_pn;
--	atomic_t refcnt;
-+	refcount_t refcnt;
- 	bool active;
- 	struct macsec_rx_sa_stats __percpu *stats;
- 	struct macsec_rx_sc *sc;
-@@ -314,7 +315,7 @@ static struct macsec_rx_sa *macsec_rxsa_get(struct macsec_rx_sa __rcu *ptr)
- 	if (!sa || !sa->active)
- 		return NULL;
+diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
+index 814fd8f..1b28e6e 100644
+--- a/drivers/net/ppp/ppp_async.c
++++ b/drivers/net/ppp/ppp_async.c
+@@ -69,7 +69,7 @@ struct asyncppp {
  
--	if (!atomic_inc_not_zero(&sa->refcnt))
-+	if (!refcount_inc_not_zero(&sa->refcnt))
- 		return NULL;
+ 	struct tasklet_struct tsk;
  
- 	return sa;
-@@ -350,7 +351,7 @@ static void free_rxsa(struct rcu_head *head)
- 
- static void macsec_rxsa_put(struct macsec_rx_sa *sa)
- {
--	if (atomic_dec_and_test(&sa->refcnt))
-+	if (refcount_dec_and_test(&sa->refcnt))
- 		call_rcu(&sa->rcu, free_rxsa);
+-	atomic_t	refcnt;
++	refcount_t	refcnt;
+ 	struct semaphore dead_sem;
+ 	struct ppp_channel chan;	/* interface to generic ppp layer */
+ 	unsigned char	obuf[OBUFSIZE];
+@@ -140,14 +140,14 @@ static struct asyncppp *ap_get(struct tty_struct *tty)
+ 	read_lock(&disc_data_lock);
+ 	ap = tty->disc_data;
+ 	if (ap != NULL)
+-		atomic_inc(&ap->refcnt);
++		refcount_inc(&ap->refcnt);
+ 	read_unlock(&disc_data_lock);
+ 	return ap;
  }
  
-@@ -1339,7 +1340,7 @@ static int init_rx_sa(struct macsec_rx_sa *rx_sa, char *sak, int key_len,
+ static void ap_put(struct asyncppp *ap)
+ {
+-	if (atomic_dec_and_test(&ap->refcnt))
++	if (refcount_dec_and_test(&ap->refcnt))
+ 		up(&ap->dead_sem);
+ }
  
- 	rx_sa->active = false;
- 	rx_sa->next_pn = 1;
--	atomic_set(&rx_sa->refcnt, 1);
-+	refcount_set(&rx_sa->refcnt, 1);
- 	spin_lock_init(&rx_sa->lock);
+@@ -185,7 +185,7 @@ ppp_asynctty_open(struct tty_struct *tty)
+ 	skb_queue_head_init(&ap->rqueue);
+ 	tasklet_init(&ap->tsk, ppp_async_process, (unsigned long) ap);
  
- 	return 0;
+-	atomic_set(&ap->refcnt, 1);
++	refcount_set(&ap->refcnt, 1);
+ 	sema_init(&ap->dead_sem, 0);
+ 
+ 	ap->chan.private = ap;
+@@ -234,7 +234,7 @@ ppp_asynctty_close(struct tty_struct *tty)
+ 	 * our channel ops (i.e. ppp_async_send/ioctl) are in progress
+ 	 * by the time it returns.
+ 	 */
+-	if (!atomic_dec_and_test(&ap->refcnt))
++	if (!refcount_dec_and_test(&ap->refcnt))
+ 		down(&ap->dead_sem);
+ 	tasklet_kill(&ap->tsk);
+ 
 -- 
 2.7.4
 
