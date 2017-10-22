@@ -1,84 +1,130 @@
-From: "Reshetova, Elena" <elena.reshetova@intel.com>
-Date: Fri, 20 Oct 2017 10:37:13 +0000
+From: Sean Wang <sean.wang@mediatek.com>
+Date: Sun, 22 Oct 2017 04:06:39 +0000
 Subject: RE: [PATCH 02/15] drivers, net, ethernet: convert mtk_eth.dma_refcnt from atomic_t to refcount_t
-Message-Id: <2236FBA76BA1254E88B949DDB74E612B802B37EE@IRSMSX102.ger.corp.intel.com>
+Message-Id: <1508645199.29850.16.camel@mtkswgap22>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
          <1508484229-19706-3-git-send-email-elena.reshetova@intel.com>
- <1508486927.29850.12.camel@mtkswgap22>
-In-Reply-To: <1508486927.29850.12.camel@mtkswgap22>
+         <1508486927.29850.12.camel@mtkswgap22>
+         <2236FBA76BA1254E88B949DDB74E612B802B37EE@IRSMSX102.ger.corp.intel.com>
+In-Reply-To: <2236FBA76BA1254E88B949DDB74E612B802B37EE@IRSMSX102.ger.corp.intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Sean Wang <sean.wang-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>
-Cc: "davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-mediatek-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-mediatek-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-hams-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-hams-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-ppp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ppp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "ganeshgr-ut6Up61K2wZBDgjK7y7TUQ@public.gmane.org" <ganeshgr-ut6Up61K2wZBDgjK7y7TUQ@public.gmane.org>, "nbd-p3rKhJxN3npAfugRpC6u6w@public.gmane.org" <nbd-p3rKhJxN3npAfugRpC6u6w@public.gmane.org>, "john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org" <john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org>, "matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org" <matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org" <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org" <saeedm-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, matanb@mell
+To: "Reshetova, Elena" <elena.reshetova@intel.com>
+Cc: "davem@davemloft.net" <davem@davemloft.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-mediatek@lists.infradead.org" <linux-mediatek@lists.infradead.org>, "linux-rdma@vger.kernel.org" <linux-rdma@vger.kernel.org>, "linux-hams@vger.kernel.org" <linux-hams@vger.kernel.org>, "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "ganeshgr@chelsio.com" <ganeshgr@chelsio.com>, "nbd@openwrt.org" <nbd@openwrt.org>, "john@phrozen.org" <john@phrozen.org>, "matthias.bgg@gmail.com" <matthias.bgg@gmail.com>, "yishaih@mellanox.com" <yishaih@mellanox.com>, "saeedm@mellanox.com" <saeedm@mellanox.com>, matanb@mell
 
-PiBPbiBGcmksIDIwMTctMTAtMjAgYXQgMTA6MjMgKzAzMDAsIEVsZW5hIFJlc2hldG92YSB3cm90
-ZToNCj4gPiBhdG9taWNfdCB2YXJpYWJsZXMgYXJlIGN1cnJlbnRseSB1c2VkIHRvIGltcGxlbWVu
-dCByZWZlcmVuY2UNCj4gPiBjb3VudGVycyB3aXRoIHRoZSBmb2xsb3dpbmcgcHJvcGVydGllczoN
-Cj4gPiAgLSBjb3VudGVyIGlzIGluaXRpYWxpemVkIHRvIDEgdXNpbmcgYXRvbWljX3NldCgpDQo+
-ID4gIC0gYSByZXNvdXJjZSBpcyBmcmVlZCB1cG9uIGNvdW50ZXIgcmVhY2hpbmcgemVybw0KPiA+
-ICAtIG9uY2UgY291bnRlciByZWFjaGVzIHplcm8sIGl0cyBmdXJ0aGVyDQo+ID4gICAgaW5jcmVt
-ZW50cyBhcmVuJ3QgYWxsb3dlZA0KPiA+ICAtIGNvdW50ZXIgc2NoZW1hIHVzZXMgYmFzaWMgYXRv
-bWljIG9wZXJhdGlvbnMNCj4gPiAgICAoc2V0LCBpbmMsIGluY19ub3RfemVybywgZGVjX2FuZF90
-ZXN0LCBldGMuKQ0KPiA+DQo+ID4gU3VjaCBhdG9taWMgdmFyaWFibGVzIHNob3VsZCBiZSBjb252
-ZXJ0ZWQgdG8gYSBuZXdseSBwcm92aWRlZA0KPiA+IHJlZmNvdW50X3QgdHlwZSBhbmQgQVBJIHRo
-YXQgcHJldmVudHMgYWNjaWRlbnRhbCBjb3VudGVyIG92ZXJmbG93cw0KPiA+IGFuZCB1bmRlcmZs
-b3dzLiBUaGlzIGlzIGltcG9ydGFudCBzaW5jZSBvdmVyZmxvd3MgYW5kIHVuZGVyZmxvd3MNCj4g
-PiBjYW4gbGVhZCB0byB1c2UtYWZ0ZXItZnJlZSBzaXR1YXRpb24gYW5kIGJlIGV4cGxvaXRhYmxl
-Lg0KPiA+DQo+ID4gVGhlIHZhcmlhYmxlIG10a19ldGguZG1hX3JlZmNudCBpcyB1c2VkIGFzIHB1
-cmUgcmVmZXJlbmNlIGNvdW50ZXIuDQo+ID4gQ29udmVydCBpdCB0byByZWZjb3VudF90IGFuZCBm
-aXggdXAgdGhlIG9wZXJhdGlvbnMuDQo+ID4NCj4gPiBTdWdnZXN0ZWQtYnk6IEtlZXMgQ29vayA8
-a2Vlc2Nvb2tAY2hyb21pdW0ub3JnPg0KPiA+IFJldmlld2VkLWJ5OiBEYXZpZCBXaW5kc29yIDxk
-d2luZHNvckBnbWFpbC5jb20+DQo+ID4gUmV2aWV3ZWQtYnk6IEhhbnMgTGlsamVzdHJhbmQgPGlz
-aGthbWllbEBnbWFpbC5jb20+DQo+ID4gU2lnbmVkLW9mZi1ieTogRWxlbmEgUmVzaGV0b3ZhIDxl
-bGVuYS5yZXNoZXRvdmFAaW50ZWwuY29tPg0KPiA+IC0tLQ0KPiA+ICBkcml2ZXJzL25ldC9ldGhl
-cm5ldC9tZWRpYXRlay9tdGtfZXRoX3NvYy5jIHwgOCArKysrKy0tLQ0KPiA+ICBkcml2ZXJzL25l
-dC9ldGhlcm5ldC9tZWRpYXRlay9tdGtfZXRoX3NvYy5oIHwgNCArKystDQo+ID4gIDIgZmlsZXMg
-Y2hhbmdlZCwgOCBpbnNlcnRpb25zKCspLCA0IGRlbGV0aW9ucygtKQ0KPiA+DQo+ID4gZGlmZiAt
-LWdpdCBhL2RyaXZlcnMvbmV0L2V0aGVybmV0L21lZGlhdGVrL210a19ldGhfc29jLmMNCj4gYi9k
-cml2ZXJzL25ldC9ldGhlcm5ldC9tZWRpYXRlay9tdGtfZXRoX3NvYy5jDQo+ID4gaW5kZXggNWU4
-MWE3Mi4uNTRhZGZkOSAxMDA2NDQNCj4gPiAtLS0gYS9kcml2ZXJzL25ldC9ldGhlcm5ldC9tZWRp
-YXRlay9tdGtfZXRoX3NvYy5jDQo+ID4gKysrIGIvZHJpdmVycy9uZXQvZXRoZXJuZXQvbWVkaWF0
-ZWsvbXRrX2V0aF9zb2MuYw0KPiA+IEBAIC0xODE3LDcgKzE4MTcsNyBAQCBzdGF0aWMgaW50IG10
-a19vcGVuKHN0cnVjdCBuZXRfZGV2aWNlICpkZXYpDQo+ID4gIAlzdHJ1Y3QgbXRrX2V0aCAqZXRo
-ID0gbWFjLT5odzsNCj4gPg0KPiA+ICAJLyogd2UgcnVuIDIgbmV0ZGV2cyBvbiB0aGUgc2FtZSBk
-bWEgcmluZyBzbyB3ZSBvbmx5IGJyaW5nIGl0IHVwIG9uY2UNCj4gKi8NCj4gPiAtCWlmICghYXRv
-bWljX3JlYWQoJmV0aC0+ZG1hX3JlZmNudCkpIHsNCj4gPiArCWlmICghcmVmY291bnRfcmVhZCgm
-ZXRoLT5kbWFfcmVmY250KSkgew0KPiA+ICAJCWludCBlcnIgPSBtdGtfc3RhcnRfZG1hKGV0aCk7
-DQo+ID4NCj4gPiAgCQlpZiAoZXJyKQ0KPiA+IEBAIC0xODI3LDggKzE4MjcsMTAgQEAgc3RhdGlj
-IGludCBtdGtfb3BlbihzdHJ1Y3QgbmV0X2RldmljZSAqZGV2KQ0KPiA+ICAJCW5hcGlfZW5hYmxl
-KCZldGgtPnJ4X25hcGkpOw0KPiA+ICAJCW10a190eF9pcnFfZW5hYmxlKGV0aCwgTVRLX1RYX0RP
-TkVfSU5UKTsNCj4gPiAgCQltdGtfcnhfaXJxX2VuYWJsZShldGgsIE1US19SWF9ET05FX0lOVCk7
-DQo+ID4gKwkJcmVmY291bnRfc2V0KCZldGgtPmRtYV9yZWZjbnQsIDEpOw0KPiANCj4gdGhlIGV4
-aXN0aW5nIGRyaXZlciBzZWVtcyB0byBoYXZlIGEgbWlzc2luZyBpbml0aWFsIGF0b21pY19zZXQg
-Zm9yIHRoZQ0KPiBldGgtPmRtYV9yZWZjbnQuDQo+IA0KPiA+ICAJfQ0KPiA+IC0JYXRvbWljX2lu
-YygmZXRoLT5kbWFfcmVmY250KTsNCj4gPiArCWVsc2UNCj4gPiArCQlyZWZjb3VudF9pbmMoJmV0
-aC0+ZG1hX3JlZmNudCk7DQo+ID4NCj4gDQo+IGhvdyBhYm91dCBhZGQgdGhlIGluaXRpYWwgcmVm
-Y291bnRfc2V0IGludG8gcHJvYmUgaGFuZGxlciwgYW5kIGtlZXANCj4gbG9naWMgZWxzZSB1bmNo
-YW5nZWQgPw0KDQpTdXJlLCBJIGd1ZXNzIHlvdSBtZWFuIG10a19wcm9iZSgpIGZ1bmN0aW9uPyBJ
-IGNhbiBtb3ZlIHRoZSByZWZjb3VudF9zZXQgdG8gYmUgdGhlcmUNCmFuZCByZW1vdmUgdGhpcyBj
-aGFuZ2UuIA0KDQpTaG91bGQgSSByZXNlbmQgdGhlIG1vZGlmaWVkIHBhdGNoIHRvIHlvdSAobWF5
-YmUgdGhlbiB0d28gb2YgdGhlIGV0aGVybmV0IHBhdGNoZXMpPw0KDQpCZXN0IFJlZ2FyZHMsDQpF
-bGVuYS4NCj4gDQo+ID4gIAlwaHlfc3RhcnQoZGV2LT5waHlkZXYpOw0KPiA+ICAJbmV0aWZfc3Rh
-cnRfcXVldWUoZGV2KTsNCj4gPiBAQCAtMTg2OCw3ICsxODcwLDcgQEAgc3RhdGljIGludCBtdGtf
-c3RvcChzdHJ1Y3QgbmV0X2RldmljZSAqZGV2KQ0KPiA+ICAJcGh5X3N0b3AoZGV2LT5waHlkZXYp
-Ow0KPiA+DQo+ID4gIAkvKiBvbmx5IHNodXRkb3duIERNQSBpZiB0aGlzIGlzIHRoZSBsYXN0IHVz
-ZXIgKi8NCj4gPiAtCWlmICghYXRvbWljX2RlY19hbmRfdGVzdCgmZXRoLT5kbWFfcmVmY250KSkN
-Cj4gPiArCWlmICghcmVmY291bnRfZGVjX2FuZF90ZXN0KCZldGgtPmRtYV9yZWZjbnQpKQ0KPiA+
-ICAJCXJldHVybiAwOw0KPiA+DQo+ID4gIAltdGtfdHhfaXJxX2Rpc2FibGUoZXRoLCBNVEtfVFhf
-RE9ORV9JTlQpOw0KPiA+IGRpZmYgLS1naXQgYS9kcml2ZXJzL25ldC9ldGhlcm5ldC9tZWRpYXRl
-ay9tdGtfZXRoX3NvYy5oDQo+IGIvZHJpdmVycy9uZXQvZXRoZXJuZXQvbWVkaWF0ZWsvbXRrX2V0
-aF9zb2MuaA0KPiA+IGluZGV4IDNkM2MyNGEuLmEzYWY0NjYgMTAwNjQ0DQo+ID4gLS0tIGEvZHJp
-dmVycy9uZXQvZXRoZXJuZXQvbWVkaWF0ZWsvbXRrX2V0aF9zb2MuaA0KPiA+ICsrKyBiL2RyaXZl
-cnMvbmV0L2V0aGVybmV0L21lZGlhdGVrL210a19ldGhfc29jLmgNCj4gPiBAQCAtMTUsNiArMTUs
-OCBAQA0KPiA+ICAjaWZuZGVmIE1US19FVEhfSA0KPiA+ICAjZGVmaW5lIE1US19FVEhfSA0KPiA+
-DQo+ID4gKyNpbmNsdWRlIDxsaW51eC9yZWZjb3VudC5oPg0KPiA+ICsNCj4gPiAgI2RlZmluZSBN
-VEtfUURNQV9QQUdFX1NJWkUJMjA0OA0KPiA+ICAjZGVmaW5lCU1US19NQVhfUlhfTEVOR1RICTE1
-MzYNCj4gPiAgI2RlZmluZSBNVEtfVFhfRE1BX0JVRl9MRU4JMHgzZmZmDQo+ID4gQEAgLTYzMiw3
-ICs2MzQsNyBAQCBzdHJ1Y3QgbXRrX2V0aCB7DQo+ID4gIAlzdHJ1Y3QgcmVnbWFwCQkJKnBjdGw7
-DQo+ID4gIAl1MzIJCQkJY2hpcF9pZDsNCj4gPiAgCWJvb2wJCQkJaHdscm87DQo+ID4gLQlhdG9t
-aWNfdAkJCWRtYV9yZWZjbnQ7DQo+ID4gKwlyZWZjb3VudF90CQkJZG1hX3JlZmNudDsNCj4gPiAg
-CXN0cnVjdCBtdGtfdHhfcmluZwkJdHhfcmluZzsNCj4gPiAgCXN0cnVjdCBtdGtfcnhfcmluZw0K
-PiAJcnhfcmluZ1tNVEtfTUFYX1JYX1JJTkdfTlVNXTsNCj4gPiAgCXN0cnVjdCBtdGtfcnhfcmlu
-ZwkJcnhfcmluZ19xZG1hOw0KPiANCg0K
+On Fri, 2017-10-20 at 10:37 +0000, Reshetova, Elena wrote:
+> > On Fri, 2017-10-20 at 10:23 +0300, Elena Reshetova wrote:
+> > > atomic_t variables are currently used to implement reference
+> > > counters with the following properties:
+> > >  - counter is initialized to 1 using atomic_set()
+> > >  - a resource is freed upon counter reaching zero
+> > >  - once counter reaches zero, its further
+> > >    increments aren't allowed
+> > >  - counter schema uses basic atomic operations
+> > >    (set, inc, inc_not_zero, dec_and_test, etc.)
+> > >
+> > > Such atomic variables should be converted to a newly provided
+> > > refcount_t type and API that prevents accidental counter overflows
+> > > and underflows. This is important since overflows and underflows
+> > > can lead to use-after-free situation and be exploitable.
+> > >
+> > > The variable mtk_eth.dma_refcnt is used as pure reference counter.
+> > > Convert it to refcount_t and fix up the operations.
+> > >
+> > > Suggested-by: Kees Cook <keescook@chromium.org>
+> > > Reviewed-by: David Windsor <dwindsor@gmail.com>
+> > > Reviewed-by: Hans Liljestrand <ishkamiel@gmail.com>
+> > > Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
+> > > ---
+> > >  drivers/net/ethernet/mediatek/mtk_eth_soc.c | 8 +++++---
+> > >  drivers/net/ethernet/mediatek/mtk_eth_soc.h | 4 +++-
+> > >  2 files changed, 8 insertions(+), 4 deletions(-)
+> > >
+> > > diff --git a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+> > b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+> > > index 5e81a72..54adfd9 100644
+> > > --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+> > > +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+> > > @@ -1817,7 +1817,7 @@ static int mtk_open(struct net_device *dev)
+> > >  	struct mtk_eth *eth = mac->hw;
+> > >
+> > >  	/* we run 2 netdevs on the same dma ring so we only bring it up once
+> > */
+> > > -	if (!atomic_read(&eth->dma_refcnt)) {
+> > > +	if (!refcount_read(&eth->dma_refcnt)) {
+> > >  		int err = mtk_start_dma(eth);
+> > >
+> > >  		if (err)
+> > > @@ -1827,8 +1827,10 @@ static int mtk_open(struct net_device *dev)
+> > >  		napi_enable(&eth->rx_napi);
+> > >  		mtk_tx_irq_enable(eth, MTK_TX_DONE_INT);
+> > >  		mtk_rx_irq_enable(eth, MTK_RX_DONE_INT);
+> > > +		refcount_set(&eth->dma_refcnt, 1);
+> > 
+> > the existing driver seems to have a missing initial atomic_set for the
+> > eth->dma_refcnt.
+> > 
+> > >  	}
+> > > -	atomic_inc(&eth->dma_refcnt);
+> > > +	else
+> > > +		refcount_inc(&eth->dma_refcnt);
+> > >
+> > 
+> > how about add the initial refcount_set into probe handler, and keep
+> > logic else unchanged ?
+> 
+> Sure, I guess you mean mtk_probe() function? I can move the refcount_set to be there
+> and remove this change. 
+> 
+> Should I resend the modified patch to you (maybe then two of the ethernet patches)?
+> 
+> Best Regards,
+> Elena.
+
+The entire series has been applies to net-next, I think I can make the
+follow-ups patches relative to your work. 
+	
+	Sean
+
+> > 
+> > >  	phy_start(dev->phydev);
+> > >  	netif_start_queue(dev);
+> > > @@ -1868,7 +1870,7 @@ static int mtk_stop(struct net_device *dev)
+> > >  	phy_stop(dev->phydev);
+> > >
+> > >  	/* only shutdown DMA if this is the last user */
+> > > -	if (!atomic_dec_and_test(&eth->dma_refcnt))
+> > > +	if (!refcount_dec_and_test(&eth->dma_refcnt))
+> > >  		return 0;
+> > >
+> > >  	mtk_tx_irq_disable(eth, MTK_TX_DONE_INT);
+> > > diff --git a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+> > b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+> > > index 3d3c24a..a3af466 100644
+> > > --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+> > > +++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+> > > @@ -15,6 +15,8 @@
+> > >  #ifndef MTK_ETH_H
+> > >  #define MTK_ETH_H
+> > >
+> > > +#include <linux/refcount.h>
+> > > +
+> > >  #define MTK_QDMA_PAGE_SIZE	2048
+> > >  #define	MTK_MAX_RX_LENGTH	1536
+> > >  #define MTK_TX_DMA_BUF_LEN	0x3fff
+> > > @@ -632,7 +634,7 @@ struct mtk_eth {
+> > >  	struct regmap			*pctl;
+> > >  	u32				chip_id;
+> > >  	bool				hwlro;
+> > > -	atomic_t			dma_refcnt;
+> > > +	refcount_t			dma_refcnt;
+> > >  	struct mtk_tx_ring		tx_ring;
+> > >  	struct mtk_rx_ring
+> > 	rx_ring[MTK_MAX_RX_RING_NUM];
+> > >  	struct mtk_rx_ring		rx_ring_qdma;
+> > 
+> 
+
+
