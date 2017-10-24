@@ -1,41 +1,74 @@
-From: "Reshetova, Elena" <elena.reshetova@intel.com>
-Date: Mon, 23 Oct 2017 06:34:53 +0000
-Subject: RE: [PATCH 00/15] networking drivers refcount_t conversions
-Message-Id: <2236FBA76BA1254E88B949DDB74E612B802B41C4@IRSMSX102.ger.corp.intel.com>
+From: David Fernandez <david.fernandez.work@googlemail.com>
+Date: Tue, 24 Oct 2017 08:52:46 +0000
+Subject: kernel-mode PPPoE does not seem able to work with MPPE.
+Message-Id: <158d6529-c9ae-a991-ca47-76e558a1209c@googlemail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
- <20171022.023132.2040144937883625039.davem@davemloft.net>
-In-Reply-To: <20171022.023132.2040144937883625039.davem@davemloft.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: David Miller <davem@davemloft.net>
-Cc: "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-mediatek@lists.infradead.org" <linux-mediatek@lists.infradead.org>, "linux-rdma@vger.kernel.org" <linux-rdma@vger.kernel.org>, "linux-hams@vger.kernel.org" <linux-hams@vger.kernel.org>, "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "ganeshgr@chelsio.com" <ganeshgr@chelsio.com>, "nbd@openwrt.org" <nbd@openwrt.org>, "john@phrozen.org" <john@phrozen.org>, "sean.wang@mediatek.com" <sean.wang@mediatek.com>, "matthias.bgg@gmail.com" <matthias.bgg@gmail.com>, "yishaih@mellanox.com" <yishaih@mellanox.com>, "saeedm@mellanox.com" <saeedm@mellanox.com>, matan
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: linux-ppp@vger.kernel.org
+
+Hi there,
+
+I've tried to run MPPE in a PPPoE connection to my LEDE linux server. The log is below.
+
+Looking at wireshark traces, it seems to negotiate mschap-v2 and mppe fine, but then ppp seems not to accept encrypted payloads.
+
+Although it should not be needed, if I use the option require-mppe, pppd complains of unrecognized option.
+
+If I grep for mppe in the 2.4.7 sources downloaded by the LEDE build system, I see that it appears only in the pptp plugin, which is strange, as the mppe options are in the pppd manual page as generally available ones.
+
+I've tried to load both plugins (rp-pppoe.so and pptp.so) in an attempt to have the mppe working with require-mppe, but the result seems the same (unrecognized option).
+
+Anybody knows why it does not work as expected?
+
+(started with pppoe-server -k -C myserver -S myservice -I eth1)
 
 
-> From: Elena Reshetova <elena.reshetova@intel.com>
-> Date: Fri, 20 Oct 2017 10:23:34 +0300
-> 
-> > Note: these are the last patches related to networking that perform
-> > conversion of refcounters from atomic_t to refcount_t.
-> > In contrast to the core network refcounter conversions that
-> > were merged earlier, these are much more straightforward ones.
-> >
-> > This series, for various networking drivers, replaces atomic_t reference
-> > counters with the new refcount_t type and API (see include/linux/refcount.h).
-> > By doing this we prevent intentional or accidental
-> > underflows or overflows that can led to use-after-free vulnerabilities.
-> >
-> > The patches are fully independent and can be cherry-picked separately.
-> > Patches are based on top of net-next.
-> > If there are no objections to the patches, please merge them via respective trees
-> 
-> I've applied this entire series to net-next.  If there are any fixups or
-> follow-ups please send them as relative patches.
-> 
-> Thank you.
+Feb  2 12:05:20 LEDE pppoe-server[1580]: Session 1 created for client 7c:d3:0a:15:22:49 (10.67.15.1) on eth1 using Service-Name 'myservice'
+Feb  2 12:05:20 LEDE pppd[1580]: Plugin /etc/ppp/plugins/rp-pppoe.so loaded.
+Feb  2 12:05:20 LEDE pppd[1580]: RP-PPPoE plugin version 3.8p compiled against pppd 2.4.7
+Feb  2 12:05:20 LEDE modprobe: failed to find a module named netdev-10.0.0.1
+Feb  2 12:05:20 LEDE modprobe: failed to find a module named netdev-10.0.0.1
+Feb  2 12:05:20 LEDE pppd[1580]: pppd options in effect:
+Feb  2 12:05:20 LEDE pppd[1580]: debug#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: nodetach#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: dump#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: plugin /etc/ppp/plugins/rp-pppoe.so#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: require-mschap-v2#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: name myserver#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: eth1#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: rp_pppoe_service myservice#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: rp_pppoe_sess 1:7c:d3:0a:15:22:49#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: eth1#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: rp_pppoe_service myservice#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: rp_pppoe_sess 1:7c:d3:0a:15:22:49#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: noaccomp#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: default-asyncmap#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: mru 1492#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: mtu 1492#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: nopcomp#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: lcp-echo-failure 2#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: lcp-echo-interval 10#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: noipdefault#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: nodefaultroute#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: netmask 255.0.0.0#011#011# (from /etc/ppp/pppoe-server-options)
+Feb  2 12:05:20 LEDE pppd[1580]: 10.0.0.1:10.67.15.1#011#011# (from command line)
+Feb  2 12:05:20 LEDE pppd[1580]: pppd 2.4.7 started by root, uid 0
+Feb  2 12:05:20 LEDE pppd[1580]: Connected to 7c:d3:0a:15:22:49 via interface eth1
+Feb  2 12:05:20 LEDE pppd[1580]: Using interface ppp0
+Feb  2 12:05:20 LEDE pppd[1580]: Connect: ppp0 <--> eth1
+Feb  2 12:05:22 LEDE pppd[1580]: peer from calling number 7C:D3:0A:15:22:49 authorized
+Feb  2 12:05:22 LEDE pppd[1580]: MPPE 128-bit stateful compression enabled
+Feb  2 12:05:22 LEDE pppd[1580]: local  IP address 10.0.0.1
+Feb  2 12:05:22 LEDE pppd[1580]: remote IP address 10.67.15.1
+Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 0xc8c8 received
+Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 0x3d received
+Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 0x79 received
+Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 'PPP Muxing' (0x59) received
+Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 0x2805 received
+Feb  2 12:05:26 LEDE pppd[1580]: Unsupported protocol 0xf6a9 received
+Feb  2 12:05:29 LEDE pppd[1580]: Unsupported protocol 0x2e59 received
+...
 
-Thank you very much David! Will send fixups separately.
 
-Best Regards,
-Elena.
