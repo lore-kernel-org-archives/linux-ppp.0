@@ -1,101 +1,185 @@
-From: "Reshetova, Elena" <elena.reshetova@intel.com>
-Date: Mon, 23 Oct 2017 06:37:09 +0000
-Subject: RE: [PATCH 02/15] drivers, net, ethernet: convert mtk_eth.dma_refcnt from atomic_t to refcount_t
-Message-Id: <2236FBA76BA1254E88B949DDB74E612B802B41DE@IRSMSX102.ger.corp.intel.com>
+From: David Fernandez <david.fernandez.work@googlemail.com>
+Date: Thu, 26 Oct 2017 10:39:53 +0000
+Subject: SOLVED: kernel-mode PPPoE does not seem able to work with MPPE.
+Message-Id: <7587137d-f9ae-a4ac-843e-6688af5ff017@googlemail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
-         <1508484229-19706-3-git-send-email-elena.reshetova@intel.com>
-         <1508486927.29850.12.camel@mtkswgap22>
-         <2236FBA76BA1254E88B949DDB74E612B802B37EE@IRSMSX102.ger.corp.intel.com>
- <1508645199.29850.16.camel@mtkswgap22>
-In-Reply-To: <1508645199.29850.16.camel@mtkswgap22>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Sean Wang <sean.wang@mediatek.com>
-Cc: "davem@davemloft.net" <davem@davemloft.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-mediatek@lists.infradead.org" <linux-mediatek@lists.infradead.org>, "linux-rdma@vger.kernel.org" <linux-rdma@vger.kernel.org>, "linux-hams@vger.kernel.org" <linux-hams@vger.kernel.org>, "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "ganeshgr@chelsio.com" <ganeshgr@chelsio.com>, "nbd@openwrt.org" <nbd@openwrt.org>, "john@phrozen.org" <john@phrozen.org>, "matthias.bgg@gmail.com" <matthias.bgg@gmail.com>, "yishaih@mellanox.com" <yishaih@mellanox.com>, "saeedm@mellanox.com" <saeedm@mellanox.com>, matanb@mell
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: linux-ppp@vger.kernel.org
 
-PiBPbiBGcmksIDIwMTctMTAtMjAgYXQgMTA6MzcgKzAwMDAsIFJlc2hldG92YSwgRWxlbmEgd3Jv
-dGU6DQo+ID4gPiBPbiBGcmksIDIwMTctMTAtMjAgYXQgMTA6MjMgKzAzMDAsIEVsZW5hIFJlc2hl
-dG92YSB3cm90ZToNCj4gPiA+ID4gYXRvbWljX3QgdmFyaWFibGVzIGFyZSBjdXJyZW50bHkgdXNl
-ZCB0byBpbXBsZW1lbnQgcmVmZXJlbmNlDQo+ID4gPiA+IGNvdW50ZXJzIHdpdGggdGhlIGZvbGxv
-d2luZyBwcm9wZXJ0aWVzOg0KPiA+ID4gPiAgLSBjb3VudGVyIGlzIGluaXRpYWxpemVkIHRvIDEg
-dXNpbmcgYXRvbWljX3NldCgpDQo+ID4gPiA+ICAtIGEgcmVzb3VyY2UgaXMgZnJlZWQgdXBvbiBj
-b3VudGVyIHJlYWNoaW5nIHplcm8NCj4gPiA+ID4gIC0gb25jZSBjb3VudGVyIHJlYWNoZXMgemVy
-bywgaXRzIGZ1cnRoZXINCj4gPiA+ID4gICAgaW5jcmVtZW50cyBhcmVuJ3QgYWxsb3dlZA0KPiA+
-ID4gPiAgLSBjb3VudGVyIHNjaGVtYSB1c2VzIGJhc2ljIGF0b21pYyBvcGVyYXRpb25zDQo+ID4g
-PiA+ICAgIChzZXQsIGluYywgaW5jX25vdF96ZXJvLCBkZWNfYW5kX3Rlc3QsIGV0Yy4pDQo+ID4g
-PiA+DQo+ID4gPiA+IFN1Y2ggYXRvbWljIHZhcmlhYmxlcyBzaG91bGQgYmUgY29udmVydGVkIHRv
-IGEgbmV3bHkgcHJvdmlkZWQNCj4gPiA+ID4gcmVmY291bnRfdCB0eXBlIGFuZCBBUEkgdGhhdCBw
-cmV2ZW50cyBhY2NpZGVudGFsIGNvdW50ZXIgb3ZlcmZsb3dzDQo+ID4gPiA+IGFuZCB1bmRlcmZs
-b3dzLiBUaGlzIGlzIGltcG9ydGFudCBzaW5jZSBvdmVyZmxvd3MgYW5kIHVuZGVyZmxvd3MNCj4g
-PiA+ID4gY2FuIGxlYWQgdG8gdXNlLWFmdGVyLWZyZWUgc2l0dWF0aW9uIGFuZCBiZSBleHBsb2l0
-YWJsZS4NCj4gPiA+ID4NCj4gPiA+ID4gVGhlIHZhcmlhYmxlIG10a19ldGguZG1hX3JlZmNudCBp
-cyB1c2VkIGFzIHB1cmUgcmVmZXJlbmNlIGNvdW50ZXIuDQo+ID4gPiA+IENvbnZlcnQgaXQgdG8g
-cmVmY291bnRfdCBhbmQgZml4IHVwIHRoZSBvcGVyYXRpb25zLg0KPiA+ID4gPg0KPiA+ID4gPiBT
-dWdnZXN0ZWQtYnk6IEtlZXMgQ29vayA8a2Vlc2Nvb2tAY2hyb21pdW0ub3JnPg0KPiA+ID4gPiBS
-ZXZpZXdlZC1ieTogRGF2aWQgV2luZHNvciA8ZHdpbmRzb3JAZ21haWwuY29tPg0KPiA+ID4gPiBS
-ZXZpZXdlZC1ieTogSGFucyBMaWxqZXN0cmFuZCA8aXNoa2FtaWVsQGdtYWlsLmNvbT4NCj4gPiA+
-ID4gU2lnbmVkLW9mZi1ieTogRWxlbmEgUmVzaGV0b3ZhIDxlbGVuYS5yZXNoZXRvdmFAaW50ZWwu
-Y29tPg0KPiA+ID4gPiAtLS0NCj4gPiA+ID4gIGRyaXZlcnMvbmV0L2V0aGVybmV0L21lZGlhdGVr
-L210a19ldGhfc29jLmMgfCA4ICsrKysrLS0tDQo+ID4gPiA+ICBkcml2ZXJzL25ldC9ldGhlcm5l
-dC9tZWRpYXRlay9tdGtfZXRoX3NvYy5oIHwgNCArKystDQo+ID4gPiA+ICAyIGZpbGVzIGNoYW5n
-ZWQsIDggaW5zZXJ0aW9ucygrKSwgNCBkZWxldGlvbnMoLSkNCj4gPiA+ID4NCj4gPiA+ID4gZGlm
-ZiAtLWdpdCBhL2RyaXZlcnMvbmV0L2V0aGVybmV0L21lZGlhdGVrL210a19ldGhfc29jLmMNCj4g
-PiA+IGIvZHJpdmVycy9uZXQvZXRoZXJuZXQvbWVkaWF0ZWsvbXRrX2V0aF9zb2MuYw0KPiA+ID4g
-PiBpbmRleCA1ZTgxYTcyLi41NGFkZmQ5IDEwMDY0NA0KPiA+ID4gPiAtLS0gYS9kcml2ZXJzL25l
-dC9ldGhlcm5ldC9tZWRpYXRlay9tdGtfZXRoX3NvYy5jDQo+ID4gPiA+ICsrKyBiL2RyaXZlcnMv
-bmV0L2V0aGVybmV0L21lZGlhdGVrL210a19ldGhfc29jLmMNCj4gPiA+ID4gQEAgLTE4MTcsNyAr
-MTgxNyw3IEBAIHN0YXRpYyBpbnQgbXRrX29wZW4oc3RydWN0IG5ldF9kZXZpY2UgKmRldikNCj4g
-PiA+ID4gIAlzdHJ1Y3QgbXRrX2V0aCAqZXRoID0gbWFjLT5odzsNCj4gPiA+ID4NCj4gPiA+ID4g
-IAkvKiB3ZSBydW4gMiBuZXRkZXZzIG9uIHRoZSBzYW1lIGRtYSByaW5nIHNvIHdlIG9ubHkgYnJp
-bmcgaXQgdXAgb25jZQ0KPiA+ID4gKi8NCj4gPiA+ID4gLQlpZiAoIWF0b21pY19yZWFkKCZldGgt
-PmRtYV9yZWZjbnQpKSB7DQo+ID4gPiA+ICsJaWYgKCFyZWZjb3VudF9yZWFkKCZldGgtPmRtYV9y
-ZWZjbnQpKSB7DQo+ID4gPiA+ICAJCWludCBlcnIgPSBtdGtfc3RhcnRfZG1hKGV0aCk7DQo+ID4g
-PiA+DQo+ID4gPiA+ICAJCWlmIChlcnIpDQo+ID4gPiA+IEBAIC0xODI3LDggKzE4MjcsMTAgQEAg
-c3RhdGljIGludCBtdGtfb3BlbihzdHJ1Y3QgbmV0X2RldmljZSAqZGV2KQ0KPiA+ID4gPiAgCQlu
-YXBpX2VuYWJsZSgmZXRoLT5yeF9uYXBpKTsNCj4gPiA+ID4gIAkJbXRrX3R4X2lycV9lbmFibGUo
-ZXRoLCBNVEtfVFhfRE9ORV9JTlQpOw0KPiA+ID4gPiAgCQltdGtfcnhfaXJxX2VuYWJsZShldGgs
-IE1US19SWF9ET05FX0lOVCk7DQo+ID4gPiA+ICsJCXJlZmNvdW50X3NldCgmZXRoLT5kbWFfcmVm
-Y250LCAxKTsNCj4gPiA+DQo+ID4gPiB0aGUgZXhpc3RpbmcgZHJpdmVyIHNlZW1zIHRvIGhhdmUg
-YSBtaXNzaW5nIGluaXRpYWwgYXRvbWljX3NldCBmb3IgdGhlDQo+ID4gPiBldGgtPmRtYV9yZWZj
-bnQuDQo+ID4gPg0KPiA+ID4gPiAgCX0NCj4gPiA+ID4gLQlhdG9taWNfaW5jKCZldGgtPmRtYV9y
-ZWZjbnQpOw0KPiA+ID4gPiArCWVsc2UNCj4gPiA+ID4gKwkJcmVmY291bnRfaW5jKCZldGgtPmRt
-YV9yZWZjbnQpOw0KPiA+ID4gPg0KPiA+ID4NCj4gPiA+IGhvdyBhYm91dCBhZGQgdGhlIGluaXRp
-YWwgcmVmY291bnRfc2V0IGludG8gcHJvYmUgaGFuZGxlciwgYW5kIGtlZXANCj4gPiA+IGxvZ2lj
-IGVsc2UgdW5jaGFuZ2VkID8NCj4gPg0KPiA+IFN1cmUsIEkgZ3Vlc3MgeW91IG1lYW4gbXRrX3By
-b2JlKCkgZnVuY3Rpb24/IEkgY2FuIG1vdmUgdGhlIHJlZmNvdW50X3NldCB0byBiZQ0KPiB0aGVy
-ZQ0KPiA+IGFuZCByZW1vdmUgdGhpcyBjaGFuZ2UuDQo+ID4NCj4gPiBTaG91bGQgSSByZXNlbmQg
-dGhlIG1vZGlmaWVkIHBhdGNoIHRvIHlvdSAobWF5YmUgdGhlbiB0d28gb2YgdGhlIGV0aGVybmV0
-DQo+IHBhdGNoZXMpPw0KPiA+DQo+ID4gQmVzdCBSZWdhcmRzLA0KPiA+IEVsZW5hLg0KPiANCj4g
-VGhlIGVudGlyZSBzZXJpZXMgaGFzIGJlZW4gYXBwbGllcyB0byBuZXQtbmV4dCwgSSB0aGluayBJ
-IGNhbiBtYWtlIHRoZQ0KPiBmb2xsb3ctdXBzIHBhdGNoZXMgcmVsYXRpdmUgdG8geW91ciB3b3Jr
-Lg0KPiANCj4gCVNlYW4NCg0KWWVzLCBJIGp1c3Qgbm90aWNlZCB0aGF0IERhdmlkIHRvb2sgdGhl
-bSBhbGwuIA0KU3VyZSwgaWYgeW91IHdhbnQgdG8gc2VuZCB0aGUgZm9sbG93IHVwIHlvdXJzZWxm
-LCBJIGNlcnRhaW5seSB3b3VsZCBub3QgbWluZCwgDQpJIHN0aWxsIGhhdmUgbWFueSBvZiB0aGVz
-ZSByZWNvdW50IHBhdGNoZXMgZm9yIGRpZmZlcmVudCBwYXJ0cyBvZiBrZXJuZWwgOikNCg0KVGhh
-bmsgeW91IQ0KDQpCZXN0IFJlZ2FyZHMsDQpFbGVuYS4NCj4gDQo+ID4gPg0KPiA+ID4gPiAgCXBo
-eV9zdGFydChkZXYtPnBoeWRldik7DQo+ID4gPiA+ICAJbmV0aWZfc3RhcnRfcXVldWUoZGV2KTsN
-Cj4gPiA+ID4gQEAgLTE4NjgsNyArMTg3MCw3IEBAIHN0YXRpYyBpbnQgbXRrX3N0b3Aoc3RydWN0
-IG5ldF9kZXZpY2UgKmRldikNCj4gPiA+ID4gIAlwaHlfc3RvcChkZXYtPnBoeWRldik7DQo+ID4g
-PiA+DQo+ID4gPiA+ICAJLyogb25seSBzaHV0ZG93biBETUEgaWYgdGhpcyBpcyB0aGUgbGFzdCB1
-c2VyICovDQo+ID4gPiA+IC0JaWYgKCFhdG9taWNfZGVjX2FuZF90ZXN0KCZldGgtPmRtYV9yZWZj
-bnQpKQ0KPiA+ID4gPiArCWlmICghcmVmY291bnRfZGVjX2FuZF90ZXN0KCZldGgtPmRtYV9yZWZj
-bnQpKQ0KPiA+ID4gPiAgCQlyZXR1cm4gMDsNCj4gPiA+ID4NCj4gPiA+ID4gIAltdGtfdHhfaXJx
-X2Rpc2FibGUoZXRoLCBNVEtfVFhfRE9ORV9JTlQpOw0KPiA+ID4gPiBkaWZmIC0tZ2l0IGEvZHJp
-dmVycy9uZXQvZXRoZXJuZXQvbWVkaWF0ZWsvbXRrX2V0aF9zb2MuaA0KPiA+ID4gYi9kcml2ZXJz
-L25ldC9ldGhlcm5ldC9tZWRpYXRlay9tdGtfZXRoX3NvYy5oDQo+ID4gPiA+IGluZGV4IDNkM2My
-NGEuLmEzYWY0NjYgMTAwNjQ0DQo+ID4gPiA+IC0tLSBhL2RyaXZlcnMvbmV0L2V0aGVybmV0L21l
-ZGlhdGVrL210a19ldGhfc29jLmgNCj4gPiA+ID4gKysrIGIvZHJpdmVycy9uZXQvZXRoZXJuZXQv
-bWVkaWF0ZWsvbXRrX2V0aF9zb2MuaA0KPiA+ID4gPiBAQCAtMTUsNiArMTUsOCBAQA0KPiA+ID4g
-PiAgI2lmbmRlZiBNVEtfRVRIX0gNCj4gPiA+ID4gICNkZWZpbmUgTVRLX0VUSF9IDQo+ID4gPiA+
-DQo+ID4gPiA+ICsjaW5jbHVkZSA8bGludXgvcmVmY291bnQuaD4NCj4gPiA+ID4gKw0KPiA+ID4g
-PiAgI2RlZmluZSBNVEtfUURNQV9QQUdFX1NJWkUJMjA0OA0KPiA+ID4gPiAgI2RlZmluZQlNVEtf
-TUFYX1JYX0xFTkdUSAkxNTM2DQo+ID4gPiA+ICAjZGVmaW5lIE1US19UWF9ETUFfQlVGX0xFTgkw
-eDNmZmYNCj4gPiA+ID4gQEAgLTYzMiw3ICs2MzQsNyBAQCBzdHJ1Y3QgbXRrX2V0aCB7DQo+ID4g
-PiA+ICAJc3RydWN0IHJlZ21hcAkJCSpwY3RsOw0KPiA+ID4gPiAgCXUzMgkJCQljaGlwX2lkOw0K
-PiA+ID4gPiAgCWJvb2wJCQkJaHdscm87DQo+ID4gPiA+IC0JYXRvbWljX3QJCQlkbWFfcmVmY250
-Ow0KPiA+ID4gPiArCXJlZmNvdW50X3QJCQlkbWFfcmVmY250Ow0KPiA+ID4gPiAgCXN0cnVjdCBt
-dGtfdHhfcmluZwkJdHhfcmluZzsNCj4gPiA+ID4gIAlzdHJ1Y3QgbXRrX3J4X3JpbmcNCj4gPiA+
-IAlyeF9yaW5nW01US19NQVhfUlhfUklOR19OVU1dOw0KPiA+ID4gPiAgCXN0cnVjdCBtdGtfcnhf
-cmluZwkJcnhfcmluZ19xZG1hOw0KPiA+ID4NCj4gPg0KPiANCg0K
+On 25/10/17 18:45, David Fernandez wrote:
+> On 24/10/17 13:09, David Fernandez wrote:
+>> On 24/10/17 09:52, David Fernandez wrote:
+>>> Hi there,
+>>>
+>>> I've tried to run MPPE in a PPPoE connection to my LEDE linux 
+>>> server. The log is below.
+>>>
+>>> Looking at wireshark traces, it seems to negotiate mschap-v2 and 
+>>> mppe fine, but then ppp seems not to accept encrypted payloads.
+>>>
+>>
+>>> Although it should not be needed, if I use the option require-mppe, 
+>>> pppd complains of unrecognized option.
+>>>
+>>> If I grep for mppe in the 2.4.7 sources downloaded by the LEDE build 
+>>> system, I see that it appears only in the pptp plugin, which is 
+>>> strange, as the mppe options are in the pppd manual page as 
+>>> generally available ones.
+>>>
+>>> I've tried to load both plugins (rp-pppoe.so and pptp.so) in an 
+>>> attempt to have the mppe working with require-mppe, but the result 
+>>> seems the same (unrecognized option).
+>>>
+>> On this bit, looking at the sources I found that the way it works is 
+>> by making the option like:
+>> mppe require
+>> I guess that this should be updated in the manual...
+>> With it I get this logging line:
+>> Feb  3 09:09:16 LEDE pppd[3307]: mppe xxx # [don't know how to print 
+>> value]#011#011# (from /etc/ppp/pppoe-server-options)
+>> Everything else is the same.
+>> So I guess this is some kind of bug in pppd/ccp.c?
+>>
+>>> Anybody knows why it does not work as expected?
+>>>
+>>> (started with pppoe-server -k -C myserver -S myservice -I eth1)
+>>>
+>>>
+>>> Feb  2 12:05:20 LEDE pppoe-server[1580]: Session 1 created for 
+>>> client 7c:d3:0a:15:22:49 (10.67.15.1) on eth1 using Service-Name 
+>>> 'myservice'
+>>> Feb  2 12:05:20 LEDE pppd[1580]: Plugin /etc/ppp/plugins/rp-pppoe.so 
+>>> loaded.
+>>> Feb  2 12:05:20 LEDE pppd[1580]: RP-PPPoE plugin version 3.8p 
+>>> compiled against pppd 2.4.7
+>>> Feb  2 12:05:20 LEDE modprobe: failed to find a module named 
+>>> netdev-10.0.0.1
+>>> Feb  2 12:05:20 LEDE modprobe: failed to find a module named 
+>>> netdev-10.0.0.1
+>>> Feb  2 12:05:20 LEDE pppd[1580]: pppd options in effect:
+>>> Feb  2 12:05:20 LEDE pppd[1580]: debug#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: nodetach#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: dump#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: plugin 
+>>> /etc/ppp/plugins/rp-pppoe.so#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: require-mschap-v2#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: name myserver#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: eth1#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: rp_pppoe_service myservice#011#011# 
+>>> (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: rp_pppoe_sess 
+>>> 1:7c:d3:0a:15:22:49#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: eth1#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: rp_pppoe_service myservice#011#011# 
+>>> (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: rp_pppoe_sess 
+>>> 1:7c:d3:0a:15:22:49#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: noaccomp#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: default-asyncmap#011#011# (from 
+>>> command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: mru 1492#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: mtu 1492#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: nopcomp#011#011# (from command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: lcp-echo-failure 2#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: lcp-echo-interval 10#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: noipdefault#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: nodefaultroute#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: netmask 255.0.0.0#011#011# (from 
+>>> /etc/ppp/pppoe-server-options)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: 10.0.0.1:10.67.15.1#011#011# (from 
+>>> command line)
+>>> Feb  2 12:05:20 LEDE pppd[1580]: pppd 2.4.7 started by root, uid 0
+>>> Feb  2 12:05:20 LEDE pppd[1580]: Connected to 7c:d3:0a:15:22:49 via 
+>>> interface eth1
+>>> Feb  2 12:05:20 LEDE pppd[1580]: Using interface ppp0
+>>> Feb  2 12:05:20 LEDE pppd[1580]: Connect: ppp0 <--> eth1
+>>> Feb  2 12:05:22 LEDE pppd[1580]: peer from calling number 
+>>> 7C:D3:0A:15:22:49 authorized
+>>> Feb  2 12:05:22 LEDE pppd[1580]: MPPE 128-bit stateful compression 
+>>> enabled
+>>> Feb  2 12:05:22 LEDE pppd[1580]: local  IP address 10.0.0.1
+>>> Feb  2 12:05:22 LEDE pppd[1580]: remote IP address 10.67.15.1
+>>> Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 0xc8c8 received
+>>> Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 0x3d received
+>>> Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 0x79 received
+>>> Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 'PPP Muxing' 
+>>> (0x59) received
+>>> Feb  2 12:05:22 LEDE pppd[1580]: Unsupported protocol 0x2805 received
+>>> Feb  2 12:05:26 LEDE pppd[1580]: Unsupported protocol 0xf6a9 received
+>>> Feb  2 12:05:29 LEDE pppd[1580]: Unsupported protocol 0x2e59 received
+>>> ...
+>>
+> Seems that this problem was kind of reported here as this:
+>
+> I Found it originally here: 
+> https://www.spinics.net/lists/linux-ppp/msg01106.html
+>
+> It is indeed in the list here: 
+> https://marc.info/?l=linux-ppp&m9753728204109&w=2
+>
+> Seems that it does solve two problems, but not all of them... Anyway, 
+> it seems that it is an olde kernel version problem, as I'm using 
+> kernel 4.4 and this might be fixed entirely in modern kernels...
+>
+> I'll check what the latest kernel ppp_mppe.c looks like.
+
+Right, seems that the latest kernel has not bother with this at all (at 
+least in kernel.org).
+
+The two patches proposed in the links above are basically all that is 
+needed AFAICS, only that the first one seems wrong in using only ccount 
+to avoid the first re-rekeying, as ccount will wrap around to 0 every 
+now and then, so this is the patch that works for me (applied to LEDE 
+kernel 4.4.45, I guess it will apply fine to later kernels, only the 
+line numbers might be different).
+
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -521,11 +521,12 @@ mppe_decompress(void *arg, unsigned char
+                 state->sanity_errors += 100;
+                 goto sanity_error;
+         }
+-       if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed) {
++       if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed) {/*
+                 printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit not 
+set on "
+                        "flag packet!\n", state->unit);
+                 state->sanity_errors += 100;
+-               goto sanity_error;
++               goto sanity_error;*/
++                flushed = 1;
+         }
+
+         /*
+@@ -586,8 +587,11 @@ mppe_decompress(void *arg, unsigned char
+                                  */
+                         }
+                 }
+-               if (flushed)
++               if (flushed && (state->bits & 1) != 0)
+                         mppe_rekey(state, 0);
++                else
++                if ((state->bits & 1) = 0 && ccount = 0 && flushed)
++                  state->bits |= 1;
+         }
+
+         /*
+
+Basically use the state->bits & 1 as a start flag, given that they are 
+not used at all in the decompressor, is a way of quickly doing it with 
+minimal changes... Feel free to add a proper boolean to the state 
+structure and make it more obvious, but with thos two things I get it 
+working just fine for a long while now.
+
+Regards
+
