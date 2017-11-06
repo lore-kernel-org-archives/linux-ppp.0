@@ -1,78 +1,36 @@
-From: David Fernandez <david.fernandez.work@googlemail.com>
-Date: Mon, 06 Nov 2017 14:59:24 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 06 Nov 2017 18:31:57 +0000
 Subject: Re: SOLVED: kernel-mode PPPoE does not seem able to work with MPPE.
-Message-Id: <65b0fb13-a602-4370-2ae7-5fe78a7d7560@googlemail.com>
+Message-Id: <1ada5160-5fbe-f2b6-010b-db14e6d13bad@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <7587137d-f9ae-a4ac-843e-6688af5ff017@googlemail.com>
 In-Reply-To: <7587137d-f9ae-a4ac-843e-6688af5ff017@googlemail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On 06/11/17 14:19, Charlie Brady wrote:
-> Why would you do this, rather than just delete the code you are removing?
->
->> --- a/drivers/net/ppp/ppp_mppe.c
->> +++ b/drivers/net/ppp/ppp_mppe.c
->> @@ -521,11 +521,12 @@ mppe_decompress(void *arg, unsigned char
->>                  state->sanity_errors += 100;
->>                  goto sanity_error;
->>          }
->> -       if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed) {
->> +       if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed)
->> {/*
->>                  printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED
->> bit not set on "
->>                         "flag packet!\n", state->unit);
->>                  state->sanity_errors += 100;
->> -               goto sanity_error;
->> +               goto sanity_error;*/
->> +                flushed = 1;
->>          }
+On 11/06/17 09:59, David Fernandez wrote:
+> Yes, the code could be deleted, I just wanted somebody to check and say
+> that there is no point in yet putting a warning in the log for this...
 
-Hi Charlie,
+RFC3078 7.2 says that the receiver changes its key on receiving a "flag"
+packet (where (count&0xff) = 0xff).  It says nothing about the
+transmitter setting the FLUSHED flag in this case.  That flag is used
+*only* when a sequence error is detected.
 
-Yes, the code could be deleted, I just wanted somebody to check and say 
-that there is no point in yet putting a warning in the log for this...
+So I think the original code was wrong (it should not have insisted on
+the flag being set), and the new code without the message and without
+the error handling is correct.
 
-Definitely you could do:
+It _might_ be a good idea to check and at least comment the sending
+code.  It should not be setting the FLUSHED flag merely because it is
+sending a flag packet ... but, for compatibility with broken Linux MPPE
+implementations already deployed, it might have to continue doing that.
 
---- a/drivers/net/ppp/ppp_mppe.c
-+++ b/drivers/net/ppp/ppp_mppe.c
-@@ -521,11 +521,7 @@ mppe_decompress(void *arg, unsigned char
-                 state->sanity_errors += 100;
-                 goto sanity_error;
-         }
--       if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed) {
-+       if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed)
--               printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit not 
-set on "
--                      "flag packet!\n", state->unit);
--               state->sanity_errors += 100;
--               goto sanity_error;
-+               flushed = 1;
--       }
+It's a shame documents like this don't go through WG review with
+multiple independent implementations.  This is the sort of spec
+misinterpretation that a good open review is designed to catch.
 
-         /*
-@@ -586,8 +587,9 @@ mppe_decompress(void *arg, unsigned char
-                                  */
-                         }
-                 }
--               if (flushed)
-+               if (flushed && (state->bits & 1) != 0)
-                         mppe_rekey(state, 0);
-+               state->bits |= 1;
-         }
-
-         /*
-
-Would be good to have this patch in the current and previous kernel 
-versions, as it seems to apply cleanly enough.
-
-If there is anything I can do to prepare a more formal patch, let me 
-know. Specially some formating and changelog things that I am not aware of.
-
-Regards
-
-
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
