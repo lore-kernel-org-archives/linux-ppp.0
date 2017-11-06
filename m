@@ -1,25 +1,41 @@
-From: David Miller <davem@davemloft.net>
-Date: Wed, 01 Nov 2017 12:21:52 +0000
-Subject: Re: [PATCH net-next] ppp: Destroy the mutex when cleanup
-Message-Id: <20171101.212152.1217584341582256505.davem@davemloft.net>
+From: Vasily Averin <vvs@virtuozzo.com>
+Date: Mon, 06 Nov 2017 13:23:51 +0000
+Subject: [PATCH v3 04/21] ppp: exit_net cleanup checks added
+Message-Id: <5e005fe5-e8b2-eee8-b185-a9e5fc1d7996@virtuozzo.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1509445537-39319-1-git-send-email-gfree.wind@vip.163.com>
-In-Reply-To: <1509445537-39319-1-git-send-email-gfree.wind@vip.163.com>
+References: <4fdc4264-e338-6ee8-a662-7d98b45733a1@virtuozzo.com>
+In-Reply-To: <4fdc4264-e338-6ee8-a662-7d98b45733a1@virtuozzo.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: gfree.wind@vip.163.com
-Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: Linux Kernel Network Developers <netdev@vger.kernel.org>
+Cc: linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
 
-From: gfree.wind@vip.163.com
-Date: Tue, 31 Oct 2017 18:25:37 +0800
+Be sure that lists initialized in net_init hook were return
+to initial state.
 
-> From: Gao Feng <gfree.wind@vip.163.com>
-> 
-> The mutex_destroy only makes sense when enable DEBUG_MUTEX. For the
-> good readbility, it's better to invoke it in exit func when the init
-> func invokes mutex_init.
-> 
-> Signed-off-by: Gao Feng <gfree.wind@vip.163.com>
+Signed-off-by: Vasily Averin <vvs@virtuozzo.com>
+---
+ drivers/net/ppp/ppp_generic.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-Applied.
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index e365866..c0861d1 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -960,6 +960,12 @@ static __net_exit void ppp_exit_net(struct net *net)
+ 	rtnl_unlock();
+ 
+ 	idr_destroy(&pn->units_idr);
++	WARN_ONCE(!list_empty(&pn->all_channels),
++		  "net %x %s: all_channels list is not empty\n",
++		  net->ns.inum, __func__);
++	WARN_ONCE(!list_empty(&pn->new_channels),
++		  "net %x %s: new_channels list is not empty\n",
++		  net->ns.inum, __func__);
+ }
+ 
+ static struct pernet_operations ppp_net_ops = {
+-- 
+2.7.4
+
