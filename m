@@ -1,103 +1,63 @@
-From: Elena Reshetova <elena.reshetova@intel.com>
-Date: Fri, 20 Oct 2017 07:23:37 +0000
-Subject: [PATCH 03/15] drivers, net, mlx4: convert mlx4_cq.refcount from atomic_t to refcount_t
-Message-Id: <1508484229-19706-4-git-send-email-elena.reshetova@intel.com>
+From: David Fernandez <david.fernandez.work@googlemail.com>
+Date: Mon, 06 Nov 2017 10:55:11 +0000
+Subject: Re: SOLVED: kernel-mode PPPoE does not seem able to work with MPPE.
+Message-Id: <ad4df999-ed6b-7981-b3e4-608e2d9aad69@googlemail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
-In-Reply-To: <1508484229-19706-1-git-send-email-elena.reshetova@intel.com>
+References: <7587137d-f9ae-a4ac-843e-6688af5ff017@googlemail.com>
+In-Reply-To: <7587137d-f9ae-a4ac-843e-6688af5ff017@googlemail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: davem@davemloft.net
-Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-mediatek@lists.infradead.org, linux-rdma@vger.kernel.org, linux-hams@vger.kernel.org, linux-ppp@vger.kernel.org, ganeshgr@chelsio.com, nbd@openwrt.org, john@phrozen.org, sean.wang@mediatek.com, matthias.bgg@gmail.com, yishaih@mellanox.com, saeedm@mellanox.com, matanb@mellanox.com, tariqt@mellanox.com, leonro@mellanox.com, ajk@comnets.uni-bremen.de, paulus@samba.org, zbr@ioremap.net, peterz@infradead.org, keescook@chromium.org, Elena Reshetova <elena.reshetova@intel.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: linux-ppp@vger.kernel.org
 
-atomic_t variables are currently used to implement reference
-counters with the following properties:
- - counter is initialized to 1 using atomic_set()
- - a resource is freed upon counter reaching zero
- - once counter reaches zero, its further
-   increments aren't allowed
- - counter schema uses basic atomic operations
-   (set, inc, inc_not_zero, dec_and_test, etc.)
+On 26/10/17 11:39, David Fernandez wrote:
+> Right, seems that the latest kernel has not bother with this at all 
+> (at least in kernel.org).
+>
+> The two patches proposed in the links above are basically all that is 
+> needed AFAICS, only that the first one seems wrong in using only 
+> ccount to avoid the first re-rekeying, as ccount will wrap around to 0 
+> every now and then, so this is the patch that works for me (applied to 
+> LEDE kernel 4.4.45, I guess it will apply fine to later kernels, only 
+> the line numbers might be different).
+>
+> --- a/drivers/net/ppp/ppp_mppe.c
+> +++ b/drivers/net/ppp/ppp_mppe.c
+> @@ -521,11 +521,12 @@ mppe_decompress(void *arg, unsigned char
+>                 state->sanity_errors += 100;
+>                 goto sanity_error;
+>         }
+> -       if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed) {
+> +       if (state->stateful && ((ccount & 0xff) = 0xff) && !flushed) {/*
+>                 printk(KERN_DEBUG "mppe_decompress[%d]: FLUSHED bit 
+> not set on "
+>                        "flag packet!\n", state->unit);
+>                 state->sanity_errors += 100;
+> -               goto sanity_error;
+> +               goto sanity_error;*/
+> +                flushed = 1;
+>         }
+>
+>         /*
+> @@ -586,8 +587,9 @@ mppe_decompress(void *arg, unsigned char
+>                                  */
+>                         }
+>                 }
+> -               if (flushed)
+> +               if (flushed && (state->bits & 1) != 0)
+>                         mppe_rekey(state, 0);
+> +               state->bits |= 1;
+>         }
+>
+>         /*
+>
+Fixed to make it work for both linux and windows.
+> Basically use the state->bits & 1 as a start flag, given that they are 
+> not used at all in the decompressor, is a way of quickly doing it with 
+> minimal changes... Feel free to add a proper boolean to the state 
+> structure and make it more obvious, but with thos two things I get it 
+> working just fine for a long while now.
+>
+> Regards
 
-Such atomic variables should be converted to a newly provided
-refcount_t type and API that prevents accidental counter overflows
-and underflows. This is important since overflows and underflows
-can lead to use-after-free situation and be exploitable.
-
-The variable mlx4_cq.refcount is used as pure reference counter.
-Convert it to refcount_t and fix up the operations.
-
-Suggested-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: David Windsor <dwindsor@gmail.com>
-Reviewed-by: Hans Liljestrand <ishkamiel@gmail.com>
-Signed-off-by: Elena Reshetova <elena.reshetova@intel.com>
----
- drivers/net/ethernet/mellanox/mlx4/cq.c | 8 ++++----
- include/linux/mlx4/device.h             | 4 ++--
- 2 files changed, 6 insertions(+), 6 deletions(-)
-
-diff --git a/drivers/net/ethernet/mellanox/mlx4/cq.c b/drivers/net/ethernet/mellanox/mlx4/cq.c
-index 72eb50c..d8e9a32 100644
---- a/drivers/net/ethernet/mellanox/mlx4/cq.c
-+++ b/drivers/net/ethernet/mellanox/mlx4/cq.c
-@@ -69,7 +69,7 @@ void mlx4_cq_tasklet_cb(unsigned long data)
- 	list_for_each_entry_safe(mcq, temp, &ctx->process_list, tasklet_ctx.list) {
- 		list_del_init(&mcq->tasklet_ctx.list);
- 		mcq->tasklet_ctx.comp(mcq);
--		if (atomic_dec_and_test(&mcq->refcount))
-+		if (refcount_dec_and_test(&mcq->refcount))
- 			complete(&mcq->free);
- 		if (time_after(jiffies, end))
- 			break;
-@@ -92,7 +92,7 @@ static void mlx4_add_cq_to_tasklet(struct mlx4_cq *cq)
- 	 * still arrive.
- 	 */
- 	if (list_empty_careful(&cq->tasklet_ctx.list)) {
--		atomic_inc(&cq->refcount);
-+		refcount_inc(&cq->refcount);
- 		kick = list_empty(&tasklet_ctx->list);
- 		list_add_tail(&cq->tasklet_ctx.list, &tasklet_ctx->list);
- 		if (kick)
-@@ -344,7 +344,7 @@ int mlx4_cq_alloc(struct mlx4_dev *dev, int nent,
- 	cq->cons_index = 0;
- 	cq->arm_sn     = 1;
- 	cq->uar        = uar;
--	atomic_set(&cq->refcount, 1);
-+	refcount_set(&cq->refcount, 1);
- 	init_completion(&cq->free);
- 	cq->comp = mlx4_add_cq_to_tasklet;
- 	cq->tasklet_ctx.priv @@ -386,7 +386,7 @@ void mlx4_cq_free(struct mlx4_dev *dev, struct mlx4_cq *cq)
- 	    priv->eq_table.eq[MLX4_EQ_ASYNC].irq)
- 		synchronize_irq(priv->eq_table.eq[MLX4_EQ_ASYNC].irq);
- 
--	if (atomic_dec_and_test(&cq->refcount))
-+	if (refcount_dec_and_test(&cq->refcount))
- 		complete(&cq->free);
- 	wait_for_completion(&cq->free);
- 
-diff --git a/include/linux/mlx4/device.h b/include/linux/mlx4/device.h
-index b0a57e0..daac2e3 100644
---- a/include/linux/mlx4/device.h
-+++ b/include/linux/mlx4/device.h
-@@ -40,7 +40,7 @@
- #include <linux/cpu_rmap.h>
- #include <linux/crash_dump.h>
- 
--#include <linux/atomic.h>
-+#include <linux/refcount.h>
- 
- #include <linux/timecounter.h>
- 
-@@ -751,7 +751,7 @@ struct mlx4_cq {
- 	int			cqn;
- 	unsigned		vector;
- 
--	atomic_t		refcount;
-+	refcount_t		refcount;
- 	struct completion	free;
- 	struct {
- 		struct list_head list;
--- 
-2.7.4
 
