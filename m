@@ -1,45 +1,50 @@
-From: David Miller <davem@davemloft.net>
-Date: Tue, 14 Nov 2017 06:47:20 +0000
-Subject: Re: [PATCH v5 00/13] exit_net checks for objects initialized in net_init hook
-Message-Id: <20171114.154720.1071922306148362515.davem@davemloft.net>
+From: =?UTF-8?Q?L=c3=a9o_Serre?= <leo@lstronic.com>
+Date: Tue, 07 Nov 2017 15:11:03 +0000
+Subject: Reset modem while using pppd
+Message-Id: <6661f19d-1804-b6e1-bd98-9503bad6b12b@lstronic.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <cb06dace-88a8-fecf-92ad-02920920a0d3@virtuozzo.com>
-        <a09a38cb-4aa3-ace5-3e0f-759d14cdef71@virtuozzo.com>
-In-Reply-To: <a09a38cb-4aa3-ace5-3e0f-759d14cdef71@virtuozzo.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: vvs@virtuozzo.com
-Cc: netdev@vger.kernel.org, steffen.klassert@secunet.com, linux-nfs@vger.kernel.org, trond.myklebust@primarydata.com, anna.schumaker@netapp.com, courmisch@gmail.com, linux-ppp@vger.kernel.org, paulus@samba.org, herbert@gondor.apana.org.au, yoshfuji@linux-ipv6.org
+Content-Type: text/plain; charset="windows-1254"
+Content-Transfer-Encoding: base64
+To: linux-ppp@vger.kernel.org
 
-From: Vasily Averin <vvs@virtuozzo.com>
-Date: Sun, 12 Nov 2017 22:26:44 +0300
-
-> OpenVz kernel team have a long history of fighting against namespace-related bugs,
-> some of them could be prevented by using simple checks described below.
-> 
-> One of typical errors is related to live cycle of namespaces:
-> usually objects created for some namespace should not live longer than namespace itself.
-> 
-> Such kind of issues can be invisible on usual systems where additional namespaces
-> are not used, because initial namespaces usually lives forever and never destroyed.
-> 
-> However in systems with namespaces it can lead to memory leaks or to use-after-free.
-> Both of them are critical for systems with running containers.
-> As you knows it's quite hard to find the reason of such issues,
-> especially in rarely-triggered scenarios on production nodes on default kernels
-> without specially enabled debug settings. Any additional hints can be useful here.
-> 
-> This patch set should help to detect some of these issues.
-> It is based on assumption that objects initialized in init hook of pernet_operations
-> should return to initial state until end of exit hook.
-> 
-> Many drivers and subsystems already have such checks, however I've found number
-> of places where list_empty check would be useful at least as smoke test.
-> 
-> These checks are useful for long-term stable kernels,
-> they allows to detect problems related to incomplete or incorrectly
-> backported patches.
-
-All applied to net-next except patch #9 and #10 which need to go via the
-NFS maintainer.
+SGVsbG8gd29ybGQsCgpJJ20gdXNpbmcgcHBwZCB3aXRoIGEgU0FSQS1VMjAxIDNHKyBtb2RlbSAo
+ZnJvbSB1LWJsb3gpLgpJdCB3b3JrcyBmaW5lIG5vcm1hbGx5LCBleGNlcHQgaW4gdGhhdCBjYXNl
+OgoKICAxLiBwcHBkIGlzIGNvbm5lY3RlZCB0byB0aGUgbW9kZW0gY29ycmVjdGx5CiAgMi4gcHBw
+ZCBpcyBzdG9wcGVkIHVzaW5nIHBvZmYKICAzLiBUaGUgY2hhdCBzY3JpcHQgaXMgY2hhbmdlZCBi
+eSB0aGUgdXNlcgogIDQuIHBwcGQgaXMgc3RhcnRlZCB1c2luZyBwb24KClRoYXQgaW50cm9kdWNl
+cyBhbiBlcnJvciwgc2luY2UgdGhlIG1vZGVtIHdvbid0IGFjY2VwdCBhIG5ldyBQSU4gY29kZSBh
+cyAKaXQgaXMgYWxyZWFkeSBjb25uZWN0ZWQgY29ycmVjdGx5LgoKVGhlIHdheSB0byBmaXggdGhh
+dCBpcyB0byBzZW5kIGEgU1cgcmVzZXQgQVQgY29tbWFuZCAnQVQrQ0ZVTj0xLDEnIApiZXR3ZWVu
+IHN0ZXBzIDIgYW5kIDQuClRoYXQncyB3aHkgSSBpbnRyb2R1Y2VkIGEgbmV3IGRpc2Nvbm5lY3Qg
+Y2hhdCBzY3JpcHQgd2hpY2ggY29uc2lzdHMgb2Y6CgogICAgIEFCT1JUICdCVVNZJwogICAgIEFC
+T1JUICdOTyBDQVJSSUVSJwogICAgIEFCT1JUICdWT0lDRScKICAgICBBQk9SVCAnTk8gRElBTFRP
+TkUnCiAgICAgQUJPUlQgJ05PIERJQUwgVE9ORScKICAgICBBQk9SVCAnTk8gQU5TV0VSJwogICAg
+IEFCT1JUICdERUxBWUVEJwogICAgIFRJTUVPVVQgMTgwCiAgICAgJ09LJyAnQVQrQ0ZVTj0xLDEn
+CgpJIGhhdmUgdGhlIGZvbGxvd2luZyBvdXRwdXQ6CgpKYW4gIDEgMDI6MjQ6NDcgZG9tZXJhZGlv
+IGxvY2FsMi5pbmZvIGNoYXRbNTY4XTogYWJvcnQgb24gKEJVU1kpCkphbiAgMSAwMjoyNDo0NyBk
+b21lcmFkaW8gbG9jYWwyLmluZm8gY2hhdFs1NjhdOiBhYm9ydCBvbiAoTk8gQ0FSUklFUikKSmFu
+ICAxIDAyOjI0OjQ3IGRvbWVyYWRpbyBsb2NhbDIuaW5mbyBjaGF0WzU2OF06IGFib3J0IG9uIChW
+T0lDRSkKSmFuICAxIDAyOjI0OjQ3IGRvbWVyYWRpbyBsb2NhbDIuaW5mbyBjaGF0WzU2OF06IGFi
+b3J0IG9uIChOTyBESUFMVE9ORSkKSmFuICAxIDAyOjI0OjQ3IGRvbWVyYWRpbyBsb2NhbDIuaW5m
+byBjaGF0WzU2OF06IGFib3J0IG9uIChOTyBESUFMIFRPTkUpCkphbiAgMSAwMjoyNDo0NyBkb21l
+cmFkaW8gbG9jYWwyLmluZm8gY2hhdFs1NjhdOiBhYm9ydCBvbiAoTk8gQU5TV0VSKQpKYW4gIDEg
+MDI6MjQ6NDcgZG9tZXJhZGlvIGxvY2FsMi5pbmZvIGNoYXRbNTY4XTogYWJvcnQgb24gKERFTEFZ
+RUQpCkphbiAgMSAwMjoyNDo0NyBkb21lcmFkaW8gbG9jYWwyLmluZm8gY2hhdFs1NjhdOiB0aW1l
+b3V0IHNldCB0byAxODAgc2Vjb25kcwpKYW4gIDEgMDI6MjQ6NDcgZG9tZXJhZGlvIGxvY2FsMi5p
+bmZvIGNoYXRbNTY4XTogZXhwZWN0IChPSykKSmFuICAxIDAyOjI0OjQ5IGRvbWVyYWRpbyBsb2Nh
+bDIuZXJyIGNoYXRbNTY4XTogU0lHVEVSTQpKYW4gIDEgMDI6MjQ6NDkgZG9tZXJhZGlvIGRhZW1v
+bi53YXJuIHBwcGRbNTM0XTogQ2hpbGQgcHJvY2VzcyAKL3Vzci9zYmluL2NoYXQgLXYgLXQxNSAt
+ZiAvZXRjL3BwcC9jaGF0c2NyaXB0cy9tb2JpbGUtbW9kZW0tb2ZmLmNoYXQgCihwaWQgNTY3KSB0
+ZXJtaW5hdGVkIHdpdGggc2lnbmFsIDE1CkphbiAgMSAwMjoyNDo0OSBkb21lcmFkaW8gZGFlbW9u
+Lndhcm4gcHBwZFs1MzRdOiBkaXNjb25uZWN0IHNjcmlwdCBmYWlsZWQKSmFuICAxIDAyOjI0OjUw
+IGRvbWVyYWRpbyBkYWVtb24uaW5mbyBwcHBkWzUzNF06IEV4aXQuCgpJdCBzZWVtcyB0aGF0IHRo
+ZSBjb21tYW5kIGlzIG5ldmVyIHNlbnQuCgpNeSB0d28gcXVlc3Rpb25zIGFyZToKCiAgMS4gRG8g
+eW91IGhhdmUgYW4gaWRlYSBhYm91dCB0aGUgY29tbWFuZCB0aGF0IGlzIG5ldmVyIHNlbnQ/CiAg
+Mi4gSXMgdGhlcmUgYW4gb3RoZXIgd2F5IHRvIHNlbmQgYW4gQVQgY29tbWFuZCB3aGlsZSBwcHBk
+IGlzIHJ1bm5pbmcgCihvciBub25lKT8KClRoYW5rIHlvdSwKCkzDqW8gU0VSUkUK8J+MjcKgwqBs
+ZW9AbHN0cm9uaWMuY29tIDxtYWlsdG86bGVvQGxzdHJvbmljLmNvbT4K8J+Tp8KgwqBsc3Ryb25p
+Yy5jb20gPGh0dHA6Ly9sc3Ryb25pYy5jb20+CgotLQpUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMg
+bGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtcHBwIiBpbgp0aGUgYm9keSBv
+ZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZwpNb3JlIG1ham9yZG9tbyBp
+bmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWw=
