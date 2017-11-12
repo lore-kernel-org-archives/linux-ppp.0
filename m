@@ -1,10 +1,10 @@
 From: Vasily Averin <vvs@virtuozzo.com>
-Date: Sun, 05 Nov 2017 16:49:26 +0000
-Subject: [PATCH v2 02/21] ppp: exit_net cleanup checks added
-Message-Id: <a86797d1-781b-9bd0-fd38-fa22e1a6d66e@virtuozzo.com>
+Date: Sun, 12 Nov 2017 08:50:25 +0000
+Subject: [PATCH v4 17/18] ppp: exit_net cleanup checks added
+Message-Id: <4efcdcc7-3442-0329-741b-7f66af42791d@virtuozzo.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <bafb347d-e36e-8b2b-7646-afc458a7a32a@virtuozzo.com>
-In-Reply-To: <bafb347d-e36e-8b2b-7646-afc458a7a32a@virtuozzo.com>
+References: <9dfa013e-9098-e155-9c47-a73753338288@virtuozzo.com>
+In-Reply-To: <9dfa013e-9098-e155-9c47-a73753338288@virtuozzo.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,21 +16,19 @@ to initial state.
 
 Signed-off-by: Vasily Averin <vvs@virtuozzo.com>
 ---
- drivers/net/ppp/ppp_generic.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/net/ppp/ppp_generic.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index e365866..10cee62 100644
+index e365866..30744ce 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -960,6 +960,10 @@ static __net_exit void ppp_exit_net(struct net *net)
+@@ -960,6 +960,8 @@ static __net_exit void ppp_exit_net(struct net *net)
  	rtnl_unlock();
  
  	idr_destroy(&pn->units_idr);
-+	WARN(!list_empty(&pn->all_channels),
-+	     "%s: all_channels list is not empty\n", __func__);
-+	WARN(!list_empty(&pn->new_channels),
-+	     "%s: new_channels list is not empty\n", __func__);
++	WARN_ON_ONCE(!list_empty(&pn->all_channels));
++	WARN_ON_ONCE(!list_empty(&pn->new_channels));
  }
  
  static struct pernet_operations ppp_net_ops = {
