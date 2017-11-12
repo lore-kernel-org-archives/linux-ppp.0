@@ -1,10 +1,10 @@
 From: Vasily Averin <vvs@virtuozzo.com>
-Date: Sun, 12 Nov 2017 08:50:25 +0000
-Subject: [PATCH v4 17/18] ppp: exit_net cleanup checks added
-Message-Id: <4efcdcc7-3442-0329-741b-7f66af42791d@virtuozzo.com>
+Date: Sun, 12 Nov 2017 19:33:22 +0000
+Subject: [PATCH v5 12/13] ppp: exit_net cleanup checks added
+Message-Id: <f15b4e69-d255-d65f-6778-1af3f89c26cd@virtuozzo.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <9dfa013e-9098-e155-9c47-a73753338288@virtuozzo.com>
-In-Reply-To: <9dfa013e-9098-e155-9c47-a73753338288@virtuozzo.com>
+References: <cb06dace-88a8-fecf-92ad-02920920a0d3@virtuozzo.com>
+In-Reply-To: <cb06dace-88a8-fecf-92ad-02920920a0d3@virtuozzo.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
