@@ -1,33 +1,57 @@
 From: Vasily Averin <vvs@virtuozzo.com>
-Date: Mon, 06 Nov 2017 13:50:49 +0000
-Subject: Re: [PATCH v3 04/21] ppp: exit_net cleanup checks added
-Message-Id: <f056b60c-bb9f-76fb-4550-c1d332757b56@virtuozzo.com>
+Date: Sun, 12 Nov 2017 19:26:44 +0000
+Subject: [PATCH v5 00/13] exit_net checks for objects initialized in net_init hook
+Message-Id: <a09a38cb-4aa3-ace5-3e0f-759d14cdef71@virtuozzo.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <5e005fe5-e8b2-eee8-b185-a9e5fc1d7996@virtuozzo.com>
-In-Reply-To: <5e005fe5-e8b2-eee8-b185-a9e5fc1d7996@virtuozzo.com>
+References: <cb06dace-88a8-fecf-92ad-02920920a0d3@virtuozzo.com>
+In-Reply-To: <cb06dace-88a8-fecf-92ad-02920920a0d3@virtuozzo.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: Steffen Klassert <steffen.klassert@secunet.com>, linux-nfs@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Remi Denis-Courmont <courmisch@gmail.com>, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>, Herbert Xu <herbert@gondor.apana.org.au>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
 
-Dear Walter,
-thank you for feedback, I'll do it next time.
+OpenVz kernel team have a long history of fighting against namespace-related bugs,
+some of them could be prevented by using simple checks described below.
 
-Changes was listed in cover letter, that was not not submitted into linux-ppp@ list
+One of typical errors is related to live cycle of namespaces:
+usually objects created for some namespace should not live longer than namespace itself.
 
-"This patch set checks that lists initialized in net_init hooks were
-return to initial state at end of net_exit hooks.
+Such kind of issues can be invisible on usual systems where additional namespaces
+are not used, because initial namespaces usually lives forever and never destroyed.
 
-I hope such checks allows to detect leaked per-netns objects.
-Also I hope that all new pernet_operations will inherit such checks too.
+However in systems with namespaces it can lead to memory leaks or to use-after-free.
+Both of them are critical for systems with running containers.
+As you knows it's quite hard to find the reason of such issues,
+especially in rarely-triggered scenarios on production nodes on default kernels
+without specially enabled debug settings. Any additional hints can be useful here.
 
-I assume that elements added into per-net lists should not live longer than net namespace,
-and should be deleted from the list. I think exit_net hook is good place for such check.
+This patch set should help to detect some of these issues.
+It is based on assumption that objects initialized in init hook of pernet_operations
+should return to initial state until end of exit hook.
 
-Recently I've found lost list_entry and enabled timer on stop of net namespace.
-Then I've reviewed all existing pernet_operations and found that many drivers
-have such checks already. So I decided to complete this task and add such checks
-into all affected subsystems.
+Many drivers and subsystems already have such checks, however I've found number
+of places where list_empty check would be useful at least as smoke test.
+
+These checks are useful for long-term stable kernels,
+they allows to detect problems related to incomplete or incorrectly
+backported patches.
+
+Changes:
+v5:
+- fixed nit pointed by Florian Westphal
+- netfilter patches are send separately to netfilter-devel@
+
+v4:
+- excluded grace and lockd patches taken by Bruce Fields
+- let's use WARN_ON_ONCE without any extra messages
+   adobriyan@ is right, output of net Id gives nothing to host admin,
+   and developers in any case will extract information from core dump
+- updated description in cover letter
+- dropped nfs4blocklayout patch: waitqueue check does not look useful
+- patches was reordered to be per-subsystem grouped
+- cover letter should be sent to all people included into cc: of any patches
+- minor cosmetic changes in some patches
 
 v3:
 - use net->ns.inum as net Id
@@ -38,60 +62,38 @@ v3:
 v2:
 - net pointer removed from output
 - fixed compilation for phonet driver
-"
 
-On 2017-11-06 16:34, walter harms wrote:
-> Hello Vasily Averin,
-> just a general hint:
-> when you send new versions of a patch please document also
-> what you have changed. Here an example from an other ML:
-> 
-> The problematic code looks like this:
-> 
-> 	res_seq = res_hdr->xd_hdr.length_sn & TB_XDOMAIN_SN_MASK;
-> 	res_seq >>= TB_XDOMAIN_SN_SHIFT;
-> 
-> TB_XDOMAIN_SN_SHIFT is 27, and right shifting a u8 27 bits is always
-> going to result in zero.  The fix is to declare these variables as u32.
-> 
-> Fixes: d1ff70241a27 ("thunderbolt: Add support for XDomain discovery protocol")
-> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
-> ---
-> v2: I accidentally sent this through the wrong list, so I'm resending to
->     netdev.  Also Mika asked me to split it up because the Fixes tags
->     are different for these patches.
-> 
-> 
-> please notice the V2. that tell the reader what has changes against
-> the V1.
-> 
-> re,
->  wh
-> 
-> Am 06.11.2017 14:23, schrieb Vasily Averin:
->> Be sure that lists initialized in net_init hook were return
->> to initial state.
->>
->> Signed-off-by: Vasily Averin <vvs@virtuozzo.com>
->> ---
->>  drivers/net/ppp/ppp_generic.c | 6 ++++++
->>  1 file changed, 6 insertions(+)
->>
->> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
->> index e365866..c0861d1 100644
->> --- a/drivers/net/ppp/ppp_generic.c
->> +++ b/drivers/net/ppp/ppp_generic.c
->> @@ -960,6 +960,12 @@ static __net_exit void ppp_exit_net(struct net *net)
->>  	rtnl_unlock();
->>  
->>  	idr_destroy(&pn->units_idr);
->> +	WARN_ONCE(!list_empty(&pn->all_channels),
->> +		  "net %x %s: all_channels list is not empty\n",
->> +		  net->ns.inum, __func__);
->> +	WARN_ONCE(!list_empty(&pn->new_channels),
->> +		  "net %x %s: new_channels list is not empty\n",
->> +		  net->ns.inum, __func__);
->>  }
->>  
->>  static struct pernet_operations ppp_net_ops = {
-> 
+
+Vasily Averin (13):
+  af_key: replace BUG_ON on WARN_ON in net_exit hook
+  geneve: exit_net cleanup check added
+  packet: exit_net cleanup check added
+  vxlan: exit_net cleanup checks added
+  netdev: exit_net cleanup check added
+  fib_notifier: exit_net cleanup check added
+  fib_rules: exit_net cleanup check added
+  l2tp: exit_net cleanup check added
+  nfs client: exit_net cleanup check added
+  sunrpc: exit_net cleanup check added
+  phonet: exit_net cleanup check added
+  ppp: exit_net cleanup checks added
+  xfrm6_tunnel: exit_net cleanup check added
+
+ drivers/net/geneve.c          | 1 +
+ drivers/net/ppp/ppp_generic.c | 2 ++
+ drivers/net/vxlan.c           | 4 ++++
+ fs/nfs/inode.c                | 4 ++++
+ net/core/dev.c                | 2 ++
+ net/core/fib_notifier.c       | 6 ++++++
+ net/core/fib_rules.c          | 6 ++++++
+ net/ipv6/xfrm6_tunnel.c       | 8 ++++++++
+ net/key/af_key.c              | 2 +-
+ net/l2tp/l2tp_core.c          | 4 ++++
+ net/packet/af_packet.c        | 1 +
+ net/phonet/pn_dev.c           | 3 +++
+ net/sunrpc/sunrpc_syms.c      | 3 +++
+ 13 files changed, 45 insertions(+), 1 deletion(-)
+
+-- 
+2.7.4
+
