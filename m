@@ -1,55 +1,110 @@
-From: md@Linux.IT (Marco d'Itri)
-Date: Tue, 07 Nov 2017 15:25:48 +0000
-Subject: Re: Reset modem while using pppd
-Message-Id: <20171107152548.jyox7u457vg5gas3@bongo.bofh.it>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="yonb3kogkhr4bepx"
+From: Vasily Averin <vvs@virtuozzo.com>
+Date: Sun, 12 Nov 2017 08:39:13 +0000
+Subject: [PATCH v4 00/18] exit_net checks for objects initialized in net_init hook
+Message-Id: <cb06dace-88a8-fecf-92ad-02920920a0d3@virtuozzo.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <6661f19d-1804-b6e1-bd98-9503bad6b12b@lstronic.com>
-In-Reply-To: <6661f19d-1804-b6e1-bd98-9503bad6b12b@lstronic.com>
-To: linux-ppp@vger.kernel.org
+References: <9dfa013e-9098-e155-9c47-a73753338288@virtuozzo.com>
+In-Reply-To: <9dfa013e-9098-e155-9c47-a73753338288@virtuozzo.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: netdev@vger.kernel.org
+Cc: Steffen Klassert <steffen.klassert@secunet.com>, Herbert Xu <herbert@gondor.apana.org.au>, Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>, Pablo Neira Ayuso <pablo@netfilter.org>, Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>, Florian Westphal <fw@strlen.de>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Remi Denis-Courmont <courmisch@gmail.com>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-nfs@vger.kernel.org
+
+OpenVz kernel team have a long history of fighting against namespace-related bugs,
+some of them could be excluded by using simple checks described below.
+
+One of typical errors is related to live cycle of namespaces:
+usually objects created for some namespace should not live longer than namespace itself.
+
+Such kind of issues can be invisible on usual systems where additional namespaces
+are not used, because initial namespaces usually lives forever and never destroyed.
+
+However in systems with namespaces it can lead to memory leaks or to use-after-free.
+Both of them are critical for systems with running containers.
+As you knows it's quite hard to find the reason of such issues,
+especially in rarely-triggered scenarios on production nodes on default kernels
+without specially enabled debug settings. Any additional hints can be useful here.
+
+This patch set should help to detect some of these issues.
+It is based on assumption that objects initialized in init hook of pernet_operations
+should return to initial state until end of exit hook.
+
+Many drivers and subsystems already have such checks, however I've found number
+of places where list_empty check would be useful at least as smoke test.
+
+These checks are useful for long-term stable kernels,
+they allows to detect problems related to incomplete or incorrectly
+backported patches.
+
+Also this patch set replaces BUG_ON in existing checks:
+memory leaks and possible memory corruptions are bad of course,
+however in many cases they are not fatal 
+and should not crash production hosts unconditionally.
+
+Changes:
+v4:
+- excluded grace and lockd patches taken by Bruce Fields
+- let's use WARN_ON_ONCE without any extra messages
+   adobriyan@ is right, output of net Id gives nothing to host admin,
+   and developers in any case will extract information from core dump
+- updated description in cover letter
+- dropped nfs4blocklayout patch: waitqueue check does not look useful
+- patches was reordered to be per-subsystem grouped
+- cover letter should be sent to all people included into cc: of any patches
+- minor cosmetic changes in some patches
+
+v3:
+- use net->ns.inum as net Id
+- removed patches for hashlimit and recent,
+    they handle tables list in exit_net hook.
+- added patches for grace and lockd
+
+v2:
+- net pointer removed from output
+- fixed compilation for phonet driver
 
 
---yonb3kogkhr4bepx
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Vasily Averin (18):
+  af_key: replace BUG_ON on WARN_ON in net_exit hook
+  geneve: exit_net cleanup check added
+  packet: exit_net cleanup check added
+  vxlan: exit_net cleanup checks added
+  netdev: exit_net cleanup check added
+  fib_notifier: exit_net cleanup check added
+  fib_rules: exit_net cleanup check added
+  l2tp: exit_net cleanup check added
+  clusterip: exit_net cleanup check added
+  nf_tables: exit_net cleanup check added
+  nfnetlink_log: exit_net cleanup check added
+  nfnetlink_gueue: exit_net cleanup check added
+  x_tables: exit_net cleanup check added
+  nfs client: exit_net cleanup check added
+  sunrpc: exit_net cleanup check added
+  phonet: exit_net cleanup check added
+  ppp: exit_net cleanup checks added
+  xfrm6_tunnel: exit_net cleanup check added
 
-On Nov 07, L=E9o Serre <leo@lstronic.com> wrote:
+ drivers/net/geneve.c               |  1 +
+ drivers/net/ppp/ppp_generic.c      |  2 ++
+ drivers/net/vxlan.c                |  5 +++++
+ fs/nfs/inode.c                     |  4 ++++
+ net/core/dev.c                     |  2 ++
+ net/core/fib_notifier.c            |  6 ++++++
+ net/core/fib_rules.c               |  6 ++++++
+ net/ipv4/netfilter/ipt_CLUSTERIP.c |  1 +
+ net/ipv6/xfrm6_tunnel.c            | 10 ++++++++++
+ net/key/af_key.c                   |  2 +-
+ net/l2tp/l2tp_core.c               |  5 +++++
+ net/netfilter/nf_tables_api.c      |  7 +++++++
+ net/netfilter/nfnetlink_log.c      |  5 +++++
+ net/netfilter/nfnetlink_queue.c    |  6 ++++++
+ net/netfilter/x_tables.c           | 10 ++++++++++
+ net/packet/af_packet.c             |  1 +
+ net/phonet/pn_dev.c                |  3 +++
+ net/sunrpc/sunrpc_syms.c           |  3 +++
+ 18 files changed, 78 insertions(+), 1 deletion(-)
 
->     'OK' 'AT+CFUN=3D1,1'
-This means "sending +CFUN after the OK prompt", but there is nothing=20
-before that which tells the modem to output the OK prompt.
+-- 
+2.7.4
 
-I think that you can just use +CFUN in the normal connect script, like=20
-this one that I wrote for Debian ages ago:
-https://anonscm.debian.org/git/collab-maint/pkg-ppp.git/tree/debian/extra/c=
-hatscripts/gprs
-
->  2. Is there an other way to send an AT command while pppd is running (or
-> none)?
-No.
-
---=20
-ciao,
-Marco
-
---yonb3kogkhr4bepx
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQGzBAABCgAdFiEEGBsIcS5ipP0URKfyK/WlwSLE96QFAloB0HwACgkQK/WlwSLE
-96QelQv/aRQXUNabGwdv2eqAhuJSy40WLwAPLUUtw4+jiqZP5S3gpTPJ8oF/nR51
-RZJ6S5njE5zkYrnky4dCKb8Ni+S+/b2Iig9cZJt9++IauTpjfwiwfaiXY9GeAatk
-00sEMkp7llGwCD6S3oHogCOLhQ1eiJOT8xCesh8OBIkGaoIUf0aY3Em9LjCU3VPh
-bx7lOfNc1uOmeKDMWmN7ounSs55GF/xtA4FhNmSOinXC1KF0AjZqAI+p4d3T31rx
-KmlAI4zq/g5KWaM+yXQDZ8Je8yBPqbf1heQKWOttTFH9O/HguaHUILTFGsxA+3h8
-LtXVqKOI9Fn/53SkmB+mh2KUM7UNcUjZ6HYLnD6GHDp/AcHH8PqSfKJ9ZTfDJKr5
-fg4nmD4qMMv9i6xHyudn96Gdlt8XAoGrX4FDXRhHNHwUNWvBjOuoWKi/DWzeVjPI
-QNMlKEejr0qjGMc8gEu4FmPZ4zDvENJ8PX4ylqTMQBSatwgxdTBg3In6HUFLO0Cc
-LPYoZ4Uf
-=xptV
------END PGP SIGNATURE-----
-
---yonb3kogkhr4bepx--
