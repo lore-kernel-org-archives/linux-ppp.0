@@ -1,76 +1,70 @@
-From: SF Markus Elfring <elfring@users.sourceforge.net>
-Date: Sun, 31 Dec 2017 21:30:18 +0000
-Subject: [PATCH] ppp: Delete an error message for a failed memory allocation in three functions
-Message-Id: <303ae3e8-f86e-1ed5-6d63-a966aa8b0552@users.sourceforge.net>
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Fri, 05 Jan 2018 18:15:31 +0000
+Subject: Re: possible deadlock in ppp_dev_uninit
+Message-Id: <20180105181531.GA1374@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <001a11c006da57e7ff0561edda2b@google.com>
+In-Reply-To: <001a11c006da57e7ff0561edda2b@google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org
+To: syzbot <syzbot+367889b9c9e279219175@syzkaller.appspotmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, syzkaller-bugs@googlegroups.com
 
-From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Sun, 31 Dec 2017 22:27:23 +0100
+On Wed, Jan 03, 2018 at 10:58:01PM -0800, syzbot wrote:
+> Hello,
+> 
+> ======================
+> WARNING: possible recursive locking detected
+> 4.15.0-rc6-next-20180103+ #87 Not tainted
+> --------------------------------------------
+> syzkaller221540/3462 is trying to acquire lock:
+>  (&pn->all_ppp_mutex){+.+.}, at: [<00000000709ea4fe>]
+> ppp_dev_uninit+0x1be/0x390 drivers/net/ppp/ppp_generic.c:1369
+> 
+> but task is already holding lock:
+>  (&pn->all_ppp_mutex){+.+.}, at: [<00000000752caad5>] ppp_unit_register
+> drivers/net/ppp/ppp_generic.c:981 [inline]
+>  (&pn->all_ppp_mutex){+.+.}, at: [<00000000752caad5>]
+> ppp_dev_configure+0x6a4/0xc40 drivers/net/ppp/ppp_generic.c:1066
+> 
+ppp_unit_register() acquires pn->all_ppp_mutex while calling
+register_netdevice(). If register_netdevice() fails, it can call
+ppp_dev_uninit() which then tries to lock pn->all_ppp_mutex again.
 
-Omit an extra message for a memory allocation failure in these functions.
+Maybe unlocking pn->all_ppp_mutex before register_netdevice() would be
+enough, but that'd make the unit visible while the PPP device isn't yet
+registered. I'm going to check if that can be a problem.
 
-This issue was detected by using the Coccinelle software.
+That's probably worth a test anyway.
 
-Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
----
- drivers/net/ppp/ppp_generic.c | 12 ++++--------
- drivers/net/ppp/ppp_synctty.c |  5 ++---
- 2 files changed, 6 insertions(+), 11 deletions(-)
+#syz test: git://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git master
+
+-------- 8< --------
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index d8e5747ff4e3..d9119dcaa04e 100644
+index d8e5747ff4e3..264d4af0bf69 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -2098,11 +2098,9 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
- 		if (skb_tailroom(skb) < 124 || skb_cloned(skb)) {
- 			/* copy to a new sk_buff with more tailroom */
- 			ns = dev_alloc_skb(skb->len + 128);
--			if (!ns) {
--				netdev_err(ppp->dev, "PPP: no memory "
--					   "(VJ decomp)\n");
-+			if (!ns)
- 				goto err;
--			}
-+
- 			skb_reserve(ns, 2);
- 			skb_copy_bits(skb, 0, skb_put(ns, skb->len), skb->len);
- 			consume_skb(skb);
-@@ -2237,11 +2235,9 @@ ppp_decompress_frame(struct ppp *ppp, struct sk_buff *skb)
- 		}
+@@ -1006,17 +1006,18 @@ static int ppp_unit_register(struct ppp *ppp, int unit, bool ifname_is_set)
+        if (!ifname_is_set)
+                snprintf(ppp->dev->name, IFNAMSIZ, "ppp%i", ppp->file.index);
  
- 		ns = dev_alloc_skb(obuff_size);
--		if (!ns) {
--			netdev_err(ppp->dev, "ppp_decompress_frame: "
--				   "no memory\n");
-+		if (!ns)
- 			goto err;
--		}
++       mutex_unlock(&pn->all_ppp_mutex);
 +
- 		/* the decompressor still expects the A/C bytes in the hdr */
- 		len = ppp->rcomp->decompress(ppp->rc_state, skb->data - 2,
- 				skb->len + 2, ns->data, obuff_size);
-diff --git a/drivers/net/ppp/ppp_synctty.c b/drivers/net/ppp/ppp_synctty.c
-index 7196f00f0991..f801e5218170 100644
---- a/drivers/net/ppp/ppp_synctty.c
-+++ b/drivers/net/ppp/ppp_synctty.c
-@@ -682,10 +682,9 @@ ppp_sync_input(struct syncppp *ap, const unsigned char *buf,
+        ret = register_netdevice(ppp->dev);
+        if (ret < 0)
+                goto err_unit;
  
- 	/* stuff the chars in the skb */
- 	skb = dev_alloc_skb(ap->mru + PPP_HDRLEN + 2);
--	if (!skb) {
--		printk(KERN_ERR "PPPsync: no memory (input pkt)\n");
-+	if (!skb)
- 		goto err;
--	}
-+
- 	/* Try to get the payload 4-byte aligned */
- 	if (buf[0] != PPP_ALLSTATIONS)
- 		skb_reserve(skb, 2 + (buf[0] & 1));
--- 
-2.15.1
+        atomic_inc(&ppp_unit_count);
+ 
+-       mutex_unlock(&pn->all_ppp_mutex);
+-
+        return 0;
+ 
+ err_unit:
++       mutex_lock(&pn->all_ppp_mutex);
+        unit_put(&pn->units_idr, ppp->file.index);
+ err:
+        mutex_unlock(&pn->all_ppp_mutex);
 
