@@ -1,18 +1,20 @@
-From: Wei Liu <wei.liu2@citrix.com>
-Date: Mon, 26 Mar 2018 14:07:27 +0000
+From: David Miller <davem@davemloft.net>
+Date: Mon, 26 Mar 2018 16:08:20 +0000
 Subject: Re: [PATCH 4/4] drivers/net: Use octal not symbolic permissions
-Message-Id: <20180326140727.4aripztdc2ar6g45@citrix.com>
+Message-Id: <20180326.120820.1903008086350362171.davem@davemloft.net>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <cover.1521845235.git.joe@perches.com>
- <8f24a711e6b8ec7b41356c378140fb54d510205c.1521845248.git.joe@perches.com>
+        <8f24a711e6b8ec7b41356c378140fb54d510205c.1521845248.git.joe@perches.com>
 In-Reply-To: <8f24a711e6b8ec7b41356c378140fb54d510205c.1521845248.git.joe@perches.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Joe Perches <joe@perches.com>
-Cc: Jay Vosburgh <j.vosburgh@gmail.com>, Veaceslav Falico <vfalico@gmail.com>, Andy Gospodarek <andy@greyhouse.net>, Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>, Wolfgang Grandegger <wg@grandegger.com>, Marc Kleine-Budde <mkl@pengutronix.de>, Nicolas Ferre <nicolas.ferre@microchip.com>, Alexandre Belloni <alexandre.belloni@bootlin.com>, Jean-Paul Roubelat <jpr@f6fbb.org>, "K. Y. Srinivasan" <kys@microsoft.com>, Haiyang Zhang <haiyangz@microsoft.com>, Stephen Hemminger <sthemmin@microsoft.com>, Alexander Aring <alex.aring@gmail.com>, Stefan Schmidt <stefan@osg.samsung.com>, Andrew Lunn <andrew@lunn.ch>, Florian Fainelli <f.fainelli@gmail.com>, Paul Mackerras <paulus@samba.org>, Michal Ostrowski <mostrows@earthlink.net>, Oliver Neukum <oliver@n>
+To: joe@perches.com
+Cc: j.vosburgh@gmail.com, vfalico@gmail.com, andy@greyhouse.net, dmitry.tarnyagin@lockless.no, wg@grandegger.com, mkl@pengutronix.de, nicolas.ferre@microchip.com, alexandre.belloni@bootlin.com, jpr@f6fbb.org, kys@microsoft.com, haiyangz@microsoft.com, sthemmin@microsoft.com, alex.aring@gmail.com, stefan@osg.samsung.com, andrew@lunn.ch, f.fainelli@gmail.com, paulus@samba.org, mostrows@earthlink.net, oliver@neukum.org, wei.liu2@citrix.com, paul.durrant@citrix.com, boris.ostrovsky@oracle.com, jgross@suse.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-can@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-hams@vger.kernel.org, devel@linuxdriverproject.org, linux-wpan@vger.kernel.org, linux-ppp@vger.kernel.org, linux-usb@vger.kernel.org, xen-devel@lists.xenprojec
 
-On Fri, Mar 23, 2018 at 03:54:39PM -0700, Joe Perches wrote:
+From: Joe Perches <joe@perches.com>
+Date: Fri, 23 Mar 2018 15:54:39 -0700
+
 > Prefer the direct use of octal for permissions.
 > 
 > Done with checkpatch -f --types=SYMBOLIC_PERMS --fix-inplace
@@ -23,8 +25,5 @@ On Fri, Mar 23, 2018 at 03:54:39PM -0700, Joe Perches wrote:
 > o Whitespace neatening around these conversions.
 > 
 > Signed-off-by: Joe Perches <joe@perches.com>
-> ---
->  drivers/net/xen-netback/xenbus.c       |  4 +-
->  drivers/net/xen-netfront.c             |  6 +--
 
-Reviewed-by: Wei Liu <wei.liu2@citrix.com>
+Applied.
