@@ -1,50 +1,81 @@
-From: Guillaume Nault <g.nault@alphalink.fr>
-Date: Fri, 05 Jan 2018 18:27:00 +0000
-Subject: Re: possible deadlock in ppp_dev_uninit
-Message-Id: <20180105182700.GB1374@alphalink.fr>
+From: Tejaswi Tanikella <tejaswit@codeaurora.org>
+Date: Thu, 29 Mar 2018 09:58:15 +0000
+Subject: [PATCH] slip: Check if rstate is initialized before uncompressing
+Message-Id: <20180329095758.GA510@tejaswit-linux.qualcomm.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <001a11c006da57e7ff0561edda2b@google.com>
- <20180105181531.GA1374@alphalink.fr>
-In-Reply-To: <20180105181531.GA1374@alphalink.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: syzbot <syzbot+367889b9c9e279219175@syzkaller.appspotmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, syzkaller-bugs@googlegroups.com
+To: linux-ppp@vger.kernel.org
 
-On Fri, Jan 05, 2018 at 07:15:31PM +0100, Guillaume Nault wrote:
-> That's probably worth a test anyway.
->
-Copy/paste error :-/
+On receiving a packet the state index points to the rstate which must be
+used to fill up IP and TCP headers. But if the state index points to a
+rstate which is unitialized, i.e. filled with zeros, watch-dog bites.
+It gets stuck in an infinite loop inside ip_fast_csum trying to compute
+the ip checsum of a header with length zero.
 
-Here's a version that should apply cleanly.
+89.666953:   <2> [<ffffff9dd3e94d38>] slhc_uncompress+0x464/0x468
+89.666965:   <2> [<ffffff9dd3e87d88>] ppp_receive_nonmp_frame+0x3b4/0x65c
+89.666978:   <2> [<ffffff9dd3e89dd4>] ppp_receive_frame+0x64/0x7e0
+89.666991:   <2> [<ffffff9dd3e8a708>] ppp_input+0x104/0x198
+89.667005:   <2> [<ffffff9dd3e93868>] pppopns_recv_core+0x238/0x370
+89.667027:   <2> [<ffffff9dd4428fc8>] __sk_receive_skb+0xdc/0x250
+89.667040:   <2> [<ffffff9dd3e939e4>] pppopns_recv+0x44/0x60
+89.667053:   <2> [<ffffff9dd4426848>] __sock_queue_rcv_skb+0x16c/0x24c
+89.667065:   <2> [<ffffff9dd4426954>] sock_queue_rcv_skb+0x2c/0x38
+89.667085:   <2> [<ffffff9dd44f7358>] raw_rcv+0x124/0x154
+89.667098:   <2> [<ffffff9dd44f7568>] raw_local_deliver+0x1e0/0x22c
+89.667117:   <2> [<ffffff9dd44c8ba0>] ip_local_deliver_finish+0x70/0x24c
+89.667131:   <2> [<ffffff9dd44c92f4>] ip_local_deliver+0x100/0x10c
 
-#syz test: git://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git master
+./scripts/faddr2line vmlinux slhc_uncompress+0x464/0x468 output:
+ ip_fast_csum at arch/arm64/include/asm/checksum.h:40
+ (inlined by) slhc_uncompress at drivers/net/slip/slhc.c:615
 
--------- 8< --------
+Adding a variable to indicate if the current rstate is initialized. If
+such a packet arrives, move to toss state.
 
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index d8e5747ff4e3..264d4af0bf69 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -1006,17 +1006,18 @@ static int ppp_unit_register(struct ppp *ppp, int unit, bool ifname_is_set)
- 	if (!ifname_is_set)
- 		snprintf(ppp->dev->name, IFNAMSIZ, "ppp%i", ppp->file.index);
+Signed-off-by: Tejaswi Tanikella <tejaswit@codeaurora.org>
+---
+ drivers/net/slip/slhc.c | 5 +++++
+ include/net/slhc_vj.h   | 1 +
+ 2 files changed, 6 insertions(+)
+
+diff --git a/drivers/net/slip/slhc.c b/drivers/net/slip/slhc.c
+index 5782733..e710b0b 100644
+--- a/drivers/net/slip/slhc.c
++++ b/drivers/net/slip/slhc.c
+@@ -509,6 +509,10 @@ struct slcompress *
+ 		if(x < 0 || x > comp->rslot_limit)
+ 			goto bad;
  
-+	mutex_unlock(&pn->all_ppp_mutex);
++		/* Check if the cstate is initialized */
++		if(!comp->rstate[x].initialized)
++			goto bad;
 +
- 	ret = register_netdevice(ppp->dev);
- 	if (ret < 0)
- 		goto err_unit;
- 
- 	atomic_inc(&ppp_unit_count);
- 
--	mutex_unlock(&pn->all_ppp_mutex);
--
- 	return 0;
- 
- err_unit:
-+	mutex_lock(&pn->all_ppp_mutex);
- 	unit_put(&pn->units_idr, ppp->file.index);
- err:
- 	mutex_unlock(&pn->all_ppp_mutex);
+ 		comp->flags &=~ SLF_TOSS;
+ 		comp->recv_current = x;
+ 	} else {
+@@ -673,6 +677,7 @@ struct slcompress *
+ 	if (cs->cs_tcp.doff > 5)
+ 	  memcpy(cs->cs_tcpopt, icp + ihl*4 + sizeof(struct tcphdr), (cs->cs_tcp.doff - 5) * 4);
+ 	cs->cs_hsize = ihl*2 + cs->cs_tcp.doff*2;
++	cs->initialized = 1;
+ 	/* Put headers back on packet
+ 	 * Neither header checksum is recalculated
+ 	 */
+diff --git a/include/net/slhc_vj.h b/include/net/slhc_vj.h
+index 8716d59..d673365 100644
+--- a/include/net/slhc_vj.h
++++ b/include/net/slhc_vj.h
+@@ -127,6 +127,7 @@
+  */
+ struct cstate {
+ 	byte_t	cs_this;	/* connection id number (xmit) */
++	byte_t	initialized;	/* non-zero if initialized */
+ 	struct cstate *next;	/* next in ring (xmit) */
+ 	struct iphdr cs_ip;	/* ip/tcp hdr from most recent packet */
+ 	struct tcphdr cs_tcp;
+-- 
+1.9.1
+
