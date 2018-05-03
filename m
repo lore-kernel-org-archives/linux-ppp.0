@@ -1,119 +1,84 @@
-From: syzbot <syzbot+f16b3e3512a1e3c1d1f6@syzkaller.appspotmail.com>
-Date: Wed, 02 May 2018 17:56:02 +0000
-Subject: INFO: rcu detected stall in __schedule
-Message-Id: <000000000000d2fe62056b3ccca5@google.com>
+From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+Date: Thu, 03 May 2018 05:45:24 +0000
+Subject: Re: INFO: rcu detected stall in __schedule
+Message-Id: <1356afb7-80cf-d9d9-c282-e4e819807376@I-love.SAKURA.ne.jp>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <000000000000d2fe62056b3ccca5@google.com>
+In-Reply-To: <000000000000d2fe62056b3ccca5@google.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+To: syzbot <syzbot+f16b3e3512a1e3c1d1f6@syzkaller.appspotmail.com>, syzkaller-bugs@googlegroups.com, dvyukov@google.com
+Cc: linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org
 
-SGVsbG8sDQoNCnN5emJvdCBmb3VuZCB0aGUgZm9sbG93aW5nIGNyYXNoIG9uOg0KDQpIRUFEIGNv
-bW1pdDogICAgZjIxMjU5OTJlN2NiIE1lcmdlIHRhZyAneGZzLTQuMTctZml4ZXMtMScgb2YgIA0K
-Z2l0Oi8vZ2l0Lmtlcm4uLi4NCmdpdCB0cmVlOiAgICAgICB1cHN0cmVhbQ0KY29uc29sZSBvdXRw
-dXQ6IGh0dHBzOi8vc3l6a2FsbGVyLmFwcHNwb3QuY29tL3gvbG9nLnR4dD9pZD00NzU1OTQwMDg3
-NjkzMzEyDQprZXJuZWwgY29uZmlnOiAgIA0KaHR0cHM6Ly9zeXprYWxsZXIuYXBwc3BvdC5jb20v
-eC8uY29uZmlnP2lkPTY0OTM1NTc3ODI5NTkxNjQ3MTENCmRhc2hib2FyZCBsaW5rOiBodHRwczov
-L3N5emthbGxlci5hcHBzcG90LmNvbS9idWc/ZXh0aWQ9ZjE2YjNlMzUxMmExZTNjMWQxZjYNCmNv
-bXBpbGVyOiAgICAgICBnY2MgKEdDQykgOC4wLjEgMjAxODA0MTMgKGV4cGVyaW1lbnRhbCkNCg0K
-VW5mb3J0dW5hdGVseSwgSSBkb24ndCBoYXZlIGFueSByZXByb2R1Y2VyIGZvciB0aGlzIGNyYXNo
-IHlldC4NCg0KSU1QT1JUQU5UOiBpZiB5b3UgZml4IHRoZSBidWcsIHBsZWFzZSBhZGQgdGhlIGZv
-bGxvd2luZyB0YWcgdG8gdGhlIGNvbW1pdDoNClJlcG9ydGVkLWJ5OiBzeXpib3QrZjE2YjNlMzUx
-MmExZTNjMWQxZjZAc3l6a2FsbGVyLmFwcHNwb3RtYWlsLmNvbQ0KDQpkb19kY2NwX2dldHNvY2tv
-cHQ6IHNvY2tvcHQoUEFDS0VUX1NJWkUpIGlzIGRlcHJlY2F0ZWQ6IGZpeCB5b3VyIGFwcA0KZG9f
-ZGNjcF9nZXRzb2Nrb3B0OiBzb2Nrb3B0KFBBQ0tFVF9TSVpFKSBpcyBkZXByZWNhdGVkOiBmaXgg
-eW91ciBhcHANCm50ZnM6IChkZXZpY2UgbG9vcDYpOiBwYXJzZV9vcHRpb25zKCk6IFVucmVjb2du
-aXplZCBtb3VudCBvcHRpb24gIA0KZXJyb3Lvv71u77+977+9dWxkaXAuDQpJTkZPOiByY3Vfc2No
-ZWQgc2VsZi1kZXRlY3RlZCBzdGFsbCBvbiBDUFUNCgkwLS4uLiE6ICgxMjUwMDAgdGlja3MgdGhp
-cyBHUCkgaWRsZT1mM2UvMS80NjExNjg2MDE4NDI3Mzg3OTA2ICANCnNvZnRpcnE9MTEyODU4LzEx
-Mjg1OCBmcXM9MA0KCSAodD0xMjUwMDAgamlmZmllcyBnPTYxNjI2IGM9NjE2MjUgcT0xNTM0KQ0K
-cmN1X3NjaGVkIGt0aHJlYWQgc3RhcnZlZCBmb3IgMTI1MDAwIGppZmZpZXMhIGc2MTYyNiBjNjE2
-MjUgZjB4MCAgDQpSQ1VfR1BfV0FJVF9GUVMoMykgLT5zdGF0ZT0weDQwMiAtPmNwdT0wDQpSQ1Ug
-Z3JhY2UtcGVyaW9kIGt0aHJlYWQgc3RhY2sgZHVtcDoNCnJjdV9zY2hlZCAgICAgICBJMjM1OTIg
-ICAgIDkgICAgICAyIDB4ODAwMDAwMDANCkNhbGwgVHJhY2U6DQogIGNvbnRleHRfc3dpdGNoIGtl
-cm5lbC9zY2hlZC9jb3JlLmM6Mjg0OCBbaW5saW5lXQ0KICBfX3NjaGVkdWxlKzB4ODAxLzB4MWUz
-MCBrZXJuZWwvc2NoZWQvY29yZS5jOjM0OTANCiAgc2NoZWR1bGUrMHhlZi8weDQzMCBrZXJuZWwv
-c2NoZWQvY29yZS5jOjM1NDkNCiAgc2NoZWR1bGVfdGltZW91dCsweDEzOC8weDI0MCBrZXJuZWwv
-dGltZS90aW1lci5jOjE4MDENCiAgcmN1X2dwX2t0aHJlYWQrMHg2YjUvMHgxOTQwIGtlcm5lbC9y
-Y3UvdHJlZS5jOjIyMzENCiAga3RocmVhZCsweDM0NS8weDQxMCBrZXJuZWwva3RocmVhZC5jOjIz
-OA0KICByZXRfZnJvbV9mb3JrKzB4M2EvMHg1MCBhcmNoL3g4Ni9lbnRyeS9lbnRyeV82NC5TOjQx
-Mg0KTk1JIGJhY2t0cmFjZSBmb3IgY3B1IDANCkNQVTogMCBQSUQ6IDI2Njk0IENvbW06IHN5ei1l
-eGVjdXRvcjEgTm90IHRhaW50ZWQgNC4xNy4wLXJjMysgIzI4DQpIYXJkd2FyZSBuYW1lOiBHb29n
-bGUgR29vZ2xlIENvbXB1dGUgRW5naW5lL0dvb2dsZSBDb21wdXRlIEVuZ2luZSwgQklPUyAgDQpH
-b29nbGUgMDEvMDEvMjAxMQ0KQ2FsbCBUcmFjZToNCiAgPElSUT4NCiAgX19kdW1wX3N0YWNrIGxp
-Yi9kdW1wX3N0YWNrLmM6NzcgW2lubGluZV0NCiAgZHVtcF9zdGFjaysweDFiOS8weDI5NCBsaWIv
-ZHVtcF9zdGFjay5jOjExMw0KICBubWlfY3B1X2JhY2t0cmFjZS5jb2xkLjQrMHgxOS8weGNlIGxp
-Yi9ubWlfYmFja3RyYWNlLmM6MTAzDQogIG5taV90cmlnZ2VyX2NwdW1hc2tfYmFja3RyYWNlKzB4
-MTUxLzB4MTkyIGxpYi9ubWlfYmFja3RyYWNlLmM6NjINCiAgYXJjaF90cmlnZ2VyX2NwdW1hc2tf
-YmFja3RyYWNlKzB4MTQvMHgyMCBhcmNoL3g4Ni9rZXJuZWwvYXBpYy9od19ubWkuYzozOA0KICB0
-cmlnZ2VyX3NpbmdsZV9jcHVfYmFja3RyYWNlIGluY2x1ZGUvbGludXgvbm1pLmg6MTU2IFtpbmxp
-bmVdDQogIHJjdV9kdW1wX2NwdV9zdGFja3MrMHgxNzUvMHgxYzIga2VybmVsL3JjdS90cmVlLmM6
-MTM3Ng0KICBwcmludF9jcHVfc3RhbGwga2VybmVsL3JjdS90cmVlLmM6MTUyNSBbaW5saW5lXQ0K
-ICBjaGVja19jcHVfc3RhbGwuaXNyYS42MS5jb2xkLjgwKzB4MzZjLzB4NTlhIGtlcm5lbC9yY3Uv
-dHJlZS5jOjE1OTMNCiAgX19yY3VfcGVuZGluZyBrZXJuZWwvcmN1L3RyZWUuYzozMzU2IFtpbmxp
-bmVdDQogIHJjdV9wZW5kaW5nIGtlcm5lbC9yY3UvdHJlZS5jOjM0MDEgW2lubGluZV0NCiAgcmN1
-X2NoZWNrX2NhbGxiYWNrcysweDIxYi8weGFkMCBrZXJuZWwvcmN1L3RyZWUuYzoyNzYzDQogIHVw
-ZGF0ZV9wcm9jZXNzX3RpbWVzKzB4MmQvMHg3MCBrZXJuZWwvdGltZS90aW1lci5jOjE2MzYNCiAg
-dGlja19zY2hlZF9oYW5kbGUrMHg5Zi8weDE4MCBrZXJuZWwvdGltZS90aWNrLXNjaGVkLmM6MTY0
-DQogIHRpY2tfc2NoZWRfdGltZXIrMHg0NS8weDEzMCBrZXJuZWwvdGltZS90aWNrLXNjaGVkLmM6
-MTI3NA0KICBfX3J1bl9ocnRpbWVyIGtlcm5lbC90aW1lL2hydGltZXIuYzoxMzk4IFtpbmxpbmVd
-DQogIF9faHJ0aW1lcl9ydW5fcXVldWVzKzB4M2UzLzB4MTBhMCBrZXJuZWwvdGltZS9ocnRpbWVy
-LmM6MTQ2MA0KICBocnRpbWVyX2ludGVycnVwdCsweDJmMy8weDc1MCBrZXJuZWwvdGltZS9ocnRp
-bWVyLmM6MTUxOA0KICBsb2NhbF9hcGljX3RpbWVyX2ludGVycnVwdCBhcmNoL3g4Ni9rZXJuZWwv
-YXBpYy9hcGljLmM6MTAyNSBbaW5saW5lXQ0KICBzbXBfYXBpY190aW1lcl9pbnRlcnJ1cHQrMHgx
-NWQvMHg3MTAgYXJjaC94ODYva2VybmVsL2FwaWMvYXBpYy5jOjEwNTANCiAgYXBpY190aW1lcl9p
-bnRlcnJ1cHQrMHhmLzB4MjAgYXJjaC94ODYvZW50cnkvZW50cnlfNjQuUzo4NjMNCiAgPC9JUlE+
-DQpSSVA6IDAwMTA6YXJjaF9sb2NhbF9pcnFfZW5hYmxlIGFyY2gveDg2L2luY2x1ZGUvYXNtL3Bh
-cmF2aXJ0Lmg6NzkzIFtpbmxpbmVdDQpSSVA6IDAwMTA6X19yYXdfc3Bpbl91bmxvY2tfaXJxIGlu
-Y2x1ZGUvbGludXgvc3BpbmxvY2tfYXBpX3NtcC5oOjE2OCAgDQpbaW5saW5lXQ0KUklQOiAwMDEw
-Ol9yYXdfc3Bpbl91bmxvY2tfaXJxKzB4NTYvMHg3MCBrZXJuZWwvbG9ja2luZy9zcGlubG9jay5j
-OjE5Mg0KUlNQOiAwMDE4OmZmZmY4ODAxYjNkYmY0MzggRUZMQUdTOiAwMDAwMDI4MiBPUklHX1JB
-WDogZmZmZmZmZmZmZmZmZmYxMw0KUkFYOiBkZmZmZmMwMDAwMDAwMDAwIFJCWDogZmZmZjg4MDFk
-YWUyYzY4MCBSQ1g6IDFmZmZmMTAwMzYxZWJkNGQNClJEWDogMWZmZmZmZmZmMTFhMzE2ZiBSU0k6
-IGZmZmY4ODAxYjBmNWVhNDggUkRJOiBmZmZmZmZmZjg4ZDE4Yjc4DQpSQlA6IGZmZmY4ODAxYjNk
-YmY0NDAgUjA4OiBmZmZmODgwMWIwZjVlOWY4IFIwOTogMDAwMDAwMDAwMDAwMDAwNg0KUjEwOiBm
-ZmZmODgwMWIwZjVlMWMwIFIxMTogMDAwMDAwMDAwMDAwMDAwMCBSMTI6IGZmZmY4ODAxYjBmNWUx
-YzANClIxMzogZmZmZjg4MDFiMGY1ZTdhMCBSMTQ6IGRmZmZmYzAwMDAwMDAwMDAgUjE1OiBmZmZm
-ODgwMWIwZjVlMWMwDQogIHJxX3VubG9ja19pcnEga2VybmVsL3NjaGVkL3NjaGVkLmg6MTgyNCBb
-aW5saW5lXQ0KICBfX3NjaGVkdWxlKzB4MTQ0Zi8weDFlMzAga2VybmVsL3NjaGVkL2NvcmUuYzoz
-NDkzDQogIHNjaGVkdWxlKzB4ZWYvMHg0MzAga2VybmVsL3NjaGVkL2NvcmUuYzozNTQ5DQogIGRv
-X3NjaGVkX3lpZWxkKzB4MTg3LzB4MjQwIGtlcm5lbC9zY2hlZC9jb3JlLmM6NDk2NQ0KICB5aWVs
-ZCsweGE1LzB4ZTAga2VybmVsL3NjaGVkL2NvcmUuYzo1MDU0DQogIHRhc2tsZXRfa2lsbCsweDRl
-LzB4ZDAga2VybmVsL3NvZnRpcnEuYzo1NTkNCiAgcHBwX2FzeW5jdHR5X2Nsb3NlKzB4OWUvMHgx
-NTAgZHJpdmVycy9uZXQvcHBwL3BwcF9hc3luYy5jOjIzOQ0KICBwcHBfYXN5bmN0dHlfaGFuZ3Vw
-KzB4MTUvMHgyMCBkcml2ZXJzL25ldC9wcHAvcHBwX2FzeW5jLmM6MjU2DQogIHR0eV9sZGlzY19o
-YW5ndXArMHgxMzgvMHg2NDAgZHJpdmVycy90dHkvdHR5X2xkaXNjLmM6NzMwDQogIF9fdHR5X2hh
-bmd1cC5wYXJ0LjIxKzB4MmRhLzB4NmUwIGRyaXZlcnMvdHR5L3R0eV9pby5jOjYyMQ0KICBfX3R0
-eV9oYW5ndXAgZHJpdmVycy90dHkvdHR5X2lvLmM6NTcxIFtpbmxpbmVdDQogIHR0eV92aGFuZ3Vw
-KzB4MjEvMHgzMCBkcml2ZXJzL3R0eS90dHlfaW8uYzo2OTQNCiAgcHR5X2Nsb3NlKzB4M2JkLzB4
-NTEwIGRyaXZlcnMvdHR5L3B0eS5jOjc4DQogIHR0eV9yZWxlYXNlKzB4NDk0LzB4MTJlMCBkcml2
-ZXJzL3R0eS90dHlfaW8uYzoxNjU2DQogIF9fZnB1dCsweDM0ZC8weDg5MCBmcy9maWxlX3RhYmxl
-LmM6MjA5DQogIF9fX19mcHV0KzB4MTUvMHgyMCBmcy9maWxlX3RhYmxlLmM6MjQzDQogIHRhc2tf
-d29ya19ydW4rMHgxZTQvMHgyOTAga2VybmVsL3Rhc2tfd29yay5jOjExMw0KICB0cmFjZWhvb2tf
-bm90aWZ5X3Jlc3VtZSBpbmNsdWRlL2xpbnV4L3RyYWNlaG9vay5oOjE5MSBbaW5saW5lXQ0KICBl
-eGl0X3RvX3VzZXJtb2RlX2xvb3ArMHgyYmQvMHgzMTAgYXJjaC94ODYvZW50cnkvY29tbW9uLmM6
-MTY2DQogIHByZXBhcmVfZXhpdF90b191c2VybW9kZSBhcmNoL3g4Ni9lbnRyeS9jb21tb24uYzox
-OTYgW2lubGluZV0NCiAgc3lzY2FsbF9yZXR1cm5fc2xvd3BhdGggYXJjaC94ODYvZW50cnkvY29t
-bW9uLmM6MjY1IFtpbmxpbmVdDQogIGRvX3N5c2NhbGxfNjQrMHg2YWMvMHg4MDAgYXJjaC94ODYv
-ZW50cnkvY29tbW9uLmM6MjkwDQogIGVudHJ5X1NZU0NBTExfNjRfYWZ0ZXJfaHdmcmFtZSsweDQ5
-LzB4YmUNClJJUDogMDAzMzoweDQ1NTk3OQ0KUlNQOiAwMDJiOjAwMDA3ZjkyYzM3NTFjNjggRUZM
-QUdTOiAwMDAwMDI0NiBPUklHX1JBWDogMDAwMDAwMDAwMDAwMDAwMw0KUkFYOiAwMDAwMDAwMDAw
-MDAwMDAwIFJCWDogMDAwMDdmOTJjMzc1MjZkNCBSQ1g6IDAwMDAwMDAwMDA0NTU5NzkNClJEWDog
-MDAwMDAwMDAwMDAwMDAwMCBSU0k6IDAwMDAwMDAwMDAwMDAwMDAgUkRJOiAwMDAwMDAwMDAwMDAw
-MDEzDQpSQlA6IDAwMDAwMDAwMDA3MmJmNTAgUjA4OiAwMDAwMDAwMDAwMDAwMDAwIFIwOTogMDAw
-MDAwMDAwMDAwMDAwMA0KUjEwOiAwMDAwMDAwMDAwMDAwMDAwIFIxMTogMDAwMDAwMDAwMDAwMDI0
-NiBSMTI6IDAwMDAwMDAwZmZmZmZmZmYNClIxMzogMDAwMDAwMDAwMDAwMDA1MyBSMTQ6IDAwMDAw
-MDAwMDA2ZjQ4NjggUjE1OiAwMDAwMDAwMDAwMDAwMDAxDQoNCg0KLS0tDQpUaGlzIGJ1ZyBpcyBn
-ZW5lcmF0ZWQgYnkgYSBib3QuIEl0IG1heSBjb250YWluIGVycm9ycy4NClNlZSBodHRwczovL2dv
-by5nbC90cHNtRUogZm9yIG1vcmUgaW5mb3JtYXRpb24gYWJvdXQgc3l6Ym90Lg0Kc3l6Ym90IGVu
-Z2luZWVycyBjYW4gYmUgcmVhY2hlZCBhdCBzeXprYWxsZXJAZ29vZ2xlZ3JvdXBzLmNvbS4NCg0K
-c3l6Ym90IHdpbGwga2VlcCB0cmFjayBvZiB0aGlzIGJ1ZyByZXBvcnQuDQpJZiB5b3UgZm9yZ290
-IHRvIGFkZCB0aGUgUmVwb3J0ZWQtYnkgdGFnLCBvbmNlIHRoZSBmaXggZm9yIHRoaXMgYnVnIGlz
-ICANCm1lcmdlZA0KaW50byBhbnkgdHJlZSwgcGxlYXNlIHJlcGx5IHRvIHRoaXMgZW1haWwgd2l0
-aDoNCiNzeXogZml4OiBleGFjdC1jb21taXQtdGl0bGUNClRvIG1hcmsgdGhpcyBhcyBhIGR1cGxp
-Y2F0ZSBvZiBhbm90aGVyIHN5emJvdCByZXBvcnQsIHBsZWFzZSByZXBseSB3aXRoOg0KI3N5eiBk
-dXA6IGV4YWN0LXN1YmplY3Qtb2YtYW5vdGhlci1yZXBvcnQNCklmIGl0J3MgYSBvbmUtb2ZmIGlu
-dmFsaWQgYnVnIHJlcG9ydCwgcGxlYXNlIHJlcGx5IHdpdGg6DQojc3l6IGludmFsaWQNCk5vdGU6
-IGlmIHRoZSBjcmFzaCBoYXBwZW5zIGFnYWluLCBpdCB3aWxsIGNhdXNlIGNyZWF0aW9uIG9mIGEg
-bmV3IGJ1ZyAgDQpyZXBvcnQuDQpOb3RlOiBhbGwgY29tbWFuZHMgbXVzdCBzdGFydCBmcm9tIGJl
-Z2lubmluZyBvZiB0aGUgbGluZSBpbiB0aGUgZW1haWwgYm9keS4NCg=
+I'm not sure whether this is a PPP bug.
+
+As of uptime =3D 484, RCU says that it stalled for 125 seconds.
+
+----------
+[  484.407032] INFO: rcu_sched self-detected stall on CPU
+[  484.412488] 	0-...!: (125000 ticks this GP) idle=F3e/1/46116860184273879=
+06 softirq=112858/112858 fqs=3D0=20
+[  484.422300] 	 (t=125000 jiffies ga626 ca625 q=1534)
+[  484.427663] rcu_sched kthread starved for 125000 jiffies! g61626 c61625 =
+f0x0 RCU_GP_WAIT_FQS(3) ->state=3D0x402 ->cpu=3D0
+----------
+
+484 - 125 =3D 359, which was about to start SND related fuzzing in that log.
+
+----------
+2033/05/18 03:36:31 executing program 1:
+r0 =3D socket(0x40000a, 0x5, 0x7)
+setsockopt$inet_int(r0, 0x0, 0x18, &(0x7f0000000000)=3D0x200, 0x4)
+bind$inet6(r0, &(0x7f00000000c0)=3D{0xa, 0x0, 0x0, @loopback=3D{0x0, 0x1}},=
+ 0x1c)
+perf_event_open(&(0x7f0000000040)=3D{0x2, 0x70, 0x3e5}, 0x0, 0xffffffffffff=
+ffff, 0xffffffffffffffff, 0x0)
+timer_create(0x0, &(0x7f00000001c0)=3D{0x0, 0x15, 0x0, @thr=3D{&(0x7f000000=
+0440), &(0x7f0000000540)}}, &(0x7f0000000200))
+timer_getoverrun(0x0)
+perf_event_open(&(0x7f000025c000)=3D{0x2, 0x78, 0x3e3}, 0x0, 0x0, 0xfffffff=
+fffffffff, 0x0)
+r1 =3D syz_open_dev$sndctrl(&(0x7f0000000200)=3D'/dev/snd/controlC#\x00', 0=
+x2, 0x0)
+perf_event_open(&(0x7f0000001000)=3D{0x0, 0x70, 0x0, 0x0, 0x0, 0x0, 0x0, 0x=
+8ce, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x7, 0x0, =
+0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xfffffffffffffff8, 0x0, =
+0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, @perf_bp=3D{&(0x7f0000005000), 0x2}, 0x1=
+000000000c}, 0x0, 0x0, 0xffffffffffffffff, 0x0)
+ioctl$SNDRV_CTL_IOCTL_SUBSCRIBE_EVENTS(r1, 0xc0045516, &(0x7f00000000c0)=3D=
+0x1)
+r2 =3D syz_open_dev$sndpcmp(&(0x7f0000000100)=3D'/dev/snd/pcmC#D#p\x00', 0x=
+1, 0x4000)
+ioctl$SNDRV_SEQ_IOCTL_GET_QUEUE_CLIENT(r2, 0xc04c5349, &(0x7f0000000240)=3D=
+{0x200, 0xfffffffffffffcdc, 0x1})
+syz_open_dev$tun(&(0x7f00000003c0)=3D'/dev/net/tun\x00', 0x0, 0x20402)
+ioctl$SNDRV_CTL_IOCTL_PVERSION(r1, 0xc1105517, &(0x7f0000001000)=3D""/250)
+ioctl$SNDRV_CTL_IOCTL_SUBSCRIBE_EVENTS(r1, 0xc0045516, &(0x7f0000000000))
+
+2033/05/18 03:36:31 executing program 4:
+syz_emit_ethernet(0x3e, &(0x7f00000000c0)=3D{@broadcast=3D[0xff, 0xff, 0xff=
+, 0xff, 0xff, 0xff], @empty=3D[0x0, 0x0, 0xb00000000000000], [], {@ipv4=3D{=
+0x800, {{0x5, 0x4, 0x0, 0x0, 0x30, 0x0, 0x0, 0x0, 0x1, 0x0, @remote=3D{0xac=
+, 0x14, 0x14, 0xbb}, @dev=3D{0xac, 0x14, 0x14}}, @icmp=3D@parameter_prob=3D=
+{0x5, 0x4, 0x0, 0x0, 0x0, 0x0, {0x5, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0=
+, 0x0, @local=3D{0xac, 0x223, 0x14, 0xaa}, @dev=3D{0xac, 0x14, 0x14}}}}}}},=
+ &(0x7f0000000000)=3D{0x0, 0x2, [0x0, 0x2e6]})
+
+2033/05/18 03:36:31 executing program 1:
+r0 =3D socket$pppoe(0x18, 0x1, 0x0)
+connect$pppoe(r0, &(0x7f00000000c0)=3D{0x18, 0x0, {0x1, @broadcast=3D[0xff,=
+ 0xff, 0xff, 0xff, 0xff, 0xff], 'ip6_vti0\x00'}}, 0x1e)
+r1 =3D socket(0x3, 0xb, 0x80000001)
+setsockopt$inet_sctp6_SCTP_ADAPTATION_LAYER(r1, 0x84, 0x7, &(0x7f0000000100=
+)=3D{0x2}, 0x4)
+ioctl$sock_inet_SIOCGIFADDR(r0, 0x8915, &(0x7f0000000040)=3D{'veth1_to_brid=
+ge\x00', {0x2, 0x4e21}})
+r2 =3D syz_open_dev$admmidi(&(0x7f0000000000)=3D'/dev/admmidi#\x00', 0x6, 0=
+x8000)
+setsockopt$SO_VM_SOCKETS_BUFFER_MAX_SIZE(r2, 0x28, 0x2, &(0x7f0000000080)=
+=3D0xffffffffffffff00, 0x8)
+
+[  359.306427] snd_virmidi snd_virmidi.0: control 112:0:0:=EF=BF=BD=08:0 is=
+ already present
+----------
