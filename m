@@ -1,89 +1,126 @@
-From: Dmitry Vyukov <dvyukov@google.com>
-Date: Thu, 03 May 2018 06:07:24 +0000
-Subject: Re: INFO: rcu detected stall in __schedule
-Message-Id: <CACT4Y+aJoMQMthMW8UXQ0eVSuwxk3HqFSuSgMtZTFHAuD5bP5A@mail.gmail.com>
+From: Eric Biggers <ebiggers3@gmail.com>
+Date: Wed, 23 May 2018 21:37:38 +0000
+Subject: [PATCH v2] ppp: remove the PPPIOCDETACH ioctl
+Message-Id: <20180523213738.146911-1-ebiggers3@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <000000000000d2fe62056b3ccca5@google.com> <1356afb7-80cf-d9d9-c282-e4e819807376@I-love.SAKURA.ne.jp>
-In-Reply-To: <1356afb7-80cf-d9d9-c282-e4e819807376@I-love.SAKURA.ne.jp>
+References: <20180523035952.25768-1-ebiggers3@gmail.com>
+In-Reply-To: <20180523035952.25768-1-ebiggers3@gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
-Cc: syzbot <syzbot+f16b3e3512a1e3c1d1f6@syzkaller.appspotmail.com>, syzkaller-bugs <syzkaller-bugs@googlegroups.com>, LKML <linux-kernel@vger.kernel.org>, linux-ppp@vger.kernel.org, netdev <netdev@vger.kernel.org>, paulus@samba.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
+Cc: netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Guillaume Nault <g.nault@alphalink.fr>, syzkaller-bugs@googlegroups.com, Eric Biggers <ebiggers@google.com>
 
-On Thu, May 3, 2018 at 7:45 AM, Tetsuo Handa
-<penguin-kernel@i-love.sakura.ne.jp> wrote:
-> I'm not sure whether this is a PPP bug.
->
-> As of uptime = 484, RCU says that it stalled for 125 seconds.
->
-> ----------
-> [  484.407032] INFO: rcu_sched self-detected stall on CPU
-> [  484.412488]  0-...!: (125000 ticks this GP) idle=f3e/1/4611686018427387906 softirq=112858/112858 fqs=0
-> [  484.422300]   (t=125000 jiffies g=61626 c=61625 q=1534)
-> [  484.427663] rcu_sched kthread starved for 125000 jiffies! g61626 c61625 f0x0 RCU_GP_WAIT_FQS(3) ->state=0x402 ->cpu=0
-> ----------
->
-> 484 - 125 = 359, which was about to start SND related fuzzing in that log.
->
-> ----------
-> 2033/05/18 03:36:31 executing program 1:
-> r0 = socket(0x40000a, 0x5, 0x7)
-> setsockopt$inet_int(r0, 0x0, 0x18, &(0x7f0000000000)=0x200, 0x4)
-> bind$inet6(r0, &(0x7f00000000c0)={0xa, 0x0, 0x0, @loopback={0x0, 0x1}}, 0x1c)
-> perf_event_open(&(0x7f0000000040)={0x2, 0x70, 0x3e5}, 0x0, 0xffffffffffffffff, 0xffffffffffffffff, 0x0)
-> timer_create(0x0, &(0x7f00000001c0)={0x0, 0x15, 0x0, @thr={&(0x7f0000000440), &(0x7f0000000540)}}, &(0x7f0000000200))
-> timer_getoverrun(0x0)
-> perf_event_open(&(0x7f000025c000)={0x2, 0x78, 0x3e3}, 0x0, 0x0, 0xffffffffffffffff, 0x0)
-> r1 = syz_open_dev$sndctrl(&(0x7f0000000200)='/dev/snd/controlC#\x00', 0x2, 0x0)
-> perf_event_open(&(0x7f0000001000)={0x0, 0x70, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8ce, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xfffffffffffffff8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, @perf_bp={&(0x7f0000005000), 0x2}, 0x1000000000c}, 0x0, 0x0, 0xffffffffffffffff, 0x0)
-> ioctl$SNDRV_CTL_IOCTL_SUBSCRIBE_EVENTS(r1, 0xc0045516, &(0x7f00000000c0)=0x1)
-> r2 = syz_open_dev$sndpcmp(&(0x7f0000000100)='/dev/snd/pcmC#D#p\x00', 0x1, 0x4000)
-> ioctl$SNDRV_SEQ_IOCTL_GET_QUEUE_CLIENT(r2, 0xc04c5349, &(0x7f0000000240)={0x200, 0xfffffffffffffcdc, 0x1})
-> syz_open_dev$tun(&(0x7f00000003c0)='/dev/net/tun\x00', 0x0, 0x20402)
-> ioctl$SNDRV_CTL_IOCTL_PVERSION(r1, 0xc1105517, &(0x7f0000001000)=""/250)
-> ioctl$SNDRV_CTL_IOCTL_SUBSCRIBE_EVENTS(r1, 0xc0045516, &(0x7f0000000000))
->
-> 2033/05/18 03:36:31 executing program 4:
-> syz_emit_ethernet(0x3e, &(0x7f00000000c0)={@broadcast=[0xff, 0xff, 0xff, 0xff, 0xff, 0xff], @empty=[0x0, 0x0, 0xb00000000000000], [], {@ipv4={0x800, {{0x5, 0x4, 0x0, 0x0, 0x30, 0x0, 0x0, 0x0, 0x1, 0x0, @remote={0xac, 0x14, 0x14, 0xbb}, @dev={0xac, 0x14, 0x14}}, @icmp=@parameter_prob={0x5, 0x4, 0x0, 0x0, 0x0, 0x0, {0x5, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, @local={0xac, 0x223, 0x14, 0xaa}, @dev={0xac, 0x14, 0x14}}}}}}}, &(0x7f0000000000)={0x0, 0x2, [0x0, 0x2e6]})
->
-> 2033/05/18 03:36:31 executing program 1:
-> r0 = socket$pppoe(0x18, 0x1, 0x0)
-> connect$pppoe(r0, &(0x7f00000000c0)={0x18, 0x0, {0x1, @broadcast=[0xff, 0xff, 0xff, 0xff, 0xff, 0xff], 'ip6_vti0\x00'}}, 0x1e)
-> r1 = socket(0x3, 0xb, 0x80000001)
-> setsockopt$inet_sctp6_SCTP_ADAPTATION_LAYER(r1, 0x84, 0x7, &(0x7f0000000100)={0x2}, 0x4)
-> ioctl$sock_inet_SIOCGIFADDR(r0, 0x8915, &(0x7f0000000040)={'veth1_to_bridge\x00', {0x2, 0x4e21}})
-> r2 = syz_open_dev$admmidi(&(0x7f0000000000)='/dev/admmidi#\x00', 0x6, 0x8000)
-> setsockopt$SO_VM_SOCKETS_BUFFER_MAX_SIZE(r2, 0x28, 0x2, &(0x7f0000000080)=0xffffffffffffff00, 0x8)
->
-> [  359.306427] snd_virmidi snd_virmidi.0: control 112:0:0:� :0 is already present
-> ----------
+From: Eric Biggers <ebiggers@google.com>
 
+The PPPIOCDETACH ioctl effectively tries to "close" the given ppp file
+before f_count has reached 0, which is fundamentally a bad idea.  It
+does check 'f_count < 2', which excludes concurrent operations on the
+file since they would only be possible with a shared fd table, in which
+case each fdget() would take a file reference.  However, it fails to
+account for the fact that even with 'f_count = 1' the file can still be
+linked into epoll instances.  As reported by syzbot, this can trivially
+be used to cause a use-after-free.
 
-It's the next one that caused the hang (the number in "Comm:
-syz-executor1" matches with the number in "executing program 1"):
+Yet, the only known user of PPPIOCDETACH is pppd versions older than
+ppp-2.4.2, which was released almost 15 years ago (November 2003).
+Also, PPPIOCDETACH apparently stopped working reliably at around the
+same time, when the f_count check was added to the kernel, e.g. see
+https://lkml.org/lkml/2002/12/31/83.  Also, the current 'f_count < 2'
+check makes PPPIOCDETACH only work in single-threaded applications; it
+always fails if called from a multithreaded application.
 
-[  359.306427] snd_virmidi snd_virmidi.0: control 112:0:0:� :0 is
-already present
-2033/05/18 03:36:31 executing program 1:
-r0 = openat$ptmx(0xffffffffffffff9c,
-&(0x7f0000000140)='/dev/ptmx\x00', 0x0, 0x0)
-ioctl$TCSETS(r0, 0x40045431, &(0x7f00005befdc))
-r1 = syz_open_pts(r0, 0x20201)
-fcntl$setstatus(r1, 0x4, 0x2800)
-ioctl$TCXONC(r1, 0x540a, 0x0)
-perf_event_open(&(0x7f000025c000)={0x2, 0x70, 0x3e5, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, @perf_bp={&(0x7f000031f000)}}, 0x0,
-0x0, 0xffffffffffffffff, 0x0)
-write(r1, &(0x7f0000fd6000)='z', 0x1)
-r2 = openat$ipvs(0xffffffffffffff9c,
-&(0x7f0000000000)='/proc/sys/net/ipv4/vs/sync_ports\x00', 0x2, 0x0)
-ioctl$ifreq_SIOCGIFINDEX_team(0xffffffffffffff9c, 0x8933,
-&(0x7f00000012c0)={'team0\x00', <r3=>0x0})
-bind$packet(r2, &(0x7f0000001300)={0x11, 0x1f, r3, 0x1, 0x0, 0x6,
-@random="31e8917e98e6"}, 0x14)
-ioctl$TIOCSETD(r1, 0x5423, &(0x7f00000000c0)=0x3)
-ioctl$TCFLSH(r0, 0x540b, 0x0)
-close(r0)
+All pppd versions released in the last 15 years just close() the file
+descriptor instead.
+
+Therefore, instead of hacking around this bug by exporting epoll
+internals to modules, and probably missing other related bugs, just
+remove the PPPIOCDETACH ioctl and see if anyone actually notices.  Leave
+a stub in place that prints a one-time warning and returns EINVAL.
+
+Reported-by: syzbot+16363c99d4134717c05b@syzkaller.appspotmail.com
+Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+Cc: stable@vger.kernel.org
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+
+v2: leave a stub in place, rather than removing the ioctl completely.
+
+ Documentation/networking/ppp_generic.txt |  6 ------
+ drivers/net/ppp/ppp_generic.c            | 27 +++++-------------------
+ include/uapi/linux/ppp-ioctl.h           |  2 +-
+ 3 files changed, 6 insertions(+), 29 deletions(-)
+
+diff --git a/Documentation/networking/ppp_generic.txt b/Documentation/networking/ppp_generic.txt
+index 091d20273dcb..61daf4b39600 100644
+--- a/Documentation/networking/ppp_generic.txt
++++ b/Documentation/networking/ppp_generic.txt
+@@ -300,12 +300,6 @@ unattached instance are:
+ The ioctl calls available on an instance of /dev/ppp attached to a
+ channel are:
+ 
+-* PPPIOCDETACH detaches the instance from the channel.  This ioctl is
+-  deprecated since the same effect can be achieved by closing the
+-  instance.  In order to prevent possible races this ioctl will fail
+-  with an EINVAL error if more than one file descriptor refers to this
+-  instance (i.e. as a result of dup(), dup2() or fork()).
+-
+ * PPPIOCCONNECT connects this channel to a PPP interface.  The
+   argument should point to an int containing the interface unit
+   number.  It will return an EINVAL error if the channel is already
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index dc7c7ec43202..02ad03a2fab7 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -605,30 +605,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 
+ 	if (cmd = PPPIOCDETACH) {
+ 		/*
+-		 * We have to be careful here... if the file descriptor
+-		 * has been dup'd, we could have another process in the
+-		 * middle of a poll using the same file *, so we had
+-		 * better not free the interface data structures -
+-		 * instead we fail the ioctl.  Even in this case, we
+-		 * shut down the interface if we are the owner of it.
+-		 * Actually, we should get rid of PPPIOCDETACH, userland
+-		 * (i.e. pppd) could achieve the same effect by closing
+-		 * this fd and reopening /dev/ppp.
++		 * PPPIOCDETACH is no longer supported as it was heavily broken,
++		 * and is only known to have been used by pppd older than
++		 * ppp-2.4.2 (released November 2003).
+ 		 */
++		pr_warn_once("%s (%d) used obsolete PPPIOCDETACH ioctl\n",
++			     current->comm, current->pid);
+ 		err = -EINVAL;
+-		if (pf->kind = INTERFACE) {
+-			ppp = PF_TO_PPP(pf);
+-			rtnl_lock();
+-			if (file = ppp->owner)
+-				unregister_netdevice(ppp->dev);
+-			rtnl_unlock();
+-		}
+-		if (atomic_long_read(&file->f_count) < 2) {
+-			ppp_release(NULL, file);
+-			err = 0;
+-		} else
+-			pr_warn("PPPIOCDETACH file->f_count=%ld\n",
+-				atomic_long_read(&file->f_count));
+ 		goto out;
+ 	}
+ 
+diff --git a/include/uapi/linux/ppp-ioctl.h b/include/uapi/linux/ppp-ioctl.h
+index b19a9c249b15..784c2e3e572e 100644
+--- a/include/uapi/linux/ppp-ioctl.h
++++ b/include/uapi/linux/ppp-ioctl.h
+@@ -106,7 +106,7 @@ struct pppol2tp_ioc_stats {
+ #define PPPIOCGIDLE	_IOR('t', 63, struct ppp_idle) /* get idle time */
+ #define PPPIOCNEWUNIT	_IOWR('t', 62, int)	/* create new ppp unit */
+ #define PPPIOCATTACH	_IOW('t', 61, int)	/* attach to ppp unit */
+-#define PPPIOCDETACH	_IOW('t', 60, int)	/* detach from ppp unit/chan */
++#define PPPIOCDETACH	_IOW('t', 60, int)	/* obsolete, do not use */
+ #define PPPIOCSMRRU	_IOW('t', 59, int)	/* set multilink MRU */
+ #define PPPIOCCONNECT	_IOW('t', 58, int)	/* connect channel to unit */
+ #define PPPIOCDISCONN	_IO('t', 57)		/* disconnect channel */
+-- 
+2.17.0.441.gb46fe60e1d-goog
+
