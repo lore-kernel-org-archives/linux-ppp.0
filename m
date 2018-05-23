@@ -1,81 +1,134 @@
-From: Guillaume Nault <g.nault@alphalink.fr>
-Date: Wed, 23 May 2018 13:26:18 +0000
-Subject: Re: KASAN: use-after-free Read in remove_wait_queue (2)
-Message-Id: <20180523132618.GA1569@alphalink.fr>
+From: Eric Biggers <ebiggers3@gmail.com>
+Date: Wed, 23 May 2018 03:59:52 +0000
+Subject: [PATCH] ppp: remove the PPPIOCDETACH ioctl
+Message-Id: <20180523035952.25768-1-ebiggers3@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <f403043d0f18f879cc056648a875@google.com>
- <20180514061155.GL677@sol.localdomain>
- <20180518160223.GF1534@alphalink.fr>
- <20180523032958.GE658@sol.localdomain>
+References: <20180523032958.GE658@sol.localdomain>
 In-Reply-To: <20180523032958.GE658@sol.localdomain>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Eric Biggers <ebiggers3@gmail.com>
-Cc: linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, syzkaller-bugs@googlegroups.com, syzbot <syzbot+16363c99d4134717c05b@syzkaller.appspotmail.com>, viro@zeniv.linux.org.uk
+To: linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
+Cc: netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Guillaume Nault <g.nault@alphalink.fr>, syzkaller-bugs@googlegroups.com, Eric Biggers <ebiggers@google.com>
 
-On Tue, May 22, 2018 at 08:29:58PM -0700, Eric Biggers wrote:
-> On Fri, May 18, 2018 at 06:02:23PM +0200, Guillaume Nault wrote:
-> > On Sun, May 13, 2018 at 11:11:55PM -0700, Eric Biggers wrote:
-> > > [+ppp list and maintainer]
-> > > 
-> > > This is a bug in ppp_generic.c; it still happens on Linus' tree and it's easily
-> > > reproducible, see program below.  The bug is that the PPPIOCDETACH ioctl doesn't
-> > > consider that the file can still be attached to epoll instances even when
-> > > ->f_count = 1.
-> > 
-> > Right. What would it take to remove the file for the epoll instances?
-> > Sorry for the naive question, but I'm not familiar with VFS and didn't
-> > find a helper function we could call.
-> > 
-> 
-> There is eventpoll_release_file(), but it's not exported to modules.  It might
-> work to call it, but it seems like a hack.
-> 
-> > > Also, the reproducer doesn't test this but I think ppp_poll(),
-> > > ppp_read(), and ppp_write() can all race with PPPIOCDETACH, causing
-> > > use-after-frees as well.
-> > 
-> > I also believe so. ppp_release() resets ->private_data, and even though
-> > functions like ppp_read() test ->private_data before executing, there's
-> > no synchronisation mechanism to ensure that the update is visible
-> > before the unit or channel is destroyed. Is that the kind of race you
-> > had in mind?
-> 
-> Yes, though after looking into it more I *think* these additional races aren't
-> actually possible, due to the 'f_count < 2' check.  These races could only
-> happen with a shared fd table, but in that case fdget() would increment f_count
-> for the duration of each operation, resulting in 'f_count >= 2' if both ioctl()
-> and something else is running on the same file concurrently.
-> 
-> Note that this also means PPPIOCDETACH doesn't work at all if called from a
-> multithreaded application...
-> 
-> > 
-> > > Any chance that PPPIOCDETACH can simply be removed,
-> > > given that it's apparently been "deprecated" for 16 years?
-> > > Does anyone use it?
-> > 
-> > The only users I'm aware of are pppd versions older than ppp-2.4.2
-> > (released in November 2003). But even at that time, there were issues
-> > with PPPIOCDETACH as pppd didn't seem to react properly when this call
-> > failed. An Internet search on the "PPPIOCDETACH file->f_count=" kernel
-> > log string, or on the "Couldn't release PPP unit: Invalid argument"
-> > error message of pppd, returns several related bug reports.
-> > 
-> > Originally, PPPIOCDETACH never failed, but testing ->f_count was
-> > later introduced to fix crashes when the file descriptor had been
-> > duplicated. It seems that this was motivated by polling issues too.
-> > 
-> > Long story short, it looks like PPPIOCDETACH never has worked well
-> > and we have at least two more bugs to fix. Given how it has proven
-> > fragile, I wouldn't be surprised if there were even more lurking
-> > around. I'd say that it's probably safer to drop it than to add more
-> > workarounds and playing wack-a-mole with those bugs.
-> 
-> IMO, if we can get away with removing it without any users noticing, that would
-> be much better than trying to fix it with a VFS-level hack, and probably missing
-> some cases.  I'll send a patch to get things started...
-> 
-Yes, I fully agree. That looks much safer, and given the track record
-of this ioctl I very much doubt anyone would depend on it.
+From: Eric Biggers <ebiggers@google.com>
+
+The PPPIOCDETACH ioctl effectively tries to "close" the given ppp file
+before f_count has reached 0, which is fundamentally a bad idea.  It
+does check 'f_count < 2', which excludes concurrent operations on the
+file since they would only be possible with a shared fd table, in which
+case each fdget() would take a file reference.  However, it fails to
+account for the fact that even with 'f_count = 1' the file can still be
+linked into epoll instances.  As reported by syzbot, this can trivially
+be used to cause a use-after-free.
+
+Yet, the only known user of PPPIOCDETACH is pppd versions older than
+ppp-2.4.2, which was released almost 15 years ago (November 2003).
+Also, PPPIOCDETACH apparently stopped working reliably at around the
+same time, when the f_count check was added to the kernel, e.g. see
+https://lkml.org/lkml/2002/12/31/83.  Also, the current 'f_count < 2'
+check makes PPPIOCDETACH only work in single-threaded applications; it
+always fails if called from a multithreaded application.
+
+All pppd versions released in the last 15 years just close() the file
+descriptor instead.
+
+Therefore, instead of hacking around this bug by exporting epoll
+internals to modules, and probably missing other related bugs, just
+remove the PPPIOCDETACH ioctl and see if anyone actually notices.
+
+Reported-by: syzbot+16363c99d4134717c05b@syzkaller.appspotmail.com
+Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+Cc: stable@vger.kernel.org
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ Documentation/networking/ppp_generic.txt |  6 -----
+ drivers/net/ppp/ppp_generic.c            | 29 ------------------------
+ fs/compat_ioctl.c                        |  1 -
+ include/uapi/linux/ppp-ioctl.h           |  1 -
+ 4 files changed, 37 deletions(-)
+
+diff --git a/Documentation/networking/ppp_generic.txt b/Documentation/networking/ppp_generic.txt
+index 091d20273dcb..61daf4b39600 100644
+--- a/Documentation/networking/ppp_generic.txt
++++ b/Documentation/networking/ppp_generic.txt
+@@ -300,12 +300,6 @@ unattached instance are:
+ The ioctl calls available on an instance of /dev/ppp attached to a
+ channel are:
+ 
+-* PPPIOCDETACH detaches the instance from the channel.  This ioctl is
+-  deprecated since the same effect can be achieved by closing the
+-  instance.  In order to prevent possible races this ioctl will fail
+-  with an EINVAL error if more than one file descriptor refers to this
+-  instance (i.e. as a result of dup(), dup2() or fork()).
+-
+ * PPPIOCCONNECT connects this channel to a PPP interface.  The
+   argument should point to an int containing the interface unit
+   number.  It will return an EINVAL error if the channel is already
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index dc7c7ec43202..dce8812fe802 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -603,35 +603,6 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		goto out;
+ 	}
+ 
+-	if (cmd = PPPIOCDETACH) {
+-		/*
+-		 * We have to be careful here... if the file descriptor
+-		 * has been dup'd, we could have another process in the
+-		 * middle of a poll using the same file *, so we had
+-		 * better not free the interface data structures -
+-		 * instead we fail the ioctl.  Even in this case, we
+-		 * shut down the interface if we are the owner of it.
+-		 * Actually, we should get rid of PPPIOCDETACH, userland
+-		 * (i.e. pppd) could achieve the same effect by closing
+-		 * this fd and reopening /dev/ppp.
+-		 */
+-		err = -EINVAL;
+-		if (pf->kind = INTERFACE) {
+-			ppp = PF_TO_PPP(pf);
+-			rtnl_lock();
+-			if (file = ppp->owner)
+-				unregister_netdevice(ppp->dev);
+-			rtnl_unlock();
+-		}
+-		if (atomic_long_read(&file->f_count) < 2) {
+-			ppp_release(NULL, file);
+-			err = 0;
+-		} else
+-			pr_warn("PPPIOCDETACH file->f_count=%ld\n",
+-				atomic_long_read(&file->f_count));
+-		goto out;
+-	}
+-
+ 	if (pf->kind = CHANNEL) {
+ 		struct channel *pch;
+ 		struct ppp_channel *chan;
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index ef80085ed564..8285b570d635 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -917,7 +917,6 @@ COMPATIBLE_IOCTL(PPPIOCSDEBUG)
+ /* PPPIOCGIDLE is translated */
+ COMPATIBLE_IOCTL(PPPIOCNEWUNIT)
+ COMPATIBLE_IOCTL(PPPIOCATTACH)
+-COMPATIBLE_IOCTL(PPPIOCDETACH)
+ COMPATIBLE_IOCTL(PPPIOCSMRRU)
+ COMPATIBLE_IOCTL(PPPIOCCONNECT)
+ COMPATIBLE_IOCTL(PPPIOCDISCONN)
+diff --git a/include/uapi/linux/ppp-ioctl.h b/include/uapi/linux/ppp-ioctl.h
+index b19a9c249b15..d46caf217ea4 100644
+--- a/include/uapi/linux/ppp-ioctl.h
++++ b/include/uapi/linux/ppp-ioctl.h
+@@ -106,7 +106,6 @@ struct pppol2tp_ioc_stats {
+ #define PPPIOCGIDLE	_IOR('t', 63, struct ppp_idle) /* get idle time */
+ #define PPPIOCNEWUNIT	_IOWR('t', 62, int)	/* create new ppp unit */
+ #define PPPIOCATTACH	_IOW('t', 61, int)	/* attach to ppp unit */
+-#define PPPIOCDETACH	_IOW('t', 60, int)	/* detach from ppp unit/chan */
+ #define PPPIOCSMRRU	_IOW('t', 59, int)	/* set multilink MRU */
+ #define PPPIOCCONNECT	_IOW('t', 58, int)	/* connect channel to unit */
+ #define PPPIOCDISCONN	_IO('t', 57)		/* disconnect channel */
+-- 
+2.17.0
+
