@@ -1,7 +1,7 @@
-From: Paul Mackerras <paulus@ozlabs.org>
-Date: Wed, 23 May 2018 23:04:00 +0000
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Thu, 24 May 2018 14:04:49 +0000
 Subject: Re: [PATCH v2] ppp: remove the PPPIOCDETACH ioctl
-Message-Id: <20180523230400.GA13256@fergus.ozlabs.ibm.com>
+Message-Id: <20180524140449.GA1389@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20180523035952.25768-1-ebiggers3@gmail.com>
  <20180523213738.146911-1-ebiggers3@gmail.com>
@@ -10,7 +10,7 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Eric Biggers <ebiggers3@gmail.com>
-Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Guillaume Nault <g.nault@alphalink.fr>, syzkaller-bugs@googlegroups.com, Eric Biggers <ebiggers@google.com>
+Cc: linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, syzkaller-bugs@googlegroups.com, Eric Biggers <ebiggers@google.com>
 
 On Wed, May 23, 2018 at 02:37:38PM -0700, Eric Biggers wrote:
 > From: Eric Biggers <ebiggers@google.com>
@@ -44,5 +44,17 @@ On Wed, May 23, 2018 at 02:37:38PM -0700, Eric Biggers wrote:
 > Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
 > Cc: stable@vger.kernel.org
 > Signed-off-by: Eric Biggers <ebiggers@google.com>
+> ---
+> 
+> v2: leave a stub in place, rather than removing the ioctl completely.
+> 
+Thanks a lot for your help on this matter.
 
-Acked-by: Paul Mackerras <paulus@ozlabs.org>
+BTW, netdev has its own rules wrt. stable backports. You didn't need to
+CC: stable@. David handles -stable submissions himself.
+Using a 'PATCH net' subject prefix would have made it clear that this
+patch was fixing some released code and should be considered for -stable
+backport.
+
+Reviewed-by: Guillaume Nault <g.nault@alphalink.fr>
+Tested-by: Guillaume Nault <g.nault@alphalink.fr>
