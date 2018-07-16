@@ -1,148 +1,136 @@
-From: Walter Harms <wharms@bfs.de>
-Date: Wed, 06 Jun 2018 09:01:44 +0000
-Subject: Re: [PATCH v2] ppp: remove the PPPIOCDETACH ioctl
-Message-Id: <909200487.17769.1528275705881@ox-groupware.bfs.de>
+From: Kees Cook <keescook@chromium.org>
+Date: Mon, 16 Jul 2018 04:05:16 +0000
+Subject: [PATCH] ppp: mppe: Remove VLA usage
+Message-Id: <20180716040516.GA32783@beast>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20180523035952.25768-1-ebiggers3@gmail.com>
- <20180523213738.146911-1-ebiggers3@gmail.com>
-In-Reply-To: <20180523213738.146911-1-ebiggers3@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org, Eric Biggers <ebiggers3@gmail.com>, Paul Mackerras <paulus@samba.org>
-Cc: syzkaller-bugs@googlegroups.com, Guillaume Nault <g.nault@alphalink.fr>, Eric Biggers <ebiggers@google.com>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
+To: Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+
+In the quest to remove all stack VLA usage from the kernel[1], this
+removes the discouraged use of AHASH_REQUEST_ON_STACK (and associated
+VLA) by switching to shash directly and keeping the associated descriptor
+allocated with the regular state on the heap.
+
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ drivers/net/ppp/ppp_mppe.c | 57 +++++++++++++++++++++-----------------
+ 1 file changed, 31 insertions(+), 26 deletions(-)
+
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index 6c7fd98cb00a..5b4b81027a75 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -96,7 +96,7 @@ static inline void sha_pad_init(struct sha_pad *shapad)
+  */
+ struct ppp_mppe_state {
+ 	struct crypto_skcipher *arc4;
+-	struct crypto_ahash *sha1;
++	struct shash_desc *sha1;
+ 	unsigned char *sha1_digest;
+ 	unsigned char master_key[MPPE_MAX_KEY_LEN];
+ 	unsigned char session_key[MPPE_MAX_KEY_LEN];
+@@ -136,25 +136,16 @@ struct ppp_mppe_state {
+  */
+ static void get_new_key_from_sha(struct ppp_mppe_state * state)
+ {
+-	AHASH_REQUEST_ON_STACK(req, state->sha1);
+-	struct scatterlist sg[4];
+-	unsigned int nbytes;
+-
+-	sg_init_table(sg, 4);
+-
+-	nbytes = setup_sg(&sg[0], state->master_key, state->keylen);
+-	nbytes += setup_sg(&sg[1], sha_pad->sha_pad1,
+-			   sizeof(sha_pad->sha_pad1));
+-	nbytes += setup_sg(&sg[2], state->session_key, state->keylen);
+-	nbytes += setup_sg(&sg[3], sha_pad->sha_pad2,
+-			   sizeof(sha_pad->sha_pad2));
+-
+-	ahash_request_set_tfm(req, state->sha1);
+-	ahash_request_set_callback(req, 0, NULL, NULL);
+-	ahash_request_set_crypt(req, sg, state->sha1_digest, nbytes);
+-
+-	crypto_ahash_digest(req);
+-	ahash_request_zero(req);
++	crypto_shash_init(state->sha1);
++	crypto_shash_update(state->sha1, state->master_key,
++			    state->keylen);
++	crypto_shash_update(state->sha1, sha_pad->sha_pad1,
++			    sizeof(sha_pad->sha_pad1));
++	crypto_shash_update(state->sha1, state->session_key,
++			    state->keylen);
++	crypto_shash_update(state->sha1, sha_pad->sha_pad2,
++			    sizeof(sha_pad->sha_pad2));
++	crypto_shash_final(state->sha1, state->sha1_digest);
+ }
+ 
+ /*
+@@ -200,6 +191,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
+ static void *mppe_alloc(unsigned char *options, int optlen)
+ {
+ 	struct ppp_mppe_state *state;
++	struct crypto_shash *shash;
+ 	unsigned int digestsize;
+ 
+ 	if (optlen != CILEN_MPPE + sizeof(state->master_key) ||
+@@ -217,13 +209,21 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+ 		goto out_free;
+ 	}
+ 
+-	state->sha1 = crypto_alloc_ahash("sha1", 0, CRYPTO_ALG_ASYNC);
+-	if (IS_ERR(state->sha1)) {
+-		state->sha1 = NULL;
++	shash = crypto_alloc_shash("sha1", 0, 0);
++	if (IS_ERR(shash))
++		goto out_free;
++
++	state->sha1 = kmalloc(sizeof(*state->sha1) +
++				     crypto_shash_descsize(shash),
++			      GFP_KERNEL);
++	if (!state->sha1) {
++		crypto_free_shash(shash);
+ 		goto out_free;
+ 	}
++	state->sha1->tfm = shash;
++	state->sha1->flags = 0;
+ 
+-	digestsize = crypto_ahash_digestsize(state->sha1);
++	digestsize = crypto_shash_digestsize(shash);
+ 	if (digestsize < MPPE_MAX_KEY_LEN)
+ 		goto out_free;
+ 
+@@ -246,7 +246,11 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+ 
+ out_free:
+ 	kfree(state->sha1_digest);
+-	crypto_free_ahash(state->sha1);
++	if (state->sha1) {
++		if (state->sha1->tfm)
++			crypto_free_shash(state->sha1->tfm);
++		kzfree(state->sha1);
++	}
+ 	crypto_free_skcipher(state->arc4);
+ 	kfree(state);
+ out:
+@@ -261,7 +265,8 @@ static void mppe_free(void *arg)
+ 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
+ 	if (state) {
+ 		kfree(state->sha1_digest);
+-		crypto_free_ahash(state->sha1);
++		crypto_free_shash(state->sha1->tfm);
++		kzfree(state->sha1);
+ 		crypto_free_skcipher(state->arc4);
+ 		kfree(state);
+ 	}
+-- 
+2.17.1
 
 
-
-> Eric Biggers <ebiggers3@gmail.com> hat am 23. Mai 2018 um 23:37 geschrieben:
-> 
-> 
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> The PPPIOCDETACH ioctl effectively tries to "close" the given ppp file
-> before f_count has reached 0, which is fundamentally a bad idea.  It
-> does check 'f_count < 2', which excludes concurrent operations on the
-> file since they would only be possible with a shared fd table, in which
-> case each fdget() would take a file reference.  However, it fails to
-> account for the fact that even with 'f_count = 1' the file can still be
-> linked into epoll instances.  As reported by syzbot, this can trivially
-> be used to cause a use-after-free.
-> 
-> Yet, the only known user of PPPIOCDETACH is pppd versions older than
-> ppp-2.4.2, which was released almost 15 years ago (November 2003).
-> Also, PPPIOCDETACH apparently stopped working reliably at around the
-> same time, when the f_count check was added to the kernel, e.g. see
-> https://lkml.org/lkml/2002/12/31/83.  Also, the current 'f_count < 2'
-> check makes PPPIOCDETACH only work in single-threaded applications; it
-> always fails if called from a multithreaded application.
-> 
-> All pppd versions released in the last 15 years just close() the file
-> descriptor instead.
-> 
-> Therefore, instead of hacking around this bug by exporting epoll
-> internals to modules, and probably missing other related bugs, just
-> remove the PPPIOCDETACH ioctl and see if anyone actually notices.  Leave
-> a stub in place that prints a one-time warning and returns EINVAL.
-> 
-> Reported-by: syzbot+16363c99d4134717c05b@syzkaller.appspotmail.com
-> Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
-> ---
-> 
-> v2: leave a stub in place, rather than removing the ioctl completely.
-> 
->  Documentation/networking/ppp_generic.txt |  6 ------
->  drivers/net/ppp/ppp_generic.c            | 27 +++++-------------------
->  include/uapi/linux/ppp-ioctl.h           |  2 +-
->  3 files changed, 6 insertions(+), 29 deletions(-)
-> 
-> diff --git a/Documentation/networking/ppp_generic.txt
-> b/Documentation/networking/ppp_generic.txt
-> index 091d20273dcb..61daf4b39600 100644
-> --- a/Documentation/networking/ppp_generic.txt
-> +++ b/Documentation/networking/ppp_generic.txt
-> @@ -300,12 +300,6 @@ unattached instance are:
->  The ioctl calls available on an instance of /dev/ppp attached to a
->  channel are:
->  
-> -* PPPIOCDETACH detaches the instance from the channel.  This ioctl is
-> -  deprecated since the same effect can be achieved by closing the
-> -  instance.  In order to prevent possible races this ioctl will fail
-> -  with an EINVAL error if more than one file descriptor refers to this
-> -  instance (i.e. as a result of dup(), dup2() or fork()).
-> -
->  * PPPIOCCONNECT connects this channel to a PPP interface.  The
->    argument should point to an int containing the interface unit
->    number.  It will return an EINVAL error if the channel is already
-> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-> index dc7c7ec43202..02ad03a2fab7 100644
-> --- a/drivers/net/ppp/ppp_generic.c
-> +++ b/drivers/net/ppp/ppp_generic.c
-> @@ -605,30 +605,13 @@ static long ppp_ioctl(struct file *file, unsigned int
-> cmd, unsigned long arg)
->  
->  	if (cmd = PPPIOCDETACH) {
->  		/*
-> -		 * We have to be careful here... if the file descriptor
-> -		 * has been dup'd, we could have another process in the
-> -		 * middle of a poll using the same file *, so we had
-> -		 * better not free the interface data structures -
-> -		 * instead we fail the ioctl.  Even in this case, we
-> -		 * shut down the interface if we are the owner of it.
-> -		 * Actually, we should get rid of PPPIOCDETACH, userland
-> -		 * (i.e. pppd) could achieve the same effect by closing
-> -		 * this fd and reopening /dev/ppp.
-> +		 * PPPIOCDETACH is no longer supported as it was heavily broken,
-> +		 * and is only known to have been used by pppd older than
-> +		 * ppp-2.4.2 (released November 2003).
->  		 */
-> +		pr_warn_once("%s (%d) used obsolete PPPIOCDETACH ioctl\n",
-> +			     current->comm, current->pid);
->  		err = -EINVAL;
-> -		if (pf->kind = INTERFACE) {
-> -			ppp = PF_TO_PPP(pf);
-> -			rtnl_lock();
-> -			if (file = ppp->owner)
-> -				unregister_netdevice(ppp->dev);
-> -			rtnl_unlock();
-> -		}
-> -		if (atomic_long_read(&file->f_count) < 2) {
-> -			ppp_release(NULL, file);
-> -			err = 0;
-> -		} else
-> -			pr_warn("PPPIOCDETACH file->f_count=%ld\n",
-> -				atomic_long_read(&file->f_count));
->  		goto out;
->  	}
->  
-> diff --git a/include/uapi/linux/ppp-ioctl.h b/include/uapi/linux/ppp-ioctl.h
-> index b19a9c249b15..784c2e3e572e 100644
-> --- a/include/uapi/linux/ppp-ioctl.h
-> +++ b/include/uapi/linux/ppp-ioctl.h
-> @@ -106,7 +106,7 @@ struct pppol2tp_ioc_stats {
->  #define PPPIOCGIDLE	_IOR('t', 63, struct ppp_idle) /* get idle time */
->  #define PPPIOCNEWUNIT	_IOWR('t', 62, int)	/* create new ppp unit */
->  #define PPPIOCATTACH	_IOW('t', 61, int)	/* attach to ppp unit */
-> -#define PPPIOCDETACH	_IOW('t', 60, int)	/* detach from ppp unit/chan */
-> +#define PPPIOCDETACH	_IOW('t', 60, int)	/* obsolete, do not use */
-
-It's a bit late but ...
-i would suggest a stronger wording here. like /* removed 2003 */ 
-for me "obsolete" sounds like "maybe it will be removed in a distant future"
-
-just my 2 cents,
-
-re,
- wh
-
->  #define PPPIOCSMRRU	_IOW('t', 59, int)	/* set multilink MRU */
->  #define PPPIOCCONNECT	_IOW('t', 58, int)	/* connect channel to unit */
->  #define PPPIOCDISCONN	_IO('t', 57)		/* disconnect channel */
-> -- 
-> 2.17.0.441.gb46fe60e1d-goog
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-ppp" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Kees Cook
+Pixel Security
