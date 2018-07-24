@@ -1,7 +1,7 @@
 From: Kees Cook <keescook@chromium.org>
-Date: Tue, 24 Jul 2018 16:49:26 +0000
-Subject: [PATCH v6 08/18] crypto: skcipher: Remove VLA usage for SKCIPHER_REQUEST_ON_STACK
-Message-Id: <20180724164936.37477-9-keescook@chromium.org>
+Date: Tue, 24 Jul 2018 16:49:25 +0000
+Subject: [PATCH v6 07/18] crypto: shash: Remove VLA usage in unaligned hashing
+Message-Id: <20180724164936.37477-8-keescook@chromium.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20180724164936.37477-1-keescook@chromium.org>
 In-Reply-To: <20180724164936.37477-1-keescook@chromium.org>
@@ -11,53 +11,90 @@ Content-Transfer-Encoding: 7bit
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, dm-devel@redhat.com, linux-pm@vger.kernel.org, linux-crypto@vger.kernel.org, drbd-dev@lists.linbit.com, linux-block@vger.kernel.org, qat-linux@intel.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, devel@driverdev.osuosl.org, linux-afs@lists.infradead.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org
 
-In the quest to remove all stack VLA usage from the kernel[1], this
-caps the skcipher request size similar to other limits and adds a sanity
-check at registration. Looking at instrumented tcrypt output, the largest
-is for lrw:
-
-	crypt: testing lrw(aes)
-	crypto_skcipher_set_reqsize: 8
-	crypto_skcipher_set_reqsize: 88
-	crypto_skcipher_set_reqsize: 472
+In the quest to remove all stack VLA usage from the kernel[1], this uses
+the newly defined max alignment to perform unaligned hashing to avoid
+VLAs, and drops the helper function while adding sanity checks on the
+resulting buffer sizes. Additionally, the __aligned_largest macro is
+removed since this helper was the only user.
 
 [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- include/crypto/internal/skcipher.h | 1 +
- include/crypto/skcipher.h          | 4 +++-
- 2 files changed, 4 insertions(+), 1 deletion(-)
+ crypto/shash.c               | 27 ++++++++++++++++-----------
+ include/linux/compiler-gcc.h |  1 -
+ 2 files changed, 16 insertions(+), 12 deletions(-)
 
-diff --git a/include/crypto/internal/skcipher.h b/include/crypto/internal/skcipher.h
-index e42f7063f245..5035482cbe68 100644
---- a/include/crypto/internal/skcipher.h
-+++ b/include/crypto/internal/skcipher.h
-@@ -130,6 +130,7 @@ static inline struct crypto_skcipher *crypto_spawn_skcipher(
- static inline void crypto_skcipher_set_reqsize(
- 	struct crypto_skcipher *skcipher, unsigned int reqsize)
- {
-+	BUG_ON(reqsize > SKCIPHER_MAX_REQSIZE);
- 	skcipher->reqsize = reqsize;
+diff --git a/crypto/shash.c b/crypto/shash.c
+index 86d76b5c626c..d21f04d70dce 100644
+--- a/crypto/shash.c
++++ b/crypto/shash.c
+@@ -73,13 +73,6 @@ int crypto_shash_setkey(struct crypto_shash *tfm, const u8 *key,
  }
+ EXPORT_SYMBOL_GPL(crypto_shash_setkey);
  
-diff --git a/include/crypto/skcipher.h b/include/crypto/skcipher.h
-index 2f327f090c3e..c48e194438cf 100644
---- a/include/crypto/skcipher.h
-+++ b/include/crypto/skcipher.h
-@@ -139,9 +139,11 @@ struct skcipher_alg {
- 	struct crypto_alg base;
- };
+-static inline unsigned int shash_align_buffer_size(unsigned len,
+-						   unsigned long mask)
+-{
+-	typedef u8 __aligned_largest u8_aligned;
+-	return len + (mask & ~(__alignof__(u8_aligned) - 1));
+-}
+-
+ static int shash_update_unaligned(struct shash_desc *desc, const u8 *data,
+ 				  unsigned int len)
+ {
+@@ -88,11 +81,17 @@ static int shash_update_unaligned(struct shash_desc *desc, const u8 *data,
+ 	unsigned long alignmask = crypto_shash_alignmask(tfm);
+ 	unsigned int unaligned_len = alignmask + 1 -
+ 				     ((unsigned long)data & alignmask);
+-	u8 ubuf[shash_align_buffer_size(unaligned_len, alignmask)]
+-		__aligned_largest;
++	/*
++	 * We cannot count on __aligned() working for large values:
++	 * https://patchwork.kernel.org/patch/9507697/
++	 */
++	u8 ubuf[MAX_ALGAPI_ALIGNMASK * 2];
+ 	u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
+ 	int err;
  
-+#define SKCIPHER_MAX_REQSIZE	472
++	if (WARN_ON(buf + unaligned_len > ubuf + sizeof(ubuf)))
++		return -EINVAL;
 +
- #define SKCIPHER_REQUEST_ON_STACK(name, tfm) \
- 	char __##name##_desc[sizeof(struct skcipher_request) + \
--		crypto_skcipher_reqsize(tfm)] CRYPTO_MINALIGN_ATTR; \
-+		SKCIPHER_MAX_REQSIZE] CRYPTO_MINALIGN_ATTR; \
- 	struct skcipher_request *name = (void *)__##name##_desc
+ 	if (unaligned_len > len)
+ 		unaligned_len = len;
  
- /**
+@@ -124,11 +123,17 @@ static int shash_final_unaligned(struct shash_desc *desc, u8 *out)
+ 	unsigned long alignmask = crypto_shash_alignmask(tfm);
+ 	struct shash_alg *shash = crypto_shash_alg(tfm);
+ 	unsigned int ds = crypto_shash_digestsize(tfm);
+-	u8 ubuf[shash_align_buffer_size(ds, alignmask)]
+-		__aligned_largest;
++	/*
++	 * We cannot count on __aligned() working for large values:
++	 * https://patchwork.kernel.org/patch/9507697/
++	 */
++	u8 ubuf[MAX_ALGAPI_ALIGNMASK + HASH_MAX_DIGESTSIZE];
+ 	u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
+ 	int err;
+ 
++	if (WARN_ON(buf + ds > ubuf + sizeof(ubuf)))
++		return -EINVAL;
++
+ 	err = shash->final(desc, buf);
+ 	if (err)
+ 		goto out;
+diff --git a/include/linux/compiler-gcc.h b/include/linux/compiler-gcc.h
+index f1a7492a5cc8..1f1cdef36a82 100644
+--- a/include/linux/compiler-gcc.h
++++ b/include/linux/compiler-gcc.h
+@@ -125,7 +125,6 @@
+  */
+ #define __pure			__attribute__((pure))
+ #define __aligned(x)		__attribute__((aligned(x)))
+-#define __aligned_largest	__attribute__((aligned))
+ #define __printf(a, b)		__attribute__((format(printf, a, b)))
+ #define __scanf(a, b)		__attribute__((format(scanf, a, b)))
+ #define __attribute_const__	__attribute__((__const__))
 -- 
 2.17.1
 
