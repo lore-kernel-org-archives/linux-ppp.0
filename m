@@ -1,41 +1,64 @@
 From: Kees Cook <keescook@chromium.org>
-Date: Tue, 24 Jul 2018 17:53:26 +0000
-Subject: Re: [PATCH v6 18/18] crypto: Remove AHASH_REQUEST_ON_STACK
-Message-Id: <CAGXu5j+gTpZFkXE8XSNgYPEpBT4+hCb1kzv8s8KrSTerHyKp6w@mail.gmail.com>
+Date: Tue, 24 Jul 2018 16:49:35 +0000
+Subject: [PATCH v6 17/18] crypto: ccm: Remove VLA usage
+Message-Id: <20180724164936.37477-18-keescook@chromium.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20180724164936.37477-1-keescook@chromium.org> <20180724164936.37477-19-keescook@chromium.org>
- <1bdc706ae86039c4ffcff39698251424d54af116.camel@perches.com>
-In-Reply-To: <1bdc706ae86039c4ffcff39698251424d54af116.camel@perches.com>
+References: <20180724164936.37477-1-keescook@chromium.org>
+In-Reply-To: <20180724164936.37477-1-keescook@chromium.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Joe Perches <joe@perches.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, X86 ML <x86@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, device-mapper development <dm-devel@redhat.com>, Linux PM list <linux-pm@vger.kernel.org>, linux-crypto <linux-crypto@vger.kernel.org>, drbd-dev@lists.linbit.com, linux-block <linux-block@vger.kernel.org>, qat-linux@intel.com, linux-ppp@vger.kernel.org, Network Development <netdev@vger.kernel.org>, "open list:ANDROID DRIVERS" <devel@driverdev.osuosl.org>, linux-afs@lists.infradead.org, linux-wireless <linux-wireless@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Kees Cook <keescook@chromium.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, dm-devel@redhat.com, linux-pm@vger.kernel.org, linux-crypto@vger.kernel.org, drbd-dev@lists.linbit.com, linux-block@vger.kernel.org, qat-linux@intel.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, devel@driverdev.osuosl.org, linux-afs@lists.infradead.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On Tue, Jul 24, 2018 at 10:31 AM, Joe Perches <joe@perches.com> wrote:
-> On Tue, 2018-07-24 at 09:49 -0700, Kees Cook wrote:
->> All users of AHASH_REQUEST_ON_STACK have been removed from the kernel, so
->> drop it entirely so no VLAs get reintroduced by future users.
->
-> checkpatch has a test for that.
-> It could now be removed as well.
-> ---
-> diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
-> index 34e4683de7a3..a3517334d661 100755
-> --- a/scripts/checkpatch.pl
-> +++ b/scripts/checkpatch.pl
-> @@ -796,7 +796,7 @@ our $declaration_macros = qr{(?x:
->         (?:$Storage\s+)?(?:[A-Z_][A-Z0-9]*_){0,2}(?:DEFINE|DECLARE)(?:_[A-Z0-9]+){1,6}\s*\(|
->         (?:$Storage\s+)?[HLP]?LIST_HEAD\s*\(|
->         (?:$Storage\s+)?${Type}\s+uninitialized_var\s*\(|
-> -       (?:SKCIPHER_REQUEST|SHASH_DESC|AHASH_REQUEST)_ON_STACK\s*\(
-> +       (?:SKCIPHER_REQUEST|SHASH_DESC)_ON_STACK\s*\(
->  )};
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
-Ah! Cool. I've added this now.
+In the quest to remove all stack VLA usage from the kernel[1], this
+drops AHASH_REQUEST_ON_STACK by preallocated the ahash request area
+with the skcipher area (which are not used at the same time).
 
--Kees
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
+Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ crypto/ccm.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/crypto/ccm.c b/crypto/ccm.c
+index 0a083342ec8c..b242fd0d3262 100644
+--- a/crypto/ccm.c
++++ b/crypto/ccm.c
+@@ -50,7 +50,10 @@ struct crypto_ccm_req_priv_ctx {
+ 	u32 flags;
+ 	struct scatterlist src[3];
+ 	struct scatterlist dst[3];
+-	struct skcipher_request skreq;
++	union {
++		struct ahash_request ahreq;
++		struct skcipher_request skreq;
++	};
+ };
+ 
+ struct cbcmac_tfm_ctx {
+@@ -181,7 +184,7 @@ static int crypto_ccm_auth(struct aead_request *req, struct scatterlist *plain,
+ 	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
+ 	struct crypto_aead *aead = crypto_aead_reqtfm(req);
+ 	struct crypto_ccm_ctx *ctx = crypto_aead_ctx(aead);
+-	AHASH_REQUEST_ON_STACK(ahreq, ctx->mac);
++	struct ahash_request *ahreq = &pctx->ahreq;
+ 	unsigned int assoclen = req->assoclen;
+ 	struct scatterlist sg[3];
+ 	u8 *odata = pctx->odata;
+@@ -427,7 +430,7 @@ static int crypto_ccm_init_tfm(struct crypto_aead *tfm)
+ 	crypto_aead_set_reqsize(
+ 		tfm,
+ 		align + sizeof(struct crypto_ccm_req_priv_ctx) +
+-		crypto_skcipher_reqsize(ctr));
++		max(crypto_ahash_reqsize(mac), crypto_skcipher_reqsize(ctr)));
+ 
+ 	return 0;
+ 
 -- 
-Kees Cook
-Pixel Security
+2.17.1
+
