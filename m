@@ -1,7 +1,7 @@
 From: Kees Cook <keescook@chromium.org>
-Date: Tue, 24 Jul 2018 16:49:24 +0000
-Subject: [PATCH v6 06/18] crypto: qat: Remove VLA usage
-Message-Id: <20180724164936.37477-7-keescook@chromium.org>
+Date: Tue, 24 Jul 2018 16:49:34 +0000
+Subject: [PATCH v6 16/18] rxrpc: Reuse SKCIPHER_REQUEST_ON_STACK buffer
+Message-Id: <20180724164936.37477-17-keescook@chromium.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20180724164936.37477-1-keescook@chromium.org>
 In-Reply-To: <20180724164936.37477-1-keescook@chromium.org>
@@ -11,42 +11,108 @@ Content-Transfer-Encoding: 7bit
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, dm-devel@redhat.com, linux-pm@vger.kernel.org, linux-crypto@vger.kernel.org, drbd-dev@lists.linbit.com, linux-block@vger.kernel.org, qat-linux@intel.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, devel@driverdev.osuosl.org, linux-afs@lists.infradead.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org
 
-In the quest to remove all stack VLA usage from the kernel[1], this uses
-the new upper bound for the stack buffer. Also adds a sanity check.
+The use of SKCIPHER_REQUEST_ON_STACK() will trigger FRAME_WARN warnings
+(when less than 2048) once the VLA is no longer hidden from the check:
 
-[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+net/rxrpc/rxkad.c:398:1: warning: the frame size of 1152 bytes is larger than 1024 bytes [-Wframe-larger-than=]
+net/rxrpc/rxkad.c:242:1: warning: the frame size of 1152 bytes is larger than 1024 bytes [-Wframe-larger-than=]
+
+This passes the initial SKCIPHER_REQUEST_ON_STACK allocation to the leaf
+functions for reuse. Two requests allocated on the stack is not needed
+when only one is used at a time.
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
+Acked-by: Arnd Bergmann <arnd@arndb.de>
 ---
- drivers/crypto/qat/qat_common/qat_algs.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ net/rxrpc/rxkad.c | 25 +++++++++++++------------
+ 1 file changed, 13 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/crypto/qat/qat_common/qat_algs.c b/drivers/crypto/qat/qat_common/qat_algs.c
-index 1138e41d6805..a28edf7b792f 100644
---- a/drivers/crypto/qat/qat_common/qat_algs.c
-+++ b/drivers/crypto/qat/qat_common/qat_algs.c
-@@ -153,8 +153,8 @@ static int qat_alg_do_precomputes(struct icp_qat_hw_auth_algo_blk *hash,
- 	struct sha512_state sha512;
- 	int block_size = crypto_shash_blocksize(ctx->hash_tfm);
- 	int digest_size = crypto_shash_digestsize(ctx->hash_tfm);
--	char ipad[block_size];
--	char opad[block_size];
-+	char ipad[MAX_ALGAPI_BLOCKSIZE];
-+	char opad[MAX_ALGAPI_BLOCKSIZE];
- 	__be32 *hash_state_out;
- 	__be64 *hash512_state_out;
- 	int i, offset;
-@@ -164,6 +164,10 @@ static int qat_alg_do_precomputes(struct icp_qat_hw_auth_algo_blk *hash,
- 	shash->tfm = ctx->hash_tfm;
- 	shash->flags = 0x0;
- 
-+	if (WARN_ON(block_size > sizeof(ipad) ||
-+		    sizeof(ipad) != sizeof(opad)))
-+		return -EINVAL;
-+
- 	if (auth_keylen > block_size) {
- 		int ret = crypto_shash_digest(shash, auth_key,
- 					      auth_keylen, ipad);
+diff --git a/net/rxrpc/rxkad.c b/net/rxrpc/rxkad.c
+index 278ac0807a60..6393391fac86 100644
+--- a/net/rxrpc/rxkad.c
++++ b/net/rxrpc/rxkad.c
+@@ -146,10 +146,10 @@ static int rxkad_prime_packet_security(struct rxrpc_connection *conn)
+ static int rxkad_secure_packet_auth(const struct rxrpc_call *call,
+ 				    struct sk_buff *skb,
+ 				    u32 data_size,
+-				    void *sechdr)
++				    void *sechdr,
++				    struct skcipher_request *req)
+ {
+ 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+-	SKCIPHER_REQUEST_ON_STACK(req, call->conn->cipher);
+ 	struct rxkad_level1_hdr hdr;
+ 	struct rxrpc_crypt iv;
+ 	struct scatterlist sg;
+@@ -183,12 +183,12 @@ static int rxkad_secure_packet_auth(const struct rxrpc_call *call,
+ static int rxkad_secure_packet_encrypt(const struct rxrpc_call *call,
+ 				       struct sk_buff *skb,
+ 				       u32 data_size,
+-				       void *sechdr)
++				       void *sechdr,
++				       struct skcipher_request *req)
+ {
+ 	const struct rxrpc_key_token *token;
+ 	struct rxkad_level2_hdr rxkhdr;
+ 	struct rxrpc_skb_priv *sp;
+-	SKCIPHER_REQUEST_ON_STACK(req, call->conn->cipher);
+ 	struct rxrpc_crypt iv;
+ 	struct scatterlist sg[16];
+ 	struct sk_buff *trailer;
+@@ -296,11 +296,12 @@ static int rxkad_secure_packet(struct rxrpc_call *call,
+ 		ret = 0;
+ 		break;
+ 	case RXRPC_SECURITY_AUTH:
+-		ret = rxkad_secure_packet_auth(call, skb, data_size, sechdr);
++		ret = rxkad_secure_packet_auth(call, skb, data_size, sechdr,
++					       req);
+ 		break;
+ 	case RXRPC_SECURITY_ENCRYPT:
+ 		ret = rxkad_secure_packet_encrypt(call, skb, data_size,
+-						  sechdr);
++						  sechdr, req);
+ 		break;
+ 	default:
+ 		ret = -EPERM;
+@@ -316,10 +317,10 @@ static int rxkad_secure_packet(struct rxrpc_call *call,
+  */
+ static int rxkad_verify_packet_1(struct rxrpc_call *call, struct sk_buff *skb,
+ 				 unsigned int offset, unsigned int len,
+-				 rxrpc_seq_t seq)
++				 rxrpc_seq_t seq,
++				 struct skcipher_request *req)
+ {
+ 	struct rxkad_level1_hdr sechdr;
+-	SKCIPHER_REQUEST_ON_STACK(req, call->conn->cipher);
+ 	struct rxrpc_crypt iv;
+ 	struct scatterlist sg[16];
+ 	struct sk_buff *trailer;
+@@ -402,11 +403,11 @@ static int rxkad_verify_packet_1(struct rxrpc_call *call, struct sk_buff *skb,
+  */
+ static int rxkad_verify_packet_2(struct rxrpc_call *call, struct sk_buff *skb,
+ 				 unsigned int offset, unsigned int len,
+-				 rxrpc_seq_t seq)
++				 rxrpc_seq_t seq,
++				 struct skcipher_request *req)
+ {
+ 	const struct rxrpc_key_token *token;
+ 	struct rxkad_level2_hdr sechdr;
+-	SKCIPHER_REQUEST_ON_STACK(req, call->conn->cipher);
+ 	struct rxrpc_crypt iv;
+ 	struct scatterlist _sg[4], *sg;
+ 	struct sk_buff *trailer;
+@@ -549,9 +550,9 @@ static int rxkad_verify_packet(struct rxrpc_call *call, struct sk_buff *skb,
+ 	case RXRPC_SECURITY_PLAIN:
+ 		return 0;
+ 	case RXRPC_SECURITY_AUTH:
+-		return rxkad_verify_packet_1(call, skb, offset, len, seq);
++		return rxkad_verify_packet_1(call, skb, offset, len, seq, req);
+ 	case RXRPC_SECURITY_ENCRYPT:
+-		return rxkad_verify_packet_2(call, skb, offset, len, seq);
++		return rxkad_verify_packet_2(call, skb, offset, len, seq, req);
+ 	default:
+ 		return -ENOANO;
+ 	}
 -- 
 2.17.1
 
