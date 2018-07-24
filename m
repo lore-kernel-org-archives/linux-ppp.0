@@ -1,7 +1,7 @@
 From: Kees Cook <keescook@chromium.org>
-Date: Tue, 24 Jul 2018 16:49:30 +0000
-Subject: [PATCH v6 12/18] drbd: Convert from ahash to shash
-Message-Id: <20180724164936.37477-13-keescook@chromium.org>
+Date: Tue, 24 Jul 2018 16:49:32 +0000
+Subject: [PATCH v6 14/18] staging: rtl8192u: ieee80211: Convert from ahash to shash
+Message-Id: <20180724164936.37477-15-keescook@chromium.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20180724164936.37477-1-keescook@chromium.org>
 In-Reply-To: <20180724164936.37477-1-keescook@chromium.org>
@@ -11,6 +11,7 @@ Content-Transfer-Encoding: 7bit
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, dm-devel@redhat.com, linux-pm@vger.kernel.org, linux-crypto@vger.kernel.org, drbd-dev@lists.linbit.com, linux-block@vger.kernel.org, qat-linux@intel.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, devel@driverdev.osuosl.org, linux-afs@lists.infradead.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org
 
+This is an identical change to the wireless/lib80211 of the same name.
 In preparing to remove all stack VLA usage from the kernel[1], this
 removes the discouraged use of AHASH_REQUEST_ON_STACK in favor of
 the smaller SHASH_DESC_ON_STACK by converting from ahash-wrapped-shash
@@ -22,441 +23,130 @@ a fixed size in a later patch to the crypto subsystem.
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- drivers/block/drbd/drbd_int.h      | 13 +++----
- drivers/block/drbd/drbd_main.c     | 14 ++++----
- drivers/block/drbd/drbd_nl.c       | 39 +++++++--------------
- drivers/block/drbd/drbd_receiver.c | 35 ++++++++++---------
- drivers/block/drbd/drbd_worker.c   | 56 +++++++++++++-----------------
- 5 files changed, 69 insertions(+), 88 deletions(-)
+ .../rtl8192u/ieee80211/ieee80211_crypt_tkip.c | 57 +++++++++----------
+ 1 file changed, 28 insertions(+), 29 deletions(-)
 
-diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
-index bc4ed2ed40a2..97d8e290c2be 100644
---- a/drivers/block/drbd/drbd_int.h
-+++ b/drivers/block/drbd/drbd_int.h
-@@ -726,10 +726,10 @@ struct drbd_connection {
- 	struct list_head transfer_log;	/* all requests not yet fully processed */
+diff --git a/drivers/staging/rtl8192u/ieee80211/ieee80211_crypt_tkip.c b/drivers/staging/rtl8192u/ieee80211/ieee80211_crypt_tkip.c
+index a7efaae4e25a..1088fa0aee0e 100644
+--- a/drivers/staging/rtl8192u/ieee80211/ieee80211_crypt_tkip.c
++++ b/drivers/staging/rtl8192u/ieee80211/ieee80211_crypt_tkip.c
+@@ -54,9 +54,9 @@ struct ieee80211_tkip_data {
+ 	int key_idx;
  
- 	struct crypto_shash *cram_hmac_tfm;
--	struct crypto_ahash *integrity_tfm;  /* checksums we compute, updates protected by connection->data->mutex */
--	struct crypto_ahash *peer_integrity_tfm;  /* checksums we verify, only accessed from receiver thread  */
--	struct crypto_ahash *csums_tfm;
--	struct crypto_ahash *verify_tfm;
-+	struct crypto_shash *integrity_tfm;  /* checksums we compute, updates protected by connection->data->mutex */
-+	struct crypto_shash *peer_integrity_tfm;  /* checksums we verify, only accessed from receiver thread  */
-+	struct crypto_shash *csums_tfm;
-+	struct crypto_shash *verify_tfm;
- 	void *int_dig_in;
- 	void *int_dig_vv;
+ 	struct crypto_skcipher *rx_tfm_arc4;
+-	struct crypto_ahash *rx_tfm_michael;
++	struct crypto_shash *rx_tfm_michael;
+ 	struct crypto_skcipher *tx_tfm_arc4;
+-	struct crypto_ahash *tx_tfm_michael;
++	struct crypto_shash *tx_tfm_michael;
  
-@@ -1533,8 +1533,9 @@ static inline void ov_out_of_sync_print(struct drbd_device *device)
+ 	/* scratch buffers for virt_to_page() (crypto API) */
+ 	u8 rx_hdr[16], tx_hdr[16];
+@@ -80,8 +80,7 @@ static void *ieee80211_tkip_init(int key_idx)
+ 		goto fail;
+ 	}
+ 
+-	priv->tx_tfm_michael = crypto_alloc_ahash("michael_mic", 0,
+-			CRYPTO_ALG_ASYNC);
++	priv->tx_tfm_michael = crypto_alloc_shash("michael_mic", 0, 0);
+ 	if (IS_ERR(priv->tx_tfm_michael)) {
+ 		printk(KERN_DEBUG "ieee80211_crypt_tkip: could not allocate "
+ 				"crypto API michael_mic\n");
+@@ -98,8 +97,7 @@ static void *ieee80211_tkip_init(int key_idx)
+ 		goto fail;
+ 	}
+ 
+-	priv->rx_tfm_michael = crypto_alloc_ahash("michael_mic", 0,
+-			CRYPTO_ALG_ASYNC);
++	priv->rx_tfm_michael = crypto_alloc_shash("michael_mic", 0, 0);
+ 	if (IS_ERR(priv->rx_tfm_michael)) {
+ 		printk(KERN_DEBUG "ieee80211_crypt_tkip: could not allocate "
+ 				"crypto API michael_mic\n");
+@@ -111,9 +109,9 @@ static void *ieee80211_tkip_init(int key_idx)
+ 
+ fail:
+ 	if (priv) {
+-		crypto_free_ahash(priv->tx_tfm_michael);
++		crypto_free_shash(priv->tx_tfm_michael);
+ 		crypto_free_skcipher(priv->tx_tfm_arc4);
+-		crypto_free_ahash(priv->rx_tfm_michael);
++		crypto_free_shash(priv->rx_tfm_michael);
+ 		crypto_free_skcipher(priv->rx_tfm_arc4);
+ 		kfree(priv);
+ 	}
+@@ -127,9 +125,9 @@ static void ieee80211_tkip_deinit(void *priv)
+ 	struct ieee80211_tkip_data *_priv = priv;
+ 
+ 	if (_priv) {
+-		crypto_free_ahash(_priv->tx_tfm_michael);
++		crypto_free_shash(_priv->tx_tfm_michael);
+ 		crypto_free_skcipher(_priv->tx_tfm_arc4);
+-		crypto_free_ahash(_priv->rx_tfm_michael);
++		crypto_free_shash(_priv->rx_tfm_michael);
+ 		crypto_free_skcipher(_priv->rx_tfm_arc4);
+ 	}
+ 	kfree(priv);
+@@ -500,30 +498,31 @@ static int ieee80211_tkip_decrypt(struct sk_buff *skb, int hdr_len, void *priv)
+ 	return keyidx;
  }
  
- 
--extern void drbd_csum_bio(struct crypto_ahash *, struct bio *, void *);
--extern void drbd_csum_ee(struct crypto_ahash *, struct drbd_peer_request *, void *);
-+extern void drbd_csum_bio(struct crypto_shash *, struct bio *, void *);
-+extern void drbd_csum_ee(struct crypto_shash *, struct drbd_peer_request *,
-+			 void *);
- /* worker callbacks */
- extern int w_e_end_data_req(struct drbd_work *, int);
- extern int w_e_end_rsdata_req(struct drbd_work *, int);
-diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
-index a80809bd3057..ccb54791d39c 100644
---- a/drivers/block/drbd/drbd_main.c
-+++ b/drivers/block/drbd/drbd_main.c
-@@ -1377,7 +1377,7 @@ void drbd_send_ack_dp(struct drbd_peer_device *peer_device, enum drbd_packet cmd
- 		      struct p_data *dp, int data_size)
+-static int michael_mic(struct crypto_ahash *tfm_michael, u8 *key, u8 *hdr,
++static int michael_mic(struct crypto_shash *tfm_michael, u8 *key, u8 *hdr,
+ 		       u8 *data, size_t data_len, u8 *mic)
  {
- 	if (peer_device->connection->peer_integrity_tfm)
--		data_size -= crypto_ahash_digestsize(peer_device->connection->peer_integrity_tfm);
-+		data_size -= crypto_shash_digestsize(peer_device->connection->peer_integrity_tfm);
- 	_drbd_send_ack(peer_device, cmd, dp->sector, cpu_to_be32(data_size),
- 		       dp->block_id);
- }
-@@ -1690,7 +1690,7 @@ int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *
- 	sock = &peer_device->connection->data;
- 	p = drbd_prepare_command(peer_device, sock);
- 	digest_size = peer_device->connection->integrity_tfm ?
--		      crypto_ahash_digestsize(peer_device->connection->integrity_tfm) : 0;
-+		      crypto_shash_digestsize(peer_device->connection->integrity_tfm) : 0;
+-	AHASH_REQUEST_ON_STACK(req, tfm_michael);
+-	struct scatterlist sg[2];
++	SHASH_DESC_ON_STACK(desc, tfm_michael);
+ 	int err;
  
- 	if (!p)
- 		return -EIO;
-@@ -1796,7 +1796,7 @@ int drbd_send_block(struct drbd_peer_device *peer_device, enum drbd_packet cmd,
- 	p = drbd_prepare_command(peer_device, sock);
- 
- 	digest_size = peer_device->connection->integrity_tfm ?
--		      crypto_ahash_digestsize(peer_device->connection->integrity_tfm) : 0;
-+		      crypto_shash_digestsize(peer_device->connection->integrity_tfm) : 0;
- 
- 	if (!p)
- 		return -EIO;
-@@ -2561,11 +2561,11 @@ void conn_free_crypto(struct drbd_connection *connection)
- {
- 	drbd_free_sock(connection);
- 
--	crypto_free_ahash(connection->csums_tfm);
--	crypto_free_ahash(connection->verify_tfm);
-+	crypto_free_shash(connection->csums_tfm);
-+	crypto_free_shash(connection->verify_tfm);
- 	crypto_free_shash(connection->cram_hmac_tfm);
--	crypto_free_ahash(connection->integrity_tfm);
--	crypto_free_ahash(connection->peer_integrity_tfm);
-+	crypto_free_shash(connection->integrity_tfm);
-+	crypto_free_shash(connection->peer_integrity_tfm);
- 	kfree(connection->int_dig_in);
- 	kfree(connection->int_dig_vv);
- 
-diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
-index b4f02768ba47..d15703b1ffe8 100644
---- a/drivers/block/drbd/drbd_nl.c
-+++ b/drivers/block/drbd/drbd_nl.c
-@@ -2303,10 +2303,10 @@ check_net_options(struct drbd_connection *connection, struct net_conf *new_net_c
- }
- 
- struct crypto {
--	struct crypto_ahash *verify_tfm;
--	struct crypto_ahash *csums_tfm;
-+	struct crypto_shash *verify_tfm;
-+	struct crypto_shash *csums_tfm;
- 	struct crypto_shash *cram_hmac_tfm;
--	struct crypto_ahash *integrity_tfm;
-+	struct crypto_shash *integrity_tfm;
- };
- 
- static int
-@@ -2324,36 +2324,21 @@ alloc_shash(struct crypto_shash **tfm, char *tfm_name, int err_alg)
- 	return NO_ERROR;
- }
- 
--static int
--alloc_ahash(struct crypto_ahash **tfm, char *tfm_name, int err_alg)
--{
--	if (!tfm_name[0])
--		return NO_ERROR;
--
--	*tfm = crypto_alloc_ahash(tfm_name, 0, CRYPTO_ALG_ASYNC);
--	if (IS_ERR(*tfm)) {
--		*tfm = NULL;
--		return err_alg;
+-	if (tfm_michael = NULL) {
+-		printk(KERN_WARNING "michael_mic: tfm_michael = NULL\n");
+-		return -1;
 -	}
 -
--	return NO_ERROR;
--}
--
- static enum drbd_ret_code
- alloc_crypto(struct crypto *crypto, struct net_conf *new_net_conf)
- {
- 	char hmac_name[CRYPTO_MAX_ALG_NAME];
- 	enum drbd_ret_code rv;
- 
--	rv = alloc_ahash(&crypto->csums_tfm, new_net_conf->csums_alg,
-+	rv = alloc_shash(&crypto->csums_tfm, new_net_conf->csums_alg,
- 			 ERR_CSUMS_ALG);
- 	if (rv != NO_ERROR)
- 		return rv;
--	rv = alloc_ahash(&crypto->verify_tfm, new_net_conf->verify_alg,
-+	rv = alloc_shash(&crypto->verify_tfm, new_net_conf->verify_alg,
- 			 ERR_VERIFY_ALG);
- 	if (rv != NO_ERROR)
- 		return rv;
--	rv = alloc_ahash(&crypto->integrity_tfm, new_net_conf->integrity_alg,
-+	rv = alloc_shash(&crypto->integrity_tfm, new_net_conf->integrity_alg,
- 			 ERR_INTEGRITY_ALG);
- 	if (rv != NO_ERROR)
- 		return rv;
-@@ -2371,9 +2356,9 @@ alloc_crypto(struct crypto *crypto, struct net_conf *new_net_conf)
- static void free_crypto(struct crypto *crypto)
- {
- 	crypto_free_shash(crypto->cram_hmac_tfm);
--	crypto_free_ahash(crypto->integrity_tfm);
--	crypto_free_ahash(crypto->csums_tfm);
--	crypto_free_ahash(crypto->verify_tfm);
-+	crypto_free_shash(crypto->integrity_tfm);
-+	crypto_free_shash(crypto->csums_tfm);
-+	crypto_free_shash(crypto->verify_tfm);
- }
- 
- int drbd_adm_net_opts(struct sk_buff *skb, struct genl_info *info)
-@@ -2450,17 +2435,17 @@ int drbd_adm_net_opts(struct sk_buff *skb, struct genl_info *info)
- 	rcu_assign_pointer(connection->net_conf, new_net_conf);
- 
- 	if (!rsr) {
--		crypto_free_ahash(connection->csums_tfm);
-+		crypto_free_shash(connection->csums_tfm);
- 		connection->csums_tfm = crypto.csums_tfm;
- 		crypto.csums_tfm = NULL;
- 	}
- 	if (!ovr) {
--		crypto_free_ahash(connection->verify_tfm);
-+		crypto_free_shash(connection->verify_tfm);
- 		connection->verify_tfm = crypto.verify_tfm;
- 		crypto.verify_tfm = NULL;
- 	}
- 
--	crypto_free_ahash(connection->integrity_tfm);
-+	crypto_free_shash(connection->integrity_tfm);
- 	connection->integrity_tfm = crypto.integrity_tfm;
- 	if (connection->cstate >= C_WF_REPORT_PARAMS && connection->agreed_pro_version >= 100)
- 		/* Do this without trying to take connection->data.mutex again.  */
-diff --git a/drivers/block/drbd/drbd_receiver.c b/drivers/block/drbd/drbd_receiver.c
-index be9450f5ad1c..76243e9ef277 100644
---- a/drivers/block/drbd/drbd_receiver.c
-+++ b/drivers/block/drbd/drbd_receiver.c
-@@ -1732,7 +1732,7 @@ static int receive_Barrier(struct drbd_connection *connection, struct packet_inf
- }
- 
- /* quick wrapper in case payload size != request_size (write same) */
--static void drbd_csum_ee_size(struct crypto_ahash *h,
-+static void drbd_csum_ee_size(struct crypto_shash *h,
- 			      struct drbd_peer_request *r, void *d,
- 			      unsigned int payload_size)
- {
-@@ -1769,7 +1769,7 @@ read_in_block(struct drbd_peer_device *peer_device, u64 id, sector_t sector,
- 
- 	digest_size = 0;
- 	if (!trim && peer_device->connection->peer_integrity_tfm) {
--		digest_size = crypto_ahash_digestsize(peer_device->connection->peer_integrity_tfm);
-+		digest_size = crypto_shash_digestsize(peer_device->connection->peer_integrity_tfm);
- 		/*
- 		 * FIXME: Receive the incoming digest into the receive buffer
- 		 *	  here, together with its struct p_data?
-@@ -1905,7 +1905,7 @@ static int recv_dless_read(struct drbd_peer_device *peer_device, struct drbd_req
- 
- 	digest_size = 0;
- 	if (peer_device->connection->peer_integrity_tfm) {
--		digest_size = crypto_ahash_digestsize(peer_device->connection->peer_integrity_tfm);
-+		digest_size = crypto_shash_digestsize(peer_device->connection->peer_integrity_tfm);
- 		err = drbd_recv_all_warn(peer_device->connection, dig_in, digest_size);
- 		if (err)
- 			return err;
-@@ -3540,7 +3540,7 @@ static int receive_protocol(struct drbd_connection *connection, struct packet_in
- 	int p_proto, p_discard_my_data, p_two_primaries, cf;
- 	struct net_conf *nc, *old_net_conf, *new_net_conf = NULL;
- 	char integrity_alg[SHARED_SECRET_MAX] = "";
--	struct crypto_ahash *peer_integrity_tfm = NULL;
-+	struct crypto_shash *peer_integrity_tfm = NULL;
- 	void *int_dig_in = NULL, *int_dig_vv = NULL;
- 
- 	p_proto		= be32_to_cpu(p->protocol);
-@@ -3621,7 +3621,7 @@ static int receive_protocol(struct drbd_connection *connection, struct packet_in
- 		 * change.
- 		 */
- 
--		peer_integrity_tfm = crypto_alloc_ahash(integrity_alg, 0, CRYPTO_ALG_ASYNC);
-+		peer_integrity_tfm = crypto_alloc_shash(integrity_alg, 0, CRYPTO_ALG_ASYNC);
- 		if (IS_ERR(peer_integrity_tfm)) {
- 			peer_integrity_tfm = NULL;
- 			drbd_err(connection, "peer data-integrity-alg %s not supported\n",
-@@ -3629,7 +3629,7 @@ static int receive_protocol(struct drbd_connection *connection, struct packet_in
- 			goto disconnect;
- 		}
- 
--		hash_size = crypto_ahash_digestsize(peer_integrity_tfm);
-+		hash_size = crypto_shash_digestsize(peer_integrity_tfm);
- 		int_dig_in = kmalloc(hash_size, GFP_KERNEL);
- 		int_dig_vv = kmalloc(hash_size, GFP_KERNEL);
- 		if (!(int_dig_in && int_dig_vv)) {
-@@ -3659,7 +3659,7 @@ static int receive_protocol(struct drbd_connection *connection, struct packet_in
- 	mutex_unlock(&connection->resource->conf_update);
- 	mutex_unlock(&connection->data.mutex);
- 
--	crypto_free_ahash(connection->peer_integrity_tfm);
-+	crypto_free_shash(connection->peer_integrity_tfm);
- 	kfree(connection->int_dig_in);
- 	kfree(connection->int_dig_vv);
- 	connection->peer_integrity_tfm = peer_integrity_tfm;
-@@ -3677,7 +3677,7 @@ static int receive_protocol(struct drbd_connection *connection, struct packet_in
- disconnect_rcu_unlock:
- 	rcu_read_unlock();
- disconnect:
--	crypto_free_ahash(peer_integrity_tfm);
-+	crypto_free_shash(peer_integrity_tfm);
- 	kfree(int_dig_in);
- 	kfree(int_dig_vv);
- 	conn_request_state(connection, NS(conn, C_DISCONNECTING), CS_HARD);
-@@ -3689,15 +3689,16 @@ static int receive_protocol(struct drbd_connection *connection, struct packet_in
-  * return: NULL (alg name was "")
-  *         ERR_PTR(error) if something goes wrong
-  *         or the crypto hash ptr, if it worked out ok. */
--static struct crypto_ahash *drbd_crypto_alloc_digest_safe(const struct drbd_device *device,
-+static struct crypto_shash *drbd_crypto_alloc_digest_safe(
-+		const struct drbd_device *device,
- 		const char *alg, const char *name)
- {
--	struct crypto_ahash *tfm;
-+	struct crypto_shash *tfm;
- 
- 	if (!alg[0])
- 		return NULL;
- 
--	tfm = crypto_alloc_ahash(alg, 0, CRYPTO_ALG_ASYNC);
-+	tfm = crypto_alloc_shash(alg, 0, 0);
- 	if (IS_ERR(tfm)) {
- 		drbd_err(device, "Can not allocate \"%s\" as %s (reason: %ld)\n",
- 			alg, name, PTR_ERR(tfm));
-@@ -3750,8 +3751,8 @@ static int receive_SyncParam(struct drbd_connection *connection, struct packet_i
- 	struct drbd_device *device;
- 	struct p_rs_param_95 *p;
- 	unsigned int header_size, data_size, exp_max_sz;
--	struct crypto_ahash *verify_tfm = NULL;
--	struct crypto_ahash *csums_tfm = NULL;
-+	struct crypto_shash *verify_tfm = NULL;
-+	struct crypto_shash *csums_tfm = NULL;
- 	struct net_conf *old_net_conf, *new_net_conf = NULL;
- 	struct disk_conf *old_disk_conf = NULL, *new_disk_conf = NULL;
- 	const int apv = connection->agreed_pro_version;
-@@ -3898,14 +3899,14 @@ static int receive_SyncParam(struct drbd_connection *connection, struct packet_i
- 			if (verify_tfm) {
- 				strcpy(new_net_conf->verify_alg, p->verify_alg);
- 				new_net_conf->verify_alg_len = strlen(p->verify_alg) + 1;
--				crypto_free_ahash(peer_device->connection->verify_tfm);
-+				crypto_free_shash(peer_device->connection->verify_tfm);
- 				peer_device->connection->verify_tfm = verify_tfm;
- 				drbd_info(device, "using verify-alg: \"%s\"\n", p->verify_alg);
- 			}
- 			if (csums_tfm) {
- 				strcpy(new_net_conf->csums_alg, p->csums_alg);
- 				new_net_conf->csums_alg_len = strlen(p->csums_alg) + 1;
--				crypto_free_ahash(peer_device->connection->csums_tfm);
-+				crypto_free_shash(peer_device->connection->csums_tfm);
- 				peer_device->connection->csums_tfm = csums_tfm;
- 				drbd_info(device, "using csums-alg: \"%s\"\n", p->csums_alg);
- 			}
-@@ -3949,9 +3950,9 @@ static int receive_SyncParam(struct drbd_connection *connection, struct packet_i
- 	mutex_unlock(&connection->resource->conf_update);
- 	/* just for completeness: actually not needed,
- 	 * as this is not reached if csums_tfm was ok. */
--	crypto_free_ahash(csums_tfm);
-+	crypto_free_shash(csums_tfm);
- 	/* but free the verify_tfm again, if csums_tfm did not work out */
--	crypto_free_ahash(verify_tfm);
-+	crypto_free_shash(verify_tfm);
- 	conn_request_state(peer_device->connection, NS(conn, C_DISCONNECTING), CS_HARD);
- 	return -EIO;
- }
-diff --git a/drivers/block/drbd/drbd_worker.c b/drivers/block/drbd/drbd_worker.c
-index 1476cb3439f4..62dd3700dd84 100644
---- a/drivers/block/drbd/drbd_worker.c
-+++ b/drivers/block/drbd/drbd_worker.c
-@@ -295,60 +295,54 @@ void drbd_request_endio(struct bio *bio)
- 		complete_master_bio(device, &m);
- }
- 
--void drbd_csum_ee(struct crypto_ahash *tfm, struct drbd_peer_request *peer_req, void *digest)
-+void drbd_csum_ee(struct crypto_shash *tfm, struct drbd_peer_request *peer_req, void *digest)
- {
--	AHASH_REQUEST_ON_STACK(req, tfm);
--	struct scatterlist sg;
-+	SHASH_DESC_ON_STACK(desc, tfm);
- 	struct page *page = peer_req->pages;
- 	struct page *tmp;
- 	unsigned len;
- 
--	ahash_request_set_tfm(req, tfm);
--	ahash_request_set_callback(req, 0, NULL, NULL);
-+	desc->tfm = tfm;
+-	sg_init_table(sg, 2);
+-	sg_set_buf(&sg[0], hdr, 16);
+-	sg_set_buf(&sg[1], data, data_len);
++	desc->tfm = tfm_michael;
 +	desc->flags = 0;
  
--	sg_init_table(&sg, 1);
--	crypto_ahash_init(req);
-+	crypto_shash_init(desc);
+-	if (crypto_ahash_setkey(tfm_michael, key, 8))
++	if (crypto_shash_setkey(tfm_michael, key, 8))
+ 		return -1;
  
- 	while ((tmp = page_chain_next(page))) {
- 		/* all but the last page will be fully used */
--		sg_set_page(&sg, page, PAGE_SIZE, 0);
--		ahash_request_set_crypt(req, &sg, NULL, sg.length);
--		crypto_ahash_update(req);
-+		crypto_shash_update(desc, page_to_virt(page), PAGE_SIZE);
- 		page = tmp;
- 	}
- 	/* and now the last, possibly only partially used page */
- 	len = peer_req->i.size & (PAGE_SIZE - 1);
--	sg_set_page(&sg, page, len ?: PAGE_SIZE, 0);
--	ahash_request_set_crypt(req, &sg, digest, sg.length);
--	crypto_ahash_finup(req);
--	ahash_request_zero(req);
-+	crypto_shash_update(desc, page_to_virt(page), len ?: PAGE_SIZE);
-+
-+	crypto_shash_final(desc, digest);
-+	shash_desc_zero(desc);
- }
- 
--void drbd_csum_bio(struct crypto_ahash *tfm, struct bio *bio, void *digest)
-+void drbd_csum_bio(struct crypto_shash *tfm, struct bio *bio, void *digest)
- {
--	AHASH_REQUEST_ON_STACK(req, tfm);
--	struct scatterlist sg;
-+	SHASH_DESC_ON_STACK(desc, tfm);
- 	struct bio_vec bvec;
- 	struct bvec_iter iter;
- 
--	ahash_request_set_tfm(req, tfm);
+-	ahash_request_set_tfm(req, tfm_michael);
 -	ahash_request_set_callback(req, 0, NULL, NULL);
-+	desc->tfm = tfm;
-+	desc->flags = 0;
- 
--	sg_init_table(&sg, 1);
--	crypto_ahash_init(req);
-+	crypto_shash_init(desc);
- 
- 	bio_for_each_segment(bvec, bio, iter) {
--		sg_set_page(&sg, bvec.bv_page, bvec.bv_len, bvec.bv_offset);
--		ahash_request_set_crypt(req, &sg, NULL, sg.length);
--		crypto_ahash_update(req);
-+		crypto_shash_update(desc, (u8 *)page_to_virt(bvec.bv_page) +
-+					  bvec.bv_offset,
-+				    bvec.bv_len);
-+
- 		/* REQ_OP_WRITE_SAME has only one segment,
- 		 * checksum the payload only once. */
- 		if (bio_op(bio) = REQ_OP_WRITE_SAME)
- 			break;
- 	}
--	ahash_request_set_crypt(req, NULL, digest, 0);
--	crypto_ahash_final(req);
+-	ahash_request_set_crypt(req, sg, mic, data_len + 16);
+-	err = crypto_ahash_digest(req);
 -	ahash_request_zero(req);
-+	crypto_shash_final(desc, digest);
++	err = crypto_shash_init(desc);
++	if (err)
++		goto out;
++	err = crypto_shash_update(desc, hdr, 16);
++	if (err)
++		goto out;
++	err = crypto_shash_update(desc, data, data_len);
++	if (err)
++		goto out;
++	err = crypto_shash_final(desc, mic);
++
++out:
 +	shash_desc_zero(desc);
+ 	return err;
  }
  
- /* MAYBE merge common code with w_e_end_ov_req */
-@@ -367,7 +361,7 @@ static int w_e_send_csum(struct drbd_work *w, int cancel)
- 	if (unlikely((peer_req->flags & EE_WAS_ERROR) != 0))
- 		goto out;
+@@ -663,9 +662,9 @@ static int ieee80211_tkip_set_key(void *key, int len, u8 *seq, void *priv)
+ {
+ 	struct ieee80211_tkip_data *tkey = priv;
+ 	int keyidx;
+-	struct crypto_ahash *tfm = tkey->tx_tfm_michael;
++	struct crypto_shash *tfm = tkey->tx_tfm_michael;
+ 	struct crypto_skcipher *tfm2 = tkey->tx_tfm_arc4;
+-	struct crypto_ahash *tfm3 = tkey->rx_tfm_michael;
++	struct crypto_shash *tfm3 = tkey->rx_tfm_michael;
+ 	struct crypto_skcipher *tfm4 = tkey->rx_tfm_arc4;
  
--	digest_size = crypto_ahash_digestsize(peer_device->connection->csums_tfm);
-+	digest_size = crypto_shash_digestsize(peer_device->connection->csums_tfm);
- 	digest = kmalloc(digest_size, GFP_NOIO);
- 	if (digest) {
- 		sector_t sector = peer_req->i.sector;
-@@ -1205,7 +1199,7 @@ int w_e_end_csum_rs_req(struct drbd_work *w, int cancel)
- 		 * a real fix would be much more involved,
- 		 * introducing more locking mechanisms */
- 		if (peer_device->connection->csums_tfm) {
--			digest_size = crypto_ahash_digestsize(peer_device->connection->csums_tfm);
-+			digest_size = crypto_shash_digestsize(peer_device->connection->csums_tfm);
- 			D_ASSERT(device, digest_size = di->digest_size);
- 			digest = kmalloc(digest_size, GFP_NOIO);
- 		}
-@@ -1255,7 +1249,7 @@ int w_e_end_ov_req(struct drbd_work *w, int cancel)
- 	if (unlikely(cancel))
- 		goto out;
- 
--	digest_size = crypto_ahash_digestsize(peer_device->connection->verify_tfm);
-+	digest_size = crypto_shash_digestsize(peer_device->connection->verify_tfm);
- 	digest = kmalloc(digest_size, GFP_NOIO);
- 	if (!digest) {
- 		err = 1;	/* terminate the connection in case the allocation failed */
-@@ -1327,7 +1321,7 @@ int w_e_end_ov_reply(struct drbd_work *w, int cancel)
- 	di = peer_req->digest;
- 
- 	if (likely((peer_req->flags & EE_WAS_ERROR) = 0)) {
--		digest_size = crypto_ahash_digestsize(peer_device->connection->verify_tfm);
-+		digest_size = crypto_shash_digestsize(peer_device->connection->verify_tfm);
- 		digest = kmalloc(digest_size, GFP_NOIO);
- 		if (digest) {
- 			drbd_csum_ee(peer_device->connection->verify_tfm, peer_req, digest);
+ 	keyidx = tkey->key_idx;
 -- 
 2.17.1
 
