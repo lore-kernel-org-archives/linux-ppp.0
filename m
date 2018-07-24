@@ -1,7 +1,7 @@
 From: Kees Cook <keescook@chromium.org>
-Date: Tue, 24 Jul 2018 16:49:23 +0000
-Subject: [PATCH v6 05/18] crypto alg: Introduce generic max blocksize and alignmask
-Message-Id: <20180724164936.37477-6-keescook@chromium.org>
+Date: Tue, 24 Jul 2018 16:49:19 +0000
+Subject: [PATCH v6 01/18] crypto: xcbc: Remove VLA usage
+Message-Id: <20180724164936.37477-2-keescook@chromium.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20180724164936.37477-1-keescook@chromium.org>
 In-Reply-To: <20180724164936.37477-1-keescook@chromium.org>
@@ -11,59 +11,51 @@ Content-Transfer-Encoding: 7bit
 To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, dm-devel@redhat.com, linux-pm@vger.kernel.org, linux-crypto@vger.kernel.org, drbd-dev@lists.linbit.com, linux-block@vger.kernel.org, qat-linux@intel.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, devel@driverdev.osuosl.org, linux-afs@lists.infradead.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org
 
-In the quest to remove all stack VLA usage from the kernel[1], this
-exposes a new general upper bound on crypto blocksize and alignmask
-(higher than for the existing cipher limits) for VLA removal,
-and introduces new checks.
-
-At present, the highest cra_alignmask in the kernel is 63. The highest
-cra_blocksize is 144 (SHA3_224_BLOCK_SIZE, 18 8-byte words). For the
-new blocksize limit, I went with 160 (20 8-byte words).
+In the quest to remove all stack VLA usage from the kernel[1], this uses
+the maximum blocksize and adds a sanity check. For xcbc, the blocksize
+must always be 16, so use that, since it's already being enforced during
+instantiation.
 
 [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- crypto/algapi.c         | 7 ++++++-
- include/crypto/algapi.h | 4 +++-
- 2 files changed, 9 insertions(+), 2 deletions(-)
+ crypto/xcbc.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/crypto/algapi.c b/crypto/algapi.c
-index c0755cf4f53f..496fc51bf215 100644
---- a/crypto/algapi.c
-+++ b/crypto/algapi.c
-@@ -57,9 +57,14 @@ static int crypto_check_alg(struct crypto_alg *alg)
- 	if (alg->cra_alignmask & (alg->cra_alignmask + 1))
- 		return -EINVAL;
+diff --git a/crypto/xcbc.c b/crypto/xcbc.c
+index 25c75af50d3f..c055f57fab11 100644
+--- a/crypto/xcbc.c
++++ b/crypto/xcbc.c
+@@ -57,15 +57,17 @@ struct xcbc_desc_ctx {
+ 	u8 ctx[];
+ };
  
--	if (alg->cra_blocksize > PAGE_SIZE / 8)
-+	/* General maximums for all algs. */
-+	if (alg->cra_alignmask > MAX_ALGAPI_ALIGNMASK)
- 		return -EINVAL;
- 
-+	if (alg->cra_blocksize > MAX_ALGAPI_BLOCKSIZE)
-+		return -EINVAL;
++#define XCBC_BLOCKSIZE	16
 +
-+	/* Lower maximums for specific alg types. */
- 	if (!alg->cra_type && (alg->cra_flags & CRYPTO_ALG_TYPE_MASK) =
- 			       CRYPTO_ALG_TYPE_CIPHER) {
- 		if (alg->cra_alignmask > MAX_CIPHER_ALIGNMASK)
-diff --git a/include/crypto/algapi.h b/include/crypto/algapi.h
-index bd5e8ccf1687..21371ac8f355 100644
---- a/include/crypto/algapi.h
-+++ b/include/crypto/algapi.h
-@@ -20,8 +20,10 @@
- /*
-  * Maximum values for blocksize and alignmask, used to allocate
-  * static buffers that are big enough for any combination of
-- * ciphers and architectures.
-+ * algs and architectures. Ciphers have a lower maximum size.
-  */
-+#define MAX_ALGAPI_BLOCKSIZE		160
-+#define MAX_ALGAPI_ALIGNMASK		63
- #define MAX_CIPHER_BLOCKSIZE		16
- #define MAX_CIPHER_ALIGNMASK		15
+ static int crypto_xcbc_digest_setkey(struct crypto_shash *parent,
+ 				     const u8 *inkey, unsigned int keylen)
+ {
+ 	unsigned long alignmask = crypto_shash_alignmask(parent);
+ 	struct xcbc_tfm_ctx *ctx = crypto_shash_ctx(parent);
+-	int bs = crypto_shash_blocksize(parent);
+ 	u8 *consts = PTR_ALIGN(&ctx->ctx[0], alignmask + 1);
+ 	int err = 0;
+-	u8 key1[bs];
++	u8 key1[XCBC_BLOCKSIZE];
++	int bs = sizeof(key1);
  
+ 	if ((err = crypto_cipher_setkey(ctx->child, inkey, keylen)))
+ 		return err;
+@@ -212,7 +214,7 @@ static int xcbc_create(struct crypto_template *tmpl, struct rtattr **tb)
+ 		return PTR_ERR(alg);
+ 
+ 	switch(alg->cra_blocksize) {
+-	case 16:
++	case XCBC_BLOCKSIZE:
+ 		break;
+ 	default:
+ 		goto out_put_alg;
 -- 
 2.17.1
 
