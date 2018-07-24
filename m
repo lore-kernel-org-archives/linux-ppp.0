@@ -1,7 +1,7 @@
 From: Kees Cook <keescook@chromium.org>
-Date: Tue, 24 Jul 2018 16:49:19 +0000
-Subject: [PATCH v6 01/18] crypto: xcbc: Remove VLA usage
-Message-Id: <20180724164936.37477-2-keescook@chromium.org>
+Date: Tue, 24 Jul 2018 16:49:24 +0000
+Subject: [PATCH v6 06/18] crypto: qat: Remove VLA usage
+Message-Id: <20180724164936.37477-7-keescook@chromium.org>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20180724164936.37477-1-keescook@chromium.org>
 In-Reply-To: <20180724164936.37477-1-keescook@chromium.org>
@@ -12,50 +12,41 @@ To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, dm-devel@redhat.com, linux-pm@vger.kernel.org, linux-crypto@vger.kernel.org, drbd-dev@lists.linbit.com, linux-block@vger.kernel.org, qat-linux@intel.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, devel@driverdev.osuosl.org, linux-afs@lists.infradead.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org
 
 In the quest to remove all stack VLA usage from the kernel[1], this uses
-the maximum blocksize and adds a sanity check. For xcbc, the blocksize
-must always be 16, so use that, since it's already being enforced during
-instantiation.
+the new upper bound for the stack buffer. Also adds a sanity check.
 
 [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- crypto/xcbc.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ drivers/crypto/qat/qat_common/qat_algs.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/crypto/xcbc.c b/crypto/xcbc.c
-index 25c75af50d3f..c055f57fab11 100644
---- a/crypto/xcbc.c
-+++ b/crypto/xcbc.c
-@@ -57,15 +57,17 @@ struct xcbc_desc_ctx {
- 	u8 ctx[];
- };
+diff --git a/drivers/crypto/qat/qat_common/qat_algs.c b/drivers/crypto/qat/qat_common/qat_algs.c
+index 1138e41d6805..a28edf7b792f 100644
+--- a/drivers/crypto/qat/qat_common/qat_algs.c
++++ b/drivers/crypto/qat/qat_common/qat_algs.c
+@@ -153,8 +153,8 @@ static int qat_alg_do_precomputes(struct icp_qat_hw_auth_algo_blk *hash,
+ 	struct sha512_state sha512;
+ 	int block_size = crypto_shash_blocksize(ctx->hash_tfm);
+ 	int digest_size = crypto_shash_digestsize(ctx->hash_tfm);
+-	char ipad[block_size];
+-	char opad[block_size];
++	char ipad[MAX_ALGAPI_BLOCKSIZE];
++	char opad[MAX_ALGAPI_BLOCKSIZE];
+ 	__be32 *hash_state_out;
+ 	__be64 *hash512_state_out;
+ 	int i, offset;
+@@ -164,6 +164,10 @@ static int qat_alg_do_precomputes(struct icp_qat_hw_auth_algo_blk *hash,
+ 	shash->tfm = ctx->hash_tfm;
+ 	shash->flags = 0x0;
  
-+#define XCBC_BLOCKSIZE	16
++	if (WARN_ON(block_size > sizeof(ipad) ||
++		    sizeof(ipad) != sizeof(opad)))
++		return -EINVAL;
 +
- static int crypto_xcbc_digest_setkey(struct crypto_shash *parent,
- 				     const u8 *inkey, unsigned int keylen)
- {
- 	unsigned long alignmask = crypto_shash_alignmask(parent);
- 	struct xcbc_tfm_ctx *ctx = crypto_shash_ctx(parent);
--	int bs = crypto_shash_blocksize(parent);
- 	u8 *consts = PTR_ALIGN(&ctx->ctx[0], alignmask + 1);
- 	int err = 0;
--	u8 key1[bs];
-+	u8 key1[XCBC_BLOCKSIZE];
-+	int bs = sizeof(key1);
- 
- 	if ((err = crypto_cipher_setkey(ctx->child, inkey, keylen)))
- 		return err;
-@@ -212,7 +214,7 @@ static int xcbc_create(struct crypto_template *tmpl, struct rtattr **tb)
- 		return PTR_ERR(alg);
- 
- 	switch(alg->cra_blocksize) {
--	case 16:
-+	case XCBC_BLOCKSIZE:
- 		break;
- 	default:
- 		goto out_put_alg;
+ 	if (auth_keylen > block_size) {
+ 		int ret = crypto_shash_digest(shash, auth_key,
+ 					      auth_keylen, ipad);
 -- 
 2.17.1
 
