@@ -1,47 +1,139 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Date: Thu, 30 Aug 2018 11:47:37 +0000
-Subject: Re: [PATCH net-next 5/5] ppp: handle PPPIOCGIDLE for 64-bit time_t
-Message-Id: <CAK8P3a0B0u7dRajmTKZwXnuxjAiARJJTQguB1RUsEASDbq7TkA@mail.gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Date: Fri, 03 Aug 2018 16:37:45 +0000
+Subject: [PATCH net-next] ppp: mppe: Remove VLA usage
+Message-Id: <20180803163745.GA45715@beast>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20180829140409.833488-1-arnd@arndb.de> <20180829140409.833488-5-arnd@arndb.de>
- <20180830110601.GA19534@alphalink.fr>
-In-Reply-To: <20180830110601.GA19534@alphalink.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: g.nault@alphalink.fr
-Cc: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, Networking <netdev@vger.kernel.org>, mitch@sfgoth.com, mostrows@earthlink.net, jchapman@katalix.com, xeb@mail.ru, David Miller <davem@davemloft.net>, Al Viro <viro@zeniv.linux.org.uk>, y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Karsten Keil <isdn@linux-pingi.de>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>
+To: Network Development <netdev@vger.kernel.org>
+Cc: Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-kernel@vger.kernel.org
 
-On Thu, Aug 30, 2018 at 1:06 PM Guillaume Nault <g.nault@alphalink.fr> wrote:
-> On Wed, Aug 29, 2018 at 04:03:30PM +0200, Arnd Bergmann wrote:
+In the quest to remove all stack VLA usage from the kernel[1], this
+removes the discouraged use of AHASH_REQUEST_ON_STACK (and associated
+VLA) by switching to shash directly and keeping the associated descriptor
+allocated with the regular state on the heap.
 
-> > @@ -743,10 +744,17 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-> >               err = 0;
-> >               break;
-> >
-> > -     case PPPIOCGIDLE:
-> > -             idle.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
-> > -             idle.recv_idle = (jiffies - ppp->last_recv) / HZ;
-> > -             if (copy_to_user(argp, &idle, sizeof(idle)))
-> > +     case PPPIOCGIDLE32:
-> > +                idle32.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
-> > +                idle32.recv_idle = (jiffies - ppp->last_recv) / HZ;
-> > +                if (copy_to_user(argp, &idle32, sizeof(idle32)))
-> >
-> Missing 'break;'
->
-> > +             err = 0;
-> > +             break;
-> > +
-> > +     case PPPIOCGIDLE64:
-> > +             idle64.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
-> > +             idle64.recv_idle = (jiffies - ppp->last_recv) / HZ;
-> > +             if (copy_to_user(argp, &idle32, sizeof(idle32)))
-> >
-> I guess you meant 'idle64' instead of 'idle32'.
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
-Good catch, fixing up both now.
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Acked-by: Arnd Bergmann <arnd@arndb.de>
+---
+Paul suggested this go via netdev directly:
+https://lkml.kernel.org/r/20180803031315.GA30807@fergus
+---
+ drivers/net/ppp/ppp_mppe.c | 56 ++++++++++++++++++++------------------
+ 1 file changed, 30 insertions(+), 26 deletions(-)
 
-Thanks for the review!
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index 6c7fd98cb00a..a205750b431b 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -96,7 +96,7 @@ static inline void sha_pad_init(struct sha_pad *shapad)
+  */
+ struct ppp_mppe_state {
+ 	struct crypto_skcipher *arc4;
+-	struct crypto_ahash *sha1;
++	struct shash_desc *sha1;
+ 	unsigned char *sha1_digest;
+ 	unsigned char master_key[MPPE_MAX_KEY_LEN];
+ 	unsigned char session_key[MPPE_MAX_KEY_LEN];
+@@ -136,25 +136,16 @@ struct ppp_mppe_state {
+  */
+ static void get_new_key_from_sha(struct ppp_mppe_state * state)
+ {
+-	AHASH_REQUEST_ON_STACK(req, state->sha1);
+-	struct scatterlist sg[4];
+-	unsigned int nbytes;
+-
+-	sg_init_table(sg, 4);
+-
+-	nbytes = setup_sg(&sg[0], state->master_key, state->keylen);
+-	nbytes += setup_sg(&sg[1], sha_pad->sha_pad1,
+-			   sizeof(sha_pad->sha_pad1));
+-	nbytes += setup_sg(&sg[2], state->session_key, state->keylen);
+-	nbytes += setup_sg(&sg[3], sha_pad->sha_pad2,
+-			   sizeof(sha_pad->sha_pad2));
+-
+-	ahash_request_set_tfm(req, state->sha1);
+-	ahash_request_set_callback(req, 0, NULL, NULL);
+-	ahash_request_set_crypt(req, sg, state->sha1_digest, nbytes);
+-
+-	crypto_ahash_digest(req);
+-	ahash_request_zero(req);
++	crypto_shash_init(state->sha1);
++	crypto_shash_update(state->sha1, state->master_key,
++			    state->keylen);
++	crypto_shash_update(state->sha1, sha_pad->sha_pad1,
++			    sizeof(sha_pad->sha_pad1));
++	crypto_shash_update(state->sha1, state->session_key,
++			    state->keylen);
++	crypto_shash_update(state->sha1, sha_pad->sha_pad2,
++			    sizeof(sha_pad->sha_pad2));
++	crypto_shash_final(state->sha1, state->sha1_digest);
+ }
+ 
+ /*
+@@ -200,6 +191,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
+ static void *mppe_alloc(unsigned char *options, int optlen)
+ {
+ 	struct ppp_mppe_state *state;
++	struct crypto_shash *shash;
+ 	unsigned int digestsize;
+ 
+ 	if (optlen != CILEN_MPPE + sizeof(state->master_key) ||
+@@ -217,13 +209,21 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+ 		goto out_free;
+ 	}
+ 
+-	state->sha1 = crypto_alloc_ahash("sha1", 0, CRYPTO_ALG_ASYNC);
+-	if (IS_ERR(state->sha1)) {
+-		state->sha1 = NULL;
++	shash = crypto_alloc_shash("sha1", 0, 0);
++	if (IS_ERR(shash))
++		goto out_free;
++
++	state->sha1 = kmalloc(sizeof(*state->sha1) +
++				     crypto_shash_descsize(shash),
++			      GFP_KERNEL);
++	if (!state->sha1) {
++		crypto_free_shash(shash);
+ 		goto out_free;
+ 	}
++	state->sha1->tfm = shash;
++	state->sha1->flags = 0;
+ 
+-	digestsize = crypto_ahash_digestsize(state->sha1);
++	digestsize = crypto_shash_digestsize(shash);
+ 	if (digestsize < MPPE_MAX_KEY_LEN)
+ 		goto out_free;
+ 
+@@ -246,7 +246,10 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+ 
+ out_free:
+ 	kfree(state->sha1_digest);
+-	crypto_free_ahash(state->sha1);
++	if (state->sha1) {
++		crypto_free_shash(state->sha1->tfm);
++		kzfree(state->sha1);
++	}
+ 	crypto_free_skcipher(state->arc4);
+ 	kfree(state);
+ out:
+@@ -261,7 +264,8 @@ static void mppe_free(void *arg)
+ 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
+ 	if (state) {
+ 		kfree(state->sha1_digest);
+-		crypto_free_ahash(state->sha1);
++		crypto_free_shash(state->sha1->tfm);
++		kzfree(state->sha1);
+ 		crypto_free_skcipher(state->arc4);
+ 		kfree(state);
+ 	}
+-- 
+2.17.1
 
-     Arnd
+
+-- 
+Kees Cook
+Pixel Security
