@@ -1,24 +1,167 @@
-From: Guillaume Nault <g.nault@alphalink.fr>
-Date: Thu, 30 Aug 2018 11:05:04 +0000
-Subject: Re: [PATCH net-next 4/5] ppp: move PPPIOCSPASS32/PPPIOCSACTIVE32 to ppp_generic.c
-Message-Id: <20180830110504.GA19457@alphalink.fr>
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Wed, 29 Aug 2018 14:03:28 +0000
+Subject: [PATCH net-next 3/5] ppp: move PPPIOCSCOMPRESS32 to ppp-generic.c
+Message-Id: <20180829140409.833488-3-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20180829140409.833488-1-arnd@arndb.de>
- <20180829140409.833488-4-arnd@arndb.de>
-In-Reply-To: <20180829140409.833488-4-arnd@arndb.de>
+In-Reply-To: <20180829140409.833488-1-arnd@arndb.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, mitch@sfgoth.com, mostrows@earthlink.net, jchapman@katalix.com, xeb@mail.ru, davem@davemloft.net, viro@zeniv.linux.org.uk, y2038@lists.linaro.org, linux-kernel@vger.kernel.org
+To: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: mitch@sfgoth.com, mostrows@earthlink.net, jchapman@katalix.com, xeb@mail.ru, davem@davemloft.net, viro@zeniv.linux.org.uk, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Guillaume Nault <g.nault@alphalink.fr>, Kirill Tkhai <ktkhai@virtuozzo.com>
 
-On Wed, Aug 29, 2018 at 04:03:29PM +0200, Arnd Bergmann wrote:
-> PPPIOCSPASS and PPPIOCSACTIVE are implemented in ppp_generic and isdn_ppp,
-> but the latter one doesn't work for compat mode in general, so we can
-> move these two into the generic code.
-> 
-> Again, the best implementation I could come up with was to merge
-> the compat handling into the regular ppp_ioctl() function and
-> treating all ioctl commands as compatible.
-> 
-Acked-by: Guillaume Nault <g.nault@alphalink.fr>
+PPPIOCSCOMPRESS is only implemented in ppp_generic, so it's best to move
+the compat handling there. My first approach was to keep it in a new
+ppp_compat_ioctl() function, but it turned out to be much simpler to do
+it in the regular ioctl handler, by allowing both structure layouts to
+be handled directly there.
+
+Aside from moving the code to the right place, this also avoids
+a round-trip through compat_alloc_user_space() allocated memory.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ drivers/net/ppp/ppp_generic.c | 40 ++++++++++++++++++++++++++++++-----
+ fs/compat_ioctl.c             | 32 ----------------------------
+ 2 files changed, 35 insertions(+), 37 deletions(-)
+
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 41a6e9851a4a..8dfe8d47df95 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -274,7 +274,7 @@ static void ppp_mp_insert(struct ppp *ppp, struct sk_buff *skb);
+ static struct sk_buff *ppp_mp_reconstruct(struct ppp *ppp);
+ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb);
+ #endif /* CONFIG_PPP_MULTILINK */
+-static int ppp_set_compress(struct ppp *ppp, unsigned long arg);
++static int ppp_set_compress(struct ppp *ppp, unsigned long arg, bool compat);
+ static void ppp_ccp_peek(struct ppp *ppp, struct sk_buff *skb, int inbound);
+ static void ppp_ccp_closed(struct ppp *ppp);
+ static struct compressor *find_compressor(int type);
+@@ -557,6 +557,15 @@ static __poll_t ppp_poll(struct file *file, poll_table *wait)
+ 	return mask;
+ }
+ 
++#ifdef CONFIG_COMPAT
++struct ppp_option_data32 {
++	compat_caddr_t	ptr;
++	u32			length;
++	compat_int_t		transmit;
++};
++#define PPPIOCSCOMPRESS32	_IOW('t', 77, struct ppp_option_data32)
++#endif
++
+ #ifdef CONFIG_PPP_FILTER
+ static int get_filter(void __user *arg, struct sock_filter **p)
+ {
+@@ -683,8 +692,14 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		break;
+ 
+ 	case PPPIOCSCOMPRESS:
+-		err = ppp_set_compress(ppp, arg);
++		err = ppp_set_compress(ppp, arg, false);
++		break;
++
++#ifdef CONFIG_COMPAT
++	case PPPIOCSCOMPRESS32:
++		err = ppp_set_compress(ppp, arg, true);
+ 		break;
++#endif
+ 
+ 	case PPPIOCGUNIT:
+ 		if (put_user(ppp->file.index, p))
+@@ -2691,7 +2706,7 @@ ppp_output_wakeup(struct ppp_channel *chan)
+ 
+ /* Process the PPPIOCSCOMPRESS ioctl. */
+ static int
+-ppp_set_compress(struct ppp *ppp, unsigned long arg)
++ppp_set_compress(struct ppp *ppp, unsigned long arg, bool compat)
+ {
+ 	int err;
+ 	struct compressor *cp, *ocomp;
+@@ -2700,8 +2715,23 @@ ppp_set_compress(struct ppp *ppp, unsigned long arg)
+ 	unsigned char ccp_option[CCP_MAX_OPTION_LENGTH];
+ 
+ 	err = -EFAULT;
+-	if (copy_from_user(&data, (void __user *) arg, sizeof(data)))
+-		goto out;
++#ifdef CONFIG_COMPAT
++	if (compat) {
++		struct ppp_option_data32 data32;
++
++		if (copy_from_user(&data32, (void __user *) arg,
++				   sizeof(data32)))
++			goto out;
++
++		data.ptr = compat_ptr(data32.ptr);
++		data.length = data32.length;
++		data.transmit = data32.transmit;
++	} else
++#endif
++	{
++		if (copy_from_user(&data, (void __user *) arg, sizeof(data)))
++			goto out;
++	}
+ 	if (data.length > CCP_MAX_OPTION_LENGTH)
+ 		goto out;
+ 	if (copy_from_user(ccp_option, (void __user *) data.ptr, data.length))
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index 142ca673b9cc..f518dc174dc7 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -413,13 +413,6 @@ static int ppp_sock_fprog_ioctl_trans(struct file *file,
+ 	return do_ioctl(file, cmd, (unsigned long) u_fprog64);
+ }
+ 
+-struct ppp_option_data32 {
+-	compat_caddr_t	ptr;
+-	u32			length;
+-	compat_int_t		transmit;
+-};
+-#define PPPIOCSCOMPRESS32	_IOW('t', 77, struct ppp_option_data32)
+-
+ struct ppp_idle32 {
+ 	compat_time_t xmit_idle;
+ 	compat_time_t recv_idle;
+@@ -447,29 +440,6 @@ static int ppp_gidle(struct file *file, unsigned int cmd,
+ 	return err;
+ }
+ 
+-static int ppp_scompress(struct file *file, unsigned int cmd,
+-	struct ppp_option_data32 __user *odata32)
+-{
+-	struct ppp_option_data __user *odata;
+-	__u32 data;
+-	void __user *datap;
+-
+-	odata = compat_alloc_user_space(sizeof(*odata));
+-
+-	if (get_user(data, &odata32->ptr))
+-		return -EFAULT;
+-
+-	datap = compat_ptr(data);
+-	if (put_user(datap, &odata->ptr))
+-		return -EFAULT;
+-
+-	if (copy_in_user(&odata->length, &odata32->length,
+-			 sizeof(__u32) + sizeof(int)))
+-		return -EFAULT;
+-
+-	return do_ioctl(file, PPPIOCSCOMPRESS, (unsigned long) odata);
+-}
+-
+ #ifdef CONFIG_BLOCK
+ struct mtget32 {
+ 	compat_long_t	mt_type;
+@@ -1248,8 +1218,6 @@ static long do_ioctl_trans(unsigned int cmd,
+ 	switch (cmd) {
+ 	case PPPIOCGIDLE32:
+ 		return ppp_gidle(file, cmd, argp);
+-	case PPPIOCSCOMPRESS32:
+-		return ppp_scompress(file, cmd, argp);
+ 	case PPPIOCSPASS32:
+ 	case PPPIOCSACTIVE32:
+ 		return ppp_sock_fprog_ioctl_trans(file, cmd, argp);
+-- 
+2.18.0
