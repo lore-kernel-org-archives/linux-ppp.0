@@ -1,36 +1,79 @@
-From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Date: Mon, 06 Aug 2018 10:28:28 +0000
-Subject: Re: [PATCH v6 10/18] x86/power/64: Remove VLA usage
-Message-Id: <1782361.6NaZWiq7ky@aspire.rjw.lan>
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Wed, 29 Aug 2018 14:03:26 +0000
+Subject: [PATCH net-next 1/5] pppoe: fix PPPOEIOCSFWD compat handling
+Message-Id: <20180829140409.833488-1-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20180724164936.37477-1-keescook@chromium.org> <CAJZ5v0gVDotjufLKUW0YuQu2vA4fmU_gqia=ZA4DocW4XHxx0w@mail.gmail.com> <CAGXu5j+NPCc2hq5x7JUwgKYvY6zKN28YdtHbHVapnpgC3GwCsg@mail.gmail.com>
-In-Reply-To: <CAGXu5j+NPCc2hq5x7JUwgKYvY6zKN28YdtHbHVapnpgC3GwCsg@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Kees Cook <keescook@chromium.org>
-Cc: "Rafael J. Wysocki" <rafael@kernel.org>, Herbert Xu <herbert@gondor.apana.org.au>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, the arch/x86 maintainers <x86@kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, device-mapper development <dm-devel@redhat.com>, Linux PM <linux-pm@vger.kernel.org>, linux-crypto <linux-crypto@vger.kernel.org>, drbd-dev@lists.linbit.com, linux-block <linux-block@vger.kernel.org>, qat-linux@intel.com, linux-ppp@vger.kernel.org, netdev <netdev@vger.kernel.org>, "open list:ANDROID DRIVERS" <devel@driverdev.osuosl.org>, linux-afs@lists.infradead.org, "open list:NETWORKING DRIVERS (WIRELESS)" <linux-wireless@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: mitch@sfgoth.com, mostrows@earthlink.net, jchapman@katalix.com, xeb@mail.ru, davem@davemloft.net, viro@zeniv.linux.org.uk, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
 
-On Wednesday, July 25, 2018 8:01:47 PM CEST Kees Cook wrote:
-> On Wed, Jul 25, 2018 at 4:32 AM, Rafael J. Wysocki <rafael@kernel.org> wrote:
-> > On Tue, Jul 24, 2018 at 6:49 PM, Kees Cook <keescook@chromium.org> wrote:
-> >> In the quest to remove all stack VLA usage from the kernel[1], this
-> >> removes the discouraged use of AHASH_REQUEST_ON_STACK by switching to
-> >> shash directly and allocating the descriptor in heap memory (which should
-> >> be fine: the tfm has already been allocated there too).
-> >>
-> >> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
-> >>
-> >> Signed-off-by: Kees Cook <keescook@chromium.org>
-> >> Acked-by: Pavel Machek <pavel@ucw.cz>
-> >
-> > I think I can queue this up if there are no objections from others.
-> >
-> > Do you want me to do that?
-> 
-> Sure thing. It looks like the other stand-alone patches like this one
-> are getting taken into the non-crypto trees, so that's fine.
-> 
+Support for handling the PPPOEIOCSFWD ioctl in compat mode was added in
+linux-2.5.69 along with hundreds of other commands, but was always broken
+sincen only the structure is compatible, but the command number is not,
+due to the size being sizeof(size_t), or at first sizeof(sizeof((struct
+sockaddr_pppox)), which is different on 64-bit architectures.
 
-Applied now, thanks!
+Fix it by defining a separate command code that matches the 32-bit
+version, and marking that one as compatible.
 
+This should apply to all stable kernels.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ drivers/net/ppp/pppoe.c  | 4 ++++
+ fs/compat_ioctl.c        | 2 +-
+ include/linux/if_pppox.h | 2 ++
+ 3 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
+index ce61231e96ea..d1c3f9292c54 100644
+--- a/drivers/net/ppp/pppoe.c
++++ b/drivers/net/ppp/pppoe.c
+@@ -57,6 +57,7 @@
+  *
+  */
+ 
++#include <linux/compat.h>
+ #include <linux/string.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+@@ -780,6 +781,9 @@ static int pppoe_ioctl(struct socket *sock, unsigned int cmd,
+ 		err = 0;
+ 		break;
+ 
++#ifdef CONFIG_COMPAT
++	case PPPOEIOCSFWD32:
++#endif
+ 	case PPPOEIOCSFWD:
+ 	{
+ 		struct pppox_sock *relay_po;
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index a9b00942e87d..a8bb193fdfd5 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -895,7 +895,7 @@ COMPATIBLE_IOCTL(PPPIOCATTCHAN)
+ COMPATIBLE_IOCTL(PPPIOCGCHAN)
+ COMPATIBLE_IOCTL(PPPIOCGL2TPSTATS)
+ /* PPPOX */
+-COMPATIBLE_IOCTL(PPPOEIOCSFWD)
++COMPATIBLE_IOCTL(PPPOEIOCSFWD32)
+ COMPATIBLE_IOCTL(PPPOEIOCDFWD)
+ /* Big A */
+ /* sparc only */
+diff --git a/include/linux/if_pppox.h b/include/linux/if_pppox.h
+index ba7a9b0c7c57..d221f1465f41 100644
+--- a/include/linux/if_pppox.h
++++ b/include/linux/if_pppox.h
+@@ -85,6 +85,8 @@ extern void unregister_pppox_proto(int proto_num);
+ extern void pppox_unbind_sock(struct sock *sk);/* delete ppp-channel binding */
+ extern int pppox_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+ 
++#define PPPOEIOCSFWD32    _IOW(0xB1 ,0, compat_size_t)
++
+ /* PPPoX socket states */
+ enum {
+     PPPOX_NONE		= 0,  /* initial state */
+-- 
+2.18.0
