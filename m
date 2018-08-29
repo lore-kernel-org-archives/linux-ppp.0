@@ -1,100 +1,166 @@
-From: Kees Cook <keescook@chromium.org>
-Date: Tue, 24 Jul 2018 16:49:25 +0000
-Subject: [PATCH v6 07/18] crypto: shash: Remove VLA usage in unaligned hashing
-Message-Id: <20180724164936.37477-8-keescook@chromium.org>
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Wed, 29 Aug 2018 14:03:29 +0000
+Subject: [PATCH net-next 4/5] ppp: move PPPIOCSPASS32/PPPIOCSACTIVE32 to ppp_generic.c
+Message-Id: <20180829140409.833488-4-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20180724164936.37477-1-keescook@chromium.org>
-In-Reply-To: <20180724164936.37477-1-keescook@chromium.org>
+References: <20180829140409.833488-1-arnd@arndb.de>
+In-Reply-To: <20180829140409.833488-1-arnd@arndb.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Pavel Machek <pavel@ucw.cz>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Philipp Reisner <philipp.reisner@linbit.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Jens Axboe <axboe@kernel.dk>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Paul Mackerras <paulus@samba.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, Tudor-Dan Ambarus <tudor.ambarus@microchip.com>, Jia-Ju Bai <baijiaju1990@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Josh Poimboeuf <jpoimboe@redhat.com>, David Woodhouse <dwmw@amazon.co.uk>, Will Deacon <will.deacon@arm.com>, dm-devel@redhat.com, linux-pm@vger.kernel.org, linux-crypto@vger.kernel.org, drbd-dev@lists.linbit.com, linux-block@vger.kernel.org, qat-linux@intel.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, devel@driverdev.osuosl.org, linux-afs@lists.infradead.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org
+To: paulus@samba.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: mitch@sfgoth.com, mostrows@earthlink.net, jchapman@katalix.com, xeb@mail.ru, davem@davemloft.net, viro@zeniv.linux.org.uk, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Guillaume Nault <g.nault@alphalink.fr>
 
-In the quest to remove all stack VLA usage from the kernel[1], this uses
-the newly defined max alignment to perform unaligned hashing to avoid
-VLAs, and drops the helper function while adding sanity checks on the
-resulting buffer sizes. Additionally, the __aligned_largest macro is
-removed since this helper was the only user.
+PPPIOCSPASS and PPPIOCSACTIVE are implemented in ppp_generic and isdn_ppp,
+but the latter one doesn't work for compat mode in general, so we can
+move these two into the generic code.
 
-[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+Again, the best implementation I could come up with was to merge
+the compat handling into the regular ppp_ioctl() function and
+treating all ioctl commands as compatible.
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- crypto/shash.c               | 27 ++++++++++++++++-----------
- include/linux/compiler-gcc.h |  1 -
- 2 files changed, 16 insertions(+), 12 deletions(-)
+ drivers/net/ppp/ppp_generic.c | 39 ++++++++++++++++++++++++++++++-----
+ fs/compat_ioctl.c             | 37 ---------------------------------
+ 2 files changed, 34 insertions(+), 42 deletions(-)
 
-diff --git a/crypto/shash.c b/crypto/shash.c
-index 86d76b5c626c..d21f04d70dce 100644
---- a/crypto/shash.c
-+++ b/crypto/shash.c
-@@ -73,13 +73,6 @@ int crypto_shash_setkey(struct crypto_shash *tfm, const u8 *key,
- }
- EXPORT_SYMBOL_GPL(crypto_shash_setkey);
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 8dfe8d47df95..3a7aa2eed415 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -22,6 +22,7 @@
+  * =FILEVERSION 20041108=
+  */
  
--static inline unsigned int shash_align_buffer_size(unsigned len,
--						   unsigned long mask)
++#include <linux/compat.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/sched/signal.h>
+@@ -567,14 +568,36 @@ struct ppp_option_data32 {
+ #endif
+ 
+ #ifdef CONFIG_PPP_FILTER
+-static int get_filter(void __user *arg, struct sock_filter **p)
++#ifdef CONFIG_COMPAT
++struct sock_fprog32 {
++	unsigned short	len;
++	compat_caddr_t	filter;
++};
++#define PPPIOCSPASS32	_IOW('t', 71, struct sock_fprog32)
++#define PPPIOCSACTIVE32	_IOW('t', 70, struct sock_fprog32)
++#endif
++
++static int get_filter(void __user *arg, struct sock_filter **p, bool compat)
+ {
+ 	struct sock_fprog uprog;
+ 	struct sock_filter *code = NULL;
+ 	int len;
+ 
+-	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+-		return -EFAULT;
++#ifdef CONFIG_COMPAT
++	if (compat) {
++		struct sock_fprog32 uprog32;
++
++		if (copy_from_user(&uprog32, arg, sizeof(uprog32)))
++			return -EFAULT;
++
++		uprog.len = uprog32.len;
++		uprog.filter = compat_ptr(uprog32.filter);
++	} else
++#endif
++	{
++		if (copy_from_user(&uprog, arg, sizeof(uprog)))
++			return -EFAULT;
++	}
+ 
+ 	if (!uprog.len) {
+ 		*p = NULL;
+@@ -772,10 +795,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 
+ #ifdef CONFIG_PPP_FILTER
+ 	case PPPIOCSPASS:
++#ifdef CONFIG_COMPAT
++	case PPPIOCSPASS32:
++#endif
+ 	{
+ 		struct sock_filter *code;
+ 
+-		err = get_filter(argp, &code);
++		err = get_filter(argp, &code, cmd != PPPIOCSPASS);
+ 		if (err >= 0) {
+ 			struct bpf_prog *pass_filter = NULL;
+ 			struct sock_fprog_kern fprog = {
+@@ -798,10 +824,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		break;
+ 	}
+ 	case PPPIOCSACTIVE:
++#ifdef CONFIG_COMPAT
++	case PPPIOCSACTIVE32:
++#endif
+ 	{
+ 		struct sock_filter *code;
+ 
+-		err = get_filter(argp, &code);
++		err = get_filter(argp, &code, cmd != PPPIOCSACTIVE);
+ 		if (err >= 0) {
+ 			struct bpf_prog *active_filter = NULL;
+ 			struct sock_fprog_kern fprog = {
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index f518dc174dc7..258c6938e80a 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -379,40 +379,6 @@ static int sg_grt_trans(struct file *file,
+ }
+ #endif /* CONFIG_BLOCK */
+ 
+-struct sock_fprog32 {
+-	unsigned short	len;
+-	compat_caddr_t	filter;
+-};
+-
+-#define PPPIOCSPASS32	_IOW('t', 71, struct sock_fprog32)
+-#define PPPIOCSACTIVE32	_IOW('t', 70, struct sock_fprog32)
+-
+-static int ppp_sock_fprog_ioctl_trans(struct file *file,
+-		unsigned int cmd, struct sock_fprog32 __user *u_fprog32)
 -{
--	typedef u8 __aligned_largest u8_aligned;
--	return len + (mask & ~(__alignof__(u8_aligned) - 1));
+-	struct sock_fprog __user *u_fprog64 = compat_alloc_user_space(sizeof(struct sock_fprog));
+-	void __user *fptr64;
+-	u32 fptr32;
+-	u16 flen;
+-
+-	if (get_user(flen, &u_fprog32->len) ||
+-	    get_user(fptr32, &u_fprog32->filter))
+-		return -EFAULT;
+-
+-	fptr64 = compat_ptr(fptr32);
+-
+-	if (put_user(flen, &u_fprog64->len) ||
+-	    put_user(fptr64, &u_fprog64->filter))
+-		return -EFAULT;
+-
+-	if (cmd = PPPIOCSPASS32)
+-		cmd = PPPIOCSPASS;
+-	else
+-		cmd = PPPIOCSACTIVE;
+-
+-	return do_ioctl(file, cmd, (unsigned long) u_fprog64);
 -}
 -
- static int shash_update_unaligned(struct shash_desc *desc, const u8 *data,
- 				  unsigned int len)
- {
-@@ -88,11 +81,17 @@ static int shash_update_unaligned(struct shash_desc *desc, const u8 *data,
- 	unsigned long alignmask = crypto_shash_alignmask(tfm);
- 	unsigned int unaligned_len = alignmask + 1 -
- 				     ((unsigned long)data & alignmask);
--	u8 ubuf[shash_align_buffer_size(unaligned_len, alignmask)]
--		__aligned_largest;
-+	/*
-+	 * We cannot count on __aligned() working for large values:
-+	 * https://patchwork.kernel.org/patch/9507697/
-+	 */
-+	u8 ubuf[MAX_ALGAPI_ALIGNMASK * 2];
- 	u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
- 	int err;
- 
-+	if (WARN_ON(buf + unaligned_len > ubuf + sizeof(ubuf)))
-+		return -EINVAL;
-+
- 	if (unaligned_len > len)
- 		unaligned_len = len;
- 
-@@ -124,11 +123,17 @@ static int shash_final_unaligned(struct shash_desc *desc, u8 *out)
- 	unsigned long alignmask = crypto_shash_alignmask(tfm);
- 	struct shash_alg *shash = crypto_shash_alg(tfm);
- 	unsigned int ds = crypto_shash_digestsize(tfm);
--	u8 ubuf[shash_align_buffer_size(ds, alignmask)]
--		__aligned_largest;
-+	/*
-+	 * We cannot count on __aligned() working for large values:
-+	 * https://patchwork.kernel.org/patch/9507697/
-+	 */
-+	u8 ubuf[MAX_ALGAPI_ALIGNMASK + HASH_MAX_DIGESTSIZE];
- 	u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
- 	int err;
- 
-+	if (WARN_ON(buf + ds > ubuf + sizeof(ubuf)))
-+		return -EINVAL;
-+
- 	err = shash->final(desc, buf);
- 	if (err)
- 		goto out;
-diff --git a/include/linux/compiler-gcc.h b/include/linux/compiler-gcc.h
-index f1a7492a5cc8..1f1cdef36a82 100644
---- a/include/linux/compiler-gcc.h
-+++ b/include/linux/compiler-gcc.h
-@@ -125,7 +125,6 @@
-  */
- #define __pure			__attribute__((pure))
- #define __aligned(x)		__attribute__((aligned(x)))
--#define __aligned_largest	__attribute__((aligned))
- #define __printf(a, b)		__attribute__((format(printf, a, b)))
- #define __scanf(a, b)		__attribute__((format(scanf, a, b)))
- #define __attribute_const__	__attribute__((__const__))
+ struct ppp_idle32 {
+ 	compat_time_t xmit_idle;
+ 	compat_time_t recv_idle;
+@@ -1218,9 +1184,6 @@ static long do_ioctl_trans(unsigned int cmd,
+ 	switch (cmd) {
+ 	case PPPIOCGIDLE32:
+ 		return ppp_gidle(file, cmd, argp);
+-	case PPPIOCSPASS32:
+-	case PPPIOCSACTIVE32:
+-		return ppp_sock_fprog_ioctl_trans(file, cmd, argp);
+ #ifdef CONFIG_BLOCK
+ 	case SG_IO:
+ 		return sg_ioctl_trans(file, cmd, argp);
 -- 
-2.17.1
-
+2.18.0
