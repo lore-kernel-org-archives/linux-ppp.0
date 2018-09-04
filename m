@@ -1,63 +1,48 @@
-From: Michael Richardson <mcr@sandelman.ca>
-Date: Tue, 04 Sep 2018 13:06:17 +0000
+From: Marco d'Itri <md@Linux.IT>
+Date: Tue, 04 Sep 2018 13:22:26 +0000
 Subject: Re: RFC: support setting DNS for systemd-resolved via DBus
-Message-Id: <7649.1536066377@localhost>
+Message-Id: <20180904132226.GA8826@bongo.bofh.it>
 MIME-Version: 1
-Content-Type: multipart/mixed; boundary="=-=-="
+Content-Type: multipart/mixed; boundary="Q68bSM7Ycu6FN28Q"
 List-Id: <linux-ppp.vger.kernel.org>
 References: <e5fa9fe1-073c-e9c5-c774-21bc5487fe7e@iam.tj>
 In-Reply-To: <e5fa9fe1-073c-e9c5-c774-21bc5487fe7e@iam.tj>
 To: linux-ppp@vger.kernel.org
 
---=-=-=
-Content-Type: text/plain
 
+--Q68bSM7Ycu6FN28Q
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Tj <linux@iam.tj> wrote:
-    > I've recently been building an embedded device to do (kernel-mode)
-    > PPPoE which uses only systemd-networkd + systemd-resolved (PC Engines
-    > APU2 with Ubuntu 18.04 - amd64).
+On Sep 04, Tj <linux@iam.tj> wrote:
 
-...
+> After some experimentation I've put together a small C helper program
+> that reads DNS[12]=3D from the helper environment and uses DBus calls to
+> set the per-link nameservers.
+Since this is not performance critical maybe you could just call busctl=20
+=66rom a shell script?
 
-    > After some experimentation I've put together a small C helper program
-    > that reads DNS[12]= from the helper environment and uses DBus calls to
-    > set the per-link nameservers.
+--=20
+ciao,
+Marco
 
-It seems like if small is your goal that you ought to have the ppp client do
-this directly.
-
-    > It build-depends on libdbus but not systemd.
-
-Cool.
-
-    > I'm looking for feedback on whether this would be acceptable as an
-    > addition to the ppp project, and if so where in the source tree would
-    > be appropriate.
-
-I would add it to ppp, and I'd put it into src/dbusdns.c or some such named
-code.
-
-If standalone, then give it a new directory.
-
---
-]               Never tell me the odds!                 | ipv6 mesh networks [
-]   Michael Richardson, Sandelman Software Works        | network architect  [
-]     mcr@sandelman.ca  http://www.sandelman.ca/        |   ruby on rails    [
-
-
---=-=-=
+--Q68bSM7Ycu6FN28Q
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAEBCAAdFiEEbsyLEzg/qUTA43uogItw+93Q3WUFAluOg0gACgkQgItw+93Q
-3WWrwAf+Jn9gdyk5aRN6oKNPpF9RnZvrPOflNv32uOdt69FUDG+/gFsnHk0N4VvY
-f1jvW/lcuX75U0033qP2Sx2c3N6frodnbwCwbpdoApuyinDfQumUymhGsmtXWbNd
-awjS7QJFxNxVBCjhcV39R0jTiz6vA97SLi43Kiz+JryP9rCv2wEWn/9UuVFAtyql
-p1wIuvoLfhMqiBln0LqOx0ha0YQjlGRwPiIoO1zwDi/aXF6eqStzZUuZlRZDBrF1
-3j1CUYGZHn5hzLVS9xknDU4s3fSjoIvgJ4s6OIqmh+tOoOusXsOLP97VUJXC2Rxq
-BrGl/AyuNKJWOcDhL128sfae0ntP/Q==
-=kady
+iQGzBAABCgAdFiEEGBsIcS5ipP0URKfyK/WlwSLE96QFAluOhxIACgkQK/WlwSLE
+96QnSQv9H30C3skRsjvkAAauAuKpS9OcH1aYoShWpruDCM1S9jirboCJK0MXW5ta
+vHjok2l+XC7S5Hva4O4h25rRKTZiGu3qhRDQE9F3B/C2oLko7sZF4j5vOgoUMu7H
+1pTOx3FKQ06fQzsDaBcuWtRVQaxcfRIxnF6bU1pvivqLTYJGQbH/g475y+ImGyzg
+VvZVHN96Ddcw0DhY6RSNrVrX5QWT6jiITbtp0mMxyaLtUHRR8728+DZrhBWOBQa+
+4Ca4NyKv31t/2pdomWS2vxE9VcTgbey48+Z/n2iAqZKzDvfdf7EjrfVCiPCczWUE
+sr+edvkQcrT0InAXBGMWYScmew3kfJcW0LlkvpTJXmrXg6IMNXJbqUqyqaG9S43O
+Tg9PfH+fJ+MofUgY1KF71m+FIsM/Kdh5cF8d1ldoQikoJhMAkHHbEmzcd7WoMA/F
+qQY6vV11GS1FJAML+G6DXZDIKb87o6cG+zNSlS/tiDMRlMazhng7yjfclv64caWa
+gs1YHW1x
+=eTdh
 -----END PGP SIGNATURE-----
---=-=-=--
+
+--Q68bSM7Ycu6FN28Q--
