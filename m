@@ -1,48 +1,135 @@
-From: Marco d'Itri <md@Linux.IT>
-Date: Tue, 04 Sep 2018 13:22:26 +0000
-Subject: Re: RFC: support setting DNS for systemd-resolved via DBus
-Message-Id: <20180904132226.GA8826@bongo.bofh.it>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="Q68bSM7Ycu6FN28Q"
+From: Kees Cook <keescook@chromium.org>
+Date: Wed, 19 Sep 2018 02:10:46 +0000
+Subject: [PATCH crypto-next 09/23] ppp: mppe: Remove VLA usage of skcipher
+Message-Id: <20180919021100.3380-10-keescook@chromium.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <e5fa9fe1-073c-e9c5-c774-21bc5487fe7e@iam.tj>
-In-Reply-To: <e5fa9fe1-073c-e9c5-c774-21bc5487fe7e@iam.tj>
-To: linux-ppp@vger.kernel.org
+References: <20180919021100.3380-1-keescook@chromium.org>
+In-Reply-To: <20180919021100.3380-1-keescook@chromium.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Kees Cook <keescook@chromium.org>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Eric Biggers <ebiggers@google.com>, linux-crypto <linux-crypto@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 
+In the quest to remove all stack VLA usage from the kernel[1], this
+replaces struct crypto_skcipher and SKCIPHER_REQUEST_ON_STACK() usage
+with struct crypto_sync_skcipher and SYNC_SKCIPHER_REQUEST_ON_STACK(),
+which uses a fixed stack size.
 
---Q68bSM7Ycu6FN28Q
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
-On Sep 04, Tj <linux@iam.tj> wrote:
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ drivers/net/ppp/ppp_mppe.c | 27 ++++++++++++++-------------
+ 1 file changed, 14 insertions(+), 13 deletions(-)
 
-> After some experimentation I've put together a small C helper program
-> that reads DNS[12]=3D from the helper environment and uses DBus calls to
-> set the per-link nameservers.
-Since this is not performance critical maybe you could just call busctl=20
-=66rom a shell script?
-
---=20
-ciao,
-Marco
-
---Q68bSM7Ycu6FN28Q
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQGzBAABCgAdFiEEGBsIcS5ipP0URKfyK/WlwSLE96QFAluOhxIACgkQK/WlwSLE
-96QnSQv9H30C3skRsjvkAAauAuKpS9OcH1aYoShWpruDCM1S9jirboCJK0MXW5ta
-vHjok2l+XC7S5Hva4O4h25rRKTZiGu3qhRDQE9F3B/C2oLko7sZF4j5vOgoUMu7H
-1pTOx3FKQ06fQzsDaBcuWtRVQaxcfRIxnF6bU1pvivqLTYJGQbH/g475y+ImGyzg
-VvZVHN96Ddcw0DhY6RSNrVrX5QWT6jiITbtp0mMxyaLtUHRR8728+DZrhBWOBQa+
-4Ca4NyKv31t/2pdomWS2vxE9VcTgbey48+Z/n2iAqZKzDvfdf7EjrfVCiPCczWUE
-sr+edvkQcrT0InAXBGMWYScmew3kfJcW0LlkvpTJXmrXg6IMNXJbqUqyqaG9S43O
-Tg9PfH+fJ+MofUgY1KF71m+FIsM/Kdh5cF8d1ldoQikoJhMAkHHbEmzcd7WoMA/F
-qQY6vV11GS1FJAML+G6DXZDIKb87o6cG+zNSlS/tiDMRlMazhng7yjfclv64caWa
-gs1YHW1x
-=eTdh
------END PGP SIGNATURE-----
-
---Q68bSM7Ycu6FN28Q--
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index a205750b431b..7ccdc62c6052 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -95,7 +95,7 @@ static inline void sha_pad_init(struct sha_pad *shapad)
+  * State for an MPPE (de)compressor.
+  */
+ struct ppp_mppe_state {
+-	struct crypto_skcipher *arc4;
++	struct crypto_sync_skcipher *arc4;
+ 	struct shash_desc *sha1;
+ 	unsigned char *sha1_digest;
+ 	unsigned char master_key[MPPE_MAX_KEY_LEN];
+@@ -155,15 +155,15 @@ static void get_new_key_from_sha(struct ppp_mppe_state * state)
+ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
+ {
+ 	struct scatterlist sg_in[1], sg_out[1];
+-	SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
++	SYNC_SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
+ 
+-	skcipher_request_set_tfm(req, state->arc4);
++	skcipher_request_set_sync_tfm(req, state->arc4);
+ 	skcipher_request_set_callback(req, 0, NULL, NULL);
+ 
+ 	get_new_key_from_sha(state);
+ 	if (!initial_key) {
+-		crypto_skcipher_setkey(state->arc4, state->sha1_digest,
+-				       state->keylen);
++		crypto_sync_skcipher_setkey(state->arc4, state->sha1_digest,
++					    state->keylen);
+ 		sg_init_table(sg_in, 1);
+ 		sg_init_table(sg_out, 1);
+ 		setup_sg(sg_in, state->sha1_digest, state->keylen);
+@@ -181,7 +181,8 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
+ 		state->session_key[1] = 0x26;
+ 		state->session_key[2] = 0x9e;
+ 	}
+-	crypto_skcipher_setkey(state->arc4, state->session_key, state->keylen);
++	crypto_sync_skcipher_setkey(state->arc4, state->session_key,
++				    state->keylen);
+ 	skcipher_request_zero(req);
+ }
+ 
+@@ -203,7 +204,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+ 		goto out;
+ 
+ 
+-	state->arc4 = crypto_alloc_skcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC);
++	state->arc4 = crypto_alloc_sync_skcipher("ecb(arc4)", 0, 0);
+ 	if (IS_ERR(state->arc4)) {
+ 		state->arc4 = NULL;
+ 		goto out_free;
+@@ -250,7 +251,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+ 		crypto_free_shash(state->sha1->tfm);
+ 		kzfree(state->sha1);
+ 	}
+-	crypto_free_skcipher(state->arc4);
++	crypto_free_sync_skcipher(state->arc4);
+ 	kfree(state);
+ out:
+ 	return NULL;
+@@ -266,7 +267,7 @@ static void mppe_free(void *arg)
+ 		kfree(state->sha1_digest);
+ 		crypto_free_shash(state->sha1->tfm);
+ 		kzfree(state->sha1);
+-		crypto_free_skcipher(state->arc4);
++		crypto_free_sync_skcipher(state->arc4);
+ 		kfree(state);
+ 	}
+ }
+@@ -366,7 +367,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+ 	      int isize, int osize)
+ {
+ 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
+-	SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
++	SYNC_SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
+ 	int proto;
+ 	int err;
+ 	struct scatterlist sg_in[1], sg_out[1];
+@@ -426,7 +427,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+ 	setup_sg(sg_in, ibuf, isize);
+ 	setup_sg(sg_out, obuf, osize);
+ 
+-	skcipher_request_set_tfm(req, state->arc4);
++	skcipher_request_set_sync_tfm(req, state->arc4);
+ 	skcipher_request_set_callback(req, 0, NULL, NULL);
+ 	skcipher_request_set_crypt(req, sg_in, sg_out, isize, NULL);
+ 	err = crypto_skcipher_encrypt(req);
+@@ -480,7 +481,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 		int osize)
+ {
+ 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
+-	SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
++	SYNC_SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
+ 	unsigned ccount;
+ 	int flushed = MPPE_BITS(ibuf) & MPPE_BIT_FLUSHED;
+ 	struct scatterlist sg_in[1], sg_out[1];
+@@ -615,7 +616,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+ 	setup_sg(sg_in, ibuf, 1);
+ 	setup_sg(sg_out, obuf, 1);
+ 
+-	skcipher_request_set_tfm(req, state->arc4);
++	skcipher_request_set_sync_tfm(req, state->arc4);
+ 	skcipher_request_set_callback(req, 0, NULL, NULL);
+ 	skcipher_request_set_crypt(req, sg_in, sg_out, 1, NULL);
+ 	if (crypto_skcipher_decrypt(req)) {
+-- 
+2.17.1
