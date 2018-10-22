@@ -1,135 +1,74 @@
-From: Kees Cook <keescook@chromium.org>
-Date: Wed, 19 Sep 2018 02:10:46 +0000
-Subject: [PATCH crypto-next 09/23] ppp: mppe: Remove VLA usage of skcipher
-Message-Id: <20180919021100.3380-10-keescook@chromium.org>
+From: Morel =?UTF-8?B?QsOpcmVuZ2Vy?= <berenger.morel@sga-automation.com>
+Date: Mon, 22 Oct 2018 10:28:18 +0000
+Subject: How to know when a link is established or destroyed?
+Message-Id: <20181022122818.1780e0bd@PC-dev2>
+MIME-Version: 1
+Content-Type: multipart/mixed; boundary="Sig_/iMs.RZ=SjmV.pV_PNAzyx7j"
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20180919021100.3380-1-keescook@chromium.org>
-In-Reply-To: <20180919021100.3380-1-keescook@chromium.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Kees Cook <keescook@chromium.org>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Eric Biggers <ebiggers@google.com>, linux-crypto <linux-crypto@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: linux-ppp@vger.kernel.org
 
-In the quest to remove all stack VLA usage from the kernel[1], this
-replaces struct crypto_skcipher and SKCIPHER_REQUEST_ON_STACK() usage
-with struct crypto_sync_skcipher and SYNC_SKCIPHER_REQUEST_ON_STACK(),
-which uses a fixed stack size.
+--Sig_/iMs.RZ=SjmV.pV_PNAzyx7j
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+Hello.
 
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linux-ppp@vger.kernel.org
-Signed-off-by: Kees Cook <keescook@chromium.org>
----
- drivers/net/ppp/ppp_mppe.c | 27 ++++++++++++++-------------
- 1 file changed, 14 insertions(+), 13 deletions(-)
+I am using pppd to have network access through GPRS/3G/4G on systems I
+do not have physical access to.
 
-diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-index a205750b431b..7ccdc62c6052 100644
---- a/drivers/net/ppp/ppp_mppe.c
-+++ b/drivers/net/ppp/ppp_mppe.c
-@@ -95,7 +95,7 @@ static inline void sha_pad_init(struct sha_pad *shapad)
-  * State for an MPPE (de)compressor.
-  */
- struct ppp_mppe_state {
--	struct crypto_skcipher *arc4;
-+	struct crypto_sync_skcipher *arc4;
- 	struct shash_desc *sha1;
- 	unsigned char *sha1_digest;
- 	unsigned char master_key[MPPE_MAX_KEY_LEN];
-@@ -155,15 +155,15 @@ static void get_new_key_from_sha(struct ppp_mppe_state * state)
- static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
- {
- 	struct scatterlist sg_in[1], sg_out[1];
--	SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
-+	SYNC_SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
- 
--	skcipher_request_set_tfm(req, state->arc4);
-+	skcipher_request_set_sync_tfm(req, state->arc4);
- 	skcipher_request_set_callback(req, 0, NULL, NULL);
- 
- 	get_new_key_from_sha(state);
- 	if (!initial_key) {
--		crypto_skcipher_setkey(state->arc4, state->sha1_digest,
--				       state->keylen);
-+		crypto_sync_skcipher_setkey(state->arc4, state->sha1_digest,
-+					    state->keylen);
- 		sg_init_table(sg_in, 1);
- 		sg_init_table(sg_out, 1);
- 		setup_sg(sg_in, state->sha1_digest, state->keylen);
-@@ -181,7 +181,8 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
- 		state->session_key[1] = 0x26;
- 		state->session_key[2] = 0x9e;
- 	}
--	crypto_skcipher_setkey(state->arc4, state->session_key, state->keylen);
-+	crypto_sync_skcipher_setkey(state->arc4, state->session_key,
-+				    state->keylen);
- 	skcipher_request_zero(req);
- }
- 
-@@ -203,7 +204,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
- 		goto out;
- 
- 
--	state->arc4 = crypto_alloc_skcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC);
-+	state->arc4 = crypto_alloc_sync_skcipher("ecb(arc4)", 0, 0);
- 	if (IS_ERR(state->arc4)) {
- 		state->arc4 = NULL;
- 		goto out_free;
-@@ -250,7 +251,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
- 		crypto_free_shash(state->sha1->tfm);
- 		kzfree(state->sha1);
- 	}
--	crypto_free_skcipher(state->arc4);
-+	crypto_free_sync_skcipher(state->arc4);
- 	kfree(state);
- out:
- 	return NULL;
-@@ -266,7 +267,7 @@ static void mppe_free(void *arg)
- 		kfree(state->sha1_digest);
- 		crypto_free_shash(state->sha1->tfm);
- 		kzfree(state->sha1);
--		crypto_free_skcipher(state->arc4);
-+		crypto_free_sync_skcipher(state->arc4);
- 		kfree(state);
- 	}
- }
-@@ -366,7 +367,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
- 	      int isize, int osize)
- {
- 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
--	SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
-+	SYNC_SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
- 	int proto;
- 	int err;
- 	struct scatterlist sg_in[1], sg_out[1];
-@@ -426,7 +427,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
- 	setup_sg(sg_in, ibuf, isize);
- 	setup_sg(sg_out, obuf, osize);
- 
--	skcipher_request_set_tfm(req, state->arc4);
-+	skcipher_request_set_sync_tfm(req, state->arc4);
- 	skcipher_request_set_callback(req, 0, NULL, NULL);
- 	skcipher_request_set_crypt(req, sg_in, sg_out, isize, NULL);
- 	err = crypto_skcipher_encrypt(req);
-@@ -480,7 +481,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
- 		int osize)
- {
- 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
--	SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
-+	SYNC_SKCIPHER_REQUEST_ON_STACK(req, state->arc4);
- 	unsigned ccount;
- 	int flushed = MPPE_BITS(ibuf) & MPPE_BIT_FLUSHED;
- 	struct scatterlist sg_in[1], sg_out[1];
-@@ -615,7 +616,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
- 	setup_sg(sg_in, ibuf, 1);
- 	setup_sg(sg_out, obuf, 1);
- 
--	skcipher_request_set_tfm(req, state->arc4);
-+	skcipher_request_set_sync_tfm(req, state->arc4);
- 	skcipher_request_set_callback(req, 0, NULL, NULL);
- 	skcipher_request_set_crypt(req, sg_in, sg_out, 1, NULL);
- 	if (crypto_skcipher_decrypt(req)) {
--- 
-2.17.1
+Since I want the system to be up almost always, I am trying to manage
+my daemons through runit (daemontools), which works by keeping child
+process foreground and restart it when it dies for a reason or another,
+eventually logging whatever came on stdout.
+
+I can run pppd in that way, but I have no idea about how to know if the
+connection is really established or not, and on some systems manual
+reboot is sometimes needed, because it seems that pppd only tries 3 or
+4 times to restore connection when link is cut, and if not it just
+stays alive doing nothing.
+
+So, I think either I missed the options needed to do what I need, or
+there is a tool to manage pppd that I don't know, or it is not
+implemented at all.
+
+If if is not implemented at all, is it intended? Would it be fine if I
+submit a patch doing this?
+
+Note:
+I am using the 2.4.7 version from the Debian 9 (stretch) package
+2.4.7-1+4 on amd64.
+$ uname -a
+Linux PC-dev2 4.9.0-5-amd64 #1 SMP Debian 4.9.65-3+deb9u2 (2018-01-04)
+x86_64 GNU/Linux
+
+Thanks in advance.
+
+PS: I'm not registered to this list, so I added my mail in the CC field.
+
+--=20
+SGA Automation
+27 Rue Jean-Philippe Rameau
+P=C3=B4le Delta
+76000 Rouen
+Tel : 02 32 10 38 53
+Fax : 02 32 10 11 30
+www.sga-automation.com
+Email : berenger.morel@sga-automation.com
+
+--Sig_/iMs.RZ=SjmV.pV_PNAzyx7j
+Content-Type: application/pgp-signature
+Content-Description: Signature digitale OpenPGP
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEE6EOLY3cbbbyLd7blx7EBpfPu3/IFAlvNpkIACgkQx7EBpfPu
+3/I3NQf/f2yUU7RL0Nng1f584EdeRPlrmKNVUC3r7zXsFV0vHDP5/3vQvgECETdQ
+KNsSwqT5dVDI/X+DHQOutx4iToRLAua5wP9OStqIZ1A1au+5VFZxV+njVO0VLpqj
+vGleGTyJ+Cng0NumtSic7u0zgagPo31haZgE3Zpf7ypLNsb5xTUeHMMBBetqEAqd
+bvDygKikN9IUg7mTu3wi3bmdho3nqVkRxY7rMga55fOM2hbq8z4FFZBc+UUpS+iK
+Pa9O2Eg/zQZBeXV3bOqzNIJdImWmOQEU4304uIBcaY1rGjirzgDbmHpatZkoSEUZ
+l2lmlH83wC4PwahNbYc66TU7epap6Q==
+=qZZn
+-----END PGP SIGNATURE-----
+
+--Sig_/iMs.RZ=SjmV.pV_PNAzyx7j--
