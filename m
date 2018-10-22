@@ -1,74 +1,93 @@
-From: Morel =?UTF-8?B?QsOpcmVuZ2Vy?= <berenger.morel@sga-automation.com>
-Date: Mon, 22 Oct 2018 10:28:18 +0000
-Subject: How to know when a link is established or destroyed?
-Message-Id: <20181022122818.1780e0bd@PC-dev2>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="Sig_/iMs.RZ=SjmV.pV_PNAzyx7j"
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 22 Oct 2018 14:40:16 +0000
+Subject: Re: How to know when a link is established or destroyed?
+Message-Id: <5977077b-5681-d186-4039-59fe5802b3e1@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20181022122818.1780e0bd@PC-dev2>
+In-Reply-To: <20181022122818.1780e0bd@PC-dev2>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
---Sig_/iMs.RZ=SjmV.pV_PNAzyx7j
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On 10/22/18 06:28, Morel B=C3=A9renger wrote:
+> I am using pppd to have network access through GPRS/3G/4G on systems I
+> do not have physical access to.
+>=20
+> Since I want the system to be up almost always, I am trying to manage
+> my daemons through runit (daemontools), which works by keeping child
+> process foreground and restart it when it dies for a reason or another,
+> eventually logging whatever came on stdout.
 
-Hello.
+Please post the pppd options you're using today.  I'm going to guess
+that you're using at least "nodetach".  Anything else?  (See the man
+page for sources of options; /etc/ppp/options is the main one.)
 
-I am using pppd to have network access through GPRS/3G/4G on systems I
-do not have physical access to.
+Please post debug traces, or a link to them; particularly those you feel
+highlight problems that you're seeing.  It's almost impossible to
+determine the source of problems without traces.  There are multiple
+ways to get a trace.  The simplest is to use the "debug" option, and get
+the log messages via syslog.  Use "logfile /path/to/some/file" if you
+can't use syslog for some reason.  (Note: don't use kdebug unless there
+are kernel-level problems.  This doesn't sound like a kernel-level problem.)
 
-Since I want the system to be up almost always, I am trying to manage
-my daemons through runit (daemontools), which works by keeping child
-process foreground and restart it when it dies for a reason or another,
-eventually logging whatever came on stdout.
+The usual way to set up an always-on connection with pppd is NOT via
+some external utility, but by using the built-in restart capability in
+pppd.  You can use use the external utility if you want, but I think
+it'll be harder to manage.
 
-I can run pppd in that way, but I have no idea about how to know if the
-connection is really established or not, and on some systems manual
-reboot is sometimes needed, because it seems that pppd only tries 3 or
-4 times to restore connection when link is cut, and if not it just
-stays alive doing nothing.
+To use the built-in restart, set "persist maxfail 0" as options.
 
-So, I think either I missed the options needed to do what I need, or
-there is a tool to manage pppd that I don't know, or it is not
-implemented at all.
+If you insist on using an external utility to do this, you will probably
+want something like "maxfail 1" or "maxfail 2" instead.
 
-If if is not implemented at all, is it intended? Would it be fine if I
-submit a patch doing this?
+If the peer you're talking to is willing, I recommend using the
+lcp-echo-interval and lcp-echo-failure options with any sort of link
+that needs to be reliable.  These options (when usable -- the peer may
+balk, if the peer is poorly implemented) allow PPP to detect when the
+point-to-point link has lost connectivity, and will shut down (and
+retry, if "persist" is enabled or if some sort of external restart
+utility is used).
 
-Note:
-I am using the 2.4.7 version from the Debian 9 (stretch) package
-2.4.7-1+4 on amd64.
-$ uname -a
-Linux PC-dev2 4.9.0-5-amd64 #1 SMP Debian 4.9.65-3+deb9u2 (2018-01-04)
-x86_64 GNU/Linux
+Note that most GPRS implementations, at least the ones I've seen, are
+horror shows, and that stems, at least in part, from execrable
+"standards" set for their use of Internet protocols.  Your mileage may vary.
 
-Thanks in advance.
+> I can run pppd in that way, but I have no idea about how to know if the
+> connection is really established or not, and on some systems manual
+> reboot is sometimes needed, because it seems that pppd only tries 3 or
+> 4 times to restore connection when link is cut, and if not it just
+> stays alive doing nothing.
 
-PS: I'm not registered to this list, so I added my mail in the CC field.
+The connection is up for IPv4 traffic when the optional executable
+script (or program) /etc/ppp/ip-up is invoked.  It's down when
+/etc/ppp/ip-down is invoked.  You should also see the IFF_UP flag on the
+interface change state; a routing socket might be good for monitoring that.
+
+Having the PPP link up and having LCP+auth+IPCP negotiated (and thus the
+local IP interface marked IFF_UP) does *NOT*, of course, guarantee that
+you have a path to "the Internet" (or whatever wider network you believe
+you're connecting to).  It merely means that an IP path has been
+established to the peer -- PPP is point-to-point, of course.  Whether
+that peer is capable and willing to transport IP traffic for you is a
+completely separate matter.
+
+If your "failures" involve losing IP routing while the PPP link is up,
+then that may just be par for the course.  You'll need some other
+monitoring system to tell you when or if that happens.  There's nothing
+that PPP can possibly do to help with that; it's only a link layer protocol.
+
+> So, I think either I missed the options needed to do what I need, or
+> there is a tool to manage pppd that I don't know, or it is not
+> implemented at all.
+>=20
+> If if is not implemented at all, is it intended? Would it be fine if I
+> submit a patch doing this?
+
+Submitting patches is fine, but if you do so, please indicate precisely
+what the patch does and (if possible) why the existing features don't
+fulfill your needs.  It's often very hard to review changes out of the
+blue that don't appear to solve problems.
 
 --=20
-SGA Automation
-27 Rue Jean-Philippe Rameau
-P=C3=B4le Delta
-76000 Rouen
-Tel : 02 32 10 38 53
-Fax : 02 32 10 11 30
-www.sga-automation.com
-Email : berenger.morel@sga-automation.com
-
---Sig_/iMs.RZ=SjmV.pV_PNAzyx7j
-Content-Type: application/pgp-signature
-Content-Description: Signature digitale OpenPGP
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEE6EOLY3cbbbyLd7blx7EBpfPu3/IFAlvNpkIACgkQx7EBpfPu
-3/I3NQf/f2yUU7RL0Nng1f584EdeRPlrmKNVUC3r7zXsFV0vHDP5/3vQvgECETdQ
-KNsSwqT5dVDI/X+DHQOutx4iToRLAua5wP9OStqIZ1A1au+5VFZxV+njVO0VLpqj
-vGleGTyJ+Cng0NumtSic7u0zgagPo31haZgE3Zpf7ypLNsb5xTUeHMMBBetqEAqd
-bvDygKikN9IUg7mTu3wi3bmdho3nqVkRxY7rMga55fOM2hbq8z4FFZBc+UUpS+iK
-Pa9O2Eg/zQZBeXV3bOqzNIJdImWmOQEU4304uIBcaY1rGjirzgDbmHpatZkoSEUZ
-l2lmlH83wC4PwahNbYc66TU7epap6Q==
-=qZZn
------END PGP SIGNATURE-----
-
---Sig_/iMs.RZ=SjmV.pV_PNAzyx7j--
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
