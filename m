@@ -1,93 +1,75 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Mon, 22 Oct 2018 14:40:16 +0000
-Subject: Re: How to know when a link is established or destroyed?
-Message-Id: <5977077b-5681-d186-4039-59fe5802b3e1@workingcode.com>
+From: Kyungtae Kim <kt0755@gmail.com>
+Date: Wed, 31 Oct 2018 10:46:16 +0000
+Subject: UBSAN: Undefined behaviour in drivers/net/ppp/ppp_generic.c
+Message-Id: <CAEAjamurFhLE7QOq596Kue8oy-MXeju_68bwn7_Byqi6r2yoUA@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20181022122818.1780e0bd@PC-dev2>
-In-Reply-To: <20181022122818.1780e0bd@PC-dev2>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: paulus@samba.org, davem@davemloft.net
+Cc: Byoungyoung Lee <lifeasageek@gmail.com>, DaeRyong Jeong <threeearcat@gmail.com>, syzkaller@googlegroups.com, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On 10/22/18 06:28, Morel B=C3=A9renger wrote:
-> I am using pppd to have network access through GPRS/3G/4G on systems I
-> do not have physical access to.
->=20
-> Since I want the system to be up almost always, I am trying to manage
-> my daemons through runit (daemontools), which works by keeping child
-> process foreground and restart it when it dies for a reason or another,
-> eventually logging whatever came on stdout.
+We report a crash in v4.19-rc2 (and the latest kernel as well):
 
-Please post the pppd options you're using today.  I'm going to guess
-that you're using at least "nodetach".  Anything else?  (See the man
-page for sources of options; /etc/ppp/options is the main one.)
+kernel config: https://kt0755.github.io/etc/config_v2-4.19
+repro: https://kt0755.github.io/etc/repro.1e3e9.c
 
-Please post debug traces, or a link to them; particularly those you feel
-highlight problems that you're seeing.  It's almost impossible to
-determine the source of problems without traces.  There are multiple
-ways to get a trace.  The simplest is to use the "debug" option, and get
-the log messages via syslog.  Use "logfile /path/to/some/file" if you
-can't use syslog for some reason.  (Note: don't use kdebug unless there
-are kernel-level problems.  This doesn't sound like a kernel-level problem.)
+unit_set() lacks the bounds checking for an integer variable n,
+which causes integer overflow when it is equal to INT_MAX.
 
-The usual way to set up an always-on connection with pppd is NOT via
-some external utility, but by using the built-in restart capability in
-pppd.  You can use use the external utility if you want, but I think
-it'll be harder to manage.
+===========================UBSAN: Undefined behaviour in drivers/net/ppp/ppp_generic.c:3246:9
+signed integer overflow:
+2147483647 + 1 cannot be represented in type 'int'
+CPU: 0 PID: 7676 Comm: syz-executor4 Not tainted 4.19.0-rc2 #1
+Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS Bochs 01/01/2011
+Call Trace:
+ __dump_stack lib/dump_stack.c:77 [inline]
+ dump_stack+0xd2/0x148 lib/dump_stack.c:113
+ ubsan_epilogue+0x12/0x94 lib/ubsan.c:159
+ handle_overflow+0x1cf/0x21a lib/ubsan.c:190
+ __ubsan_handle_add_overflow+0x2a/0x31 lib/ubsan.c:198
+ unit_set drivers/net/ppp/ppp_generic.c:3246 [inline]
+ ppp_unit_register drivers/net/ppp/ppp_generic.c:979 [inline]
+ ppp_dev_configure+0xbd8/0xd50 drivers/net/ppp/ppp_generic.c:1049
+ ppp_create_interface drivers/net/ppp/ppp_generic.c:3013 [inline]
+ ppp_unattached_ioctl drivers/net/ppp/ppp_generic.c:848 [inline]
+ ppp_ioctl+0x1652/0x27f0 drivers/net/ppp/ppp_generic.c:601
+ vfs_ioctl fs/ioctl.c:46 [inline]
+ do_vfs_ioctl+0x1c0/0x1150 fs/ioctl.c:687
+ ksys_ioctl+0x9e/0xb0 fs/ioctl.c:702
+ __do_sys_ioctl fs/ioctl.c:709 [inline]
+ __se_sys_ioctl fs/ioctl.c:707 [inline]
+ __x64_sys_ioctl+0x7e/0xc0 fs/ioctl.c:707
+ do_syscall_64+0xc4/0x510 arch/x86/entry/common.c:290
+ entry_SYSCALL_64_after_hwframe+0x49/0xbe
+RIP: 0033:0x4497b9
+Code: e8 8c 9f 02 00 48 83 c4 18 c3 0f 1f 80 00 00 00 00 48 89 f8 48
+89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d
+01 f0 ff ff 0f 83 9b 6b fc ff c3 66 2e 0f 1f 84 00 00 00 00
+RSP: 002b:00007f67b6f92c68 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+RAX: ffffffffffffffda RBX: 00007f67b6f936cc RCX: 00000000004497b9
+RDX: 0000000020000080 RSI: 00000000c004743e RDI: 0000000000000013
+RBP: 000000000071bea0 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 00000000ffffffff
+R13: 0000000000005598 R14: 00000000006ed638 R15: 00007f67b6f93700
+===========================
 
-To use the built-in restart, set "persist maxfail 0" as options.
+A simple patch below is provided.
+Note that in this control flow, negative n is already
+filtered out (drivers/net/ppp/ppp_generic.c:965).
 
-If you insist on using an external utility to do this, you will probably
-want something like "maxfail 1" or "maxfail 2" instead.
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -3243,6 +3243,9 @@ static int unit_set(struct idr *p, void *ptr, int n)
+ {
+        int unit;
 
-If the peer you're talking to is willing, I recommend using the
-lcp-echo-interval and lcp-echo-failure options with any sort of link
-that needs to be reliable.  These options (when usable -- the peer may
-balk, if the peer is poorly implemented) allow PPP to detect when the
-point-to-point link has lost connectivity, and will shut down (and
-retry, if "persist" is enabled or if some sort of external restart
-utility is used).
++  if (n = INT_MAX)
++               return -EINVAL;
++
+        unit = idr_alloc(p, ptr, n, n + 1, GFP_KERNEL);
+        if (unit = -ENOSPC)
+                unit = -EINVAL;
 
-Note that most GPRS implementations, at least the ones I've seen, are
-horror shows, and that stems, at least in part, from execrable
-"standards" set for their use of Internet protocols.  Your mileage may vary.
-
-> I can run pppd in that way, but I have no idea about how to know if the
-> connection is really established or not, and on some systems manual
-> reboot is sometimes needed, because it seems that pppd only tries 3 or
-> 4 times to restore connection when link is cut, and if not it just
-> stays alive doing nothing.
-
-The connection is up for IPv4 traffic when the optional executable
-script (or program) /etc/ppp/ip-up is invoked.  It's down when
-/etc/ppp/ip-down is invoked.  You should also see the IFF_UP flag on the
-interface change state; a routing socket might be good for monitoring that.
-
-Having the PPP link up and having LCP+auth+IPCP negotiated (and thus the
-local IP interface marked IFF_UP) does *NOT*, of course, guarantee that
-you have a path to "the Internet" (or whatever wider network you believe
-you're connecting to).  It merely means that an IP path has been
-established to the peer -- PPP is point-to-point, of course.  Whether
-that peer is capable and willing to transport IP traffic for you is a
-completely separate matter.
-
-If your "failures" involve losing IP routing while the PPP link is up,
-then that may just be par for the course.  You'll need some other
-monitoring system to tell you when or if that happens.  There's nothing
-that PPP can possibly do to help with that; it's only a link layer protocol.
-
-> So, I think either I missed the options needed to do what I need, or
-> there is a tool to manage pppd that I don't know, or it is not
-> implemented at all.
->=20
-> If if is not implemented at all, is it intended? Would it be fine if I
-> submit a patch doing this?
-
-Submitting patches is fine, but if you do so, please indicate precisely
-what the patch does and (if possible) why the existing features don't
-fulfill your needs.  It's often very hard to review changes out of the
-blue that don't appear to solve problems.
-
---=20
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+Thanks,
+Kyungtae Kim
