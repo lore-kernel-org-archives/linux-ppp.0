@@ -1,76 +1,83 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Tue, 13 Nov 2018 16:49:56 +0000
-Subject: Re: How to know when a link is established or destroyed?
-Message-Id: <12a81187-bf39-61c4-9f16-55b1653f945f@workingcode.com>
+From: Guillaume Nault <g.nault@alphalink.fr>
+Date: Mon, 05 Nov 2018 16:31:18 +0000
+Subject: Re: UBSAN: Undefined behaviour in drivers/net/ppp/ppp_generic.c
+Message-Id: <20181105163118.GA1476@alphalink.fr>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20181022122818.1780e0bd@PC-dev2>
-In-Reply-To: <20181022122818.1780e0bd@PC-dev2>
+References: <CAEAjamurFhLE7QOq596Kue8oy-MXeju_68bwn7_Byqi6r2yoUA@mail.gmail.com>
+In-Reply-To: <CAEAjamurFhLE7QOq596Kue8oy-MXeju_68bwn7_Byqi6r2yoUA@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Kyungtae Kim <kt0755@gmail.com>
+Cc: paulus@samba.org, davem@davemloft.net, Byoungyoung Lee <lifeasageek@gmail.com>, DaeRyong Jeong <threeearcat@gmail.com>, syzkaller@googlegroups.com, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On 11/13/18 07:08, Morel B=C3=A9renger wrote:
->> The simplest is to use the "debug" option, and get the log messages
->> via syslog.  Use "logfile /path/to/some/file" if you can't use syslog
->> for some reason.  (Note: don't use kdebug unless there are
->> kernel-level problems.  This doesn't sound like a kernel-level
->> problem.)
->=20
-> Are logs sent to a file exactly the same as those sent to syslog?
+On Wed, Oct 31, 2018 at 06:46:16AM -0400, Kyungtae Kim wrote:
+> We report a crash in v4.19-rc2 (and the latest kernel as well):
+> 
+> kernel config: https://kt0755.github.io/etc/config_v2-4.19
+> repro: https://kt0755.github.io/etc/repro.1e3e9.c
+> 
+> unit_set() lacks the bounds checking for an integer variable n,
+> which causes integer overflow when it is equal to INT_MAX.
+> 
+idr_alloc() does revert the overflowed n+1 to INT_MAX, so everything
+works as expected in practive. But sure, the code, as it is, looks
+wrong.
 
-Yes, if you use the "logfile /path/to/some/file" option.
-
-Missing from the logs you sent is the "debug" option, so the information
-you've provided is *very* sketchy and not very useful.  However, I do
-have some questions about it.  During the first 197.7 minute-long
-session, did you successfully connect?  Did you get actual IP service on
-the initial try?
-
-I don't know whether you have a completely failing connection (which
-would point towards one set of problems) or a connection that merely
-fails on retry (which points to a different set of problems).
-
-If you kill off pppd, wait a few seconds, and then start it again, will
-you get another successful session at the start?  Is it only having
-trouble during a post-failure retry (i.e., during 'persist')?
-
-Based on the following messages, I can make at least one somewhat
-educated guess.
-
-Nov  7 15:15:13 700009-vnf-180918 pppd[1161]: Remote message: Greetings!!
-Nov  7 15:15:13 700009-vnf-180918 pppd[1161]: PAP authentication succeeded
-Nov  7 15:15:13 700009-vnf-180918 pppd[1161]: Hangup (SIGHUP)
-Nov  7 15:15:13 700009-vnf-180918 pppd[1161]: Modem hangup
-Nov  7 15:15:13 700009-vnf-180918 pppd[1161]: Connection terminated.
-
-
-As I said in my previous message, GPRS is really quite horrible.  One of
-the horrible aspects of it is that it deliberately *lies* to the peer
-during the PPP authentication phase.  If you pass bad credentials
-(either via one of the PPP authentication protocols or via some 'hidden'
-channel, such as your subscriber ID / telephone number), a GPRS server
-will send back a fake "success" message.  The actual authentication work
-in GPRS is (inexplicably) delayed until the PPP Network phase.  This
-means that an authentication failure perversely manifests as IPCP
-negotiation failure.  Instead of getting a good address to use, you get
-a garbage address that doesn't work, or no address at all, and the
-system just waits for you to hang up in frustration with no outward
-indication of the real problem.
-
-So, at a glance, and without the strength of seeing the actual pppd
-"debug" messages I originally requested, the summary informational
-messages above *may* tend to indicate that your user name or password
-are not valid, or that something about your local configuration isn't
-right with respect to credentials, or the account that you're using to
-connect to this GPRS server is itself not authorized, or that you're
-violating some policy rule that the GPRS provider has in place (e.g.,
-maximum number of connected minutes per day or minimum time between
-successive connection attempts or some such rule).
-
-When I was PPPEXT chair, I argued with the GPRS people until I was blue
-in the face.  It did no good, of course.  I'm sorry you're one of the
-victims here.
-
---=20
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+> ===========================> UBSAN: Undefined behaviour in drivers/net/ppp/ppp_generic.c:3246:9
+> signed integer overflow:
+> 2147483647 + 1 cannot be represented in type 'int'
+> CPU: 0 PID: 7676 Comm: syz-executor4 Not tainted 4.19.0-rc2 #1
+> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS Bochs 01/01/2011
+> Call Trace:
+>  __dump_stack lib/dump_stack.c:77 [inline]
+>  dump_stack+0xd2/0x148 lib/dump_stack.c:113
+>  ubsan_epilogue+0x12/0x94 lib/ubsan.c:159
+>  handle_overflow+0x1cf/0x21a lib/ubsan.c:190
+>  __ubsan_handle_add_overflow+0x2a/0x31 lib/ubsan.c:198
+>  unit_set drivers/net/ppp/ppp_generic.c:3246 [inline]
+>  ppp_unit_register drivers/net/ppp/ppp_generic.c:979 [inline]
+>  ppp_dev_configure+0xbd8/0xd50 drivers/net/ppp/ppp_generic.c:1049
+>  ppp_create_interface drivers/net/ppp/ppp_generic.c:3013 [inline]
+>  ppp_unattached_ioctl drivers/net/ppp/ppp_generic.c:848 [inline]
+>  ppp_ioctl+0x1652/0x27f0 drivers/net/ppp/ppp_generic.c:601
+>  vfs_ioctl fs/ioctl.c:46 [inline]
+>  do_vfs_ioctl+0x1c0/0x1150 fs/ioctl.c:687
+>  ksys_ioctl+0x9e/0xb0 fs/ioctl.c:702
+>  __do_sys_ioctl fs/ioctl.c:709 [inline]
+>  __se_sys_ioctl fs/ioctl.c:707 [inline]
+>  __x64_sys_ioctl+0x7e/0xc0 fs/ioctl.c:707
+>  do_syscall_64+0xc4/0x510 arch/x86/entry/common.c:290
+>  entry_SYSCALL_64_after_hwframe+0x49/0xbe
+> RIP: 0033:0x4497b9
+> Code: e8 8c 9f 02 00 48 83 c4 18 c3 0f 1f 80 00 00 00 00 48 89 f8 48
+> 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d
+> 01 f0 ff ff 0f 83 9b 6b fc ff c3 66 2e 0f 1f 84 00 00 00 00
+> RSP: 002b:00007f67b6f92c68 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+> RAX: ffffffffffffffda RBX: 00007f67b6f936cc RCX: 00000000004497b9
+> RDX: 0000000020000080 RSI: 00000000c004743e RDI: 0000000000000013
+> RBP: 000000000071bea0 R08: 0000000000000000 R09: 0000000000000000
+> R10: 0000000000000000 R11: 0000000000000246 R12: 00000000ffffffff
+> R13: 0000000000005598 R14: 00000000006ed638 R15: 00007f67b6f93700
+> ===========================
+> 
+> A simple patch below is provided.
+> Note that in this control flow, negative n is already
+> filtered out (drivers/net/ppp/ppp_generic.c:965).
+> 
+> --- a/drivers/net/ppp/ppp_generic.c
+> +++ b/drivers/net/ppp/ppp_generic.c
+> @@ -3243,6 +3243,9 @@ static int unit_set(struct idr *p, void *ptr, int n)
+>  {
+>         int unit;
+> 
+> +  if (n = INT_MAX)
+> +               return -EINVAL;
+> +
+>         unit = idr_alloc(p, ptr, n, n + 1, GFP_KERNEL);
+>         if (unit = -ENOSPC)
+>                 unit = -EINVAL;
+> 
+What about using idr_alloc_u32() instead? This way we could safely
+continue to accept INT_MAX, without relying on idr_alloc() internal
+safeguards.
