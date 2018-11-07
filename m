@@ -1,75 +1,317 @@
-From: Kyungtae Kim <kt0755@gmail.com>
-Date: Wed, 31 Oct 2018 10:46:16 +0000
-Subject: UBSAN: Undefined behaviour in drivers/net/ppp/ppp_generic.c
-Message-Id: <CAEAjamurFhLE7QOq596Kue8oy-MXeju_68bwn7_Byqi6r2yoUA@mail.gmail.com>
+From: Matteo Croce <mcroce@redhat.com>
+Date: Wed, 07 Nov 2018 23:52:43 +0000
+Subject: [PATCH v3] pppoe: custom host-uniq tag
+Message-Id: <20181107235243.676-1-mcroce@redhat.com>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: paulus@samba.org, davem@davemloft.net
-Cc: Byoungyoung Lee <lifeasageek@gmail.com>, DaeRyong Jeong <threeearcat@gmail.com>, syzkaller@googlegroups.com, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-We report a crash in v4.19-rc2 (and the latest kernel as well):
+Add pppoe 'host-uniq' option to set an arbitrary
+host-uniq tag instead of the pppd pid.
+Some ISPs use such tag to authenticate the CPE,
+so it must be set to a proper value to connect.
 
-kernel config: https://kt0755.github.io/etc/config_v2-4.19
-repro: https://kt0755.github.io/etc/repro.1e3e9.c
+Signed-off-by: Matteo Croce <mcroce@redhat.com>
+Signed-off-by: Jo-Philipp Wich <jow@openwrt.org>
+---
+ pppd/plugins/rp-pppoe/common.c          | 14 +++----
+ pppd/plugins/rp-pppoe/discovery.c       | 52 ++++++++++---------------
+ pppd/plugins/rp-pppoe/plugin.c          | 15 ++++++-
+ pppd/plugins/rp-pppoe/pppoe-discovery.c | 40 ++++++++++++-------
+ pppd/plugins/rp-pppoe/pppoe.h           | 31 ++++++++++++++-
+ 5 files changed, 96 insertions(+), 56 deletions(-)
 
-unit_set() lacks the bounds checking for an integer variable n,
-which causes integer overflow when it is equal to INT_MAX.
-
-===========================UBSAN: Undefined behaviour in drivers/net/ppp/ppp_generic.c:3246:9
-signed integer overflow:
-2147483647 + 1 cannot be represented in type 'int'
-CPU: 0 PID: 7676 Comm: syz-executor4 Not tainted 4.19.0-rc2 #1
-Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS Bochs 01/01/2011
-Call Trace:
- __dump_stack lib/dump_stack.c:77 [inline]
- dump_stack+0xd2/0x148 lib/dump_stack.c:113
- ubsan_epilogue+0x12/0x94 lib/ubsan.c:159
- handle_overflow+0x1cf/0x21a lib/ubsan.c:190
- __ubsan_handle_add_overflow+0x2a/0x31 lib/ubsan.c:198
- unit_set drivers/net/ppp/ppp_generic.c:3246 [inline]
- ppp_unit_register drivers/net/ppp/ppp_generic.c:979 [inline]
- ppp_dev_configure+0xbd8/0xd50 drivers/net/ppp/ppp_generic.c:1049
- ppp_create_interface drivers/net/ppp/ppp_generic.c:3013 [inline]
- ppp_unattached_ioctl drivers/net/ppp/ppp_generic.c:848 [inline]
- ppp_ioctl+0x1652/0x27f0 drivers/net/ppp/ppp_generic.c:601
- vfs_ioctl fs/ioctl.c:46 [inline]
- do_vfs_ioctl+0x1c0/0x1150 fs/ioctl.c:687
- ksys_ioctl+0x9e/0xb0 fs/ioctl.c:702
- __do_sys_ioctl fs/ioctl.c:709 [inline]
- __se_sys_ioctl fs/ioctl.c:707 [inline]
- __x64_sys_ioctl+0x7e/0xc0 fs/ioctl.c:707
- do_syscall_64+0xc4/0x510 arch/x86/entry/common.c:290
- entry_SYSCALL_64_after_hwframe+0x49/0xbe
-RIP: 0033:0x4497b9
-Code: e8 8c 9f 02 00 48 83 c4 18 c3 0f 1f 80 00 00 00 00 48 89 f8 48
-89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d
-01 f0 ff ff 0f 83 9b 6b fc ff c3 66 2e 0f 1f 84 00 00 00 00
-RSP: 002b:00007f67b6f92c68 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
-RAX: ffffffffffffffda RBX: 00007f67b6f936cc RCX: 00000000004497b9
-RDX: 0000000020000080 RSI: 00000000c004743e RDI: 0000000000000013
-RBP: 000000000071bea0 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 00000000ffffffff
-R13: 0000000000005598 R14: 00000000006ed638 R15: 00007f67b6f93700
-===========================
-
-A simple patch below is provided.
-Note that in this control flow, negative n is already
-filtered out (drivers/net/ppp/ppp_generic.c:965).
-
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -3243,6 +3243,9 @@ static int unit_set(struct idr *p, void *ptr, int n)
+diff --git a/pppd/plugins/rp-pppoe/common.c b/pppd/plugins/rp-pppoe/common.c
+index 89c633c..8f175ec 100644
+--- a/pppd/plugins/rp-pppoe/common.c
++++ b/pppd/plugins/rp-pppoe/common.c
+@@ -119,15 +119,11 @@ sendPADT(PPPoEConnection *conn, char const *msg)
+     conn->session = 0;
+ 
+     /* If we're using Host-Uniq, copy it over */
+-    if (conn->useHostUniq) {
+-	PPPoETag hostUniq;
+-	pid_t pid = getpid();
+-	hostUniq.type = htons(TAG_HOST_UNIQ);
+-	hostUniq.length = htons(sizeof(pid));
+-	memcpy(hostUniq.payload, &pid, sizeof(pid));
+-	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
+-	cursor += sizeof(pid) + TAG_HDR_SIZE;
+-	plen += sizeof(pid) + TAG_HDR_SIZE;
++    if (conn->hostUniq.length) {
++	int len = ntohs(conn->hostUniq.length);
++	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
++	cursor += len + TAG_HDR_SIZE;
++	plen += len + TAG_HDR_SIZE;
+     }
+ 
+     /* Copy error message */
+diff --git a/pppd/plugins/rp-pppoe/discovery.c b/pppd/plugins/rp-pppoe/discovery.c
+index 04877cb..16a59f7 100644
+--- a/pppd/plugins/rp-pppoe/discovery.c
++++ b/pppd/plugins/rp-pppoe/discovery.c
+@@ -80,14 +80,10 @@ static void
+ parseForHostUniq(UINT16_t type, UINT16_t len, unsigned char *data,
+ 		 void *extra)
  {
-        int unit;
-
-+  if (n = INT_MAX)
-+               return -EINVAL;
+-    int *val = (int *) extra;
+-    if (type = TAG_HOST_UNIQ && len = sizeof(pid_t)) {
+-	pid_t tmp;
+-	memcpy(&tmp, data, len);
+-	if (tmp = getpid()) {
+-	    *val = 1;
+-	}
+-    }
++    PPPoETag *tag = extra;
 +
-        unit = idr_alloc(p, ptr, n, n + 1, GFP_KERNEL);
-        if (unit = -ENOSPC)
-                unit = -EINVAL;
-
-Thanks,
-Kyungtae Kim
++    if (type = TAG_HOST_UNIQ && len = ntohs(tag->length))
++	tag->length = memcmp(data, tag->payload, len);
+ }
+ 
+ /**********************************************************************
+@@ -104,16 +100,16 @@ parseForHostUniq(UINT16_t type, UINT16_t len, unsigned char *data,
+ static int
+ packetIsForMe(PPPoEConnection *conn, PPPoEPacket *packet)
+ {
+-    int forMe = 0;
++    PPPoETag hostUniq = conn->hostUniq;
+ 
+     /* If packet is not directed to our MAC address, forget it */
+     if (memcmp(packet->ethHdr.h_dest, conn->myEth, ETH_ALEN)) return 0;
+ 
+     /* If we're not using the Host-Unique tag, then accept the packet */
+-    if (!conn->useHostUniq) return 1;
++    if (!conn->hostUniq.length) return 1;
+ 
+-    parsePacket(packet, parseForHostUniq, &forMe);
+-    return forMe;
++    parsePacket(packet, parseForHostUniq, &hostUniq);
++    return !hostUniq.length;
+ }
+ 
+ /**********************************************************************
+@@ -301,16 +297,12 @@ sendPADI(PPPoEConnection *conn)
+     }
+ 
+     /* If we're using Host-Uniq, copy it over */
+-    if (conn->useHostUniq) {
+-	PPPoETag hostUniq;
+-	pid_t pid = getpid();
+-	hostUniq.type = htons(TAG_HOST_UNIQ);
+-	hostUniq.length = htons(sizeof(pid));
+-	memcpy(hostUniq.payload, &pid, sizeof(pid));
+-	CHECK_ROOM(cursor, packet.payload, sizeof(pid) + TAG_HDR_SIZE);
+-	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
+-	cursor += sizeof(pid) + TAG_HDR_SIZE;
+-	plen += sizeof(pid) + TAG_HDR_SIZE;
++    if (conn->hostUniq.length) {
++	int len = ntohs(conn->hostUniq.length);
++	CHECK_ROOM(cursor, packet.payload, len + TAG_HDR_SIZE);
++	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
++	cursor += len + TAG_HDR_SIZE;
++	plen += len + TAG_HDR_SIZE;
+     }
+ 
+     /* Add our maximum MTU/MRU */
+@@ -478,16 +470,12 @@ sendPADR(PPPoEConnection *conn)
+     cursor += namelen + TAG_HDR_SIZE;
+ 
+     /* If we're using Host-Uniq, copy it over */
+-    if (conn->useHostUniq) {
+-	PPPoETag hostUniq;
+-	pid_t pid = getpid();
+-	hostUniq.type = htons(TAG_HOST_UNIQ);
+-	hostUniq.length = htons(sizeof(pid));
+-	memcpy(hostUniq.payload, &pid, sizeof(pid));
+-	CHECK_ROOM(cursor, packet.payload, sizeof(pid)+TAG_HDR_SIZE);
+-	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
+-	cursor += sizeof(pid) + TAG_HDR_SIZE;
+-	plen += sizeof(pid) + TAG_HDR_SIZE;
++    if (conn->hostUniq.length) {
++	int len = ntohs(conn->hostUniq.length);
++	CHECK_ROOM(cursor, packet.payload, len+TAG_HDR_SIZE);
++	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
++	cursor += len + TAG_HDR_SIZE;
++	plen += len + TAG_HDR_SIZE;
+     }
+ 
+     /* Add our maximum MTU/MRU */
+diff --git a/pppd/plugins/rp-pppoe/plugin.c b/pppd/plugins/rp-pppoe/plugin.c
+index c89be94..fd5ad0a 100644
+--- a/pppd/plugins/rp-pppoe/plugin.c
++++ b/pppd/plugins/rp-pppoe/plugin.c
+@@ -68,6 +68,7 @@ static char *existingSession = NULL;
+ static int printACNames = 0;
+ static char *pppoe_reqd_mac = NULL;
+ unsigned char pppoe_reqd_mac_addr[6];
++static char *host_uniq;
+ 
+ static int PPPoEDevnameHook(char *cmd, char **argv, int doit);
+ static option_t Options[] = {
+@@ -85,6 +86,8 @@ static option_t Options[] = {
+       "Be verbose about discovered access concentrators"},
+     { "pppoe-mac", o_string, &pppoe_reqd_mac,
+       "Only connect to specified MAC address" },
++    { "host-uniq", o_string, &host_uniq,
++      "Specify custom Host-Uniq" },
+     { NULL }
+ };
+ int (*OldDevnameHook)(char *cmd, char **argv, int doit) = NULL;
+@@ -110,7 +113,6 @@ PPPOEInitDevice(void)
+     conn->ifName = devnam;
+     conn->discoverySocket = -1;
+     conn->sessionSocket = -1;
+-    conn->useHostUniq = 1;
+     conn->printACNames = printACNames;
+     conn->discoveryTimeout = PADI_TIMEOUT;
+     return 1;
+@@ -166,6 +168,17 @@ PPPOEConnectDevice(void)
+     if (lcp_wantoptions[0].mru > ifr.ifr_mtu - TOTAL_OVERHEAD)
+ 	lcp_wantoptions[0].mru = ifr.ifr_mtu - TOTAL_OVERHEAD;
+ 
++    if (host_uniq) {
++	if (!parseHostUniq(host_uniq, &conn->hostUniq))
++	    fatal("Illegal value for host-uniq option");
++    } else {
++	/* if a custom host-uniq is not supplied, use our PID */
++	pid_t pid = getpid();
++	conn->hostUniq.type = htons(TAG_HOST_UNIQ);
++	conn->hostUniq.length = htons(sizeof(pid));
++	memcpy(conn->hostUniq.payload, &pid, sizeof(pid));
++    }
++
+     conn->acName = acName;
+     conn->serviceName = pppd_pppoe_service;
+     strlcpy(ppp_devnam, devnam, sizeof(ppp_devnam));
+diff --git a/pppd/plugins/rp-pppoe/pppoe-discovery.c b/pppd/plugins/rp-pppoe/pppoe-discovery.c
+index bce71fc..7eed405 100644
+--- a/pppd/plugins/rp-pppoe/pppoe-discovery.c
++++ b/pppd/plugins/rp-pppoe/pppoe-discovery.c
+@@ -356,7 +356,7 @@ packetIsForMe(PPPoEConnection *conn, PPPoEPacket *packet)
+     if (memcmp(packet->ethHdr.h_dest, conn->myEth, ETH_ALEN)) return 0;
+ 
+     /* If we're not using the Host-Unique tag, then accept the packet */
+-    if (!conn->useHostUniq) return 1;
++    if (!conn->hostUniq.length) return 1;
+ 
+     parsePacket(packet, parseForHostUniq, &forMe);
+     return forMe;
+@@ -494,16 +494,12 @@ sendPADI(PPPoEConnection *conn)
+     cursor += namelen + TAG_HDR_SIZE;
+ 
+     /* If we're using Host-Uniq, copy it over */
+-    if (conn->useHostUniq) {
+-	PPPoETag hostUniq;
+-	pid_t pid = getpid();
+-	hostUniq.type = htons(TAG_HOST_UNIQ);
+-	hostUniq.length = htons(sizeof(pid));
+-	memcpy(hostUniq.payload, &pid, sizeof(pid));
+-	CHECK_ROOM(cursor, packet.payload, sizeof(pid) + TAG_HDR_SIZE);
+-	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
+-	cursor += sizeof(pid) + TAG_HDR_SIZE;
+-	plen += sizeof(pid) + TAG_HDR_SIZE;
++    if (conn->hostUniq.length) {
++	int len = ntohs(conn->hostUniq.length);
++	CHECK_ROOM(cursor, packet.payload, len + TAG_HDR_SIZE);
++	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
++	cursor += len + TAG_HDR_SIZE;
++	plen += len + TAG_HDR_SIZE;
+     }
+ 
+     packet.length = htons(plen);
+@@ -669,7 +665,7 @@ int main(int argc, char *argv[])
+     conn->discoveryTimeout = PADI_TIMEOUT;
+     conn->discoveryAttempts = MAX_PADI_ATTEMPTS;
+ 
+-    while ((opt = getopt(argc, argv, "I:D:VUQS:C:t:a:h")) > 0) {
++    while ((opt = getopt(argc, argv, "I:D:VUQS:C:W:t:a:h")) > 0) {
+ 	switch(opt) {
+ 	case 'S':
+ 	    conn->serviceName = xstrdup(optarg);
+@@ -696,7 +692,25 @@ int main(int argc, char *argv[])
+ 	    }
+ 	    break;
+ 	case 'U':
+-	    conn->useHostUniq = 1;
++	    if(conn->hostUniq.length) {
++		fprintf(stderr, "-U and -W are mutually exclusive\n");
++		exit(EXIT_FAILURE);
++	    } else {
++		pid_t pid = getpid();
++		conn->hostUniq.type = htons(TAG_HOST_UNIQ);
++		conn->hostUniq.length = htons(sizeof(pid));
++		memcpy(conn->hostUniq.payload, &pid, sizeof(pid));
++	    }
++	    break;
++	case 'W':
++	    if(conn->hostUniq.length) {
++		fprintf(stderr, "-U and -W are mutually exclusive\n");
++		exit(EXIT_FAILURE);
++	    }
++	    if (!parseHostUniq(optarg, &conn->hostUniq)) {
++		fprintf(stderr, "Invalid host-uniq argument: %s\n", optarg);
++		exit(EXIT_FAILURE);
++            }
+ 	    break;
+ 	case 'D':
+ 	    conn->debugFile = fopen(optarg, "w");
+diff --git a/pppd/plugins/rp-pppoe/pppoe.h b/pppd/plugins/rp-pppoe/pppoe.h
+index 813dcf3..863d268 100644
+--- a/pppd/plugins/rp-pppoe/pppoe.h
++++ b/pppd/plugins/rp-pppoe/pppoe.h
+@@ -21,6 +21,8 @@
+ 
+ #include <stdio.h>		/* For FILE */
+ #include <sys/types.h>		/* For pid_t */
++#include <ctype.h>
++#include <string.h>
+ 
+ /* How do we access raw Ethernet devices? */
+ #undef USE_LINUX_PACKET
+@@ -236,7 +238,7 @@ typedef struct PPPoEConnectionStruct {
+     char *serviceName;		/* Desired service name, if any */
+     char *acName;		/* Desired AC name, if any */
+     int synchronous;		/* Use synchronous PPP */
+-    int useHostUniq;		/* Use Host-Uniq tag */
++    PPPoETag hostUniq;		/* Use Host-Uniq tag */
+     int printACNames;		/* Just print AC names */
+     FILE *debugFile;		/* Debug file for dumping packets */
+     int numPADOs;		/* Number of PADO packets received */
+@@ -293,6 +295,33 @@ void pppoe_printpkt(PPPoEPacket *packet,
+ 		    void (*printer)(void *, char *, ...), void *arg);
+ void pppoe_log_packet(const char *prefix, PPPoEPacket *packet);
+ 
++static inline int parseHostUniq(const char *uniq, PPPoETag *tag)
++{
++    unsigned i, len = strlen(uniq);
++
++#define hex(x) \
++    (((x) <= '9') ? ((x) - '0') : \
++        (((x) <= 'F') ? ((x) - 'A' + 10) : \
++            ((x) - 'a' + 10)))
++
++    if (!len || len & 1)
++        return 0;
++
++    for (i = 0; i < len; i += 2)
++    {
++        if (!isxdigit(uniq[i]) || !isxdigit(uniq[i+1]))
++            return 0;
++
++        tag->payload[i / 2] = (char)(hex(uniq[i]) << 4 | hex(uniq[i+1]));
++    }
++
++#undef hex
++
++    tag->type = htons(TAG_HOST_UNIQ);
++    tag->length = htons(len / 2);
++    return 1;
++}
++
+ #define SET_STRING(var, val) do { if (var) free(var); var = strDup(val); } while(0);
+ 
+ #define CHECK_ROOM(cursor, start, len) \
+-- 
+2.19.1
