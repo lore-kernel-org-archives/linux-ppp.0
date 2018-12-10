@@ -1,328 +1,148 @@
-From: Matteo Croce <mcroce@redhat.com>
-Date: Fri, 23 Nov 2018 18:41:53 +0000
-Subject: [PATCH v4] pppoe: custom host-uniq tag
-Message-Id: <20181123184153.24638-1-mcroce@redhat.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Mon, 10 Dec 2018 21:52:56 +0000
+Subject: [PATCH] hamradio, ppp: change semaphore to completion
+Message-Id: <20181210215318.1982562-1-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Andreas Koensgen <ajk@comnets.uni-bremen.de>, "David S. Miller" <davem@davemloft.net>, Paul Mackerras <paulus@samba.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Colin Ian King <colin.king@canonical.com>, linux-hams@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org
 
-Add pppoe 'host-uniq' option to set an arbitrary
-host-uniq tag instead of the pppd pid.
-Some ISPs use such tag to authenticate the CPE,
-so it must be set to a proper value to connect.
+ppp and hamradio have copies of the same code that uses a semaphore
+in place of a completion for historic reasons. Make it use the
+proper interface instead in all copies.
 
-Signed-off-by: Matteo Croce <mcroce@redhat.com>
-Signed-off-by: Jo-Philipp Wich <jow@openwrt.org>
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
-changes from v3:
- fix a buffer overflow
- document the new option in the help message
+ drivers/net/hamradio/6pack.c | 10 +++++-----
+ drivers/net/hamradio/mkiss.c |  8 ++++----
+ drivers/net/ppp/ppp_async.c  |  8 ++++----
+ 3 files changed, 13 insertions(+), 13 deletions(-)
 
- pppd/plugins/rp-pppoe/common.c          | 14 +++----
- pppd/plugins/rp-pppoe/discovery.c       | 52 ++++++++++---------------
- pppd/plugins/rp-pppoe/plugin.c          | 15 ++++++-
- pppd/plugins/rp-pppoe/pppoe-discovery.c | 41 ++++++++++++-------
- pppd/plugins/rp-pppoe/pppoe.h           | 30 +++++++++++++-
- 5 files changed, 96 insertions(+), 56 deletions(-)
-
-diff --git a/pppd/plugins/rp-pppoe/common.c b/pppd/plugins/rp-pppoe/common.c
-index 89c633c..8f175ec 100644
---- a/pppd/plugins/rp-pppoe/common.c
-+++ b/pppd/plugins/rp-pppoe/common.c
-@@ -119,15 +119,11 @@ sendPADT(PPPoEConnection *conn, char const *msg)
-     conn->session = 0;
- 
-     /* If we're using Host-Uniq, copy it over */
--    if (conn->useHostUniq) {
--	PPPoETag hostUniq;
--	pid_t pid = getpid();
--	hostUniq.type = htons(TAG_HOST_UNIQ);
--	hostUniq.length = htons(sizeof(pid));
--	memcpy(hostUniq.payload, &pid, sizeof(pid));
--	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
--	cursor += sizeof(pid) + TAG_HDR_SIZE;
--	plen += sizeof(pid) + TAG_HDR_SIZE;
-+    if (conn->hostUniq.length) {
-+	int len = ntohs(conn->hostUniq.length);
-+	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
-+	cursor += len + TAG_HDR_SIZE;
-+	plen += len + TAG_HDR_SIZE;
-     }
- 
-     /* Copy error message */
-diff --git a/pppd/plugins/rp-pppoe/discovery.c b/pppd/plugins/rp-pppoe/discovery.c
-index 04877cb..16a59f7 100644
---- a/pppd/plugins/rp-pppoe/discovery.c
-+++ b/pppd/plugins/rp-pppoe/discovery.c
-@@ -80,14 +80,10 @@ static void
- parseForHostUniq(UINT16_t type, UINT16_t len, unsigned char *data,
- 		 void *extra)
- {
--    int *val = (int *) extra;
--    if (type = TAG_HOST_UNIQ && len = sizeof(pid_t)) {
--	pid_t tmp;
--	memcpy(&tmp, data, len);
--	if (tmp = getpid()) {
--	    *val = 1;
--	}
--    }
-+    PPPoETag *tag = extra;
-+
-+    if (type = TAG_HOST_UNIQ && len = ntohs(tag->length))
-+	tag->length = memcmp(data, tag->payload, len);
- }
- 
- /**********************************************************************
-@@ -104,16 +100,16 @@ parseForHostUniq(UINT16_t type, UINT16_t len, unsigned char *data,
- static int
- packetIsForMe(PPPoEConnection *conn, PPPoEPacket *packet)
- {
--    int forMe = 0;
-+    PPPoETag hostUniq = conn->hostUniq;
- 
-     /* If packet is not directed to our MAC address, forget it */
-     if (memcmp(packet->ethHdr.h_dest, conn->myEth, ETH_ALEN)) return 0;
- 
-     /* If we're not using the Host-Unique tag, then accept the packet */
--    if (!conn->useHostUniq) return 1;
-+    if (!conn->hostUniq.length) return 1;
- 
--    parsePacket(packet, parseForHostUniq, &forMe);
--    return forMe;
-+    parsePacket(packet, parseForHostUniq, &hostUniq);
-+    return !hostUniq.length;
- }
- 
- /**********************************************************************
-@@ -301,16 +297,12 @@ sendPADI(PPPoEConnection *conn)
-     }
- 
-     /* If we're using Host-Uniq, copy it over */
--    if (conn->useHostUniq) {
--	PPPoETag hostUniq;
--	pid_t pid = getpid();
--	hostUniq.type = htons(TAG_HOST_UNIQ);
--	hostUniq.length = htons(sizeof(pid));
--	memcpy(hostUniq.payload, &pid, sizeof(pid));
--	CHECK_ROOM(cursor, packet.payload, sizeof(pid) + TAG_HDR_SIZE);
--	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
--	cursor += sizeof(pid) + TAG_HDR_SIZE;
--	plen += sizeof(pid) + TAG_HDR_SIZE;
-+    if (conn->hostUniq.length) {
-+	int len = ntohs(conn->hostUniq.length);
-+	CHECK_ROOM(cursor, packet.payload, len + TAG_HDR_SIZE);
-+	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
-+	cursor += len + TAG_HDR_SIZE;
-+	plen += len + TAG_HDR_SIZE;
-     }
- 
-     /* Add our maximum MTU/MRU */
-@@ -478,16 +470,12 @@ sendPADR(PPPoEConnection *conn)
-     cursor += namelen + TAG_HDR_SIZE;
- 
-     /* If we're using Host-Uniq, copy it over */
--    if (conn->useHostUniq) {
--	PPPoETag hostUniq;
--	pid_t pid = getpid();
--	hostUniq.type = htons(TAG_HOST_UNIQ);
--	hostUniq.length = htons(sizeof(pid));
--	memcpy(hostUniq.payload, &pid, sizeof(pid));
--	CHECK_ROOM(cursor, packet.payload, sizeof(pid)+TAG_HDR_SIZE);
--	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
--	cursor += sizeof(pid) + TAG_HDR_SIZE;
--	plen += sizeof(pid) + TAG_HDR_SIZE;
-+    if (conn->hostUniq.length) {
-+	int len = ntohs(conn->hostUniq.length);
-+	CHECK_ROOM(cursor, packet.payload, len+TAG_HDR_SIZE);
-+	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
-+	cursor += len + TAG_HDR_SIZE;
-+	plen += len + TAG_HDR_SIZE;
-     }
- 
-     /* Add our maximum MTU/MRU */
-diff --git a/pppd/plugins/rp-pppoe/plugin.c b/pppd/plugins/rp-pppoe/plugin.c
-index c89be94..966be15 100644
---- a/pppd/plugins/rp-pppoe/plugin.c
-+++ b/pppd/plugins/rp-pppoe/plugin.c
-@@ -68,6 +68,7 @@ static char *existingSession = NULL;
- static int printACNames = 0;
- static char *pppoe_reqd_mac = NULL;
- unsigned char pppoe_reqd_mac_addr[6];
-+static char *host_uniq;
- 
- static int PPPoEDevnameHook(char *cmd, char **argv, int doit);
- static option_t Options[] = {
-@@ -85,6 +86,8 @@ static option_t Options[] = {
-       "Be verbose about discovered access concentrators"},
-     { "pppoe-mac", o_string, &pppoe_reqd_mac,
-       "Only connect to specified MAC address" },
-+    { "host-uniq", o_string, &host_uniq,
-+      "Set the Host-Uniq to the supplied hex string" },
-     { NULL }
+diff --git a/drivers/net/hamradio/6pack.c b/drivers/net/hamradio/6pack.c
+index 17e6dcd2eb42..28c749980359 100644
+--- a/drivers/net/hamradio/6pack.c
++++ b/drivers/net/hamradio/6pack.c
+@@ -120,7 +120,7 @@ struct sixpack {
+ 	struct timer_list	tx_t;
+ 	struct timer_list	resync_t;
+ 	refcount_t		refcnt;
+-	struct semaphore	dead_sem;
++	struct completion	dead;
+ 	spinlock_t		lock;
  };
- int (*OldDevnameHook)(char *cmd, char **argv, int doit) = NULL;
-@@ -110,7 +113,6 @@ PPPOEInitDevice(void)
-     conn->ifName = devnam;
-     conn->discoverySocket = -1;
-     conn->sessionSocket = -1;
--    conn->useHostUniq = 1;
-     conn->printACNames = printACNames;
-     conn->discoveryTimeout = PADI_TIMEOUT;
-     return 1;
-@@ -166,6 +168,17 @@ PPPOEConnectDevice(void)
-     if (lcp_wantoptions[0].mru > ifr.ifr_mtu - TOTAL_OVERHEAD)
- 	lcp_wantoptions[0].mru = ifr.ifr_mtu - TOTAL_OVERHEAD;
  
-+    if (host_uniq) {
-+	if (!parseHostUniq(host_uniq, &conn->hostUniq))
-+	    fatal("Illegal value for host-uniq option");
-+    } else {
-+	/* if a custom host-uniq is not supplied, use our PID */
-+	pid_t pid = getpid();
-+	conn->hostUniq.type = htons(TAG_HOST_UNIQ);
-+	conn->hostUniq.length = htons(sizeof(pid));
-+	memcpy(conn->hostUniq.payload, &pid, sizeof(pid));
-+    }
-+
-     conn->acName = acName;
-     conn->serviceName = pppd_pppoe_service;
-     strlcpy(ppp_devnam, devnam, sizeof(ppp_devnam));
-diff --git a/pppd/plugins/rp-pppoe/pppoe-discovery.c b/pppd/plugins/rp-pppoe/pppoe-discovery.c
-index bce71fc..f71aec8 100644
---- a/pppd/plugins/rp-pppoe/pppoe-discovery.c
-+++ b/pppd/plugins/rp-pppoe/pppoe-discovery.c
-@@ -356,7 +356,7 @@ packetIsForMe(PPPoEConnection *conn, PPPoEPacket *packet)
-     if (memcmp(packet->ethHdr.h_dest, conn->myEth, ETH_ALEN)) return 0;
- 
-     /* If we're not using the Host-Unique tag, then accept the packet */
--    if (!conn->useHostUniq) return 1;
-+    if (!conn->hostUniq.length) return 1;
- 
-     parsePacket(packet, parseForHostUniq, &forMe);
-     return forMe;
-@@ -494,16 +494,12 @@ sendPADI(PPPoEConnection *conn)
-     cursor += namelen + TAG_HDR_SIZE;
- 
-     /* If we're using Host-Uniq, copy it over */
--    if (conn->useHostUniq) {
--	PPPoETag hostUniq;
--	pid_t pid = getpid();
--	hostUniq.type = htons(TAG_HOST_UNIQ);
--	hostUniq.length = htons(sizeof(pid));
--	memcpy(hostUniq.payload, &pid, sizeof(pid));
--	CHECK_ROOM(cursor, packet.payload, sizeof(pid) + TAG_HDR_SIZE);
--	memcpy(cursor, &hostUniq, sizeof(pid) + TAG_HDR_SIZE);
--	cursor += sizeof(pid) + TAG_HDR_SIZE;
--	plen += sizeof(pid) + TAG_HDR_SIZE;
-+    if (conn->hostUniq.length) {
-+	int len = ntohs(conn->hostUniq.length);
-+	CHECK_ROOM(cursor, packet.payload, len + TAG_HDR_SIZE);
-+	memcpy(cursor, &conn->hostUniq, len + TAG_HDR_SIZE);
-+	cursor += len + TAG_HDR_SIZE;
-+	plen += len + TAG_HDR_SIZE;
-     }
- 
-     packet.length = htons(plen);
-@@ -669,7 +665,7 @@ int main(int argc, char *argv[])
-     conn->discoveryTimeout = PADI_TIMEOUT;
-     conn->discoveryAttempts = MAX_PADI_ATTEMPTS;
- 
--    while ((opt = getopt(argc, argv, "I:D:VUQS:C:t:a:h")) > 0) {
-+    while ((opt = getopt(argc, argv, "I:D:VUQS:C:W:t:a:h")) > 0) {
- 	switch(opt) {
- 	case 'S':
- 	    conn->serviceName = xstrdup(optarg);
-@@ -696,7 +692,25 @@ int main(int argc, char *argv[])
- 	    }
- 	    break;
- 	case 'U':
--	    conn->useHostUniq = 1;
-+	    if(conn->hostUniq.length) {
-+		fprintf(stderr, "-U and -W are mutually exclusive\n");
-+		exit(EXIT_FAILURE);
-+	    } else {
-+		pid_t pid = getpid();
-+		conn->hostUniq.type = htons(TAG_HOST_UNIQ);
-+		conn->hostUniq.length = htons(sizeof(pid));
-+		memcpy(conn->hostUniq.payload, &pid, sizeof(pid));
-+	    }
-+	    break;
-+	case 'W':
-+	    if(conn->hostUniq.length) {
-+		fprintf(stderr, "-U and -W are mutually exclusive\n");
-+		exit(EXIT_FAILURE);
-+	    }
-+	    if (!parseHostUniq(optarg, &conn->hostUniq)) {
-+		fprintf(stderr, "Invalid host-uniq argument: %s\n", optarg);
-+		exit(EXIT_FAILURE);
-+            }
- 	    break;
- 	case 'D':
- 	    conn->debugFile = fopen(optarg, "w");
-@@ -777,6 +791,7 @@ void usage(void)
- 	    "   -S name        -- Set desired service name.\n"
- 	    "   -C name        -- Set desired access concentrator name.\n"
- 	    "   -U             -- Use Host-Unique to allow multiple PPPoE sessions.\n"
-+	    "   -W hexvalue    -- Set the Host-Unique to the supplied hex string.\n"
- 	    "   -h             -- Print usage information.\n");
-     fprintf(stderr, "\nVersion " RP_VERSION "\n");
+@@ -389,7 +389,7 @@ static struct sixpack *sp_get(struct tty_struct *tty)
+ static void sp_put(struct sixpack *sp)
+ {
+ 	if (refcount_dec_and_test(&sp->refcnt))
+-		up(&sp->dead_sem);
++		complete(&sp->dead);
  }
-diff --git a/pppd/plugins/rp-pppoe/pppoe.h b/pppd/plugins/rp-pppoe/pppoe.h
-index 813dcf3..2ea153f 100644
---- a/pppd/plugins/rp-pppoe/pppoe.h
-+++ b/pppd/plugins/rp-pppoe/pppoe.h
-@@ -21,6 +21,8 @@
  
- #include <stdio.h>		/* For FILE */
- #include <sys/types.h>		/* For pid_t */
-+#include <ctype.h>
-+#include <string.h>
+ /*
+@@ -576,7 +576,7 @@ static int sixpack_open(struct tty_struct *tty)
  
- /* How do we access raw Ethernet devices? */
- #undef USE_LINUX_PACKET
-@@ -236,7 +238,7 @@ typedef struct PPPoEConnectionStruct {
-     char *serviceName;		/* Desired service name, if any */
-     char *acName;		/* Desired AC name, if any */
-     int synchronous;		/* Use synchronous PPP */
--    int useHostUniq;		/* Use Host-Uniq tag */
-+    PPPoETag hostUniq;		/* Use Host-Uniq tag */
-     int printACNames;		/* Just print AC names */
-     FILE *debugFile;		/* Debug file for dumping packets */
-     int numPADOs;		/* Number of PADO packets received */
-@@ -293,6 +295,32 @@ void pppoe_printpkt(PPPoEPacket *packet,
- 		    void (*printer)(void *, char *, ...), void *arg);
- void pppoe_log_packet(const char *prefix, PPPoEPacket *packet);
+ 	spin_lock_init(&sp->lock);
+ 	refcount_set(&sp->refcnt, 1);
+-	sema_init(&sp->dead_sem, 0);
++	init_completion(&sp->dead);
  
-+static inline int parseHostUniq(const char *uniq, PPPoETag *tag)
-+{
-+    unsigned i, len = strlen(uniq);
-+
-+#define hex(x) \
-+    (((x) <= '9') ? ((x) - '0') : \
-+        (((x) <= 'F') ? ((x) - 'A' + 10) : \
-+            ((x) - 'a' + 10)))
-+
-+    if (!len || len % 2 || len / 2 > sizeof(tag->payload))
-+        return 0;
-+
-+    for (i = 0; i < len; i += 2) {
-+        if (!isxdigit(uniq[i]) || !isxdigit(uniq[i+1]))
-+            return 0;
-+
-+        tag->payload[i / 2] = (char)(hex(uniq[i]) << 4 | hex(uniq[i+1]));
-+    }
-+
-+#undef hex
-+
-+    tag->type = htons(TAG_HOST_UNIQ);
-+    tag->length = htons(len / 2);
-+    return 1;
-+}
-+
- #define SET_STRING(var, val) do { if (var) free(var); var = strDup(val); } while(0);
+ 	/* !!! length of the buffers. MTU is IP MTU, not PACLEN!  */
  
- #define CHECK_ROOM(cursor, start, len) \
+@@ -670,10 +670,10 @@ static void sixpack_close(struct tty_struct *tty)
+ 	 * we have to wait for all existing users to finish.
+ 	 */
+ 	if (!refcount_dec_and_test(&sp->refcnt))
+-		down(&sp->dead_sem);
++		wait_for_completion(&sp->dead);
+ 
+ 	/* We must stop the queue to avoid potentially scribbling
+-	 * on the free buffers. The sp->dead_sem is not sufficient
++	 * on the free buffers. The sp->dead completion is not sufficient
+ 	 * to protect us from sp->xbuff access.
+ 	 */
+ 	netif_stop_queue(sp->dev);
+diff --git a/drivers/net/hamradio/mkiss.c b/drivers/net/hamradio/mkiss.c
+index 802233d41b25..4938cf4c184c 100644
+--- a/drivers/net/hamradio/mkiss.c
++++ b/drivers/net/hamradio/mkiss.c
+@@ -81,7 +81,7 @@ struct mkiss {
+ #define CRC_MODE_SMACK_TEST	4
+ 
+ 	atomic_t		refcnt;
+-	struct semaphore	dead_sem;
++	struct completion	dead;
+ };
+ 
+ /*---------------------------------------------------------------------------*/
+@@ -687,7 +687,7 @@ static struct mkiss *mkiss_get(struct tty_struct *tty)
+ static void mkiss_put(struct mkiss *ax)
+ {
+ 	if (atomic_dec_and_test(&ax->refcnt))
+-		up(&ax->dead_sem);
++		complete(&ax->dead);
+ }
+ 
+ static int crc_force = 0;	/* Can be overridden with insmod */
+@@ -715,7 +715,7 @@ static int mkiss_open(struct tty_struct *tty)
+ 
+ 	spin_lock_init(&ax->buflock);
+ 	atomic_set(&ax->refcnt, 1);
+-	sema_init(&ax->dead_sem, 0);
++	init_completion(&ax->dead);
+ 
+ 	ax->tty = tty;
+ 	tty->disc_data = ax;
+@@ -795,7 +795,7 @@ static void mkiss_close(struct tty_struct *tty)
+ 	 * we have to wait for all existing users to finish.
+ 	 */
+ 	if (!atomic_dec_and_test(&ax->refcnt))
+-		down(&ax->dead_sem);
++		wait_for_completion(&ax->dead);
+ 	/*
+ 	 * Halt the transmit queue so that a new transmit cannot scribble
+ 	 * on our buffers
+diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
+index bdc4d23627c5..288cf099876b 100644
+--- a/drivers/net/ppp/ppp_async.c
++++ b/drivers/net/ppp/ppp_async.c
+@@ -70,7 +70,7 @@ struct asyncppp {
+ 	struct tasklet_struct tsk;
+ 
+ 	refcount_t	refcnt;
+-	struct semaphore dead_sem;
++	struct completion dead;
+ 	struct ppp_channel chan;	/* interface to generic ppp layer */
+ 	unsigned char	obuf[OBUFSIZE];
+ };
+@@ -148,7 +148,7 @@ static struct asyncppp *ap_get(struct tty_struct *tty)
+ static void ap_put(struct asyncppp *ap)
+ {
+ 	if (refcount_dec_and_test(&ap->refcnt))
+-		up(&ap->dead_sem);
++		complete(&ap->dead);
+ }
+ 
+ /*
+@@ -186,7 +186,7 @@ ppp_asynctty_open(struct tty_struct *tty)
+ 	tasklet_init(&ap->tsk, ppp_async_process, (unsigned long) ap);
+ 
+ 	refcount_set(&ap->refcnt, 1);
+-	sema_init(&ap->dead_sem, 0);
++	init_completion(&ap->dead);
+ 
+ 	ap->chan.private = ap;
+ 	ap->chan.ops = &async_ops;
+@@ -235,7 +235,7 @@ ppp_asynctty_close(struct tty_struct *tty)
+ 	 * by the time it returns.
+ 	 */
+ 	if (!refcount_dec_and_test(&ap->refcnt))
+-		down(&ap->dead_sem);
++		wait_for_completion(&ap->dead);
+ 	tasklet_kill(&ap->tsk);
+ 
+ 	ppp_unregister_channel(&ap->chan);
 -- 
-2.19.1
+2.20.0
