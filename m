@@ -1,185 +1,150 @@
-From: Douglas Gilbert <dgilbert@interlog.com>
-Date: Tue, 16 Apr 2019 22:33:35 +0000
-Subject: Re: [PATCH v3 00/26] compat_ioctl: cleanups
-Message-Id: <c379ed8d-1f33-e391-a1b5-810da77605f2@interlog.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Tue, 16 Apr 2019 20:19:40 +0000
+Subject: [PATCH v3 02/26] compat_ioctl: move simple ppp command handling into driver
+Message-Id: <20190416202013.4034148-3-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20190416202013.4034148-1-arnd@arndb.de>
 In-Reply-To: <20190416202013.4034148-1-arnd@arndb.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Arnd Bergmann <arnd@arndb.de>, Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: linux-fsdevel@vger.kernel.org, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Karsten Keil <isdn@linux-pingi.de>, "James E.J. Bottomley" <jejb@linux.ibm.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Marcel Holtmann <marcel@holtmann.org>, netdev@vger.kernel.org, devel@driverdev.osuosl.org, linux-integrity@vger.kernel.org, qat-linux@intel.com, linux-crypto@vger.kernel.org, linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org, linux1394-devel@lists.sourceforge.net, amd-gfx@lists.freedesktop.org, linux-input@vger.kernel.org, linux-usb@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ide@vger.kernel.org, linux-iio@vger.kernel.org, linux-rdma@vge
+To: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: linux-fsdevel@vger.kernel.org, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>, Michal Ostrowski <mostrows@earthlink.net>, Dmitry Kozlov <xeb@mail.ru>, James Chapman <jchapman@katalix.com>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-On 2019-04-16 4:19 p.m., Arnd Bergmann wrote:
-> Hi Al,
-> 
-> It took me way longer than I had hoped to revisit this series, see
-> https://lore.kernel.org/lkml/20180912150142.157913-1-arnd@arndb.de/
-> for the previously posted version.
-> 
-> I've come to the point where all conversion handlers and most
-> COMPATIBLE_IOCTL() entries are gone from this file, but for
-> now, this series only has the parts that have either been reviewed
-> previously, or that are simple enough to include.
-> 
-> The main missing piece is the SG_IO/SG_GET_REQUEST_TABLE conversion.
-> I'll post the patches I made for that later, as they need more
-> testing and review from the scsi maintainers.
+There are multiple implementations of the PPP ioctl interface in the
+kernel:
 
-Perhaps you could look at the document in this url:
-     http://sg.danny.cz/sg/sg_v40.html
+- drivers/net/ppp/ppp_generic.c implements a generic interface
+  for the /dev/ppp chardev used by some subdrivers.
+- drivers/net/ppp/pppox.c implements a socket based interface
+  for pppoe, pptp and l2tp.
+- drivers/isdn/i4l/isdn_ppp.c is for the i4l ISDN stack
 
-It is work-in-progress to modernize the SCSI generic driver. It
-extends ioctl(sg_fd, SG_IO, &pt_obj) to additionally accept the sg v4
-interface as defined in include/uapi/linux/bsg.h . Currently only the
-bsg driver uses the sg v4 interface. Since struct sg_io_v4 is all
-explicitly sized integers, I'm guessing it is immune "compat" problems.
-[I can see no reference to bsg nor struct sg_io_v4 in the current
-fs/compat_ioctl.c file.]
+All ioctl commands in the respective functions are compatible between
+32-bit and 64-bit kernels, so we can simply mark the handlers themselves
+as compatible and stop listing the commands individually.
 
-Other additions described in the that document are these new ioctls:
-   - SG_IOSUBMIT    ultimately to replace write(sg_fd, ...)
-   - SG_IORECEIVE              to replace read(sg_fd, ...)
-   - SG_IOABORT     abort SCSI cmd in progress; new functionality
-   - SG_SET_GET_EXTENDED   has associated struct sg_extended_info
+Four commands (PPPIOCSCOMPRESS, PPPIOCSPASS, PPPIOCSACTIVE, and
+PPPIOCGIDLE) are incompatible on the user level but have a translation
+handler to make them compatible. I'm simplifying that compat handling
+in separate patches.
 
-The first three take a pointer to a struct sg_io_hdr (v3 interface) or
-a struct sg_io_v4 object. Both objects start with a 32 bit integer:
-'S' identifies the v3 interface while 'Q' identifies the v4 interface.
+The PPPIOCGUNIT and PPPIOCGCHAN ioctl commands are special, they are
+implemented on various other file descriptors, so we have to keep them
+listed as COMPATIBLE_IOCTL().
 
-The SG_SET_GET_EXTENDED ioctl takes a pointer to a struct
-sg_extended_info object which contains explicitly sized integers so it
-may also be immune from "compat" problems. The ioctls section (13) of
-that document referenced above has a table showing how many "sets and
-gets" are hiding in the SG_SET_GET_EXTENDED ioctl.
+For the isdn_ppp code, additional ioctl commands are needed that have
+never had working compat handling, so I'm leaving that part out: If
+they are remaining users of i4l's ippp, they are not using compat
+mode today, and are highly unlikely in the future before the last
+ISDN network gets shut down. I4L has been deprecated since 2002.
 
-BTW No change is proposed for this case:
-     ioctl(normal_block_device, SG_IO, &sg_v3_obj)
-which is handled by block/scsi_ioctl.c
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ drivers/net/ppp/ppp_generic.c |  1 +
+ drivers/net/ppp/pppoe.c       |  3 +++
+ drivers/net/ppp/pptp.c        |  3 +++
+ fs/compat_ioctl.c             | 31 -------------------------------
+ net/l2tp/l2tp_ppp.c           |  3 +++
+ 5 files changed, 10 insertions(+), 31 deletions(-)
 
-
-This would be a good time for me to address any "compat" concerns in the
-proposed sg driver update.
-
-Doug Gilbert
-
-
-> I hope you can still take these for the coming merge window, unless
-> new problems come up.
-> 
->        Arnd
-> 
-> Arnd Bergmann (26):
->    compat_ioctl: pppoe: fix PPPOEIOCSFWD handling
->    compat_ioctl: move simple ppp command handling into driver
->    compat_ioctl: avoid unused function warning for do_ioctl
->    compat_ioctl: move PPPIOCSCOMPRESS32 to ppp-generic.c
->    compat_ioctl: move PPPIOCSPASS32/PPPIOCSACTIVE32 to ppp_generic.c
->    compat_ioctl: handle PPPIOCGIDLE for 64-bit time_t
->    compat_ioctl: move rtc handling into rtc-dev.c
->    compat_ioctl: add compat_ptr_ioctl()
->    compat_ioctl: move drivers to compat_ptr_ioctl
->    compat_ioctl: use correct compat_ptr() translation in drivers
->    ceph: fix compat_ioctl for ceph_dir_operations
->    compat_ioctl: move more drivers to compat_ptr_ioctl
->    compat_ioctl: move tape handling into drivers
->    compat_ioctl: move ATYFB_CLK handling to atyfb driver
->    compat_ioctl: move isdn/capi ioctl translation into driver
->    compat_ioctl: move rfcomm handlers into driver
->    compat_ioctl: move hci_sock handlers into driver
->    compat_ioctl: remove HCIUART handling
->    compat_ioctl: remove HIDIO translation
->    compat_ioctl: remove translation for sound ioctls
->    compat_ioctl: remove IGNORE_IOCTL()
->    compat_ioctl: remove /dev/random commands
->    compat_ioctl: remove joystick ioctl translation
->    compat_ioctl: remove PCI ioctl translation
->    compat_ioctl: remove /dev/raw ioctl translation
->    compat_ioctl: remove last RAID handling code
-> 
->   Documentation/networking/ppp_generic.txt    |   2 +
->   arch/um/drivers/hostaudio_kern.c            |   1 +
->   drivers/android/binder.c                    |   2 +-
->   drivers/char/ppdev.c                        |  12 +-
->   drivers/char/random.c                       |   1 +
->   drivers/char/tpm/tpm_vtpm_proxy.c           |  12 +-
->   drivers/crypto/qat/qat_common/adf_ctl_drv.c |   2 +-
->   drivers/dma-buf/dma-buf.c                   |   4 +-
->   drivers/dma-buf/sw_sync.c                   |   2 +-
->   drivers/dma-buf/sync_file.c                 |   2 +-
->   drivers/firewire/core-cdev.c                |  12 +-
->   drivers/gpu/drm/amd/amdkfd/kfd_chardev.c    |   2 +-
->   drivers/hid/hidraw.c                        |   4 +-
->   drivers/hid/usbhid/hiddev.c                 |  11 +-
->   drivers/hwtracing/stm/core.c                |  12 +-
->   drivers/ide/ide-tape.c                      |  31 +-
->   drivers/iio/industrialio-core.c             |   2 +-
->   drivers/infiniband/core/uverbs_main.c       |   4 +-
->   drivers/isdn/capi/capi.c                    |  31 +
->   drivers/isdn/i4l/isdn_ppp.c                 |  14 +-
->   drivers/media/rc/lirc_dev.c                 |   4 +-
->   drivers/mfd/cros_ec_dev.c                   |   4 +-
->   drivers/misc/cxl/flash.c                    |   8 +-
->   drivers/misc/genwqe/card_dev.c              |  23 +-
->   drivers/misc/mei/main.c                     |  22 +-
->   drivers/misc/vmw_vmci/vmci_host.c           |   2 +-
->   drivers/mtd/ubi/cdev.c                      |  36 +-
->   drivers/net/ppp/ppp_generic.c               |  99 +++-
->   drivers/net/ppp/pppoe.c                     |   7 +
->   drivers/net/ppp/pptp.c                      |   3 +
->   drivers/net/tap.c                           |  12 +-
->   drivers/nvdimm/bus.c                        |   4 +-
->   drivers/nvme/host/core.c                    |   2 +-
->   drivers/pci/switch/switchtec.c              |   2 +-
->   drivers/platform/x86/wmi.c                  |   2 +-
->   drivers/rpmsg/rpmsg_char.c                  |   4 +-
->   drivers/rtc/dev.c                           |  13 +-
->   drivers/rtc/rtc-vr41xx.c                    |  10 +
->   drivers/s390/char/tape_char.c               |  41 +-
->   drivers/sbus/char/display7seg.c             |   2 +-
->   drivers/sbus/char/envctrl.c                 |   4 +-
->   drivers/scsi/3w-xxxx.c                      |   4 +-
->   drivers/scsi/cxlflash/main.c                |   2 +-
->   drivers/scsi/esas2r/esas2r_main.c           |   2 +-
->   drivers/scsi/megaraid/megaraid_mm.c         |  28 +-
->   drivers/scsi/osst.c                         |  34 +-
->   drivers/scsi/pmcraid.c                      |   4 +-
->   drivers/scsi/st.c                           |  35 +-
->   drivers/staging/android/ion/ion.c           |   4 +-
->   drivers/staging/pi433/pi433_if.c            |  12 +-
->   drivers/staging/vme/devices/vme_user.c      |   2 +-
->   drivers/tee/tee_core.c                      |   2 +-
->   drivers/usb/class/cdc-wdm.c                 |   2 +-
->   drivers/usb/class/usbtmc.c                  |   4 +-
->   drivers/usb/core/devio.c                    |  16 +-
->   drivers/usb/gadget/function/f_fs.c          |  12 +-
->   drivers/vfio/vfio.c                         |  39 +-
->   drivers/vhost/net.c                         |  12 +-
->   drivers/vhost/scsi.c                        |  12 +-
->   drivers/vhost/test.c                        |  12 +-
->   drivers/vhost/vsock.c                       |  12 +-
->   drivers/video/fbdev/aty/atyfb_base.c        |  12 +-
->   drivers/virt/fsl_hypervisor.c               |   2 +-
->   fs/btrfs/super.c                            |   2 +-
->   fs/ceph/dir.c                               |   1 +
->   fs/ceph/file.c                              |   2 +-
->   fs/compat_ioctl.c                           | 602 +-------------------
->   fs/fat/file.c                               |  13 +-
->   fs/fuse/dev.c                               |   2 +-
->   fs/notify/fanotify/fanotify_user.c          |   2 +-
->   fs/userfaultfd.c                            |   2 +-
->   include/linux/fs.h                          |   7 +
->   include/linux/if_pppox.h                    |   2 +
->   include/linux/mtio.h                        |  58 ++
->   include/uapi/linux/ppp-ioctl.h              |   2 +
->   include/uapi/linux/ppp_defs.h               |  14 +
->   net/bluetooth/hci_sock.c                    |  21 +-
->   net/bluetooth/rfcomm/sock.c                 |  14 +-
->   net/l2tp/l2tp_ppp.c                         |   3 +
->   net/rfkill/core.c                           |   2 +-
->   sound/core/oss/pcm_oss.c                    |   4 +
->   sound/oss/dmasound/dmasound_core.c          |   2 +
->   82 files changed, 452 insertions(+), 1034 deletions(-)
->   create mode 100644 include/linux/mtio.h
-> 
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index c708400fff4a..04252c3492ee 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -899,6 +899,7 @@ static const struct file_operations ppp_device_fops = {
+ 	.write		= ppp_write,
+ 	.poll		= ppp_poll,
+ 	.unlocked_ioctl	= ppp_ioctl,
++	.compat_ioctl	= ppp_ioctl,
+ 	.open		= ppp_open,
+ 	.release	= ppp_release,
+ 	.llseek		= noop_llseek,
+diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
+index c5e7435db86c..5eccb49bcd2e 100644
+--- a/drivers/net/ppp/pppoe.c
++++ b/drivers/net/ppp/pppoe.c
+@@ -1124,6 +1124,9 @@ static const struct proto_ops pppoe_ops = {
+ 	.recvmsg	= pppoe_recvmsg,
+ 	.mmap		= sock_no_mmap,
+ 	.ioctl		= pppox_ioctl,
++#ifdef CONFIG_COMPAT
++	.compat_ioctl	= pppox_ioctl,
++#endif
+ };
+ 
+ static const struct pppox_proto pppoe_proto = {
+diff --git a/drivers/net/ppp/pptp.c b/drivers/net/ppp/pptp.c
+index 50c60550f295..7cf56ad50d07 100644
+--- a/drivers/net/ppp/pptp.c
++++ b/drivers/net/ppp/pptp.c
+@@ -628,6 +628,9 @@ static const struct proto_ops pptp_ops = {
+ 	.recvmsg    = sock_no_recvmsg,
+ 	.mmap       = sock_no_mmap,
+ 	.ioctl      = pppox_ioctl,
++#ifdef CONFIG_COMPAT
++	.compat_ioctl = pppox_ioctl,
++#endif
+ };
+ 
+ static const struct pppox_proto pppox_pptp_proto = {
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index f1065d116b55..54f26a9fa9f2 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -608,39 +608,8 @@ COMPATIBLE_IOCTL(SG_SET_KEEP_ORPHAN)
+ COMPATIBLE_IOCTL(SG_GET_KEEP_ORPHAN)
+ #endif
+ /* PPP stuff */
+-COMPATIBLE_IOCTL(PPPIOCGFLAGS)
+-COMPATIBLE_IOCTL(PPPIOCSFLAGS)
+-COMPATIBLE_IOCTL(PPPIOCGASYNCMAP)
+-COMPATIBLE_IOCTL(PPPIOCSASYNCMAP)
+ COMPATIBLE_IOCTL(PPPIOCGUNIT)
+-COMPATIBLE_IOCTL(PPPIOCGRASYNCMAP)
+-COMPATIBLE_IOCTL(PPPIOCSRASYNCMAP)
+-COMPATIBLE_IOCTL(PPPIOCGMRU)
+-COMPATIBLE_IOCTL(PPPIOCSMRU)
+-COMPATIBLE_IOCTL(PPPIOCSMAXCID)
+-COMPATIBLE_IOCTL(PPPIOCGXASYNCMAP)
+-COMPATIBLE_IOCTL(PPPIOCSXASYNCMAP)
+-COMPATIBLE_IOCTL(PPPIOCXFERUNIT)
+-/* PPPIOCSCOMPRESS is translated */
+-COMPATIBLE_IOCTL(PPPIOCGNPMODE)
+-COMPATIBLE_IOCTL(PPPIOCSNPMODE)
+-COMPATIBLE_IOCTL(PPPIOCGDEBUG)
+-COMPATIBLE_IOCTL(PPPIOCSDEBUG)
+-/* PPPIOCSPASS is translated */
+-/* PPPIOCSACTIVE is translated */
+-/* PPPIOCGIDLE is translated */
+-COMPATIBLE_IOCTL(PPPIOCNEWUNIT)
+-COMPATIBLE_IOCTL(PPPIOCATTACH)
+-COMPATIBLE_IOCTL(PPPIOCDETACH)
+-COMPATIBLE_IOCTL(PPPIOCSMRRU)
+-COMPATIBLE_IOCTL(PPPIOCCONNECT)
+-COMPATIBLE_IOCTL(PPPIOCDISCONN)
+-COMPATIBLE_IOCTL(PPPIOCATTCHAN)
+ COMPATIBLE_IOCTL(PPPIOCGCHAN)
+-COMPATIBLE_IOCTL(PPPIOCGL2TPSTATS)
+-/* PPPOX */
+-COMPATIBLE_IOCTL(PPPOEIOCSFWD32)
+-COMPATIBLE_IOCTL(PPPOEIOCDFWD)
+ /* Big A */
+ /* sparc only */
+ /* Big Q for sound/OSS */
+diff --git a/net/l2tp/l2tp_ppp.c b/net/l2tp/l2tp_ppp.c
+index 04d9946dcdba..8ef66513fbe0 100644
+--- a/net/l2tp/l2tp_ppp.c
++++ b/net/l2tp/l2tp_ppp.c
+@@ -1686,6 +1686,9 @@ static const struct proto_ops pppol2tp_ops = {
+ 	.recvmsg	= pppol2tp_recvmsg,
+ 	.mmap		= sock_no_mmap,
+ 	.ioctl		= pppox_ioctl,
++#ifdef CONFIG_COMPAT
++	.compat_ioctl = pppox_ioctl,
++#endif
+ };
+ 
+ static const struct pppox_proto pppol2tp_proto = {
+-- 
+2.20.0
