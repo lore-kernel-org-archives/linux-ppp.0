@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Date: Tue, 16 Apr 2019 20:19:43 +0000
-Subject: [PATCH v3 05/26] compat_ioctl: move PPPIOCSPASS32/PPPIOCSACTIVE32 to ppp_generic.c
-Message-Id: <20190416202013.4034148-6-arnd@arndb.de>
+Date: Tue, 16 Apr 2019 20:19:44 +0000
+Subject: [PATCH v3 06/26] compat_ioctl: handle PPPIOCGIDLE for 64-bit time_t
+Message-Id: <20190416202013.4034148-7-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20190416202013.4034148-1-arnd@arndb.de>
 In-Reply-To: <20190416202013.4034148-1-arnd@arndb.de>
@@ -9,158 +9,202 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: linux-fsdevel@vger.kernel.org, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, Karsten Keil <isdn@linux-pingi.de>, Paul Mackerras <paulus@samba.org>, Guillaume Nault <g.nault@alphalink.fr>, Eric Biggers <ebiggers@google.com>, netdev@vger.kernel.org, linux-doc@vger.kernel.org, linux-ppp@vger.kernel.org
 
-PPPIOCSPASS and PPPIOCSACTIVE are implemented in ppp_generic and isdn_ppp,
-but the latter one doesn't work for compat mode in general, so we can
-move these two into the generic code.
+The ppp_idle structure is defined in terms of __kernel_time_t, which is
+defined as 'long' on all architectures, and this usage is not affected
+by the y2038 problem since it transports a time interval rather than an
+absolute time.
 
-Again, the best implementation I could come up with was to merge
-the compat handling into the regular ppp_ioctl() function and
-treating all ioctl commands as compatible.
+However, the ppp user space defines the same structure as time_t, which
+may be 64-bit wide on new libc versions even on 32-bit architectures.
+
+It's easy enough to just handle both possible structure layouts on
+all architectures, to deal with the possibility that a user space ppp
+implementation comes with its own ppp_idle structure definition, as well
+as to document the fact that the driver is y2038-safe.
+
+Doing this also avoids the need for a special compat mode translation,
+since 32-bit and 64-bit kernels now support the same interfaces.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- drivers/net/ppp/ppp_generic.c | 39 ++++++++++++++++++++++++++++++-----
- fs/compat_ioctl.c             | 37 ---------------------------------
- 2 files changed, 34 insertions(+), 42 deletions(-)
+ Documentation/networking/ppp_generic.txt |  2 ++
+ drivers/isdn/i4l/isdn_ppp.c              | 14 ++++++++---
+ drivers/net/ppp/ppp_generic.c            | 19 +++++++++++----
+ fs/compat_ioctl.c                        | 31 ------------------------
+ include/uapi/linux/ppp-ioctl.h           |  2 ++
+ include/uapi/linux/ppp_defs.h            | 14 +++++++++++
+ 6 files changed, 43 insertions(+), 39 deletions(-)
 
+diff --git a/Documentation/networking/ppp_generic.txt b/Documentation/networking/ppp_generic.txt
+index 61daf4b39600..fd563aff5fc9 100644
+--- a/Documentation/networking/ppp_generic.txt
++++ b/Documentation/networking/ppp_generic.txt
+@@ -378,6 +378,8 @@ an interface unit are:
+   CONFIG_PPP_FILTER option is enabled, the set of packets which reset
+   the transmit and receive idle timers is restricted to those which
+   pass the `active' packet filter.
++  Two versions of this command exist, to deal with user space
++  expecting times as either 32-bit or 64-bit time_t seconds.
+ 
+ * PPPIOCSMAXCID sets the maximum connection-ID parameter (and thus the
+   number of connection slots) for the TCP header compressor and
+diff --git a/drivers/isdn/i4l/isdn_ppp.c b/drivers/isdn/i4l/isdn_ppp.c
+index a7b275ea5de1..1f17126c5fa4 100644
+--- a/drivers/isdn/i4l/isdn_ppp.c
++++ b/drivers/isdn/i4l/isdn_ppp.c
+@@ -543,11 +543,19 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
+ 		}
+ 		is->pppcfg = val;
+ 		break;
+-	case PPPIOCGIDLE:	/* get idle time information */
++	case PPPIOCGIDLE32:	/* get idle time information */
+ 		if (lp) {
+-			struct ppp_idle pidle;
++			struct ppp_idle32 pidle;
+ 			pidle.xmit_idle = pidle.recv_idle = lp->huptimer;
+-			if ((r = set_arg(argp, &pidle, sizeof(struct ppp_idle))))
++			if ((r = set_arg(argp, &pidle, sizeof(struct ppp_idle32))))
++				return r;
++		}
++		break;
++	case PPPIOCGIDLE64:	/* get idle time information */
++		if (lp) {
++			struct ppp_idle64 pidle;
++			pidle.xmit_idle = pidle.recv_idle = lp->huptimer;
++			if ((r = set_arg(argp, &pidle, sizeof(struct ppp_idle64))))
+ 				return r;
+ 		}
+ 		break;
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 8d211c9c2e4e..b8a867fdd5ad 100644
+index b8a867fdd5ad..712fa94650fe 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -22,6 +22,7 @@
-  * =FILEVERSION 20041108=
-  */
- 
-+#include <linux/compat.h>
- #include <linux/module.h>
- #include <linux/kernel.h>
- #include <linux/sched/signal.h>
-@@ -567,14 +568,36 @@ struct ppp_option_data32 {
- #endif
- 
- #ifdef CONFIG_PPP_FILTER
--static int get_filter(void __user *arg, struct sock_filter **p)
-+#ifdef CONFIG_COMPAT
-+struct sock_fprog32 {
-+	unsigned short	len;
-+	compat_caddr_t	filter;
-+};
-+#define PPPIOCSPASS32	_IOW('t', 71, struct sock_fprog32)
-+#define PPPIOCSACTIVE32	_IOW('t', 70, struct sock_fprog32)
-+#endif
-+
-+static int get_filter(void __user *arg, struct sock_filter **p, bool compat)
- {
- 	struct sock_fprog uprog;
- 	struct sock_filter *code = NULL;
- 	int len;
- 
--	if (copy_from_user(&uprog, arg, sizeof(uprog)))
--		return -EFAULT;
-+#ifdef CONFIG_COMPAT
-+	if (compat) {
-+		struct sock_fprog32 uprog32;
-+
-+		if (copy_from_user(&uprog32, arg, sizeof(uprog32)))
-+			return -EFAULT;
-+
-+		uprog.len = uprog32.len;
-+		uprog.filter = compat_ptr(uprog32.filter);
-+	} else
-+#endif
-+	{
-+		if (copy_from_user(&uprog, arg, sizeof(uprog)))
-+			return -EFAULT;
-+	}
- 
- 	if (!uprog.len) {
- 		*p = NULL;
-@@ -772,10 +795,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 
- #ifdef CONFIG_PPP_FILTER
- 	case PPPIOCSPASS:
-+#ifdef CONFIG_COMPAT
-+	case PPPIOCSPASS32:
-+#endif
- 	{
- 		struct sock_filter *code;
- 
--		err = get_filter(argp, &code);
-+		err = get_filter(argp, &code, cmd != PPPIOCSPASS);
- 		if (err >= 0) {
- 			struct bpf_prog *pass_filter = NULL;
- 			struct sock_fprog_kern fprog = {
-@@ -798,10 +824,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+@@ -619,7 +619,8 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	struct ppp_file *pf;
+ 	struct ppp *ppp;
+ 	int err = -EFAULT, val, val2, i;
+-	struct ppp_idle idle;
++	struct ppp_idle32 idle32;
++	struct ppp_idle64 idle64;
+ 	struct npioctl npi;
+ 	int unit, cflags;
+ 	struct slcompress *vj;
+@@ -743,10 +744,18 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		err = 0;
  		break;
- 	}
- 	case PPPIOCSACTIVE:
-+#ifdef CONFIG_COMPAT
-+	case PPPIOCSACTIVE32:
-+#endif
- 	{
- 		struct sock_filter *code;
  
--		err = get_filter(argp, &code);
-+		err = get_filter(argp, &code, cmd != PPPIOCSACTIVE);
- 		if (err >= 0) {
- 			struct bpf_prog *active_filter = NULL;
- 			struct sock_fprog_kern fprog = {
+-	case PPPIOCGIDLE:
+-		idle.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
+-		idle.recv_idle = (jiffies - ppp->last_recv) / HZ;
+-		if (copy_to_user(argp, &idle, sizeof(idle)))
++	case PPPIOCGIDLE32:
++                idle32.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
++                idle32.recv_idle = (jiffies - ppp->last_recv) / HZ;
++                if (copy_to_user(argp, &idle32, sizeof(idle32)))
++			break;
++		err = 0;
++		break;
++
++	case PPPIOCGIDLE64:
++		idle64.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
++		idle64.recv_idle = (jiffies - ppp->last_recv) / HZ;
++		if (copy_to_user(argp, &idle64, sizeof(idle64)))
+ 			break;
+ 		err = 0;
+ 		break;
 diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
-index a7cea8f9c771..d507b7189958 100644
+index d507b7189958..e6dbd956cf66 100644
 --- a/fs/compat_ioctl.c
 +++ b/fs/compat_ioctl.c
-@@ -271,40 +271,6 @@ static int sg_grt_trans(struct file *file,
+@@ -269,36 +269,7 @@ static int sg_grt_trans(struct file *file,
+ 	}
+ 	return err;
  }
- #endif /* CONFIG_BLOCK */
- 
--struct sock_fprog32 {
--	unsigned short	len;
--	compat_caddr_t	filter;
+-#endif /* CONFIG_BLOCK */
+-
+-struct ppp_idle32 {
+-	compat_time_t xmit_idle;
+-	compat_time_t recv_idle;
 -};
+-#define PPPIOCGIDLE32		_IOR('t', 63, struct ppp_idle32)
 -
--#define PPPIOCSPASS32	_IOW('t', 71, struct sock_fprog32)
--#define PPPIOCSACTIVE32	_IOW('t', 70, struct sock_fprog32)
--
--static int ppp_sock_fprog_ioctl_trans(struct file *file,
--		unsigned int cmd, struct sock_fprog32 __user *u_fprog32)
+-static int ppp_gidle(struct file *file, unsigned int cmd,
+-		struct ppp_idle32 __user *idle32)
 -{
--	struct sock_fprog __user *u_fprog64 = compat_alloc_user_space(sizeof(struct sock_fprog));
--	void __user *fptr64;
--	u32 fptr32;
--	u16 flen;
+-	struct ppp_idle __user *idle;
+-	__kernel_time_t xmit, recv;
+-	int err;
 -
--	if (get_user(flen, &u_fprog32->len) ||
--	    get_user(fptr32, &u_fprog32->filter))
--		return -EFAULT;
+-	idle = compat_alloc_user_space(sizeof(*idle));
+ 
+-	err = do_ioctl(file, PPPIOCGIDLE, (unsigned long) idle);
 -
--	fptr64 = compat_ptr(fptr32);
--
--	if (put_user(flen, &u_fprog64->len) ||
--	    put_user(fptr64, &u_fprog64->filter))
--		return -EFAULT;
--
--	if (cmd = PPPIOCSPASS32)
--		cmd = PPPIOCSPASS;
--	else
--		cmd = PPPIOCSACTIVE;
--
--	return do_ioctl(file, cmd, (unsigned long) u_fprog64);
+-	if (!err) {
+-		if (get_user(xmit, &idle->xmit_idle) ||
+-		    get_user(recv, &idle->recv_idle) ||
+-		    put_user(xmit, &idle32->xmit_idle) ||
+-		    put_user(recv, &idle32->recv_idle))
+-			err = -EFAULT;
+-	}
+-	return err;
 -}
 -
- struct ppp_idle32 {
- 	compat_time_t xmit_idle;
- 	compat_time_t recv_idle;
-@@ -874,9 +840,6 @@ static long do_ioctl_trans(unsigned int cmd,
+-#ifdef CONFIG_BLOCK
+ struct mtget32 {
+ 	compat_long_t	mt_type;
+ 	compat_long_t	mt_resid;
+@@ -838,8 +809,6 @@ static long do_ioctl_trans(unsigned int cmd,
+ 	void __user *argp = compat_ptr(arg);
+ 
  	switch (cmd) {
- 	case PPPIOCGIDLE32:
- 		return ppp_gidle(file, cmd, argp);
--	case PPPIOCSPASS32:
--	case PPPIOCSACTIVE32:
--		return ppp_sock_fprog_ioctl_trans(file, cmd, argp);
+-	case PPPIOCGIDLE32:
+-		return ppp_gidle(file, cmd, argp);
  #ifdef CONFIG_BLOCK
  	case SG_IO:
  		return sg_ioctl_trans(file, cmd, argp);
+diff --git a/include/uapi/linux/ppp-ioctl.h b/include/uapi/linux/ppp-ioctl.h
+index 88b5f9990320..7bd2a5a75348 100644
+--- a/include/uapi/linux/ppp-ioctl.h
++++ b/include/uapi/linux/ppp-ioctl.h
+@@ -104,6 +104,8 @@ struct pppol2tp_ioc_stats {
+ #define PPPIOCGDEBUG	_IOR('t', 65, int)	/* Read debug level */
+ #define PPPIOCSDEBUG	_IOW('t', 64, int)	/* Set debug level */
+ #define PPPIOCGIDLE	_IOR('t', 63, struct ppp_idle) /* get idle time */
++#define PPPIOCGIDLE32	_IOR('t', 63, struct ppp_idle32) /* 32-bit times */
++#define PPPIOCGIDLE64	_IOR('t', 63, struct ppp_idle64) /* 64-bit times */
+ #define PPPIOCNEWUNIT	_IOWR('t', 62, int)	/* create new ppp unit */
+ #define PPPIOCATTACH	_IOW('t', 61, int)	/* attach to ppp unit */
+ #define PPPIOCDETACH	_IOW('t', 60, int)	/* obsolete, do not use */
+diff --git a/include/uapi/linux/ppp_defs.h b/include/uapi/linux/ppp_defs.h
+index fff51b91b409..0039fa39a358 100644
+--- a/include/uapi/linux/ppp_defs.h
++++ b/include/uapi/linux/ppp_defs.h
+@@ -142,10 +142,24 @@ struct ppp_comp_stats {
+ /*
+  * The following structure records the time in seconds since
+  * the last NP packet was sent or received.
++ *
++ * Linux implements both 32-bit and 64-bit time_t versions
++ * for compatibility with user space that defines ppp_idle
++ * based on the libc time_t.
+  */
+ struct ppp_idle {
+     __kernel_time_t xmit_idle;	/* time since last NP packet sent */
+     __kernel_time_t recv_idle;	/* time since last NP packet received */
+ };
+ 
++struct ppp_idle32 {
++    __s32 xmit_idle;		/* time since last NP packet sent */
++    __s32 recv_idle;		/* time since last NP packet received */
++};
++
++struct ppp_idle64 {
++    __s64 xmit_idle;		/* time since last NP packet sent */
++    __s64 recv_idle;		/* time since last NP packet received */
++};
++
+ #endif /* _UAPI_PPP_DEFS_H_ */
 -- 
 2.20.0
