@@ -1,55 +1,166 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Date: Wed, 17 Apr 2019 21:44:38 +0000
-Subject: Re: [PATCH v3 04/26] compat_ioctl: move PPPIOCSCOMPRESS32 to ppp-generic.c
-Message-Id: <CAK8P3a2a0yHv6njhwQYRC4YPdec25BdUJLU-sx6GQF9xqB95XA@mail.gmail.com>
+Date: Tue, 16 Apr 2019 20:19:43 +0000
+Subject: [PATCH v3 05/26] compat_ioctl: move PPPIOCSPASS32/PPPIOCSACTIVE32 to ppp_generic.c
+Message-Id: <20190416202013.4034148-6-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20190416202013.4034148-1-arnd@arndb.de> <20190416202013.4034148-5-arnd@arndb.de>
- <20190417211637.GV2217@ZenIV.linux.org.uk>
-In-Reply-To: <20190417211637.GV2217@ZenIV.linux.org.uk>
+References: <20190416202013.4034148-1-arnd@arndb.de>
+In-Reply-To: <20190416202013.4034148-1-arnd@arndb.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>, linux-ppp@vger.kernel.org, Networking <netdev@vger.kernel.org>
+To: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: linux-fsdevel@vger.kernel.org, y2038@lists.linaro.org, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-On Wed, Apr 17, 2019 at 11:16 PM Al Viro <viro@zeniv.linux.org.uk> wrote:
->
-> On Tue, Apr 16, 2019 at 10:19:42PM +0200, Arnd Bergmann wrote:
-> > +#ifdef CONFIG_COMPAT
-> > +struct ppp_option_data32 {
-> > +     compat_caddr_t  ptr;
->
-> Huh?  compat_uptr_t, surely?  I realize that compat_ioctl.c is bogus
-> that way right now, but let's not spread that crap into the places
-> where it's harder to find...
+PPPIOCSPASS and PPPIOCSACTIVE are implemented in ppp_generic and isdn_ppp,
+but the latter one doesn't work for compat mode in general, so we can
+move these two into the generic code.
 
-Ok, done.
+Again, the best implementation I could come up with was to merge
+the compat handling into the regular ppp_ioctl() function and
+treating all ioctl commands as compatible.
 
-> >       err = -EFAULT;
-> > -     if (copy_from_user(&data, (void __user *) arg, sizeof(data)))
-> > -             goto out;
-> > +#ifdef CONFIG_COMPAT
-> > +     if (compat) {
-> > +             struct ppp_option_data32 data32;
-> > +
-> > +             if (copy_from_user(&data32, (void __user *) arg,
-> > +                                sizeof(data32)))
-> > +                     goto out;
-> > +
-> > +             data.ptr = compat_ptr(data32.ptr);
-> > +             data.length = data32.length;
-> > +             data.transmit = data32.transmit;
-> > +     } else
-> > +#endif
-> > +     {
-> > +             if (copy_from_user(&data, (void __user *) arg, sizeof(data)))
-> > +                     goto out;
-> > +     }
->
-> *UGH*
->
-> Do that in caller, please.  And sod the flag argument...
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ drivers/net/ppp/ppp_generic.c | 39 ++++++++++++++++++++++++++++++-----
+ fs/compat_ioctl.c             | 37 ---------------------------------
+ 2 files changed, 34 insertions(+), 42 deletions(-)
 
-Ack, changed it now.
-
-      Arnd
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 8d211c9c2e4e..b8a867fdd5ad 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -22,6 +22,7 @@
+  * =FILEVERSION 20041108=
+  */
+ 
++#include <linux/compat.h>
+ #include <linux/module.h>
+ #include <linux/kernel.h>
+ #include <linux/sched/signal.h>
+@@ -567,14 +568,36 @@ struct ppp_option_data32 {
+ #endif
+ 
+ #ifdef CONFIG_PPP_FILTER
+-static int get_filter(void __user *arg, struct sock_filter **p)
++#ifdef CONFIG_COMPAT
++struct sock_fprog32 {
++	unsigned short	len;
++	compat_caddr_t	filter;
++};
++#define PPPIOCSPASS32	_IOW('t', 71, struct sock_fprog32)
++#define PPPIOCSACTIVE32	_IOW('t', 70, struct sock_fprog32)
++#endif
++
++static int get_filter(void __user *arg, struct sock_filter **p, bool compat)
+ {
+ 	struct sock_fprog uprog;
+ 	struct sock_filter *code = NULL;
+ 	int len;
+ 
+-	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+-		return -EFAULT;
++#ifdef CONFIG_COMPAT
++	if (compat) {
++		struct sock_fprog32 uprog32;
++
++		if (copy_from_user(&uprog32, arg, sizeof(uprog32)))
++			return -EFAULT;
++
++		uprog.len = uprog32.len;
++		uprog.filter = compat_ptr(uprog32.filter);
++	} else
++#endif
++	{
++		if (copy_from_user(&uprog, arg, sizeof(uprog)))
++			return -EFAULT;
++	}
+ 
+ 	if (!uprog.len) {
+ 		*p = NULL;
+@@ -772,10 +795,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 
+ #ifdef CONFIG_PPP_FILTER
+ 	case PPPIOCSPASS:
++#ifdef CONFIG_COMPAT
++	case PPPIOCSPASS32:
++#endif
+ 	{
+ 		struct sock_filter *code;
+ 
+-		err = get_filter(argp, &code);
++		err = get_filter(argp, &code, cmd != PPPIOCSPASS);
+ 		if (err >= 0) {
+ 			struct bpf_prog *pass_filter = NULL;
+ 			struct sock_fprog_kern fprog = {
+@@ -798,10 +824,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		break;
+ 	}
+ 	case PPPIOCSACTIVE:
++#ifdef CONFIG_COMPAT
++	case PPPIOCSACTIVE32:
++#endif
+ 	{
+ 		struct sock_filter *code;
+ 
+-		err = get_filter(argp, &code);
++		err = get_filter(argp, &code, cmd != PPPIOCSACTIVE);
+ 		if (err >= 0) {
+ 			struct bpf_prog *active_filter = NULL;
+ 			struct sock_fprog_kern fprog = {
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index a7cea8f9c771..d507b7189958 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -271,40 +271,6 @@ static int sg_grt_trans(struct file *file,
+ }
+ #endif /* CONFIG_BLOCK */
+ 
+-struct sock_fprog32 {
+-	unsigned short	len;
+-	compat_caddr_t	filter;
+-};
+-
+-#define PPPIOCSPASS32	_IOW('t', 71, struct sock_fprog32)
+-#define PPPIOCSACTIVE32	_IOW('t', 70, struct sock_fprog32)
+-
+-static int ppp_sock_fprog_ioctl_trans(struct file *file,
+-		unsigned int cmd, struct sock_fprog32 __user *u_fprog32)
+-{
+-	struct sock_fprog __user *u_fprog64 = compat_alloc_user_space(sizeof(struct sock_fprog));
+-	void __user *fptr64;
+-	u32 fptr32;
+-	u16 flen;
+-
+-	if (get_user(flen, &u_fprog32->len) ||
+-	    get_user(fptr32, &u_fprog32->filter))
+-		return -EFAULT;
+-
+-	fptr64 = compat_ptr(fptr32);
+-
+-	if (put_user(flen, &u_fprog64->len) ||
+-	    put_user(fptr64, &u_fprog64->filter))
+-		return -EFAULT;
+-
+-	if (cmd = PPPIOCSPASS32)
+-		cmd = PPPIOCSPASS;
+-	else
+-		cmd = PPPIOCSACTIVE;
+-
+-	return do_ioctl(file, cmd, (unsigned long) u_fprog64);
+-}
+-
+ struct ppp_idle32 {
+ 	compat_time_t xmit_idle;
+ 	compat_time_t recv_idle;
+@@ -874,9 +840,6 @@ static long do_ioctl_trans(unsigned int cmd,
+ 	switch (cmd) {
+ 	case PPPIOCGIDLE32:
+ 		return ppp_gidle(file, cmd, argp);
+-	case PPPIOCSPASS32:
+-	case PPPIOCSACTIVE32:
+-		return ppp_sock_fprog_ioctl_trans(file, cmd, argp);
+ #ifdef CONFIG_BLOCK
+ 	case SG_IO:
+ 		return sg_ioctl_trans(file, cmd, argp);
+-- 
+2.20.0
