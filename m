@@ -1,15 +1,15 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Date: Sun, 09 Jun 2019 11:55:08 +0000
-Subject: [PATCH v2 6/7] ppp: mppe: switch to RC4 library interface
-Message-Id: <20190609115509.26260-7-ard.biesheuvel@linaro.org>
+Date: Tue, 11 Jun 2019 23:09:37 +0000
+Subject: [PATCH v4 6/7] ppp: mppe: switch to RC4 library interface
+Message-Id: <20190611230938.19265-7-ard.biesheuvel@linaro.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20190609115509.26260-1-ard.biesheuvel@linaro.org>
-In-Reply-To: <20190609115509.26260-1-ard.biesheuvel@linaro.org>
+References: <20190611230938.19265-1-ard.biesheuvel@linaro.org>
+In-Reply-To: <20190611230938.19265-1-ard.biesheuvel@linaro.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-crypto@vger.kernel.org
-Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Eric Biggers <ebiggers@google.com>, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
+Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Eric Biggers <ebiggers@google.com>, Johannes Berg <johannes@sipsolutions.net>, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>
 
 The MPPE code uses the sync skcipher to invoke the ecb(arc4) skcipher,
 of which only a single generic C code implementation exists. This means
@@ -25,8 +25,8 @@ Cc: Paul Mackerras <paulus@samba.org>
 Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 ---
  drivers/net/ppp/Kconfig    |  3 +-
- drivers/net/ppp/ppp_mppe.c | 92 +++-----------------
- 2 files changed, 12 insertions(+), 83 deletions(-)
+ drivers/net/ppp/ppp_mppe.c | 97 +++-----------------
+ 2 files changed, 15 insertions(+), 85 deletions(-)
 
 diff --git a/drivers/net/ppp/Kconfig b/drivers/net/ppp/Kconfig
 index bf395df3bb37..1a2e2f7629f3 100644
@@ -43,10 +43,10 @@ index bf395df3bb37..1a2e2f7629f3 100644
  	  Support for the MPPE Encryption protocol, as employed by the
  	  Microsoft Point-to-Point Tunneling Protocol.
 diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-index ff61dd8748de..00be8143b0b6 100644
+index ff61dd8748de..de3b57d09d0c 100644
 --- a/drivers/net/ppp/ppp_mppe.c
 +++ b/drivers/net/ppp/ppp_mppe.c
-@@ -42,8 +42,8 @@
+@@ -42,9 +42,10 @@
   *                    deprecated in 2.6
   */
  
@@ -54,9 +54,11 @@ index ff61dd8748de..00be8143b0b6 100644
  #include <crypto/hash.h>
 -#include <crypto/skcipher.h>
  #include <linux/err.h>
++#include <linux/fips.h>
  #include <linux/module.h>
  #include <linux/kernel.h>
-@@ -65,13 +65,6 @@ MODULE_LICENSE("Dual BSD/GPL");
+ #include <linux/init.h>
+@@ -65,13 +66,6 @@ MODULE_LICENSE("Dual BSD/GPL");
  MODULE_ALIAS("ppp-compress-" __stringify(CI_MPPE));
  MODULE_VERSION("1.0.2");
  
@@ -70,16 +72,16 @@ index ff61dd8748de..00be8143b0b6 100644
  #define SHA1_PAD_SIZE 40
  
  /*
-@@ -95,7 +88,7 @@ static inline void sha_pad_init(struct sha_pad *shapad)
+@@ -95,7 +89,7 @@ static inline void sha_pad_init(struct sha_pad *shapad)
   * State for an MPPE (de)compressor.
   */
  struct ppp_mppe_state {
 -	struct crypto_sync_skcipher *arc4;
-+	struct crypto_arc4_ctx arc4;
++	struct arc4_ctx arc4;
  	struct shash_desc *sha1;
  	unsigned char *sha1_digest;
  	unsigned char master_key[MPPE_MAX_KEY_LEN];
-@@ -154,24 +147,12 @@ static void get_new_key_from_sha(struct ppp_mppe_state * state)
+@@ -154,24 +148,11 @@ static void get_new_key_from_sha(struct ppp_mppe_state * state)
   */
  static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
  {
@@ -101,10 +103,9 @@ index ff61dd8748de..00be8143b0b6 100644
 -					   NULL);
 -		if (crypto_skcipher_encrypt(req))
 -    		    printk(KERN_WARNING "mppe_rekey: cipher_encrypt failed\n");
-+		crypto_arc4_set_key(&state->arc4, state->sha1_digest,
-+				    state->keylen);
-+		crypto_arc4_crypt(&state->arc4, state->session_key,
-+				  state->sha1_digest, state->keylen);
++		arc4_setkey(&state->arc4, state->sha1_digest, state->keylen);
++		arc4_crypt(&state->arc4, state->session_key, state->sha1_digest,
++			   state->keylen);
  	} else {
  		memcpy(state->session_key, state->sha1_digest, state->keylen);
  	}
@@ -115,11 +116,21 @@ index ff61dd8748de..00be8143b0b6 100644
 -	crypto_sync_skcipher_setkey(state->arc4, state->session_key,
 -				    state->keylen);
 -	skcipher_request_zero(req);
-+	crypto_arc4_set_key(&state->arc4, state->session_key, state->keylen);
++	arc4_setkey(&state->arc4, state->session_key, state->keylen);
  }
  
  /*
-@@ -204,12 +183,6 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+@@ -196,7 +175,8 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+ 	unsigned int digestsize;
+ 
+ 	if (optlen != CILEN_MPPE + sizeof(state->master_key) ||
+-	    options[0] != CI_MPPE || options[1] != CILEN_MPPE)
++	    options[0] != CI_MPPE || options[1] != CILEN_MPPE ||
++	    fips_enabled)
+ 		goto out;
+ 
+ 	state = kzalloc(sizeof(*state), GFP_KERNEL);
+@@ -204,12 +184,6 @@ static void *mppe_alloc(unsigned char *options, int optlen)
  		goto out;
  
  
@@ -132,7 +143,7 @@ index ff61dd8748de..00be8143b0b6 100644
  	shash = crypto_alloc_shash("sha1", 0, 0);
  	if (IS_ERR(shash))
  		goto out_free;
-@@ -250,7 +223,6 @@ static void *mppe_alloc(unsigned char *options, int optlen)
+@@ -250,7 +224,6 @@ static void *mppe_alloc(unsigned char *options, int optlen)
  		crypto_free_shash(state->sha1->tfm);
  		kzfree(state->sha1);
  	}
@@ -140,15 +151,17 @@ index ff61dd8748de..00be8143b0b6 100644
  	kfree(state);
  out:
  	return NULL;
-@@ -266,7 +238,6 @@ static void mppe_free(void *arg)
+@@ -266,8 +239,7 @@ static void mppe_free(void *arg)
  		kfree(state->sha1_digest);
  		crypto_free_shash(state->sha1->tfm);
  		kzfree(state->sha1);
 -		crypto_free_sync_skcipher(state->arc4);
- 		kfree(state);
+-		kfree(state);
++		kzfree(state);
  	}
  }
-@@ -366,10 +337,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+ 
+@@ -366,10 +338,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
  	      int isize, int osize)
  {
  	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
@@ -159,7 +172,7 @@ index ff61dd8748de..00be8143b0b6 100644
  
  	/*
  	 * Check that the protocol is in the range we handle.
-@@ -420,21 +388,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
+@@ -420,21 +389,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
  	ibuf += 2;		/* skip to proto field */
  	isize -= 2;
  
@@ -178,11 +191,11 @@ index ff61dd8748de..00be8143b0b6 100644
 -		printk(KERN_DEBUG "crypto_cypher_encrypt failed\n");
 -		return -1;
 -	}
-+	crypto_arc4_crypt(&state->arc4, obuf, ibuf, isize);
++	arc4_crypt(&state->arc4, obuf, ibuf, isize);
  
  	state->stats.unc_bytes += isize;
  	state->stats.unc_packets++;
-@@ -480,10 +434,8 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+@@ -480,10 +435,8 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
  		int osize)
  {
  	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
@@ -193,7 +206,7 @@ index ff61dd8748de..00be8143b0b6 100644
  
  	if (isize <= PPP_HDRLEN + MPPE_OVHD) {
  		if (state->debug)
-@@ -610,19 +562,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+@@ -610,19 +563,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
  	 * Decrypt the first byte in order to check if it is
  	 * a compressed or uncompressed protocol field.
  	 */
@@ -210,11 +223,11 @@ index ff61dd8748de..00be8143b0b6 100644
 -		osize = DECOMP_ERROR;
 -		goto out_zap_req;
 -	}
-+	crypto_arc4_crypt(&state->arc4, obuf, ibuf, 1);
++	arc4_crypt(&state->arc4, obuf, ibuf, 1);
  
  	/*
  	 * Do PFC decompression.
-@@ -637,14 +577,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+@@ -637,14 +578,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
  	}
  
  	/* And finally, decrypt the rest of the packet. */
@@ -226,11 +239,11 @@ index ff61dd8748de..00be8143b0b6 100644
 -		osize = DECOMP_ERROR;
 -		goto out_zap_req;
 -	}
-+	crypto_arc4_crypt(&state->arc4, obuf + 1, ibuf + 1, isize - 1);
++	arc4_crypt(&state->arc4, obuf + 1, ibuf + 1, isize - 1);
  
  	state->stats.unc_bytes += osize;
  	state->stats.unc_packets++;
-@@ -654,8 +587,6 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
+@@ -654,8 +588,6 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
  	/* good packet credit */
  	state->sanity_errors >>= 1;
  
@@ -239,13 +252,13 @@ index ff61dd8748de..00be8143b0b6 100644
  	return osize;
  
  sanity_error:
-@@ -728,8 +659,7 @@ static struct compressor ppp_mppe = {
+@@ -728,8 +660,7 @@ static struct compressor ppp_mppe = {
  static int __init ppp_mppe_init(void)
  {
  	int answer;
 -	if (!(crypto_has_skcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC) &&
 -	      crypto_has_ahash("sha1", 0, CRYPTO_ALG_ASYNC)))
-+	if (!crypto_has_ahash("sha1", 0, CRYPTO_ALG_ASYNC))
++	if (fips_enabled || !crypto_has_ahash("sha1", 0, CRYPTO_ALG_ASYNC))
  		return -ENODEV;
  
  	sha_pad = kmalloc(sizeof(struct sha_pad), GFP_KERNEL);
