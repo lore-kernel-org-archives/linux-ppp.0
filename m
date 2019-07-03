@@ -1,37 +1,43 @@
-From: David Miller <davem@davemloft.net>
-Date: Sat, 13 Jul 2019 06:07:48 +0000
-Subject: Re: [PATCH net] ppp: mppe: Revert "ppp: mppe: Add softdep to arc4"
-Message-Id: <20190712.230748.1491964275720335140.davem@davemloft.net>
+From: Sasha Levin <sashal@kernel.org>
+Date: Wed, 03 Jul 2019 02:14:52 +0000
+Subject: [PATCH AUTOSEL 5.1 17/39] ppp: mppe: Add softdep to arc4
+Message-Id: <20190703021514.17727-17-sashal@kernel.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20190712233931.17350-1-ebiggers@kernel.org>
-In-Reply-To: <20190712233931.17350-1-ebiggers@kernel.org>
+References: <20190703021514.17727-1-sashal@kernel.org>
+In-Reply-To: <20190703021514.17727-1-sashal@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: ebiggers@kernel.org
-Cc: netdev@vger.kernel.org, linux-ppp@vger.kernel.org, paulus@samba.org, linux-crypto@vger.kernel.org, tiwai@suse.de, ard.biesheuvel@linaro.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Takashi Iwai <tiwai@suse.de>, "David S . Miller" <davem@davemloft.net>, Sasha Levin <sashal@kernel.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-From: Eric Biggers <ebiggers@kernel.org>
-Date: Fri, 12 Jul 2019 16:39:31 -0700
+From: Takashi Iwai <tiwai@suse.de>
 
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> Commit 0e5a610b5ca5 ("ppp: mppe: switch to RC4 library interface"),
-> which was merged through the crypto tree for v5.3, changed ppp_mppe.c to
-> use the new arc4_crypt() library function rather than access RC4 through
-> the dynamic crypto_skcipher API.
-> 
-> Meanwhile commit aad1dcc4f011 ("ppp: mppe: Add softdep to arc4") was
-> merged through the net tree and added a module soft-dependency on "arc4".
-> 
-> The latter commit no longer makes sense because the code now uses the
-> "libarc4" module rather than "arc4", and also due to the direct use of
-> arc4_crypt(), no module soft-dependency is required.
-> 
-> So revert the latter commit.
-> 
-> Cc: Takashi Iwai <tiwai@suse.de>
-> Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
+[ Upstream commit aad1dcc4f011ea409850e040363dff1e59aa4175 ]
 
-Applied.
+The arc4 crypto is mandatory at ppp_mppe probe time, so let's put a
+softdep line, so that the corresponding module gets prepared
+gracefully.  Without this, a simple inclusion to initrd via dracut
+failed due to the missing dependency, for example.
+
+Signed-off-by: Takashi Iwai <tiwai@suse.de>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ drivers/net/ppp/ppp_mppe.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
+index 7ccdc62c6052..06d620b10704 100644
+--- a/drivers/net/ppp/ppp_mppe.c
++++ b/drivers/net/ppp/ppp_mppe.c
+@@ -63,6 +63,7 @@ MODULE_AUTHOR("Frank Cusack <fcusack@fcusack.com>");
+ MODULE_DESCRIPTION("Point-to-Point Protocol Microsoft Point-to-Point Encryption support");
+ MODULE_LICENSE("Dual BSD/GPL");
+ MODULE_ALIAS("ppp-compress-" __stringify(CI_MPPE));
++MODULE_SOFTDEP("pre: arc4");
+ MODULE_VERSION("1.0.2");
+ 
+ static unsigned int
+-- 
+2.20.1
