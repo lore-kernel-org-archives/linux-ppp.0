@@ -1,10 +1,10 @@
 From: Sasha Levin <sashal@kernel.org>
-Date: Wed, 03 Jul 2019 02:18:07 +0000
-Subject: [PATCH AUTOSEL 4.14 06/13] ppp: mppe: Add softdep to arc4
-Message-Id: <20190703021814.18385-6-sashal@kernel.org>
+Date: Wed, 03 Jul 2019 02:16:09 +0000
+Subject: [PATCH AUTOSEL 4.19 10/26] ppp: mppe: Add softdep to arc4
+Message-Id: <20190703021625.18116-10-sashal@kernel.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20190703021814.18385-1-sashal@kernel.org>
-In-Reply-To: <20190703021814.18385-1-sashal@kernel.org>
+References: <20190703021625.18116-1-sashal@kernel.org>
+In-Reply-To: <20190703021625.18116-1-sashal@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -28,7 +28,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-index 6c7fd98cb00a..d9eda7c217e9 100644
+index a205750b431b..8609c1a0777b 100644
 --- a/drivers/net/ppp/ppp_mppe.c
 +++ b/drivers/net/ppp/ppp_mppe.c
 @@ -63,6 +63,7 @@ MODULE_AUTHOR("Frank Cusack <fcusack@fcusack.com>");
