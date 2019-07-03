@@ -1,10 +1,10 @@
 From: Sasha Levin <sashal@kernel.org>
-Date: Wed, 03 Jul 2019 02:18:43 +0000
-Subject: [PATCH AUTOSEL 4.9 4/8] ppp: mppe: Add softdep to arc4
-Message-Id: <20190703021847.18542-4-sashal@kernel.org>
+Date: Wed, 03 Jul 2019 02:18:56 +0000
+Subject: [PATCH AUTOSEL 4.4 4/6] ppp: mppe: Add softdep to arc4
+Message-Id: <20190703021858.18653-4-sashal@kernel.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20190703021847.18542-1-sashal@kernel.org>
-In-Reply-To: <20190703021847.18542-1-sashal@kernel.org>
+References: <20190703021858.18653-1-sashal@kernel.org>
+In-Reply-To: <20190703021858.18653-1-sashal@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -28,10 +28,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-index f60f7660b451..92f52a73ec0e 100644
+index 05005c660d4d..6376edd89ceb 100644
 --- a/drivers/net/ppp/ppp_mppe.c
 +++ b/drivers/net/ppp/ppp_mppe.c
-@@ -63,6 +63,7 @@ MODULE_AUTHOR("Frank Cusack <fcusack@fcusack.com>");
+@@ -62,6 +62,7 @@ MODULE_AUTHOR("Frank Cusack <fcusack@fcusack.com>");
  MODULE_DESCRIPTION("Point-to-Point Protocol Microsoft Point-to-Point Encryption support");
  MODULE_LICENSE("Dual BSD/GPL");
  MODULE_ALIAS("ppp-compress-" __stringify(CI_MPPE));
