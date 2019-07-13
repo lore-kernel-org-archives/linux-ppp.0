@@ -1,7 +1,7 @@
-From: Lev <leventelist@gmail.com>
-Date: Sat, 13 Jul 2019 11:10:05 +0000
+From: walter harms <wharms@bfs.de>
+Date: Sat, 13 Jul 2019 12:03:08 +0000
 Subject: Re: monitoring raw data
-Message-Id: <20190713131005.7f9b0fe3@jive>
+Message-Id: <5D29C87C.9070400@bfs.de>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <5D29B187.6040400@bfs.de>
 In-Reply-To: <5D29B187.6040400@bfs.de>
@@ -10,19 +10,52 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-T24gU2F0LCAxMyBKdWwgMjAxOSAxMjoyNToxMSArMDIwMA0Kd2FsdGVyIGhhcm1zIDx3aGFybXNA
-YmZzLmRlPiB3cm90ZToNCg0KPiBIZWxsbyBsaXN0LA0KPiB0aGlzIGlzIGEgYml0IG9mZi10b3Bp
-Yy4NCj4gDQo+IEkgYW0gbG9va2luZyBmb3IgYSB0b29scyB0byBtb25pdG9yIHRoZSBjb25uZWN0
-aW9uIHF1YWxpdHkNCj4gd2hlbiBpIHNlbmQgZGF0YSB2aWEgYSBMVEUtTW9kZW0uDQo+IA0KPiBC
-YWNrZ3JvdW5kOg0KPiBJIGNvbGxlY3QgZGF0YSBvbiByZW1vdGUgcGxhY2UgYW5kIHNlbmQgdGhl
-bSB0byBhIHNlcnZlci4NCj4gQXQgc29tZSBwbGFjZXMgaSBoYXZlIHN0cmFuZ2UgcHJvYmxlbXMs
-IHNvIGkgd291bGQgbGlrZSB0bw0KPiBtb25pdG9yIHRoZSBjb25uZWN0aW9uIHF1YWxpdHkgYW5k
-IHBlcmhhcHMgb3RoZXIgaW5mb3JtYXRpb25zDQo+IHRoZSBtb2RlbSBjYW4gb2ZmZXIuDQo+IA0K
-PiBJcyB0aGVyZSBhIHByb2dyYW1tIG9yIGEgaG9vayBpIGNhbiB1c2UgaW5zaWRlIHBwcGQgPyBp
-IGFtIHByZXR0eQ0KPiBzdXJlIGkgYW0gbm90IHRoZSBmaXJzdCBvbmUgd2l0aCBzdWNoIGtpbmQg
-b2YgcHJvYmxlbXMuDQo+IA0KPiBzaG9ydDoNCj4gSSB3YW50IGEgc2ltcGxlIHdheSB0byBzZW5k
-IDEgb3IgMiBBVCBjbWRzIHN0b3JlIHRoZSByZXN1bHRzIGFuZA0KPiBjb250aW51ZSB3aXRoIHBw
-cC4NCj4gDQo+IHJlLA0KPiAgd2gNCg0KSGkgV2FsdGVyLA0KDQoNClNlZSB0aGUgcmVjb3JkIG9w
-dGlvbiBvZiBQUFBkLiBXaGljaCBMVEUgbW9kZW0gYXJlIHlvdSB1c2luZz8NCg0KDQpCZXN0LA0K
-TGV2ZW50ZQ0KDQotLSANCkxldmVudGUgS292YWNzDQpTZW5pb3IgRWxlY3Ryb25pYyBFbmdpbmVl
-cg0KDQpXOiBodHRwOi8vbGV2ZW50ZS5sb2dvbmV4LmV1DQo
+
+
+Am 13.07.2019 13:10, schrieb Lev:
+> On Sat, 13 Jul 2019 12:25:11 +0200
+> walter harms <wharms@bfs.de> wrote:
+> 
+>> Hello list,
+>> this is a bit off-topic.
+>>
+>> I am looking for a tools to monitor the connection quality
+>> when i send data via a LTE-Modem.
+>>
+>> Background:
+>> I collect data on remote place and send them to a server.
+>> At some places i have strange problems, so i would like to
+>> monitor the connection quality and perhaps other informations
+>> the modem can offer.
+>>
+>> Is there a programm or a hook i can use inside pppd ? i am pretty
+>> sure i am not the first one with such kind of problems.
+>>
+>> short:
+>> I want a simple way to send 1 or 2 AT cmds store the results and
+>> continue with ppp.
+>>
+>> re,
+>>  wh
+> 
+> Hi Walter,
+> 
+> 
+> See the record option of PPPd. Which LTE modem are you using?
+> 
+
+modem: Coniugo
+
+the record option seems to be over the top. So far i understand
+i can record all trafic. I would prefer a side channel like /dev/ptsX
+where i can connect directly to the modem and get data, or something
+like a signal that send a given AT line to the modem and returns into
+a file. Only ideas no code for now :)
+
+while searching i found this:
+ https://github.com/ya-jeks/gsmmux
+
+ever heard about it ?
+
+re,
+ wh
