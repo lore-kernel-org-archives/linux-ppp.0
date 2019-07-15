@@ -1,7 +1,7 @@
-From: walter harms <wharms@bfs.de>
-Date: Sat, 13 Jul 2019 12:03:08 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 15 Jul 2019 18:24:16 +0000
 Subject: Re: monitoring raw data
-Message-Id: <5D29C87C.9070400@bfs.de>
+Message-Id: <a5cba29c-1943-92db-0b6e-a61dae007ccc@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <5D29B187.6040400@bfs.de>
 In-Reply-To: <5D29B187.6040400@bfs.de>
@@ -10,52 +10,27 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-
-
-Am 13.07.2019 13:10, schrieb Lev:
-> On Sat, 13 Jul 2019 12:25:11 +0200
-> walter harms <wharms@bfs.de> wrote:
+On 07/13/19 08:03, walter harms wrote:
+> while searching i found this:
+>  https://github.com/ya-jeks/gsmmux
 > 
->> Hello list,
->> this is a bit off-topic.
->>
->> I am looking for a tools to monitor the connection quality
->> when i send data via a LTE-Modem.
->>
->> Background:
->> I collect data on remote place and send them to a server.
->> At some places i have strange problems, so i would like to
->> monitor the connection quality and perhaps other informations
->> the modem can offer.
->>
->> Is there a programm or a hook i can use inside pppd ? i am pretty
->> sure i am not the first one with such kind of problems.
->>
->> short:
->> I want a simple way to send 1 or 2 AT cmds store the results and
->> continue with ppp.
->>
->> re,
->>  wh
-> 
-> Hi Walter,
-> 
-> 
-> See the record option of PPPd. Which LTE modem are you using?
-> 
+> ever heard about it ?
 
-modem: Coniugo
+I've never heard of it, but it does indeed look like the solution you're
+looking for.  You would just run pppd over one of the ptys allocated by
+that tool, and then use your AT commands on another pty.
 
-the record option seems to be over the top. So far i understand
-i can record all trafic. I would prefer a side channel like /dev/ptsX
-where i can connect directly to the modem and get data, or something
-like a signal that send a given AT line to the modem and returns into
-a file. Only ideas no code for now :)
+More generally, neither pppd nor its associated kernel drivers have any
+sort of multiplexing scheme for carriage of non-PPP data.
 
-while searching i found this:
- https://github.com/ya-jeks/gsmmux
+On a commercial system I once worked on, we had specially-designed
+modems that had a separate management-only serial port so that we could
+issue commands without disrupting the data port.  Life with
+consumer-grade modems is different.  I've heard of people trying to do
+the Hayes-patented TIES "<delay>+++<delay>ATH1<nl>AT...<nl>ATO<nl>"
+stuff with modified drivers in the past, but none of that (if it ever
+was successful) ended up merging into the main code.  A virtual-port
+based scheme (as you're citing) sounds a lot more promising.
 
-ever heard about it ?
-
-re,
- wh
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
