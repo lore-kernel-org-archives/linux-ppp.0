@@ -1,43 +1,34 @@
-From: Sasha Levin <sashal@kernel.org>
-Date: Wed, 03 Jul 2019 02:16:09 +0000
-Subject: [PATCH AUTOSEL 4.19 10/26] ppp: mppe: Add softdep to arc4
-Message-Id: <20190703021625.18116-10-sashal@kernel.org>
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 22 Jul 2019 23:35:25 +0000
+Subject: [PATCH] pppcrypt: Add headers for encrypt and setkey
+Message-Id: <20190722233525.29203-1-rosenp@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20190703021625.18116-1-sashal@kernel.org>
-In-Reply-To: <20190703021625.18116-1-sashal@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Takashi Iwai <tiwai@suse.de>, "David S . Miller" <davem@davemloft.net>, Sasha Levin <sashal@kernel.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+To: linux-ppp@vger.kernel.org
 
-From: Takashi Iwai <tiwai@suse.de>
+Fixes compilation with musl when building against strict C standard.
+Implicit function declarations are a GNU extension.
 
-[ Upstream commit aad1dcc4f011ea409850e040363dff1e59aa4175 ]
-
-The arc4 crypto is mandatory at ppp_mppe probe time, so let's put a
-softdep line, so that the corresponding module gets prepared
-gracefully.  Without this, a simple inclusion to initrd via dracut
-failed due to the missing dependency, for example.
-
-Signed-off-by: Takashi Iwai <tiwai@suse.de>
-Signed-off-by: David S. Miller <davem@davemloft.net>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
 ---
- drivers/net/ppp/ppp_mppe.c | 1 +
- 1 file changed, 1 insertion(+)
+ pppd/pppcrypt.h | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-index a205750b431b..8609c1a0777b 100644
---- a/drivers/net/ppp/ppp_mppe.c
-+++ b/drivers/net/ppp/ppp_mppe.c
-@@ -63,6 +63,7 @@ MODULE_AUTHOR("Frank Cusack <fcusack@fcusack.com>");
- MODULE_DESCRIPTION("Point-to-Point Protocol Microsoft Point-to-Point Encryption support");
- MODULE_LICENSE("Dual BSD/GPL");
- MODULE_ALIAS("ppp-compress-" __stringify(CI_MPPE));
-+MODULE_SOFTDEP("pre: arc4");
- MODULE_VERSION("1.0.2");
+diff --git a/pppd/pppcrypt.h b/pppd/pppcrypt.h
+index adcdcbc..48d0d1a 100644
+--- a/pppd/pppcrypt.h
++++ b/pppd/pppcrypt.h
+@@ -41,6 +41,9 @@
+ #include <des.h>
+ #endif
  
- static unsigned int
++#include <stdlib.h>		/* for encrypt */
++#include <unistd.h>		/* for setkey */
++
+ extern bool	DesSetkey __P((u_char *));
+ extern bool	DesEncrypt __P((u_char *, u_char *));
+ extern bool	DesDecrypt __P((u_char *, u_char *));
 -- 
-2.20.1
+2.17.1
