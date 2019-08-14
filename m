@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Date: Wed, 14 Aug 2019 20:54:48 +0000
-Subject: [PATCH v5 13/18] compat_ioctl: move PPPIOCSCOMPRESS to ppp_generic
-Message-Id: <20190814205521.122180-4-arnd@arndb.de>
+Date: Wed, 14 Aug 2019 20:54:47 +0000
+Subject: [PATCH v5 12/18] compat_ioctl: unify copy-in of ppp filters
+Message-Id: <20190814205521.122180-3-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20190814204259.120942-1-arnd@arndb.de>
 In-Reply-To: <20190814204259.120942-1-arnd@arndb.de>
@@ -9,191 +9,290 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>
-Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Cc: Arnd Bergmann <arnd@arndb.de>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, bpf@vger.kernel.org
 
 From: Al Viro <viro@zeniv.linux.org.uk>
 
-Rather than using a compat_alloc_user_space() buffer, moving
-this next to the native handler allows sharing most of
-the code, leaving only the user copy portion distinct.
+Now that isdn4linux is gone, the is only one implementation of PPPIOCSPASS
+and PPPIOCSACTIVE in ppp_generic.c, so this is where the compat_ioctl
+support should be implemented.
+
+The two commands are implemented in very similar ways, so introduce
+new helpers to allow sharing between the two and between native and
+compat mode.
 
 Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+[arnd: rebased, and added changelog text]
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- drivers/net/ppp/ppp_generic.c | 53 +++++++++++++++++++++++++----------
- fs/compat_ioctl.c             | 32 ---------------------
- 2 files changed, 38 insertions(+), 47 deletions(-)
+ drivers/net/ppp/ppp_generic.c | 169 ++++++++++++++++++++++------------
+ fs/compat_ioctl.c             |  37 --------
+ 2 files changed, 108 insertions(+), 98 deletions(-)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index e3f207767589..2ab67bad6224 100644
+index a30e41a56085..e3f207767589 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -270,7 +270,7 @@ static void ppp_mp_insert(struct ppp *ppp, struct sk_buff *skb);
- static struct sk_buff *ppp_mp_reconstruct(struct ppp *ppp);
- static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb);
- #endif /* CONFIG_PPP_MULTILINK */
--static int ppp_set_compress(struct ppp *ppp, unsigned long arg);
-+static int ppp_set_compress(struct ppp *ppp, struct ppp_option_data *data);
- static void ppp_ccp_peek(struct ppp *ppp, struct sk_buff *skb, int inbound);
- static void ppp_ccp_closed(struct ppp *ppp);
- static struct compressor *find_compressor(int type);
-@@ -708,9 +708,14 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 		break;
- 
- 	case PPPIOCSCOMPRESS:
--		err = ppp_set_compress(ppp, arg);
-+	{
-+		struct ppp_option_data data;
-+		if (copy_from_user(&data, argp, sizeof(data)))
-+			err = -EFAULT;
-+		else
-+			err = ppp_set_compress(ppp, &data);
- 		break;
--
-+	}
- 	case PPPIOCGUNIT:
- 		if (put_user(ppp->file.index, p))
- 			break;
-@@ -827,6 +832,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+@@ -554,29 +554,58 @@ static __poll_t ppp_poll(struct file *file, poll_table *wait)
  }
  
- #ifdef CONFIG_COMPAT
-+struct ppp_option_data32 {
-+	compat_uptr_t		ptr;
-+	u32			length;
-+	compat_int_t		transmit;
-+};
-+#define PPPIOCSCOMPRESS32	_IOW('t', 77, struct ppp_option_data32)
+ #ifdef CONFIG_PPP_FILTER
+-static int get_filter(void __user *arg, struct sock_filter **p)
++static struct bpf_prog *get_filter(struct sock_fprog *uprog)
++{
++	struct sock_fprog_kern fprog;
++	struct bpf_prog *res = NULL;
++	int err;
 +
- static long ppp_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
++	if (!uprog->len)
++		return NULL;
++
++	/* uprog->len is unsigned short, so no overflow here */
++	fprog.len = uprog->len * sizeof(struct sock_filter);
++	fprog.filter = memdup_user(uprog->filter, fprog.len);
++	if (IS_ERR(fprog.filter))
++		return ERR_CAST(fprog.filter);
++
++	err = bpf_prog_create(&res, &fprog);
++	kfree(fprog.filter);
++
++	return err ? ERR_PTR(err) : res;
++}
++
++static struct bpf_prog *ppp_get_filter(struct sock_fprog __user *p)
  {
- 	struct ppp_file *pf;
-@@ -863,6 +875,21 @@ static long ppp_compat_ioctl(struct file *file, unsigned int cmd, unsigned long
- 			break;
- 		}
- #endif /* CONFIG_PPP_FILTER */
-+		case PPPIOCSCOMPRESS32:
-+		{
-+			struct ppp_option_data32 data32;
-+			if (copy_from_user(&data32, argp, sizeof(data32))) {
-+				err = -EFAULT;
-+			} else {
-+				struct ppp_option_data data = {
-+					.ptr = compat_ptr(data32.ptr),
-+					.length = data32.length,
-+					.transmit = data32.transmit
-+				};
-+				err = ppp_set_compress(ppp, &data);
-+			}
-+			break;
-+		}
- 		}
- 	}
- 	mutex_unlock(&ppp_mutex);
-@@ -2781,24 +2808,20 @@ ppp_output_wakeup(struct ppp_channel *chan)
+ 	struct sock_fprog uprog;
+-	struct sock_filter *code = NULL;
+-	int len;
  
- /* Process the PPPIOCSCOMPRESS ioctl. */
- static int
--ppp_set_compress(struct ppp *ppp, unsigned long arg)
-+ppp_set_compress(struct ppp *ppp, struct ppp_option_data *data)
- {
--	int err;
-+	int err = -EFAULT;
- 	struct compressor *cp, *ocomp;
--	struct ppp_option_data data;
- 	void *state, *ostate;
- 	unsigned char ccp_option[CCP_MAX_OPTION_LENGTH];
+-	if (copy_from_user(&uprog, arg, sizeof(uprog)))
+-		return -EFAULT;
++	if (copy_from_user(&uprog, p, sizeof(struct sock_fprog)))
++		return ERR_PTR(-EFAULT);
++	return get_filter(&uprog);
++}
  
--	err = -EFAULT;
--	if (copy_from_user(&data, (void __user *) arg, sizeof(data)))
--		goto out;
--	if (data.length > CCP_MAX_OPTION_LENGTH)
-+	if (data->length > CCP_MAX_OPTION_LENGTH)
- 		goto out;
--	if (copy_from_user(ccp_option, (void __user *) data.ptr, data.length))
-+	if (copy_from_user(ccp_option, data->ptr, data->length))
- 		goto out;
+-	if (!uprog.len) {
+-		*p = NULL;
+-		return 0;
+-	}
++#ifdef CONFIG_COMPAT
++struct sock_fprog32 {
++	unsigned short len;
++	compat_caddr_t filter;
++};
  
- 	err = -EINVAL;
--	if (data.length < 2 || ccp_option[1] < 2 || ccp_option[1] > data.length)
-+	if (data->length < 2 || ccp_option[1] < 2 || ccp_option[1] > data->length)
- 		goto out;
+-	len = uprog.len * sizeof(struct sock_filter);
+-	code = memdup_user(uprog.filter, len);
+-	if (IS_ERR(code))
+-		return PTR_ERR(code);
++#define PPPIOCSPASS32		_IOW('t', 71, struct sock_fprog32)
++#define PPPIOCSACTIVE32		_IOW('t', 70, struct sock_fprog32)
  
- 	cp = try_then_request_module(
-@@ -2808,8 +2831,8 @@ ppp_set_compress(struct ppp *ppp, unsigned long arg)
- 		goto out;
- 
- 	err = -ENOBUFS;
--	if (data.transmit) {
--		state = cp->comp_alloc(ccp_option, data.length);
-+	if (data->transmit) {
-+		state = cp->comp_alloc(ccp_option, data->length);
- 		if (state) {
- 			ppp_xmit_lock(ppp);
- 			ppp->xstate &= ~SC_COMP_RUN;
-@@ -2827,7 +2850,7 @@ ppp_set_compress(struct ppp *ppp, unsigned long arg)
- 			module_put(cp->owner);
- 
- 	} else {
--		state = cp->decomp_alloc(ccp_option, data.length);
-+		state = cp->decomp_alloc(ccp_option, data->length);
- 		if (state) {
- 			ppp_recv_lock(ppp);
- 			ppp->rstate &= ~SC_DECOMP_RUN;
-diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
-index eda41b2537f0..0b5a732d7afd 100644
---- a/fs/compat_ioctl.c
-+++ b/fs/compat_ioctl.c
-@@ -99,13 +99,6 @@ static int sg_grt_trans(struct file *file,
+-	*p = code;
+-	return uprog.len;
++static struct bpf_prog *compat_ppp_get_filter(struct sock_fprog32 __user *p)
++{
++	struct sock_fprog32 uprog32;
++	struct sock_fprog uprog;
++
++	if (copy_from_user(&uprog32, p, sizeof(struct sock_fprog32)))
++		return ERR_PTR(-EFAULT);
++	uprog.len = uprog32.len;
++	uprog.filter = compat_ptr(uprog32.filter);
++	return get_filter(&uprog);
  }
- #endif /* CONFIG_BLOCK */
+-#endif /* CONFIG_PPP_FILTER */
++#endif
++#endif
  
--struct ppp_option_data32 {
--	compat_caddr_t	ptr;
--	u32			length;
--	compat_int_t		transmit;
--};
--#define PPPIOCSCOMPRESS32	_IOW('t', 77, struct ppp_option_data32)
+ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ {
+@@ -753,55 +782,25 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 
+ #ifdef CONFIG_PPP_FILTER
+ 	case PPPIOCSPASS:
+-	{
+-		struct sock_filter *code;
 -
- struct ppp_idle32 {
- 	compat_time_t xmit_idle;
- 	compat_time_t recv_idle;
-@@ -133,29 +126,6 @@ static int ppp_gidle(struct file *file, unsigned int cmd,
+-		err = get_filter(argp, &code);
+-		if (err >= 0) {
+-			struct bpf_prog *pass_filter = NULL;
+-			struct sock_fprog_kern fprog = {
+-				.len = err,
+-				.filter = code,
+-			};
+-
+-			err = 0;
+-			if (fprog.filter)
+-				err = bpf_prog_create(&pass_filter, &fprog);
+-			if (!err) {
+-				ppp_lock(ppp);
+-				if (ppp->pass_filter)
+-					bpf_prog_destroy(ppp->pass_filter);
+-				ppp->pass_filter = pass_filter;
+-				ppp_unlock(ppp);
+-			}
+-			kfree(code);
+-		}
+-		break;
+-	}
+ 	case PPPIOCSACTIVE:
+ 	{
+-		struct sock_filter *code;
++		struct bpf_prog *filter = ppp_get_filter(argp);
++		struct bpf_prog **which;
+ 
+-		err = get_filter(argp, &code);
+-		if (err >= 0) {
+-			struct bpf_prog *active_filter = NULL;
+-			struct sock_fprog_kern fprog = {
+-				.len = err,
+-				.filter = code,
+-			};
+-
+-			err = 0;
+-			if (fprog.filter)
+-				err = bpf_prog_create(&active_filter, &fprog);
+-			if (!err) {
+-				ppp_lock(ppp);
+-				if (ppp->active_filter)
+-					bpf_prog_destroy(ppp->active_filter);
+-				ppp->active_filter = active_filter;
+-				ppp_unlock(ppp);
+-			}
+-			kfree(code);
++		if (IS_ERR(filter)) {
++			err = PTR_ERR(filter);
++			break;
+ 		}
++		if (cmd = PPPIOCSPASS)
++			which = &ppp->pass_filter;
++		else
++			which = &ppp->active_filter;
++		ppp_lock(ppp);
++		if (*which)
++			bpf_prog_destroy(*which);
++		*which = filter;
++		ppp_unlock(ppp);
++		err = 0;
+ 		break;
+ 	}
+ #endif /* CONFIG_PPP_FILTER */
+@@ -827,6 +826,51 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
  	return err;
  }
  
--static int ppp_scompress(struct file *file, unsigned int cmd,
--	struct ppp_option_data32 __user *odata32)
++#ifdef CONFIG_COMPAT
++static long ppp_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
++{
++	struct ppp_file *pf;
++	int err = -ENOIOCTLCMD;
++	void __user *argp = (void __user *)arg;
++
++	mutex_lock(&ppp_mutex);
++
++	pf = file->private_data;
++	if (pf && pf->kind = INTERFACE) {
++		struct ppp *ppp = PF_TO_PPP(pf);
++		switch (cmd) {
++#ifdef CONFIG_PPP_FILTER
++		case PPPIOCSPASS32:
++		case PPPIOCSACTIVE32:
++		{
++			struct bpf_prog *filter = compat_ppp_get_filter(argp);
++			struct bpf_prog **which;
++
++			if (IS_ERR(filter)) {
++				err = PTR_ERR(filter);
++				break;
++			}
++			if (cmd = PPPIOCSPASS32)
++				which = &ppp->pass_filter;
++			else
++				which = &ppp->active_filter;
++			ppp_lock(ppp);
++			if (*which)
++				bpf_prog_destroy(*which);
++			*which = filter;
++			ppp_unlock(ppp);
++			err = 0;
++			break;
++		}
++#endif /* CONFIG_PPP_FILTER */
++		}
++	}
++	mutex_unlock(&ppp_mutex);
++
++	return err;
++}
++#endif
++
+ static int ppp_unattached_ioctl(struct net *net, struct ppp_file *pf,
+ 			struct file *file, unsigned int cmd, unsigned long arg)
+ {
+@@ -895,6 +939,9 @@ static const struct file_operations ppp_device_fops = {
+ 	.write		= ppp_write,
+ 	.poll		= ppp_poll,
+ 	.unlocked_ioctl	= ppp_ioctl,
++#ifdef CONFIG_COMPAT
++	.compat_ioctl	= ppp_compat_ioctl,
++#endif
+ 	.open		= ppp_open,
+ 	.release	= ppp_release,
+ 	.llseek		= noop_llseek,
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index d537888f3660..eda41b2537f0 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -99,40 +99,6 @@ static int sg_grt_trans(struct file *file,
+ }
+ #endif /* CONFIG_BLOCK */
+ 
+-struct sock_fprog32 {
+-	unsigned short	len;
+-	compat_caddr_t	filter;
+-};
+-
+-#define PPPIOCSPASS32	_IOW('t', 71, struct sock_fprog32)
+-#define PPPIOCSACTIVE32	_IOW('t', 70, struct sock_fprog32)
+-
+-static int ppp_sock_fprog_ioctl_trans(struct file *file,
+-		unsigned int cmd, struct sock_fprog32 __user *u_fprog32)
 -{
--	struct ppp_option_data __user *odata;
--	__u32 data;
--	void __user *datap;
+-	struct sock_fprog __user *u_fprog64 = compat_alloc_user_space(sizeof(struct sock_fprog));
+-	void __user *fptr64;
+-	u32 fptr32;
+-	u16 flen;
 -
--	odata = compat_alloc_user_space(sizeof(*odata));
--
--	if (get_user(data, &odata32->ptr))
+-	if (get_user(flen, &u_fprog32->len) ||
+-	    get_user(fptr32, &u_fprog32->filter))
 -		return -EFAULT;
 -
--	datap = compat_ptr(data);
--	if (put_user(datap, &odata->ptr))
+-	fptr64 = compat_ptr(fptr32);
+-
+-	if (put_user(flen, &u_fprog64->len) ||
+-	    put_user(fptr64, &u_fprog64->filter))
 -		return -EFAULT;
 -
--	if (copy_in_user(&odata->length, &odata32->length,
--			 sizeof(__u32) + sizeof(int)))
--		return -EFAULT;
+-	if (cmd = PPPIOCSPASS32)
+-		cmd = PPPIOCSPASS;
+-	else
+-		cmd = PPPIOCSACTIVE;
 -
--	return do_ioctl(file, PPPIOCSCOMPRESS, (unsigned long) odata);
+-	return do_ioctl(file, cmd, (unsigned long) u_fprog64);
 -}
 -
- /*
-  * simple reversible transform to make our table more evenly
-  * distributed after sorting.
-@@ -249,8 +219,6 @@ static long do_ioctl_trans(unsigned int cmd,
- 	switch (cmd) {
- 	case PPPIOCGIDLE32:
+ struct ppp_option_data32 {
+ 	compat_caddr_t	ptr;
+ 	u32			length;
+@@ -285,9 +251,6 @@ static long do_ioctl_trans(unsigned int cmd,
  		return ppp_gidle(file, cmd, argp);
--	case PPPIOCSCOMPRESS32:
--		return ppp_scompress(file, cmd, argp);
+ 	case PPPIOCSCOMPRESS32:
+ 		return ppp_scompress(file, cmd, argp);
+-	case PPPIOCSPASS32:
+-	case PPPIOCSACTIVE32:
+-		return ppp_sock_fprog_ioctl_trans(file, cmd, argp);
  #ifdef CONFIG_BLOCK
  	case SG_GET_REQUEST_TABLE:
  		return sg_grt_trans(file, cmd, argp);
