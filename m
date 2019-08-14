@@ -1,118 +1,201 @@
-From: syzbot <syzbot+d9c8bf24e56416d7ce2c@syzkaller.appspotmail.com>
-Date: Thu, 29 Aug 2019 15:32:07 +0000
-Subject: Re: memory leak in ppp_write
-Message-Id: <000000000000594c700591433550@google.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Wed, 14 Aug 2019 20:54:48 +0000
+Subject: [PATCH v5 13/18] compat_ioctl: move PPPIOCSCOMPRESS to ppp_generic
+Message-Id: <20190814205521.122180-4-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
-In-Reply-To: <000000000000edc1d5058f5dfa5f@google.com>
-References: <000000000000edc1d5058f5dfa5f@google.com>
-In-Reply-To: <000000000000edc1d5058f5dfa5f@google.com>
+References: <20190814204259.120942-1-arnd@arndb.de>
+In-Reply-To: <20190814204259.120942-1-arnd@arndb.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-To: ast@kernel.org, bpf@vger.kernel.org, daniel@iogearbox.net, davem@davemloft.net, kafai@fb.com, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, songliubraving@fb.com, syzkaller-bugs@googlegroups.com, yhs@fb.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-syzbot has found a reproducer for the following crash on:
+From: Al Viro <viro@zeniv.linux.org.uk>
 
-HEAD commit:    6525771f Merge tag 'arc-5.3-rc7' of git://git.kernel.org/p..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=16dc12a2600000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=E6131eafb9408877
-dashboard link: https://syzkaller.appspot.com/bug?extid=D9c8bf24e56416d7ce2c
-compiler:       gcc (GCC) 9.0.0 20181231 (experimental)
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=116942de600000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1179c582600000
+Rather than using a compat_alloc_user_space() buffer, moving
+this next to the native handler allows sharing most of
+the code, leaving only the user copy portion distinct.
 
-IMPORTANT: if you fix the bug, please add the following tag to the commit:
-Reported-by: syzbot+d9c8bf24e56416d7ce2c@syzkaller.appspotmail.com
+Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ drivers/net/ppp/ppp_generic.c | 53 +++++++++++++++++++++++++----------
+ fs/compat_ioctl.c             | 32 ---------------------
+ 2 files changed, 38 insertions(+), 47 deletions(-)
 
-executing program
-executing program
-executing program
-executing program
-BUG: memory leak
-unreferenced object 0xffff88812a17bc00 (size 224):
-   comm "syz-executor673", pid 6952, jiffies 4294942888 (age 13.040s)
-   hex dump (first 32 bytes):
-     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-   backtrace:
-     [<00000000d110fff9>] kmemleak_alloc_recursive =20
-include/linux/kmemleak.h:43 [inline]
-     [<00000000d110fff9>] slab_post_alloc_hook mm/slab.h:522 [inline]
-     [<00000000d110fff9>] slab_alloc_node mm/slab.c:3262 [inline]
-     [<00000000d110fff9>] kmem_cache_alloc_node+0x163/0x2f0 mm/slab.c:3574
-     [<000000002d616113>] __alloc_skb+0x6e/0x210 net/core/skbuff.c:197
-     [<000000000167fc45>] alloc_skb include/linux/skbuff.h:1055 [inline]
-     [<000000000167fc45>] ppp_write+0x48/0x120 =20
-drivers/net/ppp/ppp_generic.c:502
-     [<000000009ab42c0b>] __vfs_write+0x43/0xa0 fs/read_write.c:494
-     [<00000000086b2e22>] vfs_write fs/read_write.c:558 [inline]
-     [<00000000086b2e22>] vfs_write+0xee/0x210 fs/read_write.c:542
-     [<00000000a2b70ef9>] ksys_write+0x7c/0x130 fs/read_write.c:611
-     [<00000000ce5e0fdd>] __do_sys_write fs/read_write.c:623 [inline]
-     [<00000000ce5e0fdd>] __se_sys_write fs/read_write.c:620 [inline]
-     [<00000000ce5e0fdd>] __x64_sys_write+0x1e/0x30 fs/read_write.c:620
-     [<00000000d9d7b370>] do_syscall_64+0x76/0x1a0 =20
-arch/x86/entry/common.c:296
-     [<0000000006e6d506>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
-
-BUG: memory leak
-unreferenced object 0xffff888121203900 (size 224):
-   comm "syz-executor673", pid 6965, jiffies 4294943430 (age 7.620s)
-   hex dump (first 32 bytes):
-     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-   backtrace:
-     [<00000000d110fff9>] kmemleak_alloc_recursive =20
-include/linux/kmemleak.h:43 [inline]
-     [<00000000d110fff9>] slab_post_alloc_hook mm/slab.h:522 [inline]
-     [<00000000d110fff9>] slab_alloc_node mm/slab.c:3262 [inline]
-     [<00000000d110fff9>] kmem_cache_alloc_node+0x163/0x2f0 mm/slab.c:3574
-     [<000000002d616113>] __alloc_skb+0x6e/0x210 net/core/skbuff.c:197
-     [<000000000167fc45>] alloc_skb include/linux/skbuff.h:1055 [inline]
-     [<000000000167fc45>] ppp_write+0x48/0x120 =20
-drivers/net/ppp/ppp_generic.c:502
-     [<000000009ab42c0b>] __vfs_write+0x43/0xa0 fs/read_write.c:494
-     [<00000000086b2e22>] vfs_write fs/read_write.c:558 [inline]
-     [<00000000086b2e22>] vfs_write+0xee/0x210 fs/read_write.c:542
-     [<00000000a2b70ef9>] ksys_write+0x7c/0x130 fs/read_write.c:611
-     [<00000000ce5e0fdd>] __do_sys_write fs/read_write.c:623 [inline]
-     [<00000000ce5e0fdd>] __se_sys_write fs/read_write.c:620 [inline]
-     [<00000000ce5e0fdd>] __x64_sys_write+0x1e/0x30 fs/read_write.c:620
-     [<00000000d9d7b370>] do_syscall_64+0x76/0x1a0 =20
-arch/x86/entry/common.c:296
-     [<0000000006e6d506>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
-
-BUG: memory leak
-unreferenced object 0xffff88811d0cf800 (size 512):
-   comm "syz-executor673", pid 6965, jiffies 4294943430 (age 7.620s)
-   hex dump (first 32 bytes):
-     06 00 00 00 05 00 00 00 40 00 00 00 00 00 00 00  ........@.......
-     40 00 40 00 00 00 00 00 40 00 40 00 00 00 00 00  @.@.....@.@.....
-   backtrace:
-     [<00000000b9629d4c>] kmemleak_alloc_recursive =20
-include/linux/kmemleak.h:43 [inline]
-     [<00000000b9629d4c>] slab_post_alloc_hook mm/slab.h:522 [inline]
-     [<00000000b9629d4c>] slab_alloc_node mm/slab.c:3262 [inline]
-     [<00000000b9629d4c>] kmem_cache_alloc_node_trace+0x161/0x2f0 =20
-mm/slab.c:3592
-     [<00000000a9b92035>] __do_kmalloc_node mm/slab.c:3614 [inline]
-     [<00000000a9b92035>] __kmalloc_node_track_caller+0x38/0x50 =20
-mm/slab.c:3629
-     [<00000000fad050db>] __kmalloc_reserve.isra.0+0x40/0xb0 =20
-net/core/skbuff.c:141
-     [<00000000a1025904>] __alloc_skb+0xa0/0x210 net/core/skbuff.c:209
-     [<000000000167fc45>] alloc_skb include/linux/skbuff.h:1055 [inline]
-     [<000000000167fc45>] ppp_write+0x48/0x120 =20
-drivers/net/ppp/ppp_generic.c:502
-     [<000000009ab42c0b>] __vfs_write+0x43/0xa0 fs/read_write.c:494
-     [<00000000086b2e22>] vfs_write fs/read_write.c:558 [inline]
-     [<00000000086b2e22>] vfs_write+0xee/0x210 fs/read_write.c:542
-     [<00000000a2b70ef9>] ksys_write+0x7c/0x130 fs/read_write.c:611
-     [<00000000ce5e0fdd>] __do_sys_write fs/read_write.c:623 [inline]
-     [<00000000ce5e0fdd>] __se_sys_write fs/read_write.c:620 [inline]
-     [<00000000ce5e0fdd>] __x64_sys_write+0x1e/0x30 fs/read_write.c:620
-     [<00000000d9d7b370>] do_syscall_64+0x76/0x1a0 =20
-arch/x86/entry/common.c:296
-     [<0000000006e6d506>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
-
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index e3f207767589..2ab67bad6224 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -270,7 +270,7 @@ static void ppp_mp_insert(struct ppp *ppp, struct sk_buff *skb);
+ static struct sk_buff *ppp_mp_reconstruct(struct ppp *ppp);
+ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb);
+ #endif /* CONFIG_PPP_MULTILINK */
+-static int ppp_set_compress(struct ppp *ppp, unsigned long arg);
++static int ppp_set_compress(struct ppp *ppp, struct ppp_option_data *data);
+ static void ppp_ccp_peek(struct ppp *ppp, struct sk_buff *skb, int inbound);
+ static void ppp_ccp_closed(struct ppp *ppp);
+ static struct compressor *find_compressor(int type);
+@@ -708,9 +708,14 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		break;
+ 
+ 	case PPPIOCSCOMPRESS:
+-		err = ppp_set_compress(ppp, arg);
++	{
++		struct ppp_option_data data;
++		if (copy_from_user(&data, argp, sizeof(data)))
++			err = -EFAULT;
++		else
++			err = ppp_set_compress(ppp, &data);
+ 		break;
+-
++	}
+ 	case PPPIOCGUNIT:
+ 		if (put_user(ppp->file.index, p))
+ 			break;
+@@ -827,6 +832,13 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ }
+ 
+ #ifdef CONFIG_COMPAT
++struct ppp_option_data32 {
++	compat_uptr_t		ptr;
++	u32			length;
++	compat_int_t		transmit;
++};
++#define PPPIOCSCOMPRESS32	_IOW('t', 77, struct ppp_option_data32)
++
+ static long ppp_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ {
+ 	struct ppp_file *pf;
+@@ -863,6 +875,21 @@ static long ppp_compat_ioctl(struct file *file, unsigned int cmd, unsigned long
+ 			break;
+ 		}
+ #endif /* CONFIG_PPP_FILTER */
++		case PPPIOCSCOMPRESS32:
++		{
++			struct ppp_option_data32 data32;
++			if (copy_from_user(&data32, argp, sizeof(data32))) {
++				err = -EFAULT;
++			} else {
++				struct ppp_option_data data = {
++					.ptr = compat_ptr(data32.ptr),
++					.length = data32.length,
++					.transmit = data32.transmit
++				};
++				err = ppp_set_compress(ppp, &data);
++			}
++			break;
++		}
+ 		}
+ 	}
+ 	mutex_unlock(&ppp_mutex);
+@@ -2781,24 +2808,20 @@ ppp_output_wakeup(struct ppp_channel *chan)
+ 
+ /* Process the PPPIOCSCOMPRESS ioctl. */
+ static int
+-ppp_set_compress(struct ppp *ppp, unsigned long arg)
++ppp_set_compress(struct ppp *ppp, struct ppp_option_data *data)
+ {
+-	int err;
++	int err = -EFAULT;
+ 	struct compressor *cp, *ocomp;
+-	struct ppp_option_data data;
+ 	void *state, *ostate;
+ 	unsigned char ccp_option[CCP_MAX_OPTION_LENGTH];
+ 
+-	err = -EFAULT;
+-	if (copy_from_user(&data, (void __user *) arg, sizeof(data)))
+-		goto out;
+-	if (data.length > CCP_MAX_OPTION_LENGTH)
++	if (data->length > CCP_MAX_OPTION_LENGTH)
+ 		goto out;
+-	if (copy_from_user(ccp_option, (void __user *) data.ptr, data.length))
++	if (copy_from_user(ccp_option, data->ptr, data->length))
+ 		goto out;
+ 
+ 	err = -EINVAL;
+-	if (data.length < 2 || ccp_option[1] < 2 || ccp_option[1] > data.length)
++	if (data->length < 2 || ccp_option[1] < 2 || ccp_option[1] > data->length)
+ 		goto out;
+ 
+ 	cp = try_then_request_module(
+@@ -2808,8 +2831,8 @@ ppp_set_compress(struct ppp *ppp, unsigned long arg)
+ 		goto out;
+ 
+ 	err = -ENOBUFS;
+-	if (data.transmit) {
+-		state = cp->comp_alloc(ccp_option, data.length);
++	if (data->transmit) {
++		state = cp->comp_alloc(ccp_option, data->length);
+ 		if (state) {
+ 			ppp_xmit_lock(ppp);
+ 			ppp->xstate &= ~SC_COMP_RUN;
+@@ -2827,7 +2850,7 @@ ppp_set_compress(struct ppp *ppp, unsigned long arg)
+ 			module_put(cp->owner);
+ 
+ 	} else {
+-		state = cp->decomp_alloc(ccp_option, data.length);
++		state = cp->decomp_alloc(ccp_option, data->length);
+ 		if (state) {
+ 			ppp_recv_lock(ppp);
+ 			ppp->rstate &= ~SC_DECOMP_RUN;
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index eda41b2537f0..0b5a732d7afd 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -99,13 +99,6 @@ static int sg_grt_trans(struct file *file,
+ }
+ #endif /* CONFIG_BLOCK */
+ 
+-struct ppp_option_data32 {
+-	compat_caddr_t	ptr;
+-	u32			length;
+-	compat_int_t		transmit;
+-};
+-#define PPPIOCSCOMPRESS32	_IOW('t', 77, struct ppp_option_data32)
+-
+ struct ppp_idle32 {
+ 	compat_time_t xmit_idle;
+ 	compat_time_t recv_idle;
+@@ -133,29 +126,6 @@ static int ppp_gidle(struct file *file, unsigned int cmd,
+ 	return err;
+ }
+ 
+-static int ppp_scompress(struct file *file, unsigned int cmd,
+-	struct ppp_option_data32 __user *odata32)
+-{
+-	struct ppp_option_data __user *odata;
+-	__u32 data;
+-	void __user *datap;
+-
+-	odata = compat_alloc_user_space(sizeof(*odata));
+-
+-	if (get_user(data, &odata32->ptr))
+-		return -EFAULT;
+-
+-	datap = compat_ptr(data);
+-	if (put_user(datap, &odata->ptr))
+-		return -EFAULT;
+-
+-	if (copy_in_user(&odata->length, &odata32->length,
+-			 sizeof(__u32) + sizeof(int)))
+-		return -EFAULT;
+-
+-	return do_ioctl(file, PPPIOCSCOMPRESS, (unsigned long) odata);
+-}
+-
+ /*
+  * simple reversible transform to make our table more evenly
+  * distributed after sorting.
+@@ -249,8 +219,6 @@ static long do_ioctl_trans(unsigned int cmd,
+ 	switch (cmd) {
+ 	case PPPIOCGIDLE32:
+ 		return ppp_gidle(file, cmd, argp);
+-	case PPPIOCSCOMPRESS32:
+-		return ppp_scompress(file, cmd, argp);
+ #ifdef CONFIG_BLOCK
+ 	case SG_GET_REQUEST_TABLE:
+ 		return sg_grt_trans(file, cmd, argp);
+-- 
+2.20.0
