@@ -1,180 +1,191 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Date: Wed, 14 Aug 2019 20:42:27 +0000
-Subject: [PATCH v5 00/18] compat_ioctl.c removal, part 2/3
-Message-Id: <20190814204259.120942-1-arnd@arndb.de>
+Date: Wed, 14 Aug 2019 20:54:49 +0000
+Subject: [PATCH v5 14/18] compat_ioctl: handle PPPIOCGIDLE for 64-bit time_t
+Message-Id: <20190814205521.122180-5-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20190814204259.120942-1-arnd@arndb.de>
+In-Reply-To: <20190814204259.120942-1-arnd@arndb.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org
-Cc: Arnd Bergmann <arnd@arndb.de>, davem@davemloft.net, axboe@kernel.dk, linux-block@vger.kernel.org, minyard@acm.org, gregkh@linuxfoundation.org, linux@roeck-us.net, alexandre.belloni@bootlin.com, jejb@linux.ibm.com, martin.petersen@oracle.com, dgilbert@interlog.com, jslaby@suse.com, wim@linux-watchdog.org, tytso@mit.edu, adilger.kernel@dilger.ca, jaegeuk@kernel.org, rpeterso@redhat.com, agruenba@redhat.com, mikulas@artax.karlin.mff.cuni.cz, konishi.ryusuke@gmail.com, jlbec@evilplan.org, joseph.qi@linux.alibaba.com, darrick.wong@oracle.com, linux-xfs@vger.kernel.org, netdev@vger.kernel.org, openipmi-developer@lists.sourceforge.net, linux-hwmon@vger.kernel.org, linux-ppp@vger.kernel.org, linux-rtc@vger.kernel.org, linux-scsi@vger.kernel.org, linux-watchdog@vger.kernel.org, ecryptfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, cluster-devel@redhat.com, linux-nilfs@vger.kernel.org, ocfs2-devel@oss.oracle.com
+To: linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, Paul Mackerras <paulus@samba.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, netdev@vger.kernel.org, linux-doc@vger.kernel.org, linux-ppp@vger.kernel.org
 
-This is a follow-up to part 1/3 that I posted after -rc2.
-I hope these are still largely uncontroversial changes, and
-I would like to get them into linux-5.4.
+The ppp_idle structure is defined in terms of __kernel_time_t, which is
+defined as 'long' on all architectures, and this usage is not affected
+by the y2038 problem since it transports a time interval rather than an
+absolute time.
 
-Part 1 was in
+However, the ppp user space defines the same structure as time_t, which
+may be 64-bit wide on new libc versions even on 32-bit architectures.
 
-https://lore.kernel.org/lkml/CAPcyv4i_nHzV155RcgnAQ189aq2Lfd2g8pA1D5NbZqo9E_u+Dw@mail.gmail.com/
+It's easy enough to just handle both possible structure layouts on
+all architectures, to deal with the possibility that a user space ppp
+implementation comes with its own ppp_idle structure definition, as well
+as to document the fact that the driver is y2038-safe.
 
-Part 3 will be one kernel release after part 2 is merged,
-as that still needs a little extra work.
+Doing this also avoids the need for a special compat mode translation,
+since 32-bit and 64-bit kernels now support the same interfaces.  The old
+32-bit structure is also available on native 64-bit architectures now,
+but this is harmless.
 
-The entire series is available at
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ Documentation/networking/ppp_generic.txt |  2 ++
+ drivers/net/ppp/ppp_generic.c            | 19 ++++++++++----
+ fs/compat_ioctl.c                        | 32 ++----------------------
+ include/uapi/linux/ppp-ioctl.h           |  2 ++
+ include/uapi/linux/ppp_defs.h            | 14 +++++++++++
+ 5 files changed, 34 insertions(+), 35 deletions(-)
 
-git://git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git compat_ioctl
-
-      Arnd
-
-Al Viro (2):
-  compat_ioctl: unify copy-in of ppp filters
-  compat_ioctl: move PPPIOCSCOMPRESS to ppp_generic
-
-Arnd Bergmann (16):
-  xfs: compat_ioctl: use compat_ptr()
-  xfs: compat_ioctl: add missing conversions
-  gfs2: add compat_ioctl support
-  fs: compat_ioctl: move FITRIM emulation into file systems
-  watchdog: cpwd: use generic compat_ptr_ioctl
-  compat_ioctl: move WDIOC handling into wdt drivers
-  compat_ioctl: reimplement SG_IO handling
-  af_unix: add compat_ioctl support
-  compat_ioctl: handle SIOCOUTQNSD
-  compat_ioctl: move SIOCOUTQ out of compat_ioctl.c
-  tty: handle compat PPP ioctls
-  compat_ioctl: handle PPPIOCGIDLE for 64-bit time_t
-  compat_ioctl: ppp: move simple commands into ppp_generic.c
-  compat_ioctl: move SG_GET_REQUEST_TABLE handling
-  pktcdvd: add compat_ioctl handler
-  scsi: sd: enable compat ioctls for sed-opal
-
- Documentation/networking/ppp_generic.txt  |   2 +
- arch/powerpc/platforms/52xx/mpc52xx_gpt.c |   1 +
- arch/um/drivers/harddog_kern.c            |   1 +
- block/scsi_ioctl.c                        | 132 ++++++++-
- drivers/block/pktcdvd.c                   |  25 ++
- drivers/char/ipmi/ipmi_watchdog.c         |   1 +
- drivers/hwmon/fschmd.c                    |   1 +
- drivers/net/ppp/ppp_generic.c             | 245 ++++++++++-----
- drivers/rtc/rtc-ds1374.c                  |   1 +
- drivers/scsi/sd.c                         |  14 +-
- drivers/scsi/sg.c                         |  59 +++-
- drivers/tty/tty_io.c                      |   5 +
- drivers/watchdog/acquirewdt.c             |   1 +
- drivers/watchdog/advantechwdt.c           |   1 +
- drivers/watchdog/alim1535_wdt.c           |   1 +
- drivers/watchdog/alim7101_wdt.c           |   1 +
- drivers/watchdog/ar7_wdt.c                |   1 +
- drivers/watchdog/at91rm9200_wdt.c         |   1 +
- drivers/watchdog/ath79_wdt.c              |   1 +
- drivers/watchdog/bcm63xx_wdt.c            |   1 +
- drivers/watchdog/cpu5wdt.c                |   1 +
- drivers/watchdog/cpwd.c                   |  25 +-
- drivers/watchdog/eurotechwdt.c            |   1 +
- drivers/watchdog/f71808e_wdt.c            |   1 +
- drivers/watchdog/gef_wdt.c                |   1 +
- drivers/watchdog/geodewdt.c               |   1 +
- drivers/watchdog/ib700wdt.c               |   1 +
- drivers/watchdog/ibmasr.c                 |   1 +
- drivers/watchdog/indydog.c                |   1 +
- drivers/watchdog/intel_scu_watchdog.c     |   1 +
- drivers/watchdog/iop_wdt.c                |   1 +
- drivers/watchdog/it8712f_wdt.c            |   1 +
- drivers/watchdog/ixp4xx_wdt.c             |   1 +
- drivers/watchdog/ks8695_wdt.c             |   1 +
- drivers/watchdog/m54xx_wdt.c              |   1 +
- drivers/watchdog/machzwd.c                |   1 +
- drivers/watchdog/mixcomwd.c               |   1 +
- drivers/watchdog/mtx-1_wdt.c              |   1 +
- drivers/watchdog/mv64x60_wdt.c            |   1 +
- drivers/watchdog/nuc900_wdt.c             |   1 +
- drivers/watchdog/nv_tco.c                 |   1 +
- drivers/watchdog/pc87413_wdt.c            |   1 +
- drivers/watchdog/pcwd.c                   |   1 +
- drivers/watchdog/pcwd_pci.c               |   1 +
- drivers/watchdog/pcwd_usb.c               |   1 +
- drivers/watchdog/pika_wdt.c               |   1 +
- drivers/watchdog/pnx833x_wdt.c            |   1 +
- drivers/watchdog/rc32434_wdt.c            |   1 +
- drivers/watchdog/rdc321x_wdt.c            |   1 +
- drivers/watchdog/riowd.c                  |   1 +
- drivers/watchdog/sa1100_wdt.c             |   1 +
- drivers/watchdog/sb_wdog.c                |   1 +
- drivers/watchdog/sbc60xxwdt.c             |   1 +
- drivers/watchdog/sbc7240_wdt.c            |   1 +
- drivers/watchdog/sbc_epx_c3.c             |   1 +
- drivers/watchdog/sbc_fitpc2_wdt.c         |   1 +
- drivers/watchdog/sc1200wdt.c              |   1 +
- drivers/watchdog/sc520_wdt.c              |   1 +
- drivers/watchdog/sch311x_wdt.c            |   1 +
- drivers/watchdog/scx200_wdt.c             |   1 +
- drivers/watchdog/smsc37b787_wdt.c         |   1 +
- drivers/watchdog/w83877f_wdt.c            |   1 +
- drivers/watchdog/w83977f_wdt.c            |   1 +
- drivers/watchdog/wafer5823wdt.c           |   1 +
- drivers/watchdog/watchdog_dev.c           |   1 +
- drivers/watchdog/wdrtas.c                 |   1 +
- drivers/watchdog/wdt.c                    |   1 +
- drivers/watchdog/wdt285.c                 |   1 +
- drivers/watchdog/wdt977.c                 |   1 +
- drivers/watchdog/wdt_pci.c                |   1 +
- fs/compat_ioctl.c                         | 346 +---------------------
- fs/ecryptfs/file.c                        |   1 +
- fs/ext4/ioctl.c                           |   1 +
- fs/f2fs/file.c                            |   1 +
- fs/gfs2/file.c                            |  24 ++
- fs/hpfs/dir.c                             |   1 +
- fs/hpfs/file.c                            |   1 +
- fs/nilfs2/ioctl.c                         |   1 +
- fs/ocfs2/ioctl.c                          |   1 +
- fs/xfs/xfs_ioctl32.c                      |  11 +-
- include/linux/blkdev.h                    |   2 +
- include/uapi/linux/ppp-ioctl.h            |   2 +
- include/uapi/linux/ppp_defs.h             |  14 +
- lib/iov_iter.c                            |   1 +
- net/socket.c                              |   3 +
- net/unix/af_unix.c                        |  19 ++
- 86 files changed, 526 insertions(+), 472 deletions(-)
-
+diff --git a/Documentation/networking/ppp_generic.txt b/Documentation/networking/ppp_generic.txt
+index 61daf4b39600..fd563aff5fc9 100644
+--- a/Documentation/networking/ppp_generic.txt
++++ b/Documentation/networking/ppp_generic.txt
+@@ -378,6 +378,8 @@ an interface unit are:
+   CONFIG_PPP_FILTER option is enabled, the set of packets which reset
+   the transmit and receive idle timers is restricted to those which
+   pass the `active' packet filter.
++  Two versions of this command exist, to deal with user space
++  expecting times as either 32-bit or 64-bit time_t seconds.
+ 
+ * PPPIOCSMAXCID sets the maximum connection-ID parameter (and thus the
+   number of connection slots) for the TCP header compressor and
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 2ab67bad6224..6b4e227cb002 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -612,7 +612,8 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	struct ppp_file *pf;
+ 	struct ppp *ppp;
+ 	int err = -EFAULT, val, val2, i;
+-	struct ppp_idle idle;
++	struct ppp_idle32 idle32;
++	struct ppp_idle64 idle64;
+ 	struct npioctl npi;
+ 	int unit, cflags;
+ 	struct slcompress *vj;
+@@ -735,10 +736,18 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		err = 0;
+ 		break;
+ 
+-	case PPPIOCGIDLE:
+-		idle.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
+-		idle.recv_idle = (jiffies - ppp->last_recv) / HZ;
+-		if (copy_to_user(argp, &idle, sizeof(idle)))
++	case PPPIOCGIDLE32:
++                idle32.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
++                idle32.recv_idle = (jiffies - ppp->last_recv) / HZ;
++                if (copy_to_user(argp, &idle32, sizeof(idle32)))
++			break;
++		err = 0;
++		break;
++
++	case PPPIOCGIDLE64:
++		idle64.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
++		idle64.recv_idle = (jiffies - ppp->last_recv) / HZ;
++		if (copy_to_user(argp, &idle64, sizeof(idle64)))
+ 			break;
+ 		err = 0;
+ 		break;
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index 0b5a732d7afd..f97cf698cfdd 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -99,33 +99,6 @@ static int sg_grt_trans(struct file *file,
+ }
+ #endif /* CONFIG_BLOCK */
+ 
+-struct ppp_idle32 {
+-	compat_time_t xmit_idle;
+-	compat_time_t recv_idle;
+-};
+-#define PPPIOCGIDLE32		_IOR('t', 63, struct ppp_idle32)
+-
+-static int ppp_gidle(struct file *file, unsigned int cmd,
+-		struct ppp_idle32 __user *idle32)
+-{
+-	struct ppp_idle __user *idle;
+-	__kernel_time_t xmit, recv;
+-	int err;
+-
+-	idle = compat_alloc_user_space(sizeof(*idle));
+-
+-	err = do_ioctl(file, PPPIOCGIDLE, (unsigned long) idle);
+-
+-	if (!err) {
+-		if (get_user(xmit, &idle->xmit_idle) ||
+-		    get_user(recv, &idle->recv_idle) ||
+-		    put_user(xmit, &idle32->xmit_idle) ||
+-		    put_user(recv, &idle32->recv_idle))
+-			err = -EFAULT;
+-	}
+-	return err;
+-}
+-
+ /*
+  * simple reversible transform to make our table more evenly
+  * distributed after sorting.
+@@ -192,7 +165,8 @@ COMPATIBLE_IOCTL(PPPIOCGDEBUG)
+ COMPATIBLE_IOCTL(PPPIOCSDEBUG)
+ /* PPPIOCSPASS is translated */
+ /* PPPIOCSACTIVE is translated */
+-/* PPPIOCGIDLE is translated */
++COMPATIBLE_IOCTL(PPPIOCGIDLE32)
++COMPATIBLE_IOCTL(PPPIOCGIDLE64)
+ COMPATIBLE_IOCTL(PPPIOCNEWUNIT)
+ COMPATIBLE_IOCTL(PPPIOCATTACH)
+ COMPATIBLE_IOCTL(PPPIOCDETACH)
+@@ -217,8 +191,6 @@ static long do_ioctl_trans(unsigned int cmd,
+ 	void __user *argp = compat_ptr(arg);
+ 
+ 	switch (cmd) {
+-	case PPPIOCGIDLE32:
+-		return ppp_gidle(file, cmd, argp);
+ #ifdef CONFIG_BLOCK
+ 	case SG_GET_REQUEST_TABLE:
+ 		return sg_grt_trans(file, cmd, argp);
+diff --git a/include/uapi/linux/ppp-ioctl.h b/include/uapi/linux/ppp-ioctl.h
+index 88b5f9990320..7bd2a5a75348 100644
+--- a/include/uapi/linux/ppp-ioctl.h
++++ b/include/uapi/linux/ppp-ioctl.h
+@@ -104,6 +104,8 @@ struct pppol2tp_ioc_stats {
+ #define PPPIOCGDEBUG	_IOR('t', 65, int)	/* Read debug level */
+ #define PPPIOCSDEBUG	_IOW('t', 64, int)	/* Set debug level */
+ #define PPPIOCGIDLE	_IOR('t', 63, struct ppp_idle) /* get idle time */
++#define PPPIOCGIDLE32	_IOR('t', 63, struct ppp_idle32) /* 32-bit times */
++#define PPPIOCGIDLE64	_IOR('t', 63, struct ppp_idle64) /* 64-bit times */
+ #define PPPIOCNEWUNIT	_IOWR('t', 62, int)	/* create new ppp unit */
+ #define PPPIOCATTACH	_IOW('t', 61, int)	/* attach to ppp unit */
+ #define PPPIOCDETACH	_IOW('t', 60, int)	/* obsolete, do not use */
+diff --git a/include/uapi/linux/ppp_defs.h b/include/uapi/linux/ppp_defs.h
+index fff51b91b409..0039fa39a358 100644
+--- a/include/uapi/linux/ppp_defs.h
++++ b/include/uapi/linux/ppp_defs.h
+@@ -142,10 +142,24 @@ struct ppp_comp_stats {
+ /*
+  * The following structure records the time in seconds since
+  * the last NP packet was sent or received.
++ *
++ * Linux implements both 32-bit and 64-bit time_t versions
++ * for compatibility with user space that defines ppp_idle
++ * based on the libc time_t.
+  */
+ struct ppp_idle {
+     __kernel_time_t xmit_idle;	/* time since last NP packet sent */
+     __kernel_time_t recv_idle;	/* time since last NP packet received */
+ };
+ 
++struct ppp_idle32 {
++    __s32 xmit_idle;		/* time since last NP packet sent */
++    __s32 recv_idle;		/* time since last NP packet received */
++};
++
++struct ppp_idle64 {
++    __s64 xmit_idle;		/* time since last NP packet sent */
++    __s64 recv_idle;		/* time since last NP packet received */
++};
++
+ #endif /* _UAPI_PPP_DEFS_H_ */
 -- 
 2.20.0
-
-Cc: davem@davemloft.net
-Cc: axboe@kernel.dk
-Cc: linux-block@vger.kernel.org
-Cc: minyard@acm.org
-Cc: gregkh@linuxfoundation.org
-Cc: linux@roeck-us.net
-Cc: alexandre.belloni@bootlin.com
-Cc: jejb@linux.ibm.com
-Cc: martin.petersen@oracle.com
-Cc: dgilbert@interlog.com
-Cc: jslaby@suse.com
-Cc: wim@linux-watchdog.org
-Cc: viro@zeniv.linux.org.uk
-Cc: tytso@mit.edu
-Cc: adilger.kernel@dilger.ca
-Cc: jaegeuk@kernel.org
-Cc: rpeterso@redhat.com
-Cc: agruenba@redhat.com
-Cc: mikulas@artax.karlin.mff.cuni.cz
-Cc: konishi.ryusuke@gmail.com
-Cc: jlbec@evilplan.org
-Cc: joseph.qi@linux.alibaba.com
-Cc: darrick.wong@oracle.com
-Cc: linux-xfs@vger.kernel.org
-Cc: netdev@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: openipmi-developer@lists.sourceforge.net
-Cc: linux-hwmon@vger.kernel.org
-Cc: linux-ppp@vger.kernel.org
-Cc: linux-rtc@vger.kernel.org
-Cc: linux-scsi@vger.kernel.org
-Cc: linux-watchdog@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org
-Cc: ecryptfs@vger.kernel.org
-Cc: linux-ext4@vger.kernel.org
-Cc: linux-f2fs-devel@lists.sourceforge.net
-Cc: cluster-devel@redhat.com
-Cc: linux-nilfs@vger.kernel.org
-Cc: ocfs2-devel@oss.oracle.com
