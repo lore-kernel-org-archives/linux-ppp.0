@@ -1,61 +1,71 @@
-From: Baolin Wang <baolin.wang@linaro.org>
-Date: Fri, 06 Sep 2019 06:13:02 +0000
-Subject: Re: [BACKPORT 4.14.y v2 5/6] ppp: mppe: Revert "ppp: mppe: Add softdep to arc4"
-Message-Id: <CAMz4kuJem-H4pPKSTDAy3vmWmYhAf-tdjH-HmZ_aN7VYXJN6mw@mail.gmail.com>
+From: Takeshi Misawa <jeliantsurux@gmail.com>
+Date: Sat, 14 Sep 2019 04:09:58 +0000
+Subject: [PATCH] ppp: Fix memory leak in ppp_write
+Message-Id: <20190914040958.GA2363@DESKTOP>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <cover.1567649728.git.baolin.wang@linaro.org> <c24710bae9098ba971a2778a1a44627d5fa3ddc0.1567649729.git.baolin.wang@linaro.org>
- <20190905161642.GA5659@google.com>
-In-Reply-To: <20190905161642.GA5659@google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Baolin Wang <baolin.wang@linaro.org>, "# 3.4.x" <stable@vger.kernel.org>, paulus@samba.org, linux-ppp@vger.kernel.org, Networking <netdev@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Orson Zhai <orsonzhai@gmail.com>, Vincent Guittot <vincent.guittot@linaro.org>, LKML <linux-kernel@vger.kernel.org>
+To: linux-ppp@vger.kernel.org
 
-On Fri, 6 Sep 2019 at 00:16, Eric Biggers <ebiggers@google.com> wrote:
->
-> On Thu, Sep 05, 2019 at 11:10:45AM +0800, Baolin Wang wrote:
-> > From: Eric Biggers <ebiggers@google.com>
-> >
-> > [Upstream commit 25a09ce79639a8775244808c17282c491cff89cf]
-> >
-> > Commit 0e5a610b5ca5 ("ppp: mppe: switch to RC4 library interface"),
-> > which was merged through the crypto tree for v5.3, changed ppp_mppe.c to
-> > use the new arc4_crypt() library function rather than access RC4 through
-> > the dynamic crypto_skcipher API.
-> >
-> > Meanwhile commit aad1dcc4f011 ("ppp: mppe: Add softdep to arc4") was
-> > merged through the net tree and added a module soft-dependency on "arc4".
-> >
-> > The latter commit no longer makes sense because the code now uses the
-> > "libarc4" module rather than "arc4", and also due to the direct use of
-> > arc4_crypt(), no module soft-dependency is required.
-> >
-> > So revert the latter commit.
-> >
-> > Cc: Takashi Iwai <tiwai@suse.de>
-> > Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> > Signed-off-by: Eric Biggers <ebiggers@google.com>
-> > Signed-off-by: David S. Miller <davem@davemloft.net>
-> > Signed-off-by: Baolin Wang <baolin.wang@linaro.org>
-> > ---
-> >  drivers/net/ppp/ppp_mppe.c |    1 -
-> >  1 file changed, 1 deletion(-)
-> >
-> > diff --git a/drivers/net/ppp/ppp_mppe.c b/drivers/net/ppp/ppp_mppe.c
-> > index d9eda7c..6c7fd98 100644
-> > --- a/drivers/net/ppp/ppp_mppe.c
-> > +++ b/drivers/net/ppp/ppp_mppe.c
-> > @@ -63,7 +63,6 @@
-> >  MODULE_DESCRIPTION("Point-to-Point Protocol Microsoft Point-to-Point Encryption support");
-> >  MODULE_LICENSE("Dual BSD/GPL");
-> >  MODULE_ALIAS("ppp-compress-" __stringify(CI_MPPE));
-> > -MODULE_SOFTDEP("pre: arc4");
->
-> Why is this being backported?  This revert was only needed because of a
-> different patch that was merged in v5.3, as I explained in the commit message.
+When ppp is closing, __ppp_xmit_process() failed to enqueue skb
+and skb allocated in ppp_write() is leaked.
 
-Sorry I missed this. I should remove this patch from our product kernel too.
+syzbot reported :
+BUG: memory leak
+unreferenced object 0xffff88812a17bc00 (size 224):
+  comm "syz-executor673", pid 6952, jiffies 4294942888 (age 13.040s)
+  hex dump (first 32 bytes):
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<00000000d110fff9>] kmemleak_alloc_recursive include/linux/kmemleak.h:43 [inline]
+    [<00000000d110fff9>] slab_post_alloc_hook mm/slab.h:522 [inline]
+    [<00000000d110fff9>] slab_alloc_node mm/slab.c:3262 [inline]
+    [<00000000d110fff9>] kmem_cache_alloc_node+0x163/0x2f0 mm/slab.c:3574
+    [<000000002d616113>] __alloc_skb+0x6e/0x210 net/core/skbuff.c:197
+    [<000000000167fc45>] alloc_skb include/linux/skbuff.h:1055 [inline]
+    [<000000000167fc45>] ppp_write+0x48/0x120 drivers/net/ppp/ppp_generic.c:502
+    [<000000009ab42c0b>] __vfs_write+0x43/0xa0 fs/read_write.c:494
+    [<00000000086b2e22>] vfs_write fs/read_write.c:558 [inline]
+    [<00000000086b2e22>] vfs_write+0xee/0x210 fs/read_write.c:542
+    [<00000000a2b70ef9>] ksys_write+0x7c/0x130 fs/read_write.c:611
+    [<00000000ce5e0fdd>] __do_sys_write fs/read_write.c:623 [inline]
+    [<00000000ce5e0fdd>] __se_sys_write fs/read_write.c:620 [inline]
+    [<00000000ce5e0fdd>] __x64_sys_write+0x1e/0x30 fs/read_write.c:620
+    [<00000000d9d7b370>] do_syscall_64+0x76/0x1a0 arch/x86/entry/common.c:296
+    [<0000000006e6d506>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
 
+Fix this by freeing skb, if ppp is closing.
+
+Reported-and-tested-by: syzbot+d9c8bf24e56416d7ce2c@syzkaller.appspotmail.com
+Signed-off-by: Takeshi Misawa <jeliantsurux@gmail.com>
+---
+Dear Paul Mackerras
+
+syzbot reported memory leak in net/ppp.
+[TITLE] memory leak in ppp_write
+
+I send a patch that passed syzbot reproducer test. 
+Please consider this memory leak and patch.
+
+Regards.
+---
+ drivers/net/ppp/ppp_generic.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index a30e41a56085..9a1b006904a7 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -1415,6 +1415,8 @@ static void __ppp_xmit_process(struct ppp *ppp, struct sk_buff *skb)
+ 			netif_wake_queue(ppp->dev);
+ 		else
+ 			netif_stop_queue(ppp->dev);
++	} else {
++		kfree_skb(skb);
+ 	}
+ 	ppp_xmit_unlock(ppp);
+ }
 -- 
-Baolin Wang
-Best Regards
+2.17.1
