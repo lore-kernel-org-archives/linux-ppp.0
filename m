@@ -1,71 +1,89 @@
-From: Takeshi Misawa <jeliantsurux@gmail.com>
-Date: Sat, 14 Sep 2019 04:09:58 +0000
-Subject: [PATCH] ppp: Fix memory leak in ppp_write
-Message-Id: <20190914040958.GA2363@DESKTOP>
+From: walter harms <wharms@bfs.de>
+Date: Sat, 14 Sep 2019 10:36:05 +0000
+Subject: Re: [PATCH] ppp: Fix memory leak in ppp_write
+Message-Id: <5D7CC295.3090402@bfs.de>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20190914040958.GA2363@DESKTOP>
+In-Reply-To: <20190914040958.GA2363@DESKTOP>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-When ppp is closing, __ppp_xmit_process() failed to enqueue skb
-and skb allocated in ppp_write() is leaked.
 
-syzbot reported :
-BUG: memory leak
-unreferenced object 0xffff88812a17bc00 (size 224):
-  comm "syz-executor673", pid 6952, jiffies 4294942888 (age 13.040s)
-  hex dump (first 32 bytes):
-    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-  backtrace:
-    [<00000000d110fff9>] kmemleak_alloc_recursive include/linux/kmemleak.h:43 [inline]
-    [<00000000d110fff9>] slab_post_alloc_hook mm/slab.h:522 [inline]
-    [<00000000d110fff9>] slab_alloc_node mm/slab.c:3262 [inline]
-    [<00000000d110fff9>] kmem_cache_alloc_node+0x163/0x2f0 mm/slab.c:3574
-    [<000000002d616113>] __alloc_skb+0x6e/0x210 net/core/skbuff.c:197
-    [<000000000167fc45>] alloc_skb include/linux/skbuff.h:1055 [inline]
-    [<000000000167fc45>] ppp_write+0x48/0x120 drivers/net/ppp/ppp_generic.c:502
-    [<000000009ab42c0b>] __vfs_write+0x43/0xa0 fs/read_write.c:494
-    [<00000000086b2e22>] vfs_write fs/read_write.c:558 [inline]
-    [<00000000086b2e22>] vfs_write+0xee/0x210 fs/read_write.c:542
-    [<00000000a2b70ef9>] ksys_write+0x7c/0x130 fs/read_write.c:611
-    [<00000000ce5e0fdd>] __do_sys_write fs/read_write.c:623 [inline]
-    [<00000000ce5e0fdd>] __se_sys_write fs/read_write.c:620 [inline]
-    [<00000000ce5e0fdd>] __x64_sys_write+0x1e/0x30 fs/read_write.c:620
-    [<00000000d9d7b370>] do_syscall_64+0x76/0x1a0 arch/x86/entry/common.c:296
-    [<0000000006e6d506>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
 
-Fix this by freeing skb, if ppp is closing.
+Am 14.09.2019 06:09, schrieb Takeshi Misawa:
+> When ppp is closing, __ppp_xmit_process() failed to enqueue skb
+> and skb allocated in ppp_write() is leaked.
+> 
+> syzbot reported :
+> BUG: memory leak
+> unreferenced object 0xffff88812a17bc00 (size 224):
+>   comm "syz-executor673", pid 6952, jiffies 4294942888 (age 13.040s)
+>   hex dump (first 32 bytes):
+>     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+>     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+>   backtrace:
+>     [<00000000d110fff9>] kmemleak_alloc_recursive include/linux/kmemleak.h:43 [inline]
+>     [<00000000d110fff9>] slab_post_alloc_hook mm/slab.h:522 [inline]
+>     [<00000000d110fff9>] slab_alloc_node mm/slab.c:3262 [inline]
+>     [<00000000d110fff9>] kmem_cache_alloc_node+0x163/0x2f0 mm/slab.c:3574
+>     [<000000002d616113>] __alloc_skb+0x6e/0x210 net/core/skbuff.c:197
+>     [<000000000167fc45>] alloc_skb include/linux/skbuff.h:1055 [inline]
+>     [<000000000167fc45>] ppp_write+0x48/0x120 drivers/net/ppp/ppp_generic.c:502
+>     [<000000009ab42c0b>] __vfs_write+0x43/0xa0 fs/read_write.c:494
+>     [<00000000086b2e22>] vfs_write fs/read_write.c:558 [inline]
+>     [<00000000086b2e22>] vfs_write+0xee/0x210 fs/read_write.c:542
+>     [<00000000a2b70ef9>] ksys_write+0x7c/0x130 fs/read_write.c:611
+>     [<00000000ce5e0fdd>] __do_sys_write fs/read_write.c:623 [inline]
+>     [<00000000ce5e0fdd>] __se_sys_write fs/read_write.c:620 [inline]
+>     [<00000000ce5e0fdd>] __x64_sys_write+0x1e/0x30 fs/read_write.c:620
+>     [<00000000d9d7b370>] do_syscall_64+0x76/0x1a0 arch/x86/entry/common.c:296
+>     [<0000000006e6d506>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+> 
+> Fix this by freeing skb, if ppp is closing.
+> 
+> Reported-and-tested-by: syzbot+d9c8bf24e56416d7ce2c@syzkaller.appspotmail.com
+> Signed-off-by: Takeshi Misawa <jeliantsurux@gmail.com>
+> ---
+> Dear Paul Mackerras
+> 
+> syzbot reported memory leak in net/ppp.
+> [TITLE] memory leak in ppp_write
+> 
+> I send a patch that passed syzbot reproducer test. 
+> Please consider this memory leak and patch.
+> 
+> Regards.
+> ---
+>  drivers/net/ppp/ppp_generic.c | 2 ++
+>  1 file changed, 2 insertions(+)
+> 
+> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+> index a30e41a56085..9a1b006904a7 100644
+> --- a/drivers/net/ppp/ppp_generic.c
+> +++ b/drivers/net/ppp/ppp_generic.c
+> @@ -1415,6 +1415,8 @@ static void __ppp_xmit_process(struct ppp *ppp, struct sk_buff *skb)
+>  			netif_wake_queue(ppp->dev);
+>  		else
+>  			netif_stop_queue(ppp->dev);
+> +	} else {
+> +		kfree_skb(skb);
+>  	}
+>  	ppp_xmit_unlock(ppp);
+>  }
 
-Reported-and-tested-by: syzbot+d9c8bf24e56416d7ce2c@syzkaller.appspotmail.com
-Signed-off-by: Takeshi Misawa <jeliantsurux@gmail.com>
----
-Dear Paul Mackerras
+nitpicking:
 
-syzbot reported memory leak in net/ppp.
-[TITLE] memory leak in ppp_write
+i would suggest
+if (ppp->closing)
+	kfree_skb(skb)
 
-I send a patch that passed syzbot reproducer test. 
-Please consider this memory leak and patch.
+else
+ ......
 
-Regards.
----
- drivers/net/ppp/ppp_generic.c | 2 ++
- 1 file changed, 2 insertions(+)
+i think that make that more easy to read as people tend to overlook
+things like *not*.
 
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index a30e41a56085..9a1b006904a7 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -1415,6 +1415,8 @@ static void __ppp_xmit_process(struct ppp *ppp, struct sk_buff *skb)
- 			netif_wake_queue(ppp->dev);
- 		else
- 			netif_stop_queue(ppp->dev);
-+	} else {
-+		kfree_skb(skb);
- 	}
- 	ppp_xmit_unlock(ppp);
- }
--- 
-2.17.1
+re,
+ wh
