@@ -1,7 +1,7 @@
-From: walter harms <wharms@bfs.de>
-Date: Sat, 14 Sep 2019 10:36:05 +0000
+From: Guillaume Nault <gnault@redhat.com>
+Date: Tue, 17 Sep 2019 22:40:12 +0000
 Subject: Re: [PATCH] ppp: Fix memory leak in ppp_write
-Message-Id: <5D7CC295.3090402@bfs.de>
+Message-Id: <20190917224012.GA10899@linux.home>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20190914040958.GA2363@DESKTOP>
 In-Reply-To: <20190914040958.GA2363@DESKTOP>
@@ -10,9 +10,7 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-
-
-Am 14.09.2019 06:09, schrieb Takeshi Misawa:
+On Sat, Sep 14, 2019 at 01:09:58PM +0900, Takeshi Misawa wrote:
 > When ppp is closing, __ppp_xmit_process() failed to enqueue skb
 > and skb allocated in ppp_write() is leaked.
 > 
@@ -54,36 +52,18 @@ Am 14.09.2019 06:09, schrieb Takeshi Misawa:
 > I send a patch that passed syzbot reproducer test. 
 > Please consider this memory leak and patch.
 > 
-> Regards.
-> ---
->  drivers/net/ppp/ppp_generic.c | 2 ++
->  1 file changed, 2 insertions(+)
-> 
-> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-> index a30e41a56085..9a1b006904a7 100644
-> --- a/drivers/net/ppp/ppp_generic.c
-> +++ b/drivers/net/ppp/ppp_generic.c
-> @@ -1415,6 +1415,8 @@ static void __ppp_xmit_process(struct ppp *ppp, struct sk_buff *skb)
->  			netif_wake_queue(ppp->dev);
->  		else
->  			netif_stop_queue(ppp->dev);
-> +	} else {
-> +		kfree_skb(skb);
->  	}
->  	ppp_xmit_unlock(ppp);
->  }
+Hi Takeshi,
 
-nitpicking:
+Kernel networking patches are reviewed on netdev ML. Your patch looks
+good but the description misses a Fixes tag:
 
-i would suggest
-if (ppp->closing)
-	kfree_skb(skb)
+Fixes: 6d066734e9f0 ("ppp: avoid loop in xmit recursion detection code")
 
-else
- ......
+Can you please send this patch formally to netdev? Don't forget to
+indicate which tree you're tagetting in the subject. In this case, it
+should be [PATCH net] (see Documentation/networking/netdev-FAQ.rst for
+details).
 
-i think that make that more easy to read as people tend to overlook
-things like *not*.
+Thanks for fixing my bug :)
 
-re,
- wh
+Guillaume
