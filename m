@@ -1,12 +1,20 @@
 From: Kurt Van Dijck <dev.kurt@vandijck-laurijssen.be>
-Date: Thu, 26 Sep 2019 07:21:04 +0000
-Subject: [PATCH 7/9] pppoe: remove the use of cdefs
-Message-Id: <1569482466-9551-8-git-send-email-dev.kurt@vandijck-laurijssen.be>
+Date: Mon, 30 Sep 2019 12:45:08 +0000
+Subject: Re: [PATCH 7/9] pppoe: remove the use of cdefs
+Message-Id: <20190930124508.GA27078@x1.vandijck-laurijssen.be>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1569482466-9551-8-git-send-email-dev.kurt@vandijck-laurijssen.be>
+In-Reply-To: <1569482466-9551-8-git-send-email-dev.kurt@vandijck-laurijssen.be>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
+
+sys/cdefs.h contains the __P() macro.
+The header doesn't exist in my musl toolchain,
+the __P() macro has been obsoleted even by glibc,
+and it's never used in the code.
+This commit removes the need for this remainder.
 
 Signed-off-by: Kurt Van Dijck <dev.kurt@vandijck-laurijssen.be>
 ---
@@ -43,5 +51,3 @@ index 813dcf3..55f0ca3 100644
  #ifdef HAVE_SYS_SOCKET_H
  #include <sys/socket.h>
  #endif
--- 
-1.8.5.rc3
