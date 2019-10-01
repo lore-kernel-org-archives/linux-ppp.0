@@ -1,109 +1,73 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Date: Wed, 09 Oct 2019 19:10:41 +0000
-Subject: [PATCH v6 40/43] compat_ioctl: ppp: move simple commands into ppp_generic.c
-Message-Id: <20191009191044.308087-41-arnd@arndb.de>
+From: Sasha Levin <sashal@kernel.org>
+Date: Tue, 01 Oct 2019 16:41:02 +0000
+Subject: [PATCH AUTOSEL 5.2 40/63] ppp: Fix memory leak in ppp_write
+Message-Id: <20191001164125.15398-40-sashal@kernel.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20191009190853.245077-1-arnd@arndb.de>
-In-Reply-To: <20191009190853.245077-1-arnd@arndb.de>
+References: <20191001164125.15398-1-sashal@kernel.org>
+In-Reply-To: <20191001164125.15398-1-sashal@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: linux-kernel@vger.kernel.org, y2038@lists.linaro.org, linux-fsdevel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Takeshi Misawa <jeliantsurux@gmail.com>, syzbot+d9c8bf24e56416d7ce2c@syzkaller.appspotmail.com, Guillaume Nault <gnault@redhat.com>, "David S . Miller" <davem@davemloft.net>, Sasha Levin <sashal@kernel.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-All ppp commands that are not already handled in ppp_compat_ioctl()
-are compatible, so they can now handled by calling the native
-ppp_ioctl() directly.
+From: Takeshi Misawa <jeliantsurux@gmail.com>
 
-Without CONFIG_BLOCK, the generic compat_ioctl table is now empty,
-so add a check to avoid a build failure in the looking function for
-that configuration.
+[ Upstream commit 4c247de564f1ff614d11b3bb5313fb70d7b9598b ]
 
-Cc: netdev@vger.kernel.org
-Cc: linux-ppp@vger.kernel.org
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: "David S. Miller" <davem@davemloft.net>
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+When ppp is closing, __ppp_xmit_process() failed to enqueue skb
+and skb allocated in ppp_write() is leaked.
+
+syzbot reported :
+BUG: memory leak
+unreferenced object 0xffff88812a17bc00 (size 224):
+  comm "syz-executor673", pid 6952, jiffies 4294942888 (age 13.040s)
+  hex dump (first 32 bytes):
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<00000000d110fff9>] kmemleak_alloc_recursive include/linux/kmemleak.h:43 [inline]
+    [<00000000d110fff9>] slab_post_alloc_hook mm/slab.h:522 [inline]
+    [<00000000d110fff9>] slab_alloc_node mm/slab.c:3262 [inline]
+    [<00000000d110fff9>] kmem_cache_alloc_node+0x163/0x2f0 mm/slab.c:3574
+    [<000000002d616113>] __alloc_skb+0x6e/0x210 net/core/skbuff.c:197
+    [<000000000167fc45>] alloc_skb include/linux/skbuff.h:1055 [inline]
+    [<000000000167fc45>] ppp_write+0x48/0x120 drivers/net/ppp/ppp_generic.c:502
+    [<000000009ab42c0b>] __vfs_write+0x43/0xa0 fs/read_write.c:494
+    [<00000000086b2e22>] vfs_write fs/read_write.c:558 [inline]
+    [<00000000086b2e22>] vfs_write+0xee/0x210 fs/read_write.c:542
+    [<00000000a2b70ef9>] ksys_write+0x7c/0x130 fs/read_write.c:611
+    [<00000000ce5e0fdd>] __do_sys_write fs/read_write.c:623 [inline]
+    [<00000000ce5e0fdd>] __se_sys_write fs/read_write.c:620 [inline]
+    [<00000000ce5e0fdd>] __x64_sys_write+0x1e/0x30 fs/read_write.c:620
+    [<00000000d9d7b370>] do_syscall_64+0x76/0x1a0 arch/x86/entry/common.c:296
+    [<0000000006e6d506>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+Fix this by freeing skb, if ppp is closing.
+
+Fixes: 6d066734e9f0 ("ppp: avoid loop in xmit recursion detection code")
+Reported-and-tested-by: syzbot+d9c8bf24e56416d7ce2c@syzkaller.appspotmail.com
+Signed-off-by: Takeshi Misawa <jeliantsurux@gmail.com>
+Reviewed-by: Guillaume Nault <gnault@redhat.com>
+Tested-by: Guillaume Nault <gnault@redhat.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- drivers/net/ppp/ppp_generic.c |  4 ++++
- fs/compat_ioctl.c             | 36 ++++-------------------------------
- 2 files changed, 8 insertions(+), 32 deletions(-)
+ drivers/net/ppp/ppp_generic.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index ce4dd45c541d..267fe2c58087 100644
+index a30e41a560853..9a1b006904a7d 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -903,6 +903,10 @@ static long ppp_compat_ioctl(struct file *file, unsigned int cmd, unsigned long
+@@ -1415,6 +1415,8 @@ static void __ppp_xmit_process(struct ppp *ppp, struct sk_buff *skb)
+ 			netif_wake_queue(ppp->dev);
+ 		else
+ 			netif_stop_queue(ppp->dev);
++	} else {
++		kfree_skb(skb);
  	}
- 	mutex_unlock(&ppp_mutex);
- 
-+	/* all other commands have compatible arguments */
-+	if (err = -ENOIOCTLCMD)
-+		err = ppp_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
-+
- 	return err;
+ 	ppp_xmit_unlock(ppp);
  }
- #endif
-diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
-index 5e59101ef981..3cf8b6d113c3 100644
---- a/fs/compat_ioctl.c
-+++ b/fs/compat_ioctl.c
-@@ -144,38 +144,6 @@ COMPATIBLE_IOCTL(SG_GET_REQUEST_TABLE)
- COMPATIBLE_IOCTL(SG_SET_KEEP_ORPHAN)
- COMPATIBLE_IOCTL(SG_GET_KEEP_ORPHAN)
- #endif
--/* PPP stuff */
--COMPATIBLE_IOCTL(PPPIOCGFLAGS)
--COMPATIBLE_IOCTL(PPPIOCSFLAGS)
--COMPATIBLE_IOCTL(PPPIOCGASYNCMAP)
--COMPATIBLE_IOCTL(PPPIOCSASYNCMAP)
--COMPATIBLE_IOCTL(PPPIOCGUNIT)
--COMPATIBLE_IOCTL(PPPIOCGRASYNCMAP)
--COMPATIBLE_IOCTL(PPPIOCSRASYNCMAP)
--COMPATIBLE_IOCTL(PPPIOCGMRU)
--COMPATIBLE_IOCTL(PPPIOCSMRU)
--COMPATIBLE_IOCTL(PPPIOCSMAXCID)
--COMPATIBLE_IOCTL(PPPIOCGXASYNCMAP)
--COMPATIBLE_IOCTL(PPPIOCSXASYNCMAP)
--COMPATIBLE_IOCTL(PPPIOCXFERUNIT)
--/* PPPIOCSCOMPRESS is translated */
--COMPATIBLE_IOCTL(PPPIOCGNPMODE)
--COMPATIBLE_IOCTL(PPPIOCSNPMODE)
--COMPATIBLE_IOCTL(PPPIOCGDEBUG)
--COMPATIBLE_IOCTL(PPPIOCSDEBUG)
--/* PPPIOCSPASS is translated */
--/* PPPIOCSACTIVE is translated */
--COMPATIBLE_IOCTL(PPPIOCGIDLE32)
--COMPATIBLE_IOCTL(PPPIOCGIDLE64)
--COMPATIBLE_IOCTL(PPPIOCNEWUNIT)
--COMPATIBLE_IOCTL(PPPIOCATTACH)
--COMPATIBLE_IOCTL(PPPIOCDETACH)
--COMPATIBLE_IOCTL(PPPIOCSMRRU)
--COMPATIBLE_IOCTL(PPPIOCCONNECT)
--COMPATIBLE_IOCTL(PPPIOCDISCONN)
--COMPATIBLE_IOCTL(PPPIOCATTCHAN)
--COMPATIBLE_IOCTL(PPPIOCGCHAN)
--COMPATIBLE_IOCTL(PPPIOCGL2TPSTATS)
- };
- 
- /*
-@@ -202,6 +170,7 @@ static long do_ioctl_trans(unsigned int cmd,
- 
- static int compat_ioctl_check_table(unsigned int xcmd)
- {
-+#ifdef CONFIG_BLOCK
- 	int i;
- 	const int max = ARRAY_SIZE(ioctl_pointer) - 1;
- 
-@@ -220,6 +189,9 @@ static int compat_ioctl_check_table(unsigned int xcmd)
- 		i--;
- 
- 	return ioctl_pointer[i] = xcmd;
-+#else
-+	return 0;
-+#endif
- }
- 
- COMPAT_SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd,
 -- 
-2.20.0
+2.20.1
