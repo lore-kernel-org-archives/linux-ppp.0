@@ -1,10 +1,10 @@
 From: Sasha Levin <sashal@kernel.org>
-Date: Tue, 01 Oct 2019 16:42:58 +0000
-Subject: [PATCH AUTOSEL 4.19 30/43] ppp: Fix memory leak in ppp_write
-Message-Id: <20191001164311.15993-30-sashal@kernel.org>
+Date: Tue, 01 Oct 2019 16:44:15 +0000
+Subject: [PATCH AUTOSEL 4.14 21/29] ppp: Fix memory leak in ppp_write
+Message-Id: <20191001164423.16406-21-sashal@kernel.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20191001164311.15993-1-sashal@kernel.org>
-In-Reply-To: <20191001164311.15993-1-sashal@kernel.org>
+References: <20191001164423.16406-1-sashal@kernel.org>
+In-Reply-To: <20191001164423.16406-1-sashal@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -57,10 +57,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 02ad03a2fab77..3e014ecffef8e 100644
+index 34b24d7e1e2f3..8faf4488340dd 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -1419,6 +1419,8 @@ static void __ppp_xmit_process(struct ppp *ppp, struct sk_buff *skb)
+@@ -1433,6 +1433,8 @@ static void __ppp_xmit_process(struct ppp *ppp, struct sk_buff *skb)
  			netif_wake_queue(ppp->dev);
  		else
  			netif_stop_queue(ppp->dev);
