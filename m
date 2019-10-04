@@ -1,7 +1,7 @@
-From: Kurt Van Dijck <dev.kurt@vandijck-laurijssen.be>
-Date: Fri, 04 Oct 2019 18:33:23 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Fri, 04 Oct 2019 20:10:38 +0000
 Subject: Re: [PATCH] time.h: include header before using time_t
-Message-Id: <20191004183323.GB868@x1.vandijck-laurijssen.be>
+Message-Id: <2342bac3-8759-d98b-631e-3c0d760e1126@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20191004174046.GA868@x1.vandijck-laurijssen.be>
 In-Reply-To: <20191004174046.GA868@x1.vandijck-laurijssen.be>
@@ -10,27 +10,33 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On vr, 04 okt 2019 13:52:11 -0400, James Carlson wrote:
-> On 10/04/19 13:40, Kurt Van Dijck wrote:
-> > I think you confirm 4x what I said, but I probably expressed myself
-> > badly, so "show me code!", I created this patch.
-> > It (1) works for me and (2) does not mix userspace headers in kernel
-> > space anywhere.
-> > Would this work for you?
-> 
-> That seems ok, in as much as it compiles on Solaris.  But I'm still a
-> little confused about your apparent opposition to <sys/time.h> at the
-> point where time_t is actually used.
-> 
-> <sys/time.h> is part of the UNIX standards.  It's documented to define
-> time_t (among other things).  It's on-point for a header file that may
-> be used in kernel context.  What's the concern?
+On 10/04/19 14:33, Kurt Van Dijck wrote:
+> On vr, 04 okt 2019 13:52:11 -0400, James Carlson wrote:
+> headers under sys/ are, AFAIK, not delivered by the kernel, but by the
+> toolchain. sys/time.h may have less issues than time.h, it has the same
+> disease.
 
-headers under sys/ are, AFAIK, not delivered by the kernel, but by the
-toolchain. sys/time.h may have less issues than time.h, it has the same
-disease.
+I've never heard of this problem.  I'm afraid I don't know what you're
+referring to.
 
-But maybe I'm incompetent on the matter, my knowledge besides linux on
-this matter is very limited.
+I've never heard of a compiler (or other tool chain component) that
+delivers files to /usr/include/sys.  That'd be somewhat surprising to
+me, but I guess it's a wide world out there.
 
-Kurt
+As the name says, the stuff under sys/ is part of the _system_.  On
+UNIX, the standard parts of it are described in the Single UNIX
+Standard, maintained by The Open Group.  That's the documentation
+pointer I provided previously.
+
+Are there systems where system header files aren't installed by default?
+ Sure.  That's somewhat commonplace.  But on such a machine you can't
+compile things (including pppd) until you install the (presumably
+optional) header files.
+
+If you look closely, you'll see that pppd/main.c already includes
+<sys/time.h> and it's not guarded by any conditional compilation because
+it's a *STANDARD HEADER FILE*.  If there were problems of some sort with
+this include file, I'd expect they'd have surfaced by now.
+
+-- 
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
