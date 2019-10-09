@@ -1,44 +1,221 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 04 Oct 2019 14:49:17 +0000
-Subject: Re: [PATCH 4/9] pppd: include time.h before using time_t
-Message-Id: <f274b8fb-d472-c66d-5bc7-6af229a5f1b1@workingcode.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Wed, 09 Oct 2019 19:10:40 +0000
+Subject: [PATCH v6 39/43] compat_ioctl: handle PPPIOCGIDLE for 64-bit time_t
+Message-Id: <20191009191044.308087-40-arnd@arndb.de>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1569482466-9551-5-git-send-email-dev.kurt@vandijck-laurijssen.be>
-In-Reply-To: <1569482466-9551-5-git-send-email-dev.kurt@vandijck-laurijssen.be>
+References: <20191009190853.245077-1-arnd@arndb.de>
+In-Reply-To: <20191009190853.245077-1-arnd@arndb.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-kernel@vger.kernel.org, y2038@lists.linaro.org, linux-fsdevel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>
 
-On 10/04/19 10:29, Kurt Van Dijck wrote:
-> I don't know a system where (a) or (b) are valid. My point is that such
-> system could could exist, so I learned not to inspect the header files
-> looking for a type, but inspect man-pages or specifications when looking
-> for a type, and so time_t is defined in time.h.
+The ppp_idle structure is defined in terms of __kernel_time_t, which is
+defined as 'long' on all architectures, and this usage is not affected
+by the y2038 problem since it transports a time interval rather than an
+absolute time.
 
-I didn't just go trolling a grepping for time_t.  sys/time.h is pretty
-well-established in UNIX, and I think you're punting when you point to
-ANSI C alone as the authority here.
+However, the ppp user space defines the same structure as time_t, which
+may be 64-bit wide on new libc versions even on 32-bit architectures.
 
-As for documentation, how does SUSv2 seem?
+It's easy enough to just handle both possible structure layouts on
+all architectures, to deal with the possibility that a user space ppp
+implementation comes with its own ppp_idle structure definition, as well
+as to document the fact that the driver is y2038-safe.
 
-https://pubs.opengroup.org/onlinepubs/7908799/xsh/systime.h.html
+Doing this also avoids the need for a special compat mode translation,
+since 32-bit and 64-bit kernels now support the same interfaces.  The old
+32-bit structure is also available on native 64-bit architectures now,
+but this is harmless.
 
-> Now that I know that that file is used as include for kernel code, I'd
-> rather include time.h in the userspace c-files.
+Cc: netdev@vger.kernel.org
+Cc: linux-ppp@vger.kernel.org
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: "David S. Miller" <davem@davemloft.net>
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ Documentation/networking/ppp_generic.txt |  2 ++
+ drivers/net/ppp/ppp_generic.c            | 19 ++++++++----
+ fs/compat_ioctl.c                        | 38 ++++--------------------
+ include/uapi/linux/ppp-ioctl.h           |  2 ++
+ include/uapi/linux/ppp_defs.h            | 14 +++++++++
+ 5 files changed, 37 insertions(+), 38 deletions(-)
 
-My point is that include/net/ isn't strictly userspace.
-
-If you feel the need, then go ahead and include <time.h> in user level
-files.  This just isn't one of those.
-
-If you must do this in ppp_def.h, then it needs to be guarded against
-*all* of the systems where including a top-level header file inside a
-kernel module is the wrong thing to do, not just "ifndef SOLARIS".  Do
-you know which systems those are?  I can tell you that Solaris/Illumos
-is at least one such system, but I can't tell you that it's *all* of them.
-
-I think this include is out of place here.
-
+diff --git a/Documentation/networking/ppp_generic.txt b/Documentation/networking/ppp_generic.txt
+index 61daf4b39600..fd563aff5fc9 100644
+--- a/Documentation/networking/ppp_generic.txt
++++ b/Documentation/networking/ppp_generic.txt
+@@ -378,6 +378,8 @@ an interface unit are:
+   CONFIG_PPP_FILTER option is enabled, the set of packets which reset
+   the transmit and receive idle timers is restricted to those which
+   pass the `active' packet filter.
++  Two versions of this command exist, to deal with user space
++  expecting times as either 32-bit or 64-bit time_t seconds.
+ 
+ * PPPIOCSMAXCID sets the maximum connection-ID parameter (and thus the
+   number of connection slots) for the TCP header compressor and
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index fb8e0ac099b8..ce4dd45c541d 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -612,7 +612,8 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	struct ppp_file *pf;
+ 	struct ppp *ppp;
+ 	int err = -EFAULT, val, val2, i;
+-	struct ppp_idle idle;
++	struct ppp_idle32 idle32;
++	struct ppp_idle64 idle64;
+ 	struct npioctl npi;
+ 	int unit, cflags;
+ 	struct slcompress *vj;
+@@ -735,10 +736,18 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		err = 0;
+ 		break;
+ 
+-	case PPPIOCGIDLE:
+-		idle.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
+-		idle.recv_idle = (jiffies - ppp->last_recv) / HZ;
+-		if (copy_to_user(argp, &idle, sizeof(idle)))
++	case PPPIOCGIDLE32:
++                idle32.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
++                idle32.recv_idle = (jiffies - ppp->last_recv) / HZ;
++                if (copy_to_user(argp, &idle32, sizeof(idle32)))
++			break;
++		err = 0;
++		break;
++
++	case PPPIOCGIDLE64:
++		idle64.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
++		idle64.recv_idle = (jiffies - ppp->last_recv) / HZ;
++		if (copy_to_user(argp, &idle64, sizeof(idle64)))
+ 			break;
+ 		err = 0;
+ 		break;
+diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+index 0b5a732d7afd..5e59101ef981 100644
+--- a/fs/compat_ioctl.c
++++ b/fs/compat_ioctl.c
+@@ -52,6 +52,7 @@
+ 
+ #include <linux/sort.h>
+ 
++#ifdef CONFIG_BLOCK
+ static int do_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ {
+ 	int err;
+@@ -63,7 +64,6 @@ static int do_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	return vfs_ioctl(file, cmd, arg);
+ }
+ 
+-#ifdef CONFIG_BLOCK
+ struct compat_sg_req_info { /* used by SG_GET_REQUEST_TABLE ioctl() */
+ 	char req_state;
+ 	char orphan;
+@@ -99,33 +99,6 @@ static int sg_grt_trans(struct file *file,
+ }
+ #endif /* CONFIG_BLOCK */
+ 
+-struct ppp_idle32 {
+-	compat_time_t xmit_idle;
+-	compat_time_t recv_idle;
+-};
+-#define PPPIOCGIDLE32		_IOR('t', 63, struct ppp_idle32)
+-
+-static int ppp_gidle(struct file *file, unsigned int cmd,
+-		struct ppp_idle32 __user *idle32)
+-{
+-	struct ppp_idle __user *idle;
+-	__kernel_time_t xmit, recv;
+-	int err;
+-
+-	idle = compat_alloc_user_space(sizeof(*idle));
+-
+-	err = do_ioctl(file, PPPIOCGIDLE, (unsigned long) idle);
+-
+-	if (!err) {
+-		if (get_user(xmit, &idle->xmit_idle) ||
+-		    get_user(recv, &idle->recv_idle) ||
+-		    put_user(xmit, &idle32->xmit_idle) ||
+-		    put_user(recv, &idle32->recv_idle))
+-			err = -EFAULT;
+-	}
+-	return err;
+-}
+-
+ /*
+  * simple reversible transform to make our table more evenly
+  * distributed after sorting.
+@@ -192,7 +165,8 @@ COMPATIBLE_IOCTL(PPPIOCGDEBUG)
+ COMPATIBLE_IOCTL(PPPIOCSDEBUG)
+ /* PPPIOCSPASS is translated */
+ /* PPPIOCSACTIVE is translated */
+-/* PPPIOCGIDLE is translated */
++COMPATIBLE_IOCTL(PPPIOCGIDLE32)
++COMPATIBLE_IOCTL(PPPIOCGIDLE64)
+ COMPATIBLE_IOCTL(PPPIOCNEWUNIT)
+ COMPATIBLE_IOCTL(PPPIOCATTACH)
+ COMPATIBLE_IOCTL(PPPIOCDETACH)
+@@ -214,16 +188,14 @@ COMPATIBLE_IOCTL(PPPIOCGL2TPSTATS)
+ static long do_ioctl_trans(unsigned int cmd,
+ 		 unsigned long arg, struct file *file)
+ {
++#ifdef CONFIG_BLOCK
+ 	void __user *argp = compat_ptr(arg);
+ 
+ 	switch (cmd) {
+-	case PPPIOCGIDLE32:
+-		return ppp_gidle(file, cmd, argp);
+-#ifdef CONFIG_BLOCK
+ 	case SG_GET_REQUEST_TABLE:
+ 		return sg_grt_trans(file, cmd, argp);
+-#endif
+ 	}
++#endif
+ 
+ 	return -ENOIOCTLCMD;
+ }
+diff --git a/include/uapi/linux/ppp-ioctl.h b/include/uapi/linux/ppp-ioctl.h
+index 88b5f9990320..7bd2a5a75348 100644
+--- a/include/uapi/linux/ppp-ioctl.h
++++ b/include/uapi/linux/ppp-ioctl.h
+@@ -104,6 +104,8 @@ struct pppol2tp_ioc_stats {
+ #define PPPIOCGDEBUG	_IOR('t', 65, int)	/* Read debug level */
+ #define PPPIOCSDEBUG	_IOW('t', 64, int)	/* Set debug level */
+ #define PPPIOCGIDLE	_IOR('t', 63, struct ppp_idle) /* get idle time */
++#define PPPIOCGIDLE32	_IOR('t', 63, struct ppp_idle32) /* 32-bit times */
++#define PPPIOCGIDLE64	_IOR('t', 63, struct ppp_idle64) /* 64-bit times */
+ #define PPPIOCNEWUNIT	_IOWR('t', 62, int)	/* create new ppp unit */
+ #define PPPIOCATTACH	_IOW('t', 61, int)	/* attach to ppp unit */
+ #define PPPIOCDETACH	_IOW('t', 60, int)	/* obsolete, do not use */
+diff --git a/include/uapi/linux/ppp_defs.h b/include/uapi/linux/ppp_defs.h
+index fff51b91b409..0039fa39a358 100644
+--- a/include/uapi/linux/ppp_defs.h
++++ b/include/uapi/linux/ppp_defs.h
+@@ -142,10 +142,24 @@ struct ppp_comp_stats {
+ /*
+  * The following structure records the time in seconds since
+  * the last NP packet was sent or received.
++ *
++ * Linux implements both 32-bit and 64-bit time_t versions
++ * for compatibility with user space that defines ppp_idle
++ * based on the libc time_t.
+  */
+ struct ppp_idle {
+     __kernel_time_t xmit_idle;	/* time since last NP packet sent */
+     __kernel_time_t recv_idle;	/* time since last NP packet received */
+ };
+ 
++struct ppp_idle32 {
++    __s32 xmit_idle;		/* time since last NP packet sent */
++    __s32 recv_idle;		/* time since last NP packet received */
++};
++
++struct ppp_idle64 {
++    __s64 xmit_idle;		/* time since last NP packet sent */
++    __s64 recv_idle;		/* time since last NP packet received */
++};
++
+ #endif /* _UAPI_PPP_DEFS_H_ */
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+2.20.0
