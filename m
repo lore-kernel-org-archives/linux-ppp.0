@@ -1,36 +1,24 @@
-From: Guillaume Nault <gnault@redhat.com>
-Date: Fri, 27 Dec 2019 12:05:36 +0000
-Subject: Re: [PATCH v2] ppp: Remove redundant BUG_ON() check in ppp_pernet
-Message-Id: <20191227120536.GA32264@linux-2.home>
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Thu, 05 Dec 2019 09:08:45 +0000
+Subject: Re: KASAN: slab-out-of-bounds Read in bpf_prog_create
+Message-Id: <CAK8P3a3XLzm+zGmADUR3VYi4NziY-Aox7a8QG6VcGYQcAJiGnQ@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1577243224-1923-1-git-send-email-vulab@iscas.ac.cn>
-In-Reply-To: <1577243224-1923-1-git-send-email-vulab@iscas.ac.cn>
+References: <000000000000cacc7e0592c42ce3@google.com> <20190928031510.GD1079@sol.localdomain>
+ <20191205052220.GC1158@sol.localdomain>
+In-Reply-To: <20191205052220.GC1158@sol.localdomain>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Xu Wang <vulab@iscas.ac.cn>
-Cc: paulus@samba.org, davem@davemloft.net, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, syzbot <syzbot+eb853b51b10f1befa0b7@syzkaller.appspotmail.com>, Alexei Starovoitov <ast@kernel.org>, bpf@vger.kernel.org, Daniel Borkmann <daniel@iogearbox.net>, David Miller <davem@davemloft.net>, Jesper Dangaard Brouer <hawk@kernel.org>, Jakub Kicinski <jakub.kicinski@netronome.com>, John Fastabend <john.fastabend@gmail.com>, Martin KaFai Lau <kafai@fb.com>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-ppp@vger.kernel.org, Networking <netdev@vger.kernel.org>, Paul Mackerras <paulus@samba.org>, Song Liu <songliubraving@fb.com>, syzkaller-bugs <syzkaller-bugs@googlegroups.com>, Yonghong Song <yhs@fb.com>
 
-On Wed, Dec 25, 2019 at 03:07:04AM +0000, Xu Wang wrote:
-> Passing NULL to ppp_pernet causes a crash via BUG_ON.
-> Dereferencing net in net_generic() also has the same effect.
-> This patch removes the redundant BUG_ON check on the same parameter.
-> 
-> Signed-off-by: Xu Wang <vulab@iscas.ac.cn>
-> ---
->  drivers/net/ppp/ppp_generic.c | 2 --
->  1 file changed, 2 deletions(-)
-> 
-> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-> index 3bf8a8b..22cc2cb 100644
-> --- a/drivers/net/ppp/ppp_generic.c
-> +++ b/drivers/net/ppp/ppp_generic.c
-> @@ -296,8 +296,6 @@ static struct class *ppp_class;
->  /* per net-namespace data */
->  static inline struct ppp_net *ppp_pernet(struct net *net)
->  {
-> -	BUG_ON(!net);
-> -
->  	return net_generic(net, ppp_net_id);
->  }
-Acked-by: Guillaume Nault <gnault@redhat.com>
+On Thu, Dec 5, 2019 at 6:22 AM Eric Biggers <ebiggers@kernel.org> wrote:
+
+> >
+>
+> Why did you ignore this and merge the buggy commit to mainline anyway?
+> I even told you how to fix it...
+
+I'm sorry about this, I completely missed the email about it originally.
+
+      Arnd
