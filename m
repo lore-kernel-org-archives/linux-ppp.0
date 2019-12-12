@@ -1,108 +1,33 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Date: Thu, 05 Dec 2019 05:22:20 +0000
-Subject: Re: KASAN: slab-out-of-bounds Read in bpf_prog_create
-Message-Id: <20191205052220.GC1158@sol.localdomain>
+From: syzbot <syzbot+31043da7725b6ec210f1@syzkaller.appspotmail.com>
+Date: Thu, 12 Dec 2019 11:35:00 +0000
+Subject: Re: BUG: corrupted list in __dentry_kill (2)
+Message-Id: <000000000000b949ee0599802274@google.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <000000000000cacc7e0592c42ce3@google.com>
- <20190928031510.GD1079@sol.localdomain>
-In-Reply-To: <20190928031510.GD1079@sol.localdomain>
+In-Reply-To: <000000000000b6b03205997b71cf@google.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
+Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
-To: Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>
-Cc: syzbot <syzbot+eb853b51b10f1befa0b7@syzkaller.appspotmail.com>, ast@kernel.org, bpf@vger.kernel.org, daniel@iogearbox.net, davem@davemloft.net, hawk@kernel.org, jakub.kicinski@netronome.com, john.fastabend@gmail.com, kafai@fb.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, paulus@samba.org, songliubraving@fb.com, syzkaller-bugs@googlegroups.com, yhs@fb.com
+To: a@unstable.cc, alex.aring@gmail.com, allison@lohutok.net, andrew@lunn.ch, andy@greyhouse.net, ap420073@gmail.com, ast@domdv.de, ast@kernel.org, b.a.t.m.a.n@lists.open-mesh.org, bpf@vger.kernel.org, bridge@lists.linux-foundation.org, cleech@redhat.com, daniel@iogearbox.net, davem@davemloft.net, dsa@cumulusnetworks.com, dsahern@gmail.com, dvyukov@google.com, f.fainelli@gmail.com, fw@strlen.de, gregkh@linuxfoundation.org, haiyangz@microsoft.com, hawk@kernel.org, hdanton@sina.com, idosch@mellanox.com, info@metux.net, j.vosburgh@gmail.com, j@w1.fi, jakub.kicinski@netronome.com, jhs@mojatatu.com, jiri@mellanox.com, jiri@resnulli.us, johan.hedberg@gmail.com, johannes.berg@intel.com, john.fastabend@gmail.com, john.hurley@netronome.com, jwi@linux.ibm.com, kafai@fb.com, kstewart@linuxfoundation.org, kvalo@codeaurora.org, kys@microsoft.com, linux-bluetooth@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-hams@vger.kernel.org, linux-hyperv@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, linux-wireless@vger.kernel.org, linux-wpan@vger.kernel.org, liuhangbin@gmail.com, marcel@holtmann.org
 
-Arnd and Al,
+syzbot has bisected this bug to:
 
-On Fri, Sep 27, 2019 at 08:15:10PM -0700, Eric Biggers wrote:
-> Arnd and Al,
->=20
-> On Tue, Sep 17, 2019 at 11:49:06AM -0700, syzbot wrote:
-> > Hello,
-> >=20
-> > syzbot found the following crash on:
-> >=20
-> > HEAD commit:    2015a28f Add linux-next specific files for 20190915
-> > git tree:       linux-next
-> > console output: https://syzkaller.appspot.com/x/log.txt?x=11880d69600000
-> > kernel config:  https://syzkaller.appspot.com/x/.config?x=110691c2286b6=
-79a
-> > dashboard link: https://syzkaller.appspot.com/bug?extid=EB853b51b10f1be=
-fa0b7
-> > compiler:       gcc (GCC) 9.0.0 20181231 (experimental)
-> > syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=127c3481600=
-000
-> > C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1150a70d600000
-> >=20
-> > The bug was bisected to:
-> >=20
-> > commit 2f4fa2db75e26995709043c8d3de4632ebed5c4b
-> > Author: Al Viro <viro@zeniv.linux.org.uk>
-> > Date:   Thu Apr 18 03:48:01 2019 +0000
-> >=20
-> >     compat_ioctl: unify copy-in of ppp filters
-> >=20
-> > bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=145eee1d60=
-0000
-> > final crash:    https://syzkaller.appspot.com/x/report.txt?x=165eee1d60=
-0000
-> > console output: https://syzkaller.appspot.com/x/log.txt?x=125eee1d600000
-> >=20
-> > IMPORTANT: if you fix the bug, please add the following tag to the comm=
-it:
-> > Reported-by: syzbot+eb853b51b10f1befa0b7@syzkaller.appspotmail.com
-> > Fixes: 2f4fa2db75e2 ("compat_ioctl: unify copy-in of ppp filters")
-> >=20
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > BUG: KASAN: slab-out-of-bounds in memcpy include/linux/string.h:404 [in=
-line]
-> > BUG: KASAN: slab-out-of-bounds in bpf_prog_create+0xe9/0x250
-> > net/core/filter.c:1351
-> > Read of size 32768 at addr ffff88809cf74000 by task syz-executor183/8575
-> >=20
-> > CPU: 0 PID: 8575 Comm: syz-executor183 Not tainted 5.3.0-rc8-next-20190=
-915
-> > #0
-> > Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS
-> > Google 01/01/2011
-> > Call Trace:
-> >  __dump_stack lib/dump_stack.c:77 [inline]
-> >  dump_stack+0x172/0x1f0 lib/dump_stack.c:113
-> >  print_address_description.constprop.0.cold+0xd4/0x30b mm/kasan/report.=
-c:374
-> >  __kasan_report.cold+0x1b/0x41 mm/kasan/report.c:506
-> >  kasan_report+0x12/0x20 mm/kasan/common.c:634
-> >  check_memory_region_inline mm/kasan/generic.c:185 [inline]
-> >  check_memory_region+0x134/0x1a0 mm/kasan/generic.c:192
-> >  memcpy+0x24/0x50 mm/kasan/common.c:122
-> >  memcpy include/linux/string.h:404 [inline]
-> >  bpf_prog_create+0xe9/0x250 net/core/filter.c:1351
-> >  get_filter.isra.0+0x108/0x1a0 drivers/net/ppp/ppp_generic.c:572
-> >  ppp_get_filter drivers/net/ppp/ppp_generic.c:584 [inline]
-> >  ppp_ioctl+0x129d/0x2590 drivers/net/ppp/ppp_generic.c:801
->=20
-> This is a correct bisection.  This commit needs:
->=20
-> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-> index 267fe2c58087..f55d7937d6c5 100644
-> --- a/drivers/net/ppp/ppp_generic.c
-> +++ b/drivers/net/ppp/ppp_generic.c
-> @@ -564,8 +564,9 @@ static struct bpf_prog *get_filter(struct sock_fprog =
-*uprog)
->  		return NULL;
-> =20
->  	/* uprog->len is unsigned short, so no overflow here */
-> -	fprog.len =3D uprog->len * sizeof(struct sock_filter);
-> -	fprog.filter =3D memdup_user(uprog->filter, fprog.len);
-> +	fprog.len =3D uprog->len;
-> +	fprog.filter =3D memdup_user(uprog->filter,
-> +				   uprog->len * sizeof(struct sock_filter));
->  	if (IS_ERR(fprog.filter))
->  		return ERR_CAST(fprog.filter);
-> =20
+commit ab92d68fc22f9afab480153bd82a20f6e2533769
+Author: Taehee Yoo <ap420073@gmail.com>
+Date:   Mon Oct 21 18:47:51 2019 +0000
 
-Why did you ignore this and merge the buggy commit to mainline anyway?
-I even told you how to fix it...
+     net: core: add generic lockdep keys
 
-- Eric
+bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=12d37cb6e00000
+start commit:   938f49c8 Add linux-next specific files for 20191211
+git tree:       linux-next
+final crash:    https://syzkaller.appspot.com/x/report.txt?x=11d37cb6e00000
+console output: https://syzkaller.appspot.com/x/log.txt?x=16d37cb6e00000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=96834c884ba7bb81
+dashboard link: https://syzkaller.appspot.com/bug?extid1043da7725b6ec210f1
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=12dc83dae00000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=16ac8396e00000
+
+Reported-by: syzbot+31043da7725b6ec210f1@syzkaller.appspotmail.com
+Fixes: ab92d68fc22f ("net: core: add generic lockdep keys")
+
+For information about bisection process see: https://goo.gl/tpsmEJ#bisection
