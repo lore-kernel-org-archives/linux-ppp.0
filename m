@@ -1,26 +1,35 @@
-From: David Miller <davem@davemloft.net>
-Date: Thu, 05 Dec 2019 22:45:40 +0000
-Subject: Re: [PATCH] ppp: fix out-of-bounds access in bpf_prog_create()
-Message-Id: <20191205.144540.791142390544922677.davem@davemloft.net>
+From: Xu Wang <vulab@iscas.ac.cn>
+Date: Tue, 24 Dec 2019 09:37:04 +0000
+Subject: [PATCH] ppp: Remove redundant BUG_ON() check in ppp_pernet
+Message-Id: <1577180224-16405-1-git-send-email-vulab@iscas.ac.cn>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20191205052220.GC1158@sol.localdomain>
-        <20191205055419.13435-1-ebiggers@kernel.org>
-In-Reply-To: <20191205055419.13435-1-ebiggers@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: ebiggers@kernel.org
-Cc: arnd@arndb.de, viro@zeniv.linux.org.uk, paulus@samba.org, bpf@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, syzbot+eb853b51b10f1befa0b7@syzkaller.appspotmail.com, syzkaller-bugs@googlegroups.com
+To: paulus@samba.org
+Cc: davem@davemloft.net, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 
-From: Eric Biggers <ebiggers@kernel.org>
-Date: Wed,  4 Dec 2019 21:54:19 -0800
+Passing NULL to ppp_pernet causes a crash via BUG_ON.
+Dereferencing net in net_generici() also has the same effect.
+This patch removes the redundant BUG_ON check on the same parameter.
 
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> sock_fprog_kern::len is in units of struct sock_filter, not bytes.
-> 
-> Fixes: 3e859adf3643 ("compat_ioctl: unify copy-in of ppp filters")
-> Reported-by: syzbot+eb853b51b10f1befa0b7@syzkaller.appspotmail.com
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
+Signed-off-by: Xu Wang <vulab@iscas.ac.cn>
+---
+ drivers/net/ppp/ppp_generic.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-Applied, thank you.
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 3bf8a8b..22cc2cb 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -296,8 +296,6 @@ static struct class *ppp_class;
+ /* per net-namespace data */
+ static inline struct ppp_net *ppp_pernet(struct net *net)
+ {
+-	BUG_ON(!net);
+-
+ 	return net_generic(net, ppp_net_id);
+ }
+ 
+-- 
+2.7.4
