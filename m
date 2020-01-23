@@ -1,33 +1,134 @@
-From: syzbot <syzbot+4925d60532bf4c399608@syzkaller.appspotmail.com>
-Date: Mon, 02 Dec 2019 04:07:01 +0000
-Subject: Re: BUG: sleeping function called from invalid context in __alloc_pages_nodemask
-Message-Id: <000000000000293e9f0598b0b69d@google.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Date: Thu, 23 Jan 2020 19:00:12 +0000
+Subject: [PATCH] Documentation: changes.rst: update several outdated project URLs
+Message-Id: <efb1f518-9e66-c472-d124-4b7d91e56639@infradead.org>
 List-Id: <linux-ppp.vger.kernel.org>
-In-Reply-To: <000000000000c280ba05988b6242@google.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: a@unstable.cc, akpm@linux-foundation.org, alex.aring@gmail.com, allison@lohutok.net, andrew@lunn.ch, andy@greyhouse.net, ap420073@gmail.com, aryabinin@virtuozzo.com, ast@domdv.de, b.a.t.m.a.n@lists.open-mesh.org, bridge@lists.linux-foundation.org, christophe.leroy@c-s.fr, cleech@redhat.com, daniel@iogearbox.net, davem@davemloft.net, dja@axtens.net, dsa@cumulusnetworks.com, dvyukov@google.com, edumazet@google.com, f.fainelli@gmail.com, fw@strlen.de, glider@google.com, gor@linux.ibm.com, gregkh@linuxfoundation.org, gustavo@embeddedor.com, gvaradar@cisco.com, haiyangz@microsoft.com, hdanton@sina.com, idosch@mellanox.com, info@metux.net, j.vosburgh@gmail.com, j@w1.fi, jakub.kicinski@netronome.com, jhs@mojatatu.com, jiri@resnulli.us, johan.hedberg@gmail.com, johannes.berg@intel.com, jwi@linux.ibm.com, kasan-dev@googlegroups.com, kstewart@linuxfoundation.org, kvalo@codeaurora.org, kys@microsoft.com, lariel@mellanox.com, linmiaohe@huawei.com, linux-bluetooth@vger.kernel.org, linux-hams@vger.kernel.org, linux-hyperv@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-ppp@vger.kernel.org
+To: "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>
+Cc: Jan Kara <jack@suse.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-ext4@vger.kernel.org, Pablo Neira Ayuso <pablo@netfilter.org>, Jozsef Kadlecsik <kadlec@netfilter.org>, Florian Westphal <fw@strlen.de>, netfilter-devel@vger.kernel.org, coreteam@netfilter.org, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, Jan Kara <jack@suse.com>, reiserfs-devel@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs <linux-xfs@vger.kernel.org>
 
-syzbot has bisected this bug to:
+From: Randy Dunlap <rdunlap@infradead.org>
 
-commit ab92d68fc22f9afab480153bd82a20f6e2533769
-Author: Taehee Yoo <ap420073@gmail.com>
-Date:   Mon Oct 21 18:47:51 2019 +0000
+Update projects URLs in the changes.rst file.
 
-     net: core: add generic lockdep keys
+Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: linux-doc@vger.kernel.org
+Cc: Jan Kara <jack@suse.com>
+Cc: "Theodore Ts'o" <tytso@mit.edu>
+Cc: Andreas Dilger <adilger.kernel@dilger.ca>
+Cc: linux-ext4@vger.kernel.org
+Cc: Pablo Neira Ayuso <pablo@netfilter.org>
+Cc: Jozsef Kadlecsik <kadlec@netfilter.org>
+Cc: Florian Westphal <fw@strlen.de>
+Cc: netfilter-devel@vger.kernel.org
+Cc: coreteam@netfilter.org
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org
+Cc: Jan Kara <jack@suse.com>
+Cc: reiserfs-devel@vger.kernel.org
+Cc: Darrick J. Wong <darrick.wong@oracle.com>
+Cc: linux-xfs@vger.kernel.org
+---
 
-bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x769712e00000
-start commit:   419593da Add linux-next specific files for 20191129
-git tree:       linux-next
-final crash:    https://syzkaller.appspot.com/x/report.txt?x769712e00000
-console output: https://syzkaller.appspot.com/x/log.txt?x769712e00000
-kernel config:  https://syzkaller.appspot.com/x/.config?x|04b0959e75c206
-dashboard link: https://syzkaller.appspot.com/bug?extidI25d60532bf4c399608
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x148e9ce00000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?xa1f786e00000
+ Documentation/process/changes.rst                    |   12 ++++++----
+ Documentation/translations/it_IT/process/changes.rst |   12 ++++++----
+ 2 files changed, 16 insertions(+), 8 deletions(-)
 
-Reported-by: syzbot+4925d60532bf4c399608@syzkaller.appspotmail.com
-Fixes: ab92d68fc22f ("net: core: add generic lockdep keys")
+diff -Naurp linux-next-20200123/Documentation/translations/it_IT/process/changes.rst%WWW linux-next-20200123/Documentation/translations/it_IT/process/changes.rst
+--- linux-next-20200123/Documentation/translations/it_IT/process/changes.rst%WWW	2019-11-24 16:32:01.000000000 -0800
++++ linux-next-20200123/Documentation/translations/it_IT/process/changes.rst	2020-01-23 10:47:56.226457425 -0800
+@@ -391,6 +391,8 @@ E2fsprogs
+ ---------
+ 
+ - <http://prdownloads.sourceforge.net/e2fsprogs/e2fsprogs-1.29.tar.gz>
++- <https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/>
++- <https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/>
+ 
+ JFSutils
+ --------
+@@ -400,12 +402,12 @@ JFSutils
+ Reiserfsprogs
+ -------------
+ 
+-- <http://www.kernel.org/pub/linux/utils/fs/reiserfs/>
++- <https://git.kernel.org/pub/scm/linux/kernel/git/jeffm/reiserfsprogs.git/>
+ 
+ Xfsprogs
+ --------
+ 
+-- <ftp://oss.sgi.com/projects/xfs/>
++- <https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git>
+ 
+ Pcmciautils
+ -----------
+@@ -444,7 +446,9 @@ Rete
+ PPP
+ ---
+ 
+-- <ftp://ftp.samba.org/pub/ppp/>
++- <https://download.samba.org/pub/ppp/>
++- <https://git.ozlabs.org/?p=ppp.git>
++- <https://github.com/paulusmack/ppp/>
+ 
+ 
+ NFS-utils
+@@ -455,7 +459,7 @@ NFS-utils
+ Iptables
+ --------
+ 
+-- <http://www.iptables.org/downloads.html>
++- <https://netfilter.org/projects/iptables/index.html>
+ 
+ Ip-route2
+ ---------
+diff -Naurp linux-next-20200123/Documentation/process/changes.rst%WWW linux-next-20200123/Documentation/process/changes.rst
+--- linux-next-20200123/Documentation/process/changes.rst%WWW	2019-11-24 16:32:01.000000000 -0800
++++ linux-next-20200123/Documentation/process/changes.rst	2020-01-23 10:47:56.226457425 -0800
+@@ -384,6 +384,8 @@ E2fsprogs
+ ---------
+ 
+ - <http://prdownloads.sourceforge.net/e2fsprogs/e2fsprogs-1.29.tar.gz>
++- <https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/>
++- <https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/>
+ 
+ JFSutils
+ --------
+@@ -393,12 +395,12 @@ JFSutils
+ Reiserfsprogs
+ -------------
+ 
+-- <http://www.kernel.org/pub/linux/utils/fs/reiserfs/>
++- <https://git.kernel.org/pub/scm/linux/kernel/git/jeffm/reiserfsprogs.git/>
+ 
+ Xfsprogs
+ --------
+ 
+-- <ftp://oss.sgi.com/projects/xfs/>
++- <https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git>
+ 
+ Pcmciautils
+ -----------
+@@ -437,7 +439,9 @@ Networking
+ PPP
+ ---
+ 
+-- <ftp://ftp.samba.org/pub/ppp/>
++- <https://download.samba.org/pub/ppp/>
++- <https://git.ozlabs.org/?p=ppp.git>
++- <https://github.com/paulusmack/ppp/>
+ 
+ NFS-utils
+ ---------
+@@ -447,7 +451,7 @@ NFS-utils
+ Iptables
+ --------
+ 
+-- <http://www.iptables.org/downloads.html>
++- <https://netfilter.org/projects/iptables/index.html>
+ 
+ Ip-route2
+ ---------
 
-For information about bisection process see: https://goo.gl/tpsmEJ#bisection
