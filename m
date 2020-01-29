@@ -1,33 +1,139 @@
-From: syzbot <syzbot+4ec99438ed7450da6272@syzkaller.appspotmail.com>
-Date: Sun, 05 Jan 2020 22:58:00 +0000
-Subject: Re: WARNING: bad unlock balance in sch_direct_xmit
-Message-Id: <000000000000802598059b6c7989@google.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Date: Wed, 29 Jan 2020 23:15:15 +0000
+Subject: [PATCH v2] Documentation: changes.rst: update several outdated project URLs
+Message-Id: <a9c3c509-8f30-fcc4-d9e0-b53aeaa89e4f@infradead.org>
 List-Id: <linux-ppp.vger.kernel.org>
-In-Reply-To: <000000000000ab3f800598cec624@google.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-To: a@unstable.cc, alex.aring@gmail.com, allison@lohutok.net, andrew@lunn.ch, andy@greyhouse.net, ap420073@gmail.com, ast@domdv.de, b.a.t.m.a.n@lists.open-mesh.org, bridge@lists.linux-foundation.org, cleech@redhat.com, daniel@iogearbox.net, davem@davemloft.net, dsa@cumulusnetworks.com, f.fainelli@gmail.com, fw@strlen.de, gregkh@linuxfoundation.org, gustavo@embeddedor.com, haiyangz@microsoft.com, info@metux.net, j.vosburgh@gmail.com, j@w1.fi, jakub.kicinski@netronome.com, jhs@mojatatu.com, jiri@resnulli.us, johan.hedberg@gmail.com, johannes.berg@intel.com, jwi@linux.ibm.com, kstewart@linuxfoundation.org, kvalo@codeaurora.org, kys@microsoft.com, linmiaohe@huawei.com, linux-bluetooth@vger.kernel.org, linux-hams@vger.kernel.org, linux-hyperv@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, linux-wireless@vger.kernel.org, linux-wpan@vger.kernel.org, liuhangbin@gmail.com, marcel@holtmann.org, mareklindner@neomailbox.ch, mkubecek@suse.cz, mmanning@vyatta.att-mail.com, netdev@vger.kernel.org, nikolay@cumulusnetworks.com, oss-drivers@netronome.com, paulus@samba.org, ralf@linux-mips.org, roopa@cumulusnetworks.com, sashal@kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Jonathan Corbet <corbet@lwn.net>
+Cc: Jan Kara <jack@suse.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-ext4@vger.kernel.org, Pablo Neira Ayuso <pablo@netfilter.org>, Jozsef Kadlecsik <kadlec@netfilter.org>, Florian Westphal <fw@strlen.de>, netfilter-devel@vger.kernel.org, coreteam@netfilter.org, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org, reiserfs-devel@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-xfs <linux-xfs@vger.kernel.org>
 
-syzbot has bisected this bug to:
+From: Randy Dunlap <rdunlap@infradead.org>
 
-commit ab92d68fc22f9afab480153bd82a20f6e2533769
-Author: Taehee Yoo <ap420073@gmail.com>
-Date:   Mon Oct 21 18:47:51 2019 +0000
+Update projects URLs in the changes.rst file.
 
-     net: core: add generic lockdep keys
+Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: linux-doc@vger.kernel.org
+Cc: Jan Kara <jack@suse.com>
+Cc: "Theodore Ts'o" <tytso@mit.edu>
+Cc: Andreas Dilger <adilger.kernel@dilger.ca>
+Cc: linux-ext4@vger.kernel.org
+Cc: Pablo Neira Ayuso <pablo@netfilter.org>
+Cc: Jozsef Kadlecsik <kadlec@netfilter.org>
+Cc: Florian Westphal <fw@strlen.de>
+Cc: netfilter-devel@vger.kernel.org
+Cc: coreteam@netfilter.org
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org
+Cc: reiserfs-devel@vger.kernel.org
+Cc: Darrick J. Wong <darrick.wong@oracle.com>
+Cc: linux-xfs@vger.kernel.org
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+Acked-by: Theodore Ts'o <tytso@mit.edu>
+---
+v2 changes:
+. add Ack and Review tags;
+. update as requested by Darrick and Ted;
 
-bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=15e88ec6e00000
-start commit:   36487907 Merge branch 'akpm' (patches from Andrew)
-git tree:       upstream
-final crash:    https://syzkaller.appspot.com/x/report.txt?x=17e88ec6e00000
-console output: https://syzkaller.appspot.com/x/log.txt?x=13e88ec6e00000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=F2f3ef188b7e16cf
-dashboard link: https://syzkaller.appspot.com/bug?extidNc99438ed7450da6272
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1722c5c1e00000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=167aee3ee00000
+ Documentation/process/changes.rst                    |   14 ++++++----
+ Documentation/translations/it_IT/process/changes.rst |   14 ++++++----
+ 2 files changed, 18 insertions(+), 10 deletions(-)
 
-Reported-by: syzbot+4ec99438ed7450da6272@syzkaller.appspotmail.com
-Fixes: ab92d68fc22f ("net: core: add generic lockdep keys")
-
-For information about bisection process see: https://goo.gl/tpsmEJ#bisection
+--- linux-next-20200129.orig/Documentation/translations/it_IT/process/changes.rst
++++ linux-next-20200129/Documentation/translations/it_IT/process/changes.rst
+@@ -390,7 +390,8 @@ Mkinitrd
+ E2fsprogs
+ ---------
+ 
+-- <http://prdownloads.sourceforge.net/e2fsprogs/e2fsprogs-1.29.tar.gz>
++- <https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/>
++- <https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/>
+ 
+ JFSutils
+ --------
+@@ -400,12 +401,13 @@ JFSutils
+ Reiserfsprogs
+ -------------
+ 
+-- <http://www.kernel.org/pub/linux/utils/fs/reiserfs/>
++- <https://git.kernel.org/pub/scm/linux/kernel/git/jeffm/reiserfsprogs.git/>
+ 
+ Xfsprogs
+ --------
+ 
+-- <ftp://oss.sgi.com/projects/xfs/>
++- <https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git>
++- <https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/>
+ 
+ Pcmciautils
+ -----------
+@@ -444,7 +446,9 @@ Rete
+ PPP
+ ---
+ 
+-- <ftp://ftp.samba.org/pub/ppp/>
++- <https://download.samba.org/pub/ppp/>
++- <https://git.ozlabs.org/?p=ppp.git>
++- <https://github.com/paulusmack/ppp/>
+ 
+ 
+ NFS-utils
+@@ -455,7 +459,7 @@ NFS-utils
+ Iptables
+ --------
+ 
+-- <http://www.iptables.org/downloads.html>
++- <https://netfilter.org/projects/iptables/index.html>
+ 
+ Ip-route2
+ ---------
+--- linux-next-20200129.orig/Documentation/process/changes.rst
++++ linux-next-20200129/Documentation/process/changes.rst
+@@ -383,7 +383,8 @@ Mkinitrd
+ E2fsprogs
+ ---------
+ 
+-- <http://prdownloads.sourceforge.net/e2fsprogs/e2fsprogs-1.29.tar.gz>
++- <https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/>
++- <https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/>
+ 
+ JFSutils
+ --------
+@@ -393,12 +394,13 @@ JFSutils
+ Reiserfsprogs
+ -------------
+ 
+-- <http://www.kernel.org/pub/linux/utils/fs/reiserfs/>
++- <https://git.kernel.org/pub/scm/linux/kernel/git/jeffm/reiserfsprogs.git/>
+ 
+ Xfsprogs
+ --------
+ 
+-- <ftp://oss.sgi.com/projects/xfs/>
++- <https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git>
++- <https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/>
+ 
+ Pcmciautils
+ -----------
+@@ -437,7 +439,9 @@ Networking
+ PPP
+ ---
+ 
+-- <ftp://ftp.samba.org/pub/ppp/>
++- <https://download.samba.org/pub/ppp/>
++- <https://git.ozlabs.org/?p=ppp.git>
++- <https://github.com/paulusmack/ppp/>
+ 
+ NFS-utils
+ ---------
+@@ -447,7 +451,7 @@ NFS-utils
+ Iptables
+ --------
+ 
+-- <http://www.iptables.org/downloads.html>
++- <https://netfilter.org/projects/iptables/index.html>
+ 
+ Ip-route2
+ ---------
