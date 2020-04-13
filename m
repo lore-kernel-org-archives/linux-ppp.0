@@ -1,297 +1,183 @@
-From: =?UTF-8?Q?David_Bala=C5=BEic?= <xerces9@gmail.com>
-Date: Wed, 29 Apr 2020 11:58:37 +0000
-Subject: Re: PPPoE Modem hangup after random time - how to debug?
-Message-Id: <CAPJ9Yc_nBzy5zWPBAOgD2FPmnOegHUEYi+vpURtwm8z9wHeoQw@mail.gmail.com>
+From: Waiman Long <longman@redhat.com>
+Date: Mon, 13 Apr 2020 22:28:46 +0000
+Subject: [PATCH v2 2/2] crypto: Remove unnecessary memzero_explicit()
+Message-Id: <20200413222846.24240-1-longman@redhat.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
-In-Reply-To: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
+References: <20200413211550.8307-1-longman@redhat.com>
+In-Reply-To: <20200413211550.8307-1-longman@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, David Howells <dhowells@redhat.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, James Morris <jmorris@namei.org>, "Serge E. Hallyn" <serge@hallyn.com>, Linus Torvalds <torvalds@linux-foundation.org>, Joe Perches <joe@perches.com>, Matthew Wilcox <willy@infradead.org>, David Rientjes <rientjes@google.com>
+Cc: samba-technical@lists.samba.org, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, linux-sctp@vger.kernel.org, target-devel@vger.kernel.org, linux-stm32@st-md-mailman.stormreply.com, devel@driverdev.osuosl.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, x86@kernel.org, kasan-dev@googlegroups.com, cocci@systeme.lip6.fr, linux-wpan@vger.kernel.org, intel-wired-lan@lists.osuosl.org, Waiman Long <longman@redhat.com>, linux-crypto@vger.kernel.org, linux-pm@vger.kernel.org, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mediatek@lists.infradead.org, linux-amlogic@lists.infradead.org, linux-arm-kernel@lists.infradead.org, linux-cifs@vger.kernel.org, netdev@vger.kernel.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org, linux-bluetooth@vger.kernel.org, linux-security-module@vger.kernel.org, keyrings@vger.kernel.org, tipc-discussion@lists.sourceforge.net, wireguard@lists.zx2c4.com, linux-ppp@vger.kernel.org, linux-integrity@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 
-Next disconnect:
+Since kfree_sensitive() will do an implicit memzero_explicit(), there
+is no need to call memzero_explicit() before it. Eliminate those
+memzero_explicit() and simplify the call sites. For better correctness,
+the setting of keylen is also moved down after the key pointer check.
 
-NOTE: c4:XX:XX:XX:XX:ed  is my wan interfaces MAC address
+Signed-off-by: Waiman Long <longman@redhat.com>
+---
+ .../allwinner/sun8i-ce/sun8i-ce-cipher.c      | 19 +++++-------------
+ .../allwinner/sun8i-ss/sun8i-ss-cipher.c      | 20 +++++--------------
+ drivers/crypto/amlogic/amlogic-gxl-cipher.c   | 12 +++--------
+ drivers/crypto/inside-secure/safexcel_hash.c  |  3 +--
+ 4 files changed, 14 insertions(+), 40 deletions(-)
 
-tcpdump -e -v -i eth1 vlan 3902 and pppoed
-tcpdump: listening on eth1, link-type EN10MB (Ethernet), capture size
-262144 bytes
-** several PADO and PADS packet sent from server/AC to
-44:4e:6d:fd:c7:39 before this, during the day **
-05:03:44.348738 a4:7b:2c:9e:c7:44 (oui Unknown) > 00:0f:94:ef:64:e0
-(oui Unknown), ethertype 802.1Q (0x8100), length 75: vlan 3902, p 1,
-ethertype PPPoE D, PPPoE PADO [Service-Name] [AC-Name
-"SIMB_TABOR_BNG1"] [Host-Uniq 0x960B0000] [AC-Cookie
-0xDCC3248D61A5D76C7C1DD4138431B17C]
-06:40:27.668095 a4:7b:2c:9e:c7:44 (oui Unknown) > 44:4e:6d:fd:c7:39
-(oui Unknown), ethertype 802.1Q (0x8100), length 101: vlan 3902, p 1,
-ethertype PPPoE D, PPPoE PADO [Service-Name] [AC-Name
-"SIMB_TABOR_BNG1"] [Host-Uniq
-0x444E6DFDC739AAAAAAAA92000000AAAAAAAA4621426F78202020AAAAAAAA]
-[AC-Cookie ".5b.u...~.F.mlKv"]
-06:40:27.674078 a4:7b:2c:9e:c7:44 (oui Unknown) > 44:4e:6d:fd:c7:39
-(oui Unknown), ethertype 802.1Q (0x8100), length 62: vlan 3902, p 1,
-ethertype PPPoE D, PPPoE PADS [ses 0x1] [Service-Name] [Host-Uniq
-0x444E6DFDC739AAAAAAAA92000000AAAAAAAA4621426F78202020AAAAAAAA]
-06:40:30.552119 a4:7b:2c:9e:c7:44 (oui Unknown) > 44:4e:6d:fd:c7:39
-(oui Unknown), ethertype 802.1Q (0x8100), length 60: vlan 3902, p 1,
-ethertype PPPoE D, PPPoE PADT [ses 0x1]
-06:40:31.158067 c4:XX:XX:XX:XX:ed (oui Unknown) > a4:7b:2c:9e:c7:44
-(oui Unknown), ethertype 802.1Q (0x8100), length 52: vlan 3902, p 0,
-ethertype PPPoE D, PPPoE PADT [ses 0x1] [Host-Uniq 0x000057CF]
-[AC-Cookie 0xED891159D8A73577F9B098A2E3E36875]
-tcpdump: pcap_loop: The interface went down
-12 packets captured
-12 packets received by filter
-0 packets dropped by kernel
-
-
-ip monitor link
-
-[2020-04-29 06:40:30] 47: pppoe-wan: <POINTOPOINT,MULTICAST,NOARP> mtu
-1492 qdisc fq_codel state DOWN group default
-[2020-04-29 06:40:30]     link/ppp
-[2020-04-29 06:40:31] Deleted 47: pppoe-wan:
-<POINTOPOINT,MULTICAST,NOARP> mtu 1492 qdisc noop state DOWN group
-default
-[2020-04-29 06:40:31]     link/ppp
-[2020-04-29 06:40:31] 46: eth1.3902@eth1: <BROADCAST,MULTICAST> mtu
-1500 qdisc noqueue state DOWN group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu
-1500 qdisc fq_codel state UP group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] Deleted 46: eth1.3902@eth1:
-<BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 3: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc
-fq_codel state DOWN group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 3: eth1: <BROADCAST,MULTICAST,UP> mtu 1500 qdisc
-fq_codel state UP group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu
-1500 qdisc fq_codel state UP group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 48: eth1.3902@eth1: <BROADCAST,MULTICAST> mtu
-1500 qdisc noop state DOWN group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu
-1500 qdisc fq_codel state UP group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 48: eth1.3902@eth1:
-<BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN
-group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu
-1500 qdisc fq_codel state UP group default
-[2020-04-29 06:40:31]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:31] 49: ppp0: <POINTOPOINT,MULTICAST,NOARP> mtu 1500
-qdisc noop state DOWN group default
-[2020-04-29 06:40:31]     link/ppp
-[2020-04-29 06:40:31] 49: pppoe-wan: <POINTOPOINT,MULTICAST,NOARP> mtu
-1500 qdisc noop state DOWN group default
-[2020-04-29 06:40:31]     link/ppp
-[2020-04-29 06:40:32] 48: eth1.3902@eth1:
-<BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP
-group default
-[2020-04-29 06:40:32]     link/ether c4:XX:XX:XX:XX:ed brd ff:ff:ff:ff:ff:ff
-[2020-04-29 06:40:34] 49: pppoe-wan: <POINTOPOINT,MULTICAST,NOARP> mtu
-1492 qdisc noop state DOWN group default
-[2020-04-29 06:40:34]     link/ppp
-[2020-04-29 06:40:35] 49: pppoe-wan:
-<POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1492 qdisc fq_codel
-state UNKNOWN group default
-[2020-04-29 06:40:35]     link/ppp
-
-
-syslog:
-
-Wed Apr 29 02:36:07 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPREQUEST(br-lan) 192.168.1.197 XX:XX:XX:XX:XX:XX
-Wed Apr 29 02:36:07 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPACK(br-lan) 192.168.1.197 XX:XX:XX:XX:XX:XX ffoo
-Wed Apr 29 05:21:53 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPREQUEST(br-lan) 192.168.1.111 XX:XX:XX:XX:XX:XX
-Wed Apr 29 05:21:53 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPACK(br-lan) 192.168.1.111 XX:XX:XX:XX:XX:XX bar
-Wed Apr 29 05:53:34 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPREQUEST(br-lan) 192.168.1.217 XX:XX:XX:XX:XX:XX
-Wed Apr 29 05:53:34 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPACK(br-lan) 192.168.1.217 XX:XX:XX:XX:XX:XX baz
-Wed Apr 29 06:01:46 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPREQUEST(br-lan) 192.168.1.225 XX:XX:XX:XX:XX:XX
-Wed Apr 29 06:01:46 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPACK(br-lan) 192.168.1.225 XX:XX:XX:XX:XX:XX foobar
-Wed Apr 29 06:36:11 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPREQUEST(br-lan) 192.168.1.193 XX:XX:XX:XX:XX:XX
-Wed Apr 29 06:36:11 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPACK(br-lan) 192.168.1.193 XX:XX:XX:XX:XX:XX barfoo
-Wed Apr 29 06:40:30 2020 daemon.notice pppd[22479]: Modem hangup
-Wed Apr 29 06:40:30 2020 daemon.info pppd[22479]: Connect time 2351.5 minutes.
-Wed Apr 29 06:40:30 2020 daemon.info pppd[22479]: Sent 524878898
-bytes, received 2649683636 bytes.
-Wed Apr 29 06:40:30 2020 daemon.notice netifd: Network device
-'pppoe-wan' link is down
-Wed Apr 29 06:40:30 2020 daemon.debug pppd[22479]: Script
-/lib/netifd/ppp-down started (pid 9434)
-Wed Apr 29 06:40:31 2020 daemon.notice pppd[22479]: Connection terminated.
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[22479]: Send PPPOE
-Discovery V1T1 PADT session 0x1 length 28
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[22479]:  dst
-a4:7b:2c:9e:c7:44  src c4:XX:XX:XX:XX:ed
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[22479]:  [host-uniq  00 00
-57 cf] [AC-cookie  ed 89 11 59 d8 a7 35 77 f9 b0 98 a2 e3 e3 68 75]
-Wed Apr 29 06:40:31 2020 daemon.info pppd[22479]: Sent PADT
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[22479]: Waiting for 1 child
-processes...
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[22479]:   script
-/lib/netifd/ppp-down, pid 9434
-Wed Apr 29 06:40:31 2020 daemon.notice netifd: Interface 'wan' has
-lost the connection
-Wed Apr 29 06:40:31 2020 daemon.warn dnsmasq[1565]: no servers found
-in /tmp/resolv.conf.auto, will retry
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[22479]: Script
-/lib/netifd/ppp-down finished (pid 9434), status = 0x1
-Wed Apr 29 06:40:31 2020 daemon.info pppd[22479]: Exit.
-Wed Apr 29 06:40:31 2020 daemon.notice netifd: Interface 'wan' is now down
-Wed Apr 29 06:40:31 2020 kern.info kernel: [825025.766137] IPv6:
-ADDRCONF(NETDEV_UP): eth1.3902: link is not ready
-Wed Apr 29 06:40:31 2020 kern.info kernel: [825025.781197] eth1: link down
-Wed Apr 29 06:40:31 2020 daemon.notice netifd: Interface 'wan' is disabled
-Wed Apr 29 06:40:31 2020 kern.info kernel: [825025.815043] IPv6:
-ADDRCONF(NETDEV_UP): eth1: link is not ready
-Wed Apr 29 06:40:31 2020 kern.info kernel: [825025.822423] eth1: link
-up (1000Mbps/Full duplex)
-Wed Apr 29 06:40:31 2020 kern.info kernel: [825025.844083] IPv6:
-ADDRCONF(NETDEV_CHANGE): eth1: link becomes ready
-Wed Apr 29 06:40:31 2020 daemon.notice netifd: Interface 'wan' is enabled
-Wed Apr 29 06:40:31 2020 daemon.notice netifd: Interface 'wan' is setting up now
-Wed Apr 29 06:40:31 2020 kern.info kernel: [825026.010950] device eth1
-left promiscuous mode
-Wed Apr 29 06:40:31 2020 daemon.err insmod: module is already loaded - slhc
-Wed Apr 29 06:40:31 2020 daemon.err insmod: module is already loaded -
-ppp_generic
-Wed Apr 29 06:40:31 2020 daemon.err insmod: module is already loaded - pppox
-Wed Apr 29 06:40:31 2020 daemon.err insmod: module is already loaded - pppoe
-Wed Apr 29 06:40:31 2020 daemon.info pppd[9495]: Plugin rp-pppoe.so loaded.
-Wed Apr 29 06:40:31 2020 daemon.info pppd[9495]: RP-PPPoE plugin
-version 3.8p compiled against pppd 2.4.7
-Wed Apr 29 06:40:31 2020 daemon.notice pppd[9495]: pppd 2.4.7 started
-by root, uid 0
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]: Send PPPOE Discovery
-V1T1 PADI session 0x0 length 12
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]:  dst
-ff:ff:ff:ff:ff:ff  src c4:XX:XX:XX:XX:ed
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]:  [service-name]
-[host-uniq  00 00 25 17]
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]: Recv PPPOE Discovery
-V1T1 PADO session 0x0 length 51
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]:  dst
-c4:XX:XX:XX:XX:ed  src a4:7b:2c:9e:c7:44
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]:  [service-name]
-[AC-name SIMB_TABOR_BNG1] [host-uniq  00 00 25 17] [AC-cookie  ed 89
-11 59 d8 a7 35 77 f9 b0 98 a2 e3 e3 68 75]
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]: Send PPPOE Discovery
-V1T1 PADR session 0x0 length 32
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]:  dst
-a4:7b:2c:9e:c7:44  src c4:XX:XX:XX:XX:ed
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]:  [service-name]
-[host-uniq  00 00 25 17] [AC-cookie  ed 89 11 59 d8 a7 35 77 f9 b0 98
-a2 e3 e3 68 75]
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]: Recv PPPOE Discovery
-V1T1 PADS session 0x1 length 12
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]:  dst
-c4:XX:XX:XX:XX:ed  src a4:7b:2c:9e:c7:44
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]:  [service-name]
-[host-uniq  00 00 25 17]
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]: PADS: Service-Name: ''
-Wed Apr 29 06:40:31 2020 daemon.info pppd[9495]: PPP session is 1
-Wed Apr 29 06:40:31 2020 daemon.warn pppd[9495]: Connected to
-a4:7b:2c:9e:c7:44 via interface eth1.3902
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]: using channel 20
-Wed Apr 29 06:40:31 2020 kern.info kernel: [825026.248151] pppoe-wan:
-renamed from ppp0
-Wed Apr 29 06:40:31 2020 daemon.info pppd[9495]: Renamed interface
-ppp0 to pppoe-wan
-Wed Apr 29 06:40:31 2020 daemon.info pppd[9495]: Using interface pppoe-wan
-Wed Apr 29 06:40:31 2020 daemon.notice pppd[9495]: Connect: pppoe-wan
-<--> eth1.3902
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]: sent [LCP ConfReq
-id=0x1 <mru 1492> <magic 0x5455b2ef>]
-Wed Apr 29 06:40:31 2020 daemon.debug pppd[9495]: rcvd [LCP ConfAck
-id=0x1 <mru 1492> <magic 0x5455b2ef>]
-Wed Apr 29 06:40:34 2020 daemon.debug pppd[9495]: rcvd [LCP ConfReq
-id=0x22 <mru 1492> <auth chap MD5> <magic 0x3b0f63c8>]
-Wed Apr 29 06:40:34 2020 daemon.debug pppd[9495]: sent [LCP ConfAck
-id=0x22 <mru 1492> <auth chap MD5> <magic 0x3b0f63c8>]
-Wed Apr 29 06:40:34 2020 daemon.debug pppd[9495]: sent [LCP EchoReq
-id=0x0 magic=0x5455b2ef]
-Wed Apr 29 06:40:34 2020 daemon.debug pppd[9495]: rcvd [CHAP Challenge
-id=0x1 <5f38**********************************************5423>, name
-= "SIMB_TABOR_BNG1"]
-Wed Apr 29 06:40:34 2020 daemon.debug pppd[9495]: sent [CHAP Response
-id=0x1 <c02**********************e9f>, name = "username"]
-Wed Apr 29 06:40:34 2020 daemon.debug pppd[9495]: rcvd [LCP EchoRep
-id=0x0 magic=0x3b0f63c8]
-Wed Apr 29 06:40:34 2020 daemon.debug pppd[9495]: rcvd [CHAP Success
-id=0x1 "CHAP authentication success"]
-Wed Apr 29 06:40:34 2020 daemon.info pppd[9495]: CHAP authentication
-succeeded: CHAP authentication success
-Wed Apr 29 06:40:34 2020 daemon.notice pppd[9495]: CHAP authentication succeeded
-Wed Apr 29 06:40:34 2020 daemon.notice pppd[9495]: peer from calling
-number A4:7B:2C:9E:C7:44 authorized
-Wed Apr 29 06:40:35 2020 daemon.debug pppd[9495]: sent [IPCP ConfReq
-id=0x1 <addr 0.0.0.0> <ms-dns1 0.0.0.0> <ms-dns2 0.0.0.0>]
-Wed Apr 29 06:40:35 2020 daemon.debug pppd[9495]: rcvd [IPCP ConfReq
-id=0x2d <addr 94.127.30.0>]
-Wed Apr 29 06:40:35 2020 daemon.debug pppd[9495]: sent [IPCP ConfAck
-id=0x2d <addr 94.127.30.0>]
-Wed Apr 29 06:40:35 2020 daemon.debug pppd[9495]: rcvd [IPCP ConfNak
-id=0x1 <addr 146.X.Y.Z> <ms-dns1 212.18.32.10> <ms-dns2 212.18.32.12>]
-Wed Apr 29 06:40:35 2020 daemon.debug pppd[9495]: sent [IPCP ConfReq
-id=0x2 <addr 146.X.Y.Z> <ms-dns1 212.18.32.10> <ms-dns2 212.18.32.12>]
-Wed Apr 29 06:40:35 2020 daemon.debug pppd[9495]: rcvd [IPCP ConfAck
-id=0x2 <addr 146.X.Y.Z> <ms-dns1 212.18.32.10> <ms-dns2 212.18.32.12>]
-Wed Apr 29 06:40:35 2020 daemon.notice pppd[9495]: local  IP address 146.X.Y.Z
-Wed Apr 29 06:40:35 2020 daemon.notice pppd[9495]: remote IP address 94.127.30.0
-Wed Apr 29 06:40:35 2020 daemon.notice pppd[9495]: primary   DNS
-address 212.18.32.10
-Wed Apr 29 06:40:35 2020 daemon.notice pppd[9495]: secondary DNS
-address 212.18.32.12
-Wed Apr 29 06:40:35 2020 daemon.debug pppd[9495]: Script
-/lib/netifd/ppp-up started (pid 9560)
-Wed Apr 29 06:40:35 2020 daemon.notice netifd: Network device
-'pppoe-wan' link is up
-Wed Apr 29 06:40:35 2020 daemon.notice netifd: Interface 'wan' is now up
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: reading
-/tmp/resolv.conf.auto
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using local
-addresses only for domain test
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using local
-addresses only for domain onion
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using local
-addresses only for domain localhost
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using local
-addresses only for domain local
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using local
-addresses only for domain invalid
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using local
-addresses only for domain bind
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using local
-addresses only for domain lan
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using nameserver
-212.18.32.10#53
-Wed Apr 29 06:40:35 2020 daemon.info dnsmasq[1565]: using nameserver
-212.18.32.12#53
-Wed Apr 29 06:40:35 2020 daemon.debug pppd[9495]: Script
-/lib/netifd/ppp-up finished (pid 9560), status = 0x1
-Wed Apr 29 06:40:36 2020 user.notice firewall: Reloading firewall due
-to ifup of wan (pppoe-wan)
-Wed Apr 29 08:07:42 2020 daemon.info dnsmasq-dhcp[1565]:
-DHCPREQUEST(br-lan) 192.168.1.197 XX:XX:XX:XX:XX:XX
-
-
-Regards,
-David
+diff --git a/drivers/crypto/allwinner/sun8i-ce/sun8i-ce-cipher.c b/drivers/crypto/allwinner/sun8i-ce/sun8i-ce-cipher.c
+index aa4e8fdc2b32..8358fac98719 100644
+--- a/drivers/crypto/allwinner/sun8i-ce/sun8i-ce-cipher.c
++++ b/drivers/crypto/allwinner/sun8i-ce/sun8i-ce-cipher.c
+@@ -366,10 +366,7 @@ void sun8i_ce_cipher_exit(struct crypto_tfm *tfm)
+ {
+ 	struct sun8i_cipher_tfm_ctx *op = crypto_tfm_ctx(tfm);
+ 
+-	if (op->key) {
+-		memzero_explicit(op->key, op->keylen);
+-		kfree(op->key);
+-	}
++	kfree_sensitive(op->key);
+ 	crypto_free_sync_skcipher(op->fallback_tfm);
+ 	pm_runtime_put_sync_suspend(op->ce->dev);
+ }
+@@ -391,14 +388,11 @@ int sun8i_ce_aes_setkey(struct crypto_skcipher *tfm, const u8 *key,
+ 		dev_dbg(ce->dev, "ERROR: Invalid keylen %u\n", keylen);
+ 		return -EINVAL;
+ 	}
+-	if (op->key) {
+-		memzero_explicit(op->key, op->keylen);
+-		kfree(op->key);
+-	}
+-	op->keylen = keylen;
++	kfree_sensitive(op->key);
+ 	op->key = kmemdup(key, keylen, GFP_KERNEL | GFP_DMA);
+ 	if (!op->key)
+ 		return -ENOMEM;
++	op->keylen = keylen;
+ 
+ 	crypto_sync_skcipher_clear_flags(op->fallback_tfm, CRYPTO_TFM_REQ_MASK);
+ 	crypto_sync_skcipher_set_flags(op->fallback_tfm, tfm->base.crt_flags & CRYPTO_TFM_REQ_MASK);
+@@ -416,14 +410,11 @@ int sun8i_ce_des3_setkey(struct crypto_skcipher *tfm, const u8 *key,
+ 	if (err)
+ 		return err;
+ 
+-	if (op->key) {
+-		memzero_explicit(op->key, op->keylen);
+-		kfree(op->key);
+-	}
+-	op->keylen = keylen;
++	kfree_sensitive(op->key);
+ 	op->key = kmemdup(key, keylen, GFP_KERNEL | GFP_DMA);
+ 	if (!op->key)
+ 		return -ENOMEM;
++	op->keylen = keylen;
+ 
+ 	crypto_sync_skcipher_clear_flags(op->fallback_tfm, CRYPTO_TFM_REQ_MASK);
+ 	crypto_sync_skcipher_set_flags(op->fallback_tfm, tfm->base.crt_flags & CRYPTO_TFM_REQ_MASK);
+diff --git a/drivers/crypto/allwinner/sun8i-ss/sun8i-ss-cipher.c b/drivers/crypto/allwinner/sun8i-ss/sun8i-ss-cipher.c
+index 5246ef4f5430..0495fbc27fcc 100644
+--- a/drivers/crypto/allwinner/sun8i-ss/sun8i-ss-cipher.c
++++ b/drivers/crypto/allwinner/sun8i-ss/sun8i-ss-cipher.c
+@@ -249,7 +249,6 @@ static int sun8i_ss_cipher(struct skcipher_request *areq)
+ 			offset = areq->cryptlen - ivsize;
+ 			if (rctx->op_dir & SS_DECRYPTION) {
+ 				memcpy(areq->iv, backup_iv, ivsize);
+-				memzero_explicit(backup_iv, ivsize);
+ 				kfree_sensitive(backup_iv);
+ 			} else {
+ 				scatterwalk_map_and_copy(areq->iv, areq->dst, offset,
+@@ -367,10 +366,7 @@ void sun8i_ss_cipher_exit(struct crypto_tfm *tfm)
+ {
+ 	struct sun8i_cipher_tfm_ctx *op = crypto_tfm_ctx(tfm);
+ 
+-	if (op->key) {
+-		memzero_explicit(op->key, op->keylen);
+-		kfree(op->key);
+-	}
++	kfree_sensitive(op->key);
+ 	crypto_free_sync_skcipher(op->fallback_tfm);
+ 	pm_runtime_put_sync(op->ss->dev);
+ }
+@@ -392,14 +388,11 @@ int sun8i_ss_aes_setkey(struct crypto_skcipher *tfm, const u8 *key,
+ 		dev_dbg(ss->dev, "ERROR: Invalid keylen %u\n", keylen);
+ 		return -EINVAL;
+ 	}
+-	if (op->key) {
+-		memzero_explicit(op->key, op->keylen);
+-		kfree(op->key);
+-	}
+-	op->keylen = keylen;
++	kfree_sensitive(op->key);
+ 	op->key = kmemdup(key, keylen, GFP_KERNEL | GFP_DMA);
+ 	if (!op->key)
+ 		return -ENOMEM;
++	op->keylen = keylen;
+ 
+ 	crypto_sync_skcipher_clear_flags(op->fallback_tfm, CRYPTO_TFM_REQ_MASK);
+ 	crypto_sync_skcipher_set_flags(op->fallback_tfm, tfm->base.crt_flags & CRYPTO_TFM_REQ_MASK);
+@@ -418,14 +411,11 @@ int sun8i_ss_des3_setkey(struct crypto_skcipher *tfm, const u8 *key,
+ 		return -EINVAL;
+ 	}
+ 
+-	if (op->key) {
+-		memzero_explicit(op->key, op->keylen);
+-		kfree(op->key);
+-	}
+-	op->keylen = keylen;
++	kfree_sensitive(op->key);
+ 	op->key = kmemdup(key, keylen, GFP_KERNEL | GFP_DMA);
+ 	if (!op->key)
+ 		return -ENOMEM;
++	op->keylen = keylen;
+ 
+ 	crypto_sync_skcipher_clear_flags(op->fallback_tfm, CRYPTO_TFM_REQ_MASK);
+ 	crypto_sync_skcipher_set_flags(op->fallback_tfm, tfm->base.crt_flags & CRYPTO_TFM_REQ_MASK);
+diff --git a/drivers/crypto/amlogic/amlogic-gxl-cipher.c b/drivers/crypto/amlogic/amlogic-gxl-cipher.c
+index fd1269900d67..6aa9ce7bbbd4 100644
+--- a/drivers/crypto/amlogic/amlogic-gxl-cipher.c
++++ b/drivers/crypto/amlogic/amlogic-gxl-cipher.c
+@@ -341,10 +341,7 @@ void meson_cipher_exit(struct crypto_tfm *tfm)
+ {
+ 	struct meson_cipher_tfm_ctx *op = crypto_tfm_ctx(tfm);
+ 
+-	if (op->key) {
+-		memzero_explicit(op->key, op->keylen);
+-		kfree(op->key);
+-	}
++	kfree_sensitive(op->key);
+ 	crypto_free_sync_skcipher(op->fallback_tfm);
+ }
+ 
+@@ -368,14 +365,11 @@ int meson_aes_setkey(struct crypto_skcipher *tfm, const u8 *key,
+ 		dev_dbg(mc->dev, "ERROR: Invalid keylen %u\n", keylen);
+ 		return -EINVAL;
+ 	}
+-	if (op->key) {
+-		memzero_explicit(op->key, op->keylen);
+-		kfree(op->key);
+-	}
+-	op->keylen = keylen;
++	kfree_sensitive(op->key);
+ 	op->key = kmemdup(key, keylen, GFP_KERNEL | GFP_DMA);
+ 	if (!op->key)
+ 		return -ENOMEM;
++	op->keylen = keylen;
+ 
+ 	return crypto_sync_skcipher_setkey(op->fallback_tfm, key, keylen);
+ }
+diff --git a/drivers/crypto/inside-secure/safexcel_hash.c b/drivers/crypto/inside-secure/safexcel_hash.c
+index 43962bc709c6..4a2d162914de 100644
+--- a/drivers/crypto/inside-secure/safexcel_hash.c
++++ b/drivers/crypto/inside-secure/safexcel_hash.c
+@@ -1081,8 +1081,7 @@ static int safexcel_hmac_init_pad(struct ahash_request *areq,
+ 		}
+ 
+ 		/* Avoid leaking */
+-		memzero_explicit(keydup, keylen);
+-		kfree(keydup);
++		kfree_sensitive(keydup);
+ 
+ 		if (ret)
+ 			return ret;
+-- 
+2.18.1
