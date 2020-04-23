@@ -1,52 +1,82 @@
 From: =?UTF-8?Q?David_Bala=C5=BEic?= <xerces9@gmail.com>
-Date: Thu, 23 Apr 2020 10:37:41 +0000
+Date: Thu, 23 Apr 2020 11:12:48 +0000
 Subject: Re: PPPoE Modem hangup after random time - how to debug?
-Message-Id: <CAPJ9Yc_C0tAi5RrzK--rugHQpaE1UigqHUX4vWWuwg_kMfmqPw@mail.gmail.com>
+Message-Id: <CAPJ9Yc_JEuDV4yEjhyJp-+bo7fkYcFrW58vypqZzAyjRFcuvoA@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 In-Reply-To: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 To: linux-ppp@vger.kernel.org
 
-Some more info:
+One more thing I noticed:
 
- - the connect time is random:
-# logread  | grep "Connect time"
-Wed Apr 22 16:42:18 2020 daemon.info pppd[7960]: Connect time 1742.8 minute=
-s.
-Wed Apr 22 19:13:03 2020 daemon.info pppd[9563]: Connect time 150.7 minutes.
-Thu Apr 23 09:38:31 2020 daemon.info pppd[9884]: Connect time 865.5 minutes.
+the packet count for eth1 is much higher than for eth1.3902:
 
 
+eth1      Link encap:Ethernet  HWaddr C4:XX:XX:XX:XX:ED
+          inet6 addr: fe80::c6xx:xxff:fexx:xxed/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:23147175 errors:0 dropped:0 overruns:3 frame:0
+          TX packets:12334230 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:3553425618 (3.3 GiB)  TX bytes:4237688514 (3.9 GiB)
+          Interrupt:5
 
- - the assigned IP address is different on each connection
+eth1.3902 Link encap:Ethernet  HWaddr C4:XX:XX:XX:XX:ED
+          inet6 addr: fe80::c6xx:xxff:fexx:xxed/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:682037 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:91218 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:373700490 (356.3 MiB)  TX bytes:26176360 (24.9 MiB)
+
+As if the eth1.3902 is somehow reset every now and then. I'll keep my eye on it.
 
 
- - logs
-On Thu, 23 Apr 2020 at 00:00, James Carlson <carlsonj@workingcode.com> wrot=
-e:
+Also: the IPv6 address (the part derived from hwaddr) starts with c6
+instead of c4 like the actual hw address. Is that normal?
+
+
+
+On Thu, 23 Apr 2020 at 12:37, David Balažic <xerces9@gmail.com> wrote:
 >
-> On 2020-04-22 13:45, David Bala=C5=BEic wrote:
-> > Hi!
+> Some more info:
+>
+>  - the connect time is random:
+> # logread  | grep "Connect time"
+> Wed Apr 22 16:42:18 2020 daemon.info pppd[7960]: Connect time 1742.8 minutes.
+> Wed Apr 22 19:13:03 2020 daemon.info pppd[9563]: Connect time 150.7 minutes.
+> Thu Apr 23 09:38:31 2020 daemon.info pppd[9884]: Connect time 865.5 minutes.
+>
+>
+>
+>  - the assigned IP address is different on each connection
+>
+>
+>  - logs
+> On Thu, 23 Apr 2020 at 00:00, James Carlson <carlsonj@workingcode.com> wrote:
 > >
-> > I have a router running openwrt connected to a GPON ONT, running a
-> > PPPoE connection (hw details below).
+> > On 2020-04-22 13:45, David Balažic wrote:
+> > > Hi!
+> > >
+> > > I have a router running openwrt connected to a GPON ONT, running a
+> > > PPPoE connection (hw details below).
+> >
+> > This looks to be (possibly) a PPPoE failure, though there's nothing
+> > interesting in the log messages provided.  If there were an interesting
+> > log message, it would almost certainly come somewhere (perhaps even
+> > *minutes*) before that initial "Modem hangup" message.
 >
-> This looks to be (possibly) a PPPoE failure, though there's nothing
-> interesting in the log messages provided.  If there were an interesting
-> log message, it would almost certainly come somewhere (perhaps even
-> *minutes*) before that initial "Modem hangup" message.
-
-Nothing there:
-
-Thu Apr 23 08:59:02 2020 daemon.info hostapd: wlan0: STA
-58:XX:XX:XX:XX:b9 IEEE 802.11: deauthenticated due to inactivity
-(timer DEAUTH/REMOVE)
-Thu Apr 23 09:38:31 2020 daemon.notice pppd[9884]: Modem hangup
-
-I'll try packet capture next.
-
-Regards,
-David
+> Nothing there:
+>
+> Thu Apr 23 08:59:02 2020 daemon.info hostapd: wlan0: STA
+> 58:XX:XX:XX:XX:b9 IEEE 802.11: deauthenticated due to inactivity
+> (timer DEAUTH/REMOVE)
+> Thu Apr 23 09:38:31 2020 daemon.notice pppd[9884]: Modem hangup
+>
+> I'll try packet capture next.
+>
+> Regards,
+> David
