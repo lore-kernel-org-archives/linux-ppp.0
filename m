@@ -1,7 +1,7 @@
 From: Michael Richardson <mcr@sandelman.ca>
-Date: Thu, 23 Apr 2020 15:59:55 +0000
+Date: Thu, 23 Apr 2020 16:01:38 +0000
 Subject: Re: PPPoE Modem hangup after random time - how to debug?
-Message-Id: <7221.1587657595@localhost>
+Message-Id: <7689.1587657698@localhost>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 In-Reply-To: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
@@ -12,12 +12,20 @@ To: linux-ppp@vger.kernel.org
 
 
 David Bala=C5=BEic <xerces9@gmail.com> wrote:
-    > Also: the IPv6 address (the part derived from hwaddr) starts with c6
-    > instead of c4 like the actual hw address. Is that normal?
+    > tcpdump: pcap_loop: The interface went down
+    > 4 packets captured
+    > 22 packets received by filter
+    > 0 packets dropped by kernel
 
-There is a bit in the IPv6 IID (bit 2), which is the L/G bit, and says if t=
-he
-IID is considered globally unique.
+    > The ifconfig packet counter for the VLAN interface eth1.3902 is reset,
+    > compare to values in quested message below, this is th eoutpu a few
+    > minutes after the reconnect:
+
+.. your counter reset suggests that somehow your VLAN interface is being
+killed and restarted.
+That's really weird.
+
+This is openwrt?
 
 --
 ]               Never tell me the odds!                 | ipv6 mesh network=
