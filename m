@@ -1,47 +1,37 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Fri, 24 Apr 2020 14:26:16 +0000
+From: Guillaume Nault <gnault@redhat.com>
+Date: Fri, 24 Apr 2020 15:44:59 +0000
 Subject: Re: PPPoE Modem hangup after random time - how to debug?
-Message-Id: <7b366bd6-85d6-c7c2-9d0e-aafdaf9a81fc@workingcode.com>
+Message-Id: <20200424154459.GA21114@pc-3.home>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 In-Reply-To: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 To: linux-ppp@vger.kernel.org
 
-On 2020-04-24 10:02, David Bala=C5=BEic wrote:
-> ppp log:
->=20
->=20
-> Fri Apr 24 10:42:32 2020 daemon.notice pppd[11986]: Modem hangup
-> Fri Apr 24 10:42:32 2020 daemon.info pppd[11986]: Connect time 979.3 minu=
-tes.
-> Fri Apr 24 10:42:32 2020 daemon.info pppd[11986]: Sent 325423487
-> bytes, received 1643504692 bytes.
-
-Truncated logs aren't so helpful.  This tells us nothing about what's
-going on.
-
-> It seems echo requests come more often towards the end, almost every
-> second. Earlier they are also irregular, but come at 30-60 second
-> intervals.
-
-LCP Echo-Request messages are an optional feature.  They're controlled
-by the lcp-echo-interval and lcp-echo-failure options.  By default, pppd
-won't send these, but will respond if the other side sends them.
-
-The idea is that if you send a request, and the other side fails to
-respond, then, regardless of what the hardware is telling you, the link
-itself is dead, and can be torn down.
-
-However, in the exchange you've shown here, every request has a
-response, and all of the requests and responses appear to be in good
-order (each side is attaching its own LCP magic number option, which is
-the right thing to see, and the ID numbers line up for request/reply).
-
-There's nothing out of what you've sent that indicates (to me, at least)
-any sort of problem, at least within PPP itself.
-
---=20
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+On Fri, Apr 24, 2020 at 03:47:34PM +0200, David Balažic wrote:
+> On Thu, 23 Apr 2020 at 21:36, David Balažic <xerces9@gmail.com> wrote:
+> >
+> > OK, more data:
+> > I started tcpdump with the -e option as suggested on openwrt forum:
+> > tcpdump -e -v -i eth1.3902 pppoed
+> >
+> > on disconnect, this was logged (times are UTC):
+> >
+> >
+> > tcpdump: listening on eth1.3902, link-type EN10MB (Ethernet), capture
+> > size 262144 bytes
+> > 18:23:09.204991 a4:7b:2c:9e:c7:44 (oui Unknown) > 44:4e:6d:fd:c7:39
+> > (oui Unknown), ethertype PPPoE D (0x8863), length 97: PPPoE PADO
+> > [Service-Name] [AC-Name "SIMB_TABOR_BNG1"] [Host-Uniq
+> > 0x44************long_number******************************AA]
+> > [AC-Cookie ".5b************v"]
+> 
+> Isnt this strange? The dst addr is not my router or any other known.
+> Also the Host-Uniq value is different.
+> As if is traffic meant for someone else.
+> 
+You're probably not supposed to receive this frame, but a PADO
+shouldn't disconnect you. If that was a PADT, then yes, it'd be a good
+suspect.
