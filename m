@@ -1,7 +1,7 @@
-From: =?UTF-8?Q?David_Bala=C5=BEic?= <xerces9@gmail.com>
-Date: Mon, 27 Apr 2020 09:59:25 +0000
+From: James Carlson <carlsonj@workingcode.com>
+Date: Mon, 27 Apr 2020 13:43:06 +0000
 Subject: Re: PPPoE Modem hangup after random time - how to debug?
-Message-Id: <CAPJ9Yc_9E5PjDf7duYusKo3KnQ8kXUA7xkdiNgc2Vtsu3ufEUg@mail.gmail.com>
+Message-Id: <92e78022-55ca-862c-fcda-3f728be89774@workingcode.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 In-Reply-To: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
@@ -10,55 +10,59 @@ Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-On Mon, 27 Apr 2020 at 04:14, Michael Richardson <mcr@sandelman.ca> wrote:
->
->
-> David Bala=C5=BEic <xerces9@gmail.com> wrote:
->     > Sun Apr 26 17:34:57 2020 daemon.debug pppd[20289]: sent [IPV6CP
->     > ConfReq id=3D0x1 <addr fe80::d035:60ed:928e:f741>]
->     > Sun Apr 26 17:35:00 2020 daemon.debug pppd[20289]: sent [IPV6CP
->     > ConfReq id=3D0x1 <addr fe80::d035:60ed:928e:f741>]
->     > Sun Apr 26 17:35:03 2020 daemon.debug pppd[20289]: sent [IPV6CP
->     > ConfReq id=3D0x1 <addr fe80::d035:60ed:928e:f741>]
->     > Sun Apr 26 17:35:06 2020 daemon.debug pppd[20289]: sent [IPV6CP
->     > ConfReq id=3D0x1 <addr fe80::d035:60ed:928e:f741>]
->     > Sun Apr 26 17:35:09 2020 daemon.warn pppd[20289]: IPV6CP: timeout
->     > sending Config-Requests
->
-> Could this be the reason for the hangup?
-> pppd gets tired of no IPv6, decides it should hangup?
+On 2020-04-26 15:03, David Bala=C5=BEic wrote:
+> tcpdump: listening on eth1, link-type EN10MB (Ethernet), capture size
+> 262144 bytes
+> 17:34:34.805424 a4:7b:2c:9e:c7:44 (oui Unknown) > 44:4e:6d:fd:c7:39
+> (oui Unknown), ethertype 802.1Q (0x8100), length 60: vlan 3902, p 1,
+> ethertype PPPoE D, PPPoE PADT [ses 0x1]
+> 17:34:34.815673 c4:3d:c7:90:ce:ed (oui Unknown) > a4:7b:2c:9e:c7:44
+> (oui Unknown), ethertype 802.1Q (0x8100), length 52: vlan 3902, p 0,
+> ethertype PPPoE D, PPPoE PADT [ses 0x1] [Host-Uniq 0x00003003]
+> [AC-Cookie 0xED****************************75]
+> tcpdump: pcap_loop: The interface went down
+[...]
+> Sun Apr 26 17:34:35 2020 daemon.debug pppd[20289]:  dst
+> c4:XX:XX:XX:XX:ed  src a4:XX:XX:XX:XX:44
 
-These lines are logged in the 30 seconds after the connection is
-established. Later they never show up. It was like that for all
-connections thus far.
+That's really good evidence right there.  It certainly looks like the
+Roaring Penguin PPPoE kernel driver is blindly accepting a bad PADT
+packet meant for someone else.  Your peer probably shouldn't have sent
+this down the line to you, but that's another matter.
 
->     > The strange part is in the tcpdump there is a PADT sent to an
->     > "unknown" MAC and my pppd responds. At least that is how I see it.
->
->     > You think NOT putting the interface into promiscuous mode (done by
->     > tcpdump) would prevent this?
->     > Anyway, now I startted tcpdump with the -p option:  tcpdump -e -v -p
->     > -i eth1 vlan 3902 and pppoed
->
-> It could be that promisc mode (no -p) means that the PADT makes something
-> break, different than what you are investigating.  -p avoid promisc mode,=
- so
-> would avoid seeing that packet.
->
-> You mention in another thread that you were trying to do DHCPv6 on a
-> different (non-PPPoE) interface.  I don't see how that would matter unless
-> the failure caused netifd to decide to retry it all.
->
-> It seems that you ought to try the noipv6 option to pppd.
+I don't maintain the RP software, but I have a guess.  Either something
+on the system is keeping the Ethernet driver itself in promiscuous mode,
+or some defect in the driver allows non-matching non-multicast
+destinations to be sent up the receive pipe.
 
-I removed it (from the system config, the file /etc/config/network ).
-I also removed that "other interface", so there is no IPv6 stuff left.
-The new command line is:
-/usr/sbin/pppd nodetach ipparam wan ifname pppoe-wan lcp-echo-interval
-1 lcp-echo-failure 5 lcp-echo-adaptive nodefaultroute usepeerdns
-maxfail 1 user YYYYYY password XXXXX ip-up-script /lib/netifd/ppp-up
-ip-down-script /lib/netifd/ppp-down mtu 1492 mru 1492 plugin
-rp-pppoe.so nic-eth1.3902
+Either way, it's usually responsibility of the receiving protocol
+software after ethertype demux (in this case, the PPPoE implementation,
+and NOT the PPP code) to validate that the addresses are correct when
+necessary.  It's not the driver's problem.
 
-For the record: The new connection with new settings was started on
-Mon Apr 27 09:47:48 (UTC)
+I think the PPPoE code may be missing a check here.  This looks like a
+bug to me.
+
+> Sun Apr 26 17:35:06 2020 daemon.debug pppd[20289]: sent [IPV6CP
+> ConfReq id=3D0x1 <addr fe80::d035:60ed:928e:f741>]
+> Sun Apr 26 17:35:09 2020 daemon.warn pppd[20289]: IPV6CP: timeout
+> sending Config-Requests
+
+I don't think this is causing the problem, but it's interesting evidence
+nonetheless.  If the peer you're talking to actually implemented PPP in
+a reasonable manner, it would send LCP Protocol-Reject in response to
+your attempt to negotiate IPV6CP rather than just ignoring you.  The
+peer isn't healthy.  Not much you can do about it at this point (other
+than disabling IPv6 on your side with "noipv6"), but still interesting.
+
+> The strange part is in the tcpdump there is a PADT sent to an
+> "unknown" MAC and my pppd responds. At least that is how I see it.
+
+Yes, EXCEPT that pppd isn't involved at all.  PADT is part of the PPPoE
+protocol, not PPP.  pppd doesn't know anything about this.  It's the
+rp-pppoe software that's responding improperly.  As I suggested
+previously in a private message, I think you should discuss the problem
+with the maintainers of the PPPoE stuff.
+
+--=20
+James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
