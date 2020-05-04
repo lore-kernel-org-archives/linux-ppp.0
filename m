@@ -1,7 +1,7 @@
-From: Guillaume Nault <gnault@redhat.com>
-Date: Mon, 04 May 2020 18:11:59 +0000
+From: =?UTF-8?Q?David_Bala=C5=BEic?= <xerces9@gmail.com>
+Date: Mon, 04 May 2020 18:43:26 +0000
 Subject: Re: PPPoE Modem hangup after random time - how to debug?
-Message-Id: <20200504181159.GA7717@pc-3.home>
+Message-Id: <CAPJ9Yc8KxAHuw-PsF2uJuW+Ec5HNzhVqVR7yQgrWRwUWeT=ekA@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 In-Reply-To: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
@@ -10,32 +10,40 @@ Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 To: linux-ppp@vger.kernel.org
 
-On Mon, May 04, 2020 at 06:36:48PM +0200, David Bala=C5=BEic wrote:
-> On Mon, 4 May 2020 at 15:01, Guillaume Nault <gnault@redhat.com> wrote:
-> > You can use "%pM" for printing MAC addresses. Also, it'd be interesting
-> > to have information about promisc mode:
-> >   "dev %s, flags: %#x, promiscuity %u",
-> >   dev->name, dev->flags, dev->promiscuity,
->=20
-> "ifdown wan" triggers a PADT response from the server, and then this
-> code prints:
->=20
->  dev eth1.3902, flags: 0x1003, promiscuity 0
->=20
-I'm not sure what "ifdown wan" is supposed to do. Assuming "wan" is the
-name of your ppp interface (wasn't it "pppoe-wan" in your previous
-logs?) and that ifdown works like on Debian, then it makes sense that
-the peer disconnects the PPPoE session by sending a PADT. At least now
-the device isn't in promisc mode.
+On Mon, 4 May 2020 at 20:12, Guillaume Nault <gnault@redhat.com> wrote:
+>
+> On Mon, May 04, 2020 at 06:36:48PM +0200, David Bala=C5=BEic wrote:
+> > On Mon, 4 May 2020 at 15:01, Guillaume Nault <gnault@redhat.com> wrote:
+> > > You can use "%pM" for printing MAC addresses. Also, it'd be interesti=
+ng
+> > > to have information about promisc mode:
+> > >   "dev %s, flags: %#x, promiscuity %u",
+> > >   dev->name, dev->flags, dev->promiscuity,
+> >
+> > "ifdown wan" triggers a PADT response from the server, and then this
+> > code prints:
+> >
+> >  dev eth1.3902, flags: 0x1003, promiscuity 0
+> >
+> I'm not sure what "ifdown wan" is supposed to do. Assuming "wan" is the
+> name of your ppp interface (wasn't it "pppoe-wan" in your previous
+> logs?) and that ifdown works like on Debian, then it makes sense that
+> the peer disconnects the PPPoE session by sending a PADT. At least now
+> the device isn't in promisc mode.
 
-> I'll report later values printed when a stray PADT appears.
->=20
-Okay, but please keep printing the destination MAC address of the
-packet. I was providing the flags/promiscuity string just to get extra
-information, not to replace your original log.
+Yes, "wan" is the interface alias. ifdown "closes" it... sends a PADT
+to the server, server replies with PADT...
 
-Also, what's the driver of your NIC (ethtool -i eth1)?
+> > I'll report later values printed when a stray PADT appears.
+> >
+> Okay, but please keep printing the destination MAC address of the
+> packet. I was providing the flags/promiscuity string just to get extra
+> information, not to replace your original log.
+>
+> Also, what's the driver of your NIC (ethtool -i eth1)?
 
-> Regards,
-> David
->=20
+# ethtool  -i eth1
+driver: ag71xx
+
+Regards,
+David
