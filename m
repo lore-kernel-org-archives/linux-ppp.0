@@ -1,7 +1,7 @@
 From: =?UTF-8?Q?David_Bala=C5=BEic?= <xerces9@gmail.com>
-Date: Mon, 04 May 2020 18:43:26 +0000
+Date: Wed, 06 May 2020 09:52:48 +0000
 Subject: Re: PPPoE Modem hangup after random time - how to debug?
-Message-Id: <CAPJ9Yc8KxAHuw-PsF2uJuW+Ec5HNzhVqVR7yQgrWRwUWeT=ekA@mail.gmail.com>
+Message-Id: <CAPJ9Yc-a4ax_RgYLJT71ukkcPasz+z2dU6bm9yiE+k664JhNqA@mail.gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 In-Reply-To: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
@@ -20,30 +20,27 @@ ng
 > > >   "dev %s, flags: %#x, promiscuity %u",
 > > >   dev->name, dev->flags, dev->promiscuity,
 > >
-> > "ifdown wan" triggers a PADT response from the server, and then this
-> > code prints:
-> >
-> >  dev eth1.3902, flags: 0x1003, promiscuity 0
-> >
-> I'm not sure what "ifdown wan" is supposed to do. Assuming "wan" is the
-> name of your ppp interface (wasn't it "pppoe-wan" in your previous
-> logs?) and that ifdown works like on Debian, then it makes sense that
-> the peer disconnects the PPPoE session by sending a PADT. At least now
-> the device isn't in promisc mode.
-
-Yes, "wan" is the interface alias. ifdown "closes" it... sends a PADT
-to the server, server replies with PADT...
-
+>
 > > I'll report later values printed when a stray PADT appears.
 > >
 > Okay, but please keep printing the destination MAC address of the
 > packet. I was providing the flags/promiscuity string just to get extra
 > information, not to replace your original log.
->
-> Also, what's the driver of your NIC (ethtool -i eth1)?
 
-# ethtool  -i eth1
-driver: ag71xx
+This was logged now:
+
+(all at May  6 05:34:50 2020 UTC)
+pppoe_disc_rcv PADT received, sid=3D1, SRC: a4:7b:2c:9e:c7:44, DST:
+44:4e:6d:fd:c7:39
+pppoe_disc_rcv PADT received, own hw addr: c4:XX:XX:XX:XX:ed
+      dev eth1.3902, flags: 0x1003, promiscuity 0
+pppoe_disc_rcv PADT received, not four our address, ignoring
+
+(the last line is from my fix, the connection is now not dropped when
+the PADT is not for us; works fine, my connection stays up and
+working)
+
+I'll clean up and post the patch later.
 
 Regards,
 David
