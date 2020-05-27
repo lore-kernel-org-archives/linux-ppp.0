@@ -1,62 +1,40 @@
-From: Guillaume Nault <gnault@redhat.com>
-Date: Wed, 06 May 2020 20:20:18 +0000
-Subject: Re: PPPoE Modem hangup after random time - how to debug?
-Message-Id: <20200506202018.GA29247@pc-3.home>
+From: Patrick Mahan <mahan@mahan.org>
+Date: Wed, 27 May 2020 19:16:07 +0000
+Subject: PPP cycling between UP and DOWN
+Message-Id: <f44e7e14-1621-7141-66a3-3a2218e8db86@mahan.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
-In-Reply-To: <CAPJ9Yc8Wvxb_UoqGu=wrrWX2HP5AwE98jvcS3XYnvevxa0RZpg@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 To: linux-ppp@vger.kernel.org
 
-On Wed, May 06, 2020 at 11:15:46AM -0400, James Carlson wrote:
-> On 2020-05-06 10:26, Guillaume Nault wrote:
-> > On Wed, May 06, 2020 at 11:52:48AM +0200, David Bala=C5=BEic wrote:
-> >> (the last line is from my fix, the connection is now not dropped when
-> >> the PADT is not for us; works fine, my connection stays up and
-> >> working)
-> >>
-> > Looks like a more fundamental issue. This frame shouldn't have been
-> > accepted in the first place. Can you also print the packet class
-> > ("... pkt_type %u", ..., skb->pkt_type)?
-> >=20
-> > Testing the destination MAC here is likely to just paper over the
-> > problem.
->=20
-> Having either sketchy (e.g., CRC hash filter based) or just absent
-> hardware filtering of unicast addresses isn't an unknown property for
-> some Ethernet devices.  Relying on exact match from the underlying
-> hardware seems like a bad idea.  (Some, for instance, can either receive
-> "all multicast" or can filter using the low N bits of the CRC to index
-> into a 2^N-bit hash table, but can't really exclude a unicast packet
-> that happens to match the low N bits of a selectively enabled multicast
-> address.  See, for example, the PowerQUICC implementation.  But there
-> are quite a few that work like this.  It wouldn't surprise me in the
-> least that 'ar71xx' [Atheros/Qualcomm?] is like this.)
->=20
-Yes, but that's just a limitation of the chip. I'm not a driver guy,
-but I'd expect the driver to do whatever is need, in software, to fix
-such limitations.
+PPP v2.3.11
+RP-PPPOE v3.12
+Linux 2.6.35
 
-> I agree that having to test the MAC address right here is a bit lame and
-> that the driver itself ought to assist the hardware in doing the Right
-> Thing.
->=20
-Yes, we shouldn't have to check the destination MAC address in all
-ethertype handlers. The Ethernet layer has to do its job.
+I am seeing some issues with respect to how PPP is handling a PPPoE connection.
 
-But looking at the openwrt code, it seems that the driver properly
-calls eth_type_trans(). So skb->pkt_type should be correctly set and we
-could use it to know if the frame was for us. It'd still be good to
-verify that skb->pkt_type =3D PACKET_OTHERHOST when the original problem
-happens.
+My PPPoE connection gets established and pppd reports UP via the ip-up script. 
+Then at some point (sometimes within a second, sometimes hours) pppd reports down 
+via the ip-down script, but does not exit then re-establishes the UP state and 
+reports it via ip-up.
 
-Testing if ->pkt_type =3D PACKET_HOST in the PPPoE discovery handler
-would be a good thing anyway, to avoid processing packets just because
-someone started tcpdump. That might also "fix" David's problem as a
-side effect.
+I have a script that monitors by this by having a modified ip-up and ip-down 
+script write a value to a specific file under /var/run/pppd/ and if it is 
+ip-down, then I schedule a restart of pppd to occur once the pppd image exits.  I 
+have assumed that ip-down being triggered is and indication that PPPoE connection 
+is down and over.
 
-> --=20
-> James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
->=20
+But I am now seeing that this assumption could be incorrect.  I don't claim to 
+understand the entire protocol layers involved.  But is it supported that a PPPoE 
+connection can shift back from the IPCP layer to the LCP layer?  Then back?
+
+Or is this a ppp protocol issue.  I see in the pppd code that we can moved to a 
+down state if we get a request to restart negotiations, so I can see that my 
+assumption may be incorrect.
+
+Any help is appreciated.
+
+Thanks,
+
+Patrick
