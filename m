@@ -1,46 +1,113 @@
-From: David Howells <dhowells@redhat.com>
-Date: Tue, 16 Jun 2020 15:46:40 +0000
-Subject: Re: [PATCH v4 1/3] mm/slab: Use memzero_explicit() in kzfree()
-Message-Id: <879079.1592322400@warthog.procyon.org.uk>
+From: Patrick Mahan <mahan@mahan.org>
+Date: Mon, 08 Jun 2020 17:04:41 +0000
+Subject: Re: PPP cycling between UP and DOWN
+Message-Id: <8d6fcc7e-c727-7979-13ca-a3e80d9eb514@mahan.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <56c2304c-73cc-8f48-d8d0-5dd6c39f33f3@redhat.com>
- <20200616015718.7812-1-longman@redhat.com>
- <20200616015718.7812-2-longman@redhat.com>
- <20200616033035.GB902@sol.localdomain>
-In-Reply-To: <56c2304c-73cc-8f48-d8d0-5dd6c39f33f3@redhat.com>
+References: <f44e7e14-1621-7141-66a3-3a2218e8db86@mahan.org>
+In-Reply-To: <f44e7e14-1621-7141-66a3-3a2218e8db86@mahan.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Waiman Long <longman@redhat.com>
-Cc: "Jason A . Donenfeld" <Jason@zx2c4.com>, Michal Hocko <mhocko@suse.com>, linux-btrfs@vger.kernel.org, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, David Sterba <dsterba@suse.cz>, David Howells <dhowells@redhat.com>, linux-mm@kvack.org, linux-sctp@vger.kernel.org, keyrings@vger.kernel.org, kasan-dev@googlegroups.com, linux-stm32@st-md-mailman.stormreply.com, devel@driverdev.osuosl.org, linux-cifs@vger.kernel.org, linux-scsi@vger.kernel.org, James Morris <jmorris@namei.org>, Matthew Wilcox <willy@infradead.org>, ebiggers@kernel.org, linux-wpan@vger.kernel.org, David Rientjes <rientjes@google.com>, Dan Carpenter <dan.carpenter@oracle.com>, linux-pm@vger.kernel.org, ecryptfs@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mediatek@lists.infradead.org, linux-amlogic@lists.infradead.org, virtualization@lists.linux-foundation.org, linux-integrity@vger.kernel.org, linux-nfs@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-wireless@vger.kernel.org, linux-kernel@vger.kernel.org, stable@vger.kernel.org, linux-bluetooth@vger.kernel.org, linux-security-module@vger.kernel.org, target-devel@vger.kernel.org, tipc-discussion@lists.sourceforge.net, linux-crypto@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Joe Perches <joe@perches.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, netdev@vger.kernel.org, wireguard@lists.zx2c4.com, linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: linux-ppp@vger.kernel.org
 
-Waiman Long <longman@redhat.com> wrote:
+On 5/28/20 6:59 AM, James Carlson wrote:
+> On 2020-05-27 15:16, Patrick Mahan wrote:
+>> I have a script that monitors by this by having a modified ip-up and
+>> ip-down script write a value to a specific file under /var/run/pppd/ and
+>> if it is ip-down, then I schedule a restart of pppd to occur once the
+>> pppd image exits.  I have assumed that ip-down being triggered is and
+>> indication that PPPoE connection is down and over.
+> 
+> That's the most likely case.  It would help to have _complete_ debug
+> logs showing what's happening.
+> 
+> (For what it's worth, another person posting to this list recently was
+> having PPPoE problems that ended up tracking back to a bad Ethernet
+> driver.  The driver allowed receive of unicast packets with someone
+> else's address, and the PPPoE kernel code accepted a stray PADT that
+> caused the link to go down.)  (PPPoE, as a protocol, is pretty nasty stuff.)
+> 
+>> But I am now seeing that this assumption could be incorrect.  I don't
+>> claim to understand the entire protocol layers involved.  But is it
+>> supported that a PPPoE connection can shift back from the IPCP layer to
+>> the LCP layer?  Then back?
+> 
+> IPCP can certainly be taken down without taking down LCP.  And LCP can
+> be renegotiated (implicitly taking down IPCP as well) at any time.
+> However, I've yet to find a commercial service provider that actually
+> supports anything like this.  All of the systems they use are much more
+> limited implementations.
+> 
+> It sounds like a stretch to me.  A debug log would show for sure, though.
+> 
+>> Or is this a ppp protocol issue.  I see in the pppd code that we can
+>> moved to a down state if we get a request to restart negotiations, so I
+>> can see that my assumption may be incorrect.
+> 
+> It can, as described above, but it's not something that's commonly (or
+> "ever") implemented, at least in my experience.  Renegotiation almost
+> always leads to complete teardown.  (Depending on the vendor, some will
+> start doing LCP Protocol-Reject on the NCP protocols like IPCP if you
+> attempt that.)
+> 
+> This doesn't sound likely to me.  But, again, debug logs are your friend
+> here.
+> 
+> Use the pppd 'debug' option.  By itself, that'll write the log
+> information to syslog daemon.debug (be sure to redirect that to a file).
+>   Or use the "logfile /path/to/file" option to write the messages to a
+> file.  Then post those logs.
+> 
+> It's important to understand that PPP is just one protocol layer.  PPPoE
+> itself is distinct, with its own messages and states.  The actions of
+> PPPoE are seen by PPP as just underlying link up/down states -- very
+> much like the signals PPP would get from a modem.
+> 
 
-> The kzfree() function is normally used to clear some sensitive
-> information, like encryption keys, in the buffer before freeing it back
-> to the pool. Memset()
+I finally obtained the PPPoE logs from my customer.  I have redacted the IP 
+addresses.  This is where I think we get the UP-->DOWN-->UP that is causing my 
+issue.  Oddly, the customer has not experienced another event of this nature 
+since then.
 
-"memset()" is all lowercase.
+Here is the log with my annotations:
 
-> is currently used for buffer clearing. However unlikely, there is still a
-> non-zero probability
+Executing pppd w/plugin(/etc/ppp/plugins/rp-pppoe.so): '/usr/sbin/pppd plugin 
+/etc/ppp/plugins/rp-pppoe.so nic-wan0  unit 0 noipdefault noauth default-asyncmap 
+defaultroute hide-password nodetach  mtu 1492 mru 1492 noaccomp nodeflate nopcomp 
+novj novjccomp user w29ddnjt@bizf.ocn.ne.jp lcp-echo-interval 20 lcp-echo-failure 3 '
+PPPd pid is 15175
+Plugin /etc/ppp/plugins/rp-pppoe.so loaded.
+RP-PPPoE plugin version 3.12 compiled against pppd 2.4.7
+Connected to 00:12:e2:c0:0e:94 via interface wan0
+Using interface ppp0
+Connect: ppp0 <--> wan0
+CHAP authentication succeeded
+CHAP authentication succeeded
+peer from calling number 00:12:E2:C0:0E:94 authorized
+kernel does not support PPP filtering
+sifdefaultroute(unit=0, ouraddr=XX.XX.XX.XX, gateway=YY.YY.YY.YY)
+local  IP address XX.XX.XX.XX
+remote IP address YY.YY.YY.YY
 
-I'd say "a possibility".
+NOTE: This is where the first ip-up callout was triggered.
 
-> that
+Connect time 0.1 minutes.
+Sent 0 bytes, received 10 bytes.
 
-and I'd move "in [the] future" here.
+NOTE: This is where I think the ip-down callout was triggered.
 
-> the compiler may choose to optimize away the
-> memory clearing especially if LTO is being used in the future. To make sure
-> that this optimization will never happen
+sifdefaultroute(unit=0, ouraddr=XX.XX.XX.XX, gateway=YY.YY.YY.YY)
+local  IP address XX.XX.XX.XX
+remote IP address YY.YY.YY.YY
 
-"in these cases"
+NOTE: This is where I think the second ip-up callout was triggered.
 
-> , memzero_explicit(), which is introduced in v3.18, is now used in
+Modem hangup
+Connect time 1629.1 minutes.
+Sent 572 bytes, received 452067 bytes.
+Connection terminated.
+PPPoE shutdown on interface 'ppp0', exit status is '16'
 
-"instead of"?
+Thanks,
 
-> kzfree() to future-proof it.
-
-Davod
+Patrick
