@@ -1,88 +1,60 @@
-From: Patrick Mahan <mahan@mahan.org>
-Date: Thu, 28 May 2020 17:54:08 +0000
-Subject: Re: PPP cycling between UP and DOWN
-Message-Id: <4180d56f-b951-71a1-4a64-5360f4bea31a@mahan.org>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Date: Mon, 15 Jun 2020 18:07:53 +0000
+Subject: Re: [PATCH 1/2] mm, treewide: Rename kzfree() to kfree_sensitive()
+Message-Id: <20200615180753.GJ4151@kadam>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <f44e7e14-1621-7141-66a3-3a2218e8db86@mahan.org>
-In-Reply-To: <f44e7e14-1621-7141-66a3-3a2218e8db86@mahan.org>
+References: <20200413211550.8307-1-longman@redhat.com>
+ <20200413211550.8307-2-longman@redhat.com>
+In-Reply-To: <20200413211550.8307-2-longman@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Waiman Long <longman@redhat.com>
+Cc: linux-cifs@vger.kernel.org, linux-wireless@vger.kernel.org, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, virtualization@lists.linux-foundation.org, David Howells <dhowells@redhat.com>, linux-mm@kvack.org, linux-sctp@vger.kernel.org, target-devel@vger.kernel.org, kasan-dev@googlegroups.com, cocci@systeme.lip6.fr, devel@driverdev.osuosl.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, x86@kernel.org, James Morris <jmorris@namei.org>, Matthew Wilcox <willy@infradead.org>, linux-stm32@st-md-mailman.stormreply.com, intel-wired-lan@lists.osuosl.org, David Rientjes <rientjes@google.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-pm@vger.kernel.org, ecryptfs@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-fscrypt@vger.kernel.org, linux-mediatek@lists.infradead.org, linux-amlogic@lists.infradead.org, linux-btrfs@vger.kernel.org, linux-integrity@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-nfs@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, samba-technical@lists.samba.org, linux-kernel@vger.kernel.org, linux-bluetooth@vger.kernel.org, linux-security-module@vger.kernel.org, keyrings@vger.kernel.org, tipc-discussion@lists.sourceforge.net, linux-crypto@vger.kernel.org, netdev@vger.kernel.org, Joe Perches <joe@perches.com>, Andrew Morton <akpm@linux-foundation.org>, linux-wpan@vger.kernel.org, wireguard@lists.zx2c4.com, linux-ppp@vger.kernel.org
 
-On 5/28/20 6:59 AM, James Carlson wrote:
-> On 2020-05-27 15:16, Patrick Mahan wrote:
->> I have a script that monitors by this by having a modified ip-up and
->> ip-down script write a value to a specific file under /var/run/pppd/ and
->> if it is ip-down, then I schedule a restart of pppd to occur once the
->> pppd image exits.  I have assumed that ip-down being triggered is and
->> indication that PPPoE connection is down and over.
-> 
-> That's the most likely case.  It would help to have _complete_ debug
-> logs showing what's happening.
+On Mon, Apr 13, 2020 at 05:15:49PM -0400, Waiman Long wrote:
+> diff --git a/mm/slab_common.c b/mm/slab_common.c
+> index 23c7500eea7d..c08bc7eb20bd 100644
+> --- a/mm/slab_common.c
+> +++ b/mm/slab_common.c
+> @@ -1707,17 +1707,17 @@ void *krealloc(const void *p, size_t new_size, gfp_t flags)
+>  EXPORT_SYMBOL(krealloc);
+>  
+>  /**
+> - * kzfree - like kfree but zero memory
+> + * kfree_sensitive - Clear sensitive information in memory before freeing
+>   * @p: object to free memory of
+>   *
+>   * The memory of the object @p points to is zeroed before freed.
+> - * If @p is %NULL, kzfree() does nothing.
+> + * If @p is %NULL, kfree_sensitive() does nothing.
+>   *
+>   * Note: this function zeroes the whole allocated buffer which can be a good
+>   * deal bigger than the requested buffer size passed to kmalloc(). So be
+>   * careful when using this function in performance sensitive code.
+>   */
+> -void kzfree(const void *p)
+> +void kfree_sensitive(const void *p)
+>  {
+>  	size_t ks;
+>  	void *mem = (void *)p;
+> @@ -1725,10 +1725,10 @@ void kzfree(const void *p)
+>  	if (unlikely(ZERO_OR_NULL_PTR(mem)))
+>  		return;
+>  	ks = ksize(mem);
+> -	memset(mem, 0, ks);
+> +	memzero_explicit(mem, ks);
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+This is an unrelated bug fix.  It really needs to be pulled into a
+separate patch by itself and back ported to stable kernels.
 
-I'm working on that, but I probably won't have them until tomorrow.
+>  	kfree(mem);
+>  }
+> -EXPORT_SYMBOL(kzfree);
+> +EXPORT_SYMBOL(kfree_sensitive);
+>  
+>  /**
+>   * ksize - get the actual amount of memory allocated for a given object
 
-> 
-> (For what it's worth, another person posting to this list recently was
-> having PPPoE problems that ended up tracking back to a bad Ethernet
-> driver.  The driver allowed receive of unicast packets with someone
-> else's address, and the PPPoE kernel code accepted a stray PADT that
-> caused the link to go down.)  (PPPoE, as a protocol, is pretty nasty stuff.)
-> 
-
-I am dis-inclined to lean in that direction.  These are standard Intel igb 
-devices.  In over 5 years I have yet to have one issue tracked back directly to 
-the ethernet driver.
-
->> But I am now seeing that this assumption could be incorrect.  I don't
->> claim to understand the entire protocol layers involved.  But is it
->> supported that a PPPoE connection can shift back from the IPCP layer to
->> the LCP layer?  Then back?
-> 
-> IPCP can certainly be taken down without taking down LCP.  And LCP can
-> be renegotiated (implicitly taking down IPCP as well) at any time.
-> However, I've yet to find a commercial service provider that actually
-> supports anything like this.  All of the systems they use are much more
-> limited implementations.
-> 
-> It sounds like a stretch to me.  A debug log would show for sure, though.
-> 
-
-Yes, it seems like a stretch to me as well.  This code has been operating for 
-almost 5 years with very little change.  This is the first case and it has only 
-happened once.
-
->> Or is this a ppp protocol issue.  I see in the pppd code that we can
->> moved to a down state if we get a request to restart negotiations, so I
->> can see that my assumption may be incorrect.
-> 
-> It can, as described above, but it's not something that's commonly (or
-> "ever") implemented, at least in my experience.  Renegotiation almost
-> always leads to complete teardown.  (Depending on the vendor, some will
-> start doing LCP Protocol-Reject on the NCP protocols like IPCP if you
-> attempt that.)
-> 
-> This doesn't sound likely to me.  But, again, debug logs are your friend
-> here.
-> 
-> Use the pppd 'debug' option.  By itself, that'll write the log
-> information to syslog daemon.debug (be sure to redirect that to a file).
->   Or use the "logfile /path/to/file" option to write the messages to a
-> file.  Then post those logs.
-> 
-> It's important to understand that PPP is just one protocol layer.  PPPoE
-> itself is distinct, with its own messages and states.  The actions of
-> PPPoE are seen by PPP as just underlying link up/down states -- very
-> much like the signals PPP would get from a modem.
-> 
-
-I am using rp-pppoe so I will look at their code to see if there might be an 
-possible issue.
-
-I am currently hoping this is an one off issue that won't return soon and I can, 
-hopefully, wait until we are upgrade to a newer kernel and code.
-
-Thanks,
-
-Patrick
+regards,
+dan carpenter
