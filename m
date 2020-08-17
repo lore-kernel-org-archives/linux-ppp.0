@@ -1,7 +1,7 @@
 From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:12 +0000
-Subject: [PATCH 7/9] net: r8152: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200817084614.24263-11-allen.cryptic@gmail.com>
+Date: Mon, 17 Aug 2020 08:58:13 +0000
+Subject: [PATCH 8/9] net: rtl8150: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200817084614.24263-12-allen.cryptic@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200817084614.24263-1-allen.cryptic@gmail.com>
 In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
@@ -21,35 +21,33 @@ and from_tasklet() to pass the tasklet pointer explicitly.
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <allen.lkml@gmail.com>
 ---
- drivers/net/usb/r8152.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ drivers/net/usb/rtl8150.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/net/usb/r8152.c b/drivers/net/usb/r8152.c
-index 2b02fefd094d..6805686abfe7 100644
---- a/drivers/net/usb/r8152.c
-+++ b/drivers/net/usb/r8152.c
-@@ -2410,11 +2410,9 @@ static void tx_bottom(struct r8152 *tp)
- 	} while (res = 0);
+diff --git a/drivers/net/usb/rtl8150.c b/drivers/net/usb/rtl8150.c
+index e7c630d37589..b6d70716321c 100644
+--- a/drivers/net/usb/rtl8150.c
++++ b/drivers/net/usb/rtl8150.c
+@@ -589,9 +589,9 @@ static void free_skb_pool(rtl8150_t *dev)
+ 		dev_kfree_skb(dev->rx_skb_pool[i]);
  }
  
--static void bottom_half(unsigned long data)
-+static void bottom_half(struct tasklet_struct *t)
+-static void rx_fixup(unsigned long data)
++static void rx_fixup(struct tasklet_struct *t)
  {
--	struct r8152 *tp;
--
--	tp = (struct r8152 *)data;
-+	struct r8152 *tp = from_tasklet(tp, t, tx_tl);
+-	struct rtl8150 *dev = (struct rtl8150 *)data;
++	struct rtl8150 *dev = from_tasklet(dev, t, tl);
+ 	struct sk_buff *skb;
+ 	int status;
  
- 	if (test_bit(RTL8152_UNPLUG, &tp->flags))
- 		return;
-@@ -6730,7 +6728,7 @@ static int rtl8152_probe(struct usb_interface *intf,
- 	mutex_init(&tp->control);
- 	INIT_DELAYED_WORK(&tp->schedule, rtl_work_func_t);
- 	INIT_DELAYED_WORK(&tp->hw_phy_work, rtl_hw_phy_work_func_t);
--	tasklet_init(&tp->tx_tl, bottom_half, (unsigned long)tp);
-+	tasklet_setup(&tp->tx_tl, bottom_half);
- 	tasklet_disable(&tp->tx_tl);
+@@ -890,7 +890,7 @@ static int rtl8150_probe(struct usb_interface *intf,
+ 		return -ENOMEM;
+ 	}
  
- 	netdev->netdev_ops = &rtl8152_netdev_ops;
+-	tasklet_init(&dev->tl, rx_fixup, (unsigned long)dev);
++	tasklet_setup(&dev->tl, rx_fixup);
+ 	spin_lock_init(&dev->rx_pool_lock);
+ 
+ 	dev->udev = udev;
 -- 
 2.17.1
