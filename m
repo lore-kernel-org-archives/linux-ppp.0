@@ -1,7 +1,7 @@
 From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:13 +0000
-Subject: [PATCH 8/9] net: rtl8150: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200817084614.24263-12-allen.cryptic@gmail.com>
+Date: Mon, 17 Aug 2020 08:58:04 +0000
+Subject: [PATCH 1/9] net: ifb: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200817084614.24263-3-allen.cryptic@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200817084614.24263-1-allen.cryptic@gmail.com>
 In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
@@ -21,33 +21,34 @@ and from_tasklet() to pass the tasklet pointer explicitly.
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <allen.lkml@gmail.com>
 ---
- drivers/net/usb/rtl8150.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/net/ifb.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/net/usb/rtl8150.c b/drivers/net/usb/rtl8150.c
-index e7c630d37589..b6d70716321c 100644
---- a/drivers/net/usb/rtl8150.c
-+++ b/drivers/net/usb/rtl8150.c
-@@ -589,9 +589,9 @@ static void free_skb_pool(rtl8150_t *dev)
- 		dev_kfree_skb(dev->rx_skb_pool[i]);
- }
+diff --git a/drivers/net/ifb.c b/drivers/net/ifb.c
+index 7fe306e76281..a2d6027362d2 100644
+--- a/drivers/net/ifb.c
++++ b/drivers/net/ifb.c
+@@ -59,9 +59,9 @@ static netdev_tx_t ifb_xmit(struct sk_buff *skb, struct net_device *dev);
+ static int ifb_open(struct net_device *dev);
+ static int ifb_close(struct net_device *dev);
  
--static void rx_fixup(unsigned long data)
-+static void rx_fixup(struct tasklet_struct *t)
+-static void ifb_ri_tasklet(unsigned long _txp)
++static void ifb_ri_tasklet(struct tasklet_struct *t)
  {
--	struct rtl8150 *dev = (struct rtl8150 *)data;
-+	struct rtl8150 *dev = from_tasklet(dev, t, tl);
+-	struct ifb_q_private *txp = (struct ifb_q_private *)_txp;
++	struct ifb_q_private *txp = from_tasklet(txp, t, ifb_tasklet);
+ 	struct netdev_queue *txq;
  	struct sk_buff *skb;
- 	int status;
  
-@@ -890,7 +890,7 @@ static int rtl8150_probe(struct usb_interface *intf,
- 		return -ENOMEM;
+@@ -170,8 +170,7 @@ static int ifb_dev_init(struct net_device *dev)
+ 		__skb_queue_head_init(&txp->tq);
+ 		u64_stats_init(&txp->rsync);
+ 		u64_stats_init(&txp->tsync);
+-		tasklet_init(&txp->ifb_tasklet, ifb_ri_tasklet,
+-			     (unsigned long)txp);
++		tasklet_setup(&txp->ifb_tasklet, ifb_ri_tasklet);
+ 		netif_tx_start_queue(netdev_get_tx_queue(dev, i));
  	}
- 
--	tasklet_init(&dev->tl, rx_fixup, (unsigned long)dev);
-+	tasklet_setup(&dev->tl, rx_fixup);
- 	spin_lock_init(&dev->rx_pool_lock);
- 
- 	dev->udev = udev;
+ 	return 0;
 -- 
 2.17.1
