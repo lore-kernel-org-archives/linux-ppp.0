@@ -1,7 +1,7 @@
 From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:10 +0000
-Subject: [PATCH 5/9] net: lan78xx: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200817084614.24263-9-allen.cryptic@gmail.com>
+Date: Mon, 17 Aug 2020 08:58:11 +0000
+Subject: [PATCH 6/9] net: pegasus: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200817084614.24263-10-allen.cryptic@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200817084614.24263-1-allen.cryptic@gmail.com>
 In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
@@ -21,33 +21,36 @@ and from_tasklet() to pass the tasklet pointer explicitly.
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <allen.lkml@gmail.com>
 ---
- drivers/net/usb/lan78xx.c | 6 +++---
+ drivers/net/usb/pegasus.c | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/net/usb/lan78xx.c b/drivers/net/usb/lan78xx.c
-index 442507f25aad..557999a94ef9 100644
---- a/drivers/net/usb/lan78xx.c
-+++ b/drivers/net/usb/lan78xx.c
-@@ -3386,9 +3386,9 @@ static void lan78xx_rx_bh(struct lan78xx_net *dev)
- 		netif_wake_queue(dev->net);
+diff --git a/drivers/net/usb/pegasus.c b/drivers/net/usb/pegasus.c
+index 0ef7e1f443e3..addf904e7c65 100644
+--- a/drivers/net/usb/pegasus.c
++++ b/drivers/net/usb/pegasus.c
+@@ -565,12 +565,12 @@ static void read_bulk_callback(struct urb *urb)
+ 	tasklet_schedule(&pegasus->rx_tl);
  }
  
--static void lan78xx_bh(unsigned long param)
-+static void lan78xx_bh(struct tasklet_struct *t)
+-static void rx_fixup(unsigned long data)
++static void rx_fixup(struct tasklet_struct *t)
  {
--	struct lan78xx_net *dev = (struct lan78xx_net *)param;
-+	struct lan78xx_net *dev = from_tasklet(dev, t, bh);
- 	struct sk_buff *skb;
- 	struct skb_data *entry;
+ 	pegasus_t *pegasus;
+ 	int status;
  
-@@ -3666,7 +3666,7 @@ static int lan78xx_probe(struct usb_interface *intf,
- 	skb_queue_head_init(&dev->txq_pend);
- 	mutex_init(&dev->phy_mutex);
+-	pegasus = (pegasus_t *) data;
++	pegasus = from_tasklet(pegasus, t, rx_tl);
+ 	if (pegasus->flags & PEGASUS_UNPLUG)
+ 		return;
  
--	tasklet_init(&dev->bh, lan78xx_bh, (unsigned long)dev);
-+	tasklet_setup(&dev->bh, lan78xx_bh);
- 	INIT_DELAYED_WORK(&dev->wq, lan78xx_delayedwork);
- 	init_usb_anchor(&dev->deferred);
+@@ -1141,7 +1141,7 @@ static int pegasus_probe(struct usb_interface *intf,
+ 		goto out1;
+ 	}
+ 
+-	tasklet_init(&pegasus->rx_tl, rx_fixup, (unsigned long) pegasus);
++	tasklet_setup(&pegasus->rx_tl, rx_fixup);
+ 
+ 	INIT_DELAYED_WORK(&pegasus->carrier_check, check_carrier);
  
 -- 
 2.17.1
