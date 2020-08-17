@@ -1,7 +1,7 @@
 From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:14 +0000
-Subject: [PATCH 9/9] net: usbnet: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200817084614.24263-13-allen.cryptic@gmail.com>
+Date: Mon, 17 Aug 2020 08:58:09 +0000
+Subject: [PATCH 4/9] net: hso: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200817084614.24263-8-allen.cryptic@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200817084614.24263-1-allen.cryptic@gmail.com>
 In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
@@ -16,28 +16,42 @@ From: Allen Pais <allen.lkml@gmail.com>
 In preparation for unconditionally passing the
 struct tasklet_struct pointer to all tasklet
 callbacks, switch to using the new tasklet_setup()
-and from_tasklet() to pass the tasklet pointer explicitly
-and remove the .data field.
+and from_tasklet() to pass the tasklet pointer explicitly.
 
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <allen.lkml@gmail.com>
 ---
- drivers/net/usb/usbnet.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/net/usb/hso.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/usb/usbnet.c b/drivers/net/usb/usbnet.c
-index e45935a5856a..45bf0814939d 100644
---- a/drivers/net/usb/usbnet.c
-+++ b/drivers/net/usb/usbnet.c
-@@ -1708,8 +1708,7 @@ usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
- 	skb_queue_head_init (&dev->txq);
- 	skb_queue_head_init (&dev->done);
- 	skb_queue_head_init(&dev->rxq_pause);
--	dev->bh.func = usbnet_bh_tasklet;
--	dev->bh.data = (unsigned long)&dev->delay;
-+	dev->bh.func = (void(*) (unsigned long))usbnet_bh_tasklet;
- 	INIT_WORK (&dev->kevent, usbnet_deferred_kevent);
- 	init_usb_anchor(&dev->deferred);
- 	timer_setup(&dev->delay, usbnet_bh, 0);
+diff --git a/drivers/net/usb/hso.c b/drivers/net/usb/hso.c
+index 2bb28db89432..56b3b6395831 100644
+--- a/drivers/net/usb/hso.c
++++ b/drivers/net/usb/hso.c
+@@ -1213,9 +1213,10 @@ static void hso_std_serial_read_bulk_callback(struct urb *urb)
+  * This needs to be a tasklet otherwise we will
+  * end up recursively calling this function.
+  */
+-static void hso_unthrottle_tasklet(unsigned long data)
++static void hso_unthrottle_tasklet(struct tasklet_struct *t)
+ {
+-	struct hso_serial *serial = (struct hso_serial *)data;
++	struct hso_serial *serial = from_tasklet(serial, t,
++						 unthrottle_tasklet);
+ 	unsigned long flags;
+ 
+ 	spin_lock_irqsave(&serial->serial_lock, flags);
+@@ -1264,9 +1265,8 @@ static int hso_serial_open(struct tty_struct *tty, struct file *filp)
+ 		serial->rx_state = RX_IDLE;
+ 		/* Force default termio settings */
+ 		_hso_serial_set_termios(tty, NULL);
+-		tasklet_init(&serial->unthrottle_tasklet,
+-			     hso_unthrottle_tasklet,
+-			     (unsigned long)serial);
++		tasklet_setup(&serial->unthrottle_tasklet,
++			     hso_unthrottle_tasklet);
+ 		result = hso_start_serial_device(serial->parent, GFP_KERNEL);
+ 		if (result) {
+ 			hso_stop_serial_device(serial->parent);
 -- 
 2.17.1
