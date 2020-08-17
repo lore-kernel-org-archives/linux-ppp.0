@@ -1,7 +1,7 @@
 From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:04 +0000
-Subject: [PATCH 1/9] net: ifb: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200817084614.24263-3-allen.cryptic@gmail.com>
+Date: Mon, 17 Aug 2020 08:58:14 +0000
+Subject: [PATCH 9/9] net: usbnet: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200817084614.24263-13-allen.cryptic@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200817084614.24263-1-allen.cryptic@gmail.com>
 In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
@@ -16,39 +16,28 @@ From: Allen Pais <allen.lkml@gmail.com>
 In preparation for unconditionally passing the
 struct tasklet_struct pointer to all tasklet
 callbacks, switch to using the new tasklet_setup()
-and from_tasklet() to pass the tasklet pointer explicitly.
+and from_tasklet() to pass the tasklet pointer explicitly
+and remove the .data field.
 
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <allen.lkml@gmail.com>
 ---
- drivers/net/ifb.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ drivers/net/usb/usbnet.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/net/ifb.c b/drivers/net/ifb.c
-index 7fe306e76281..a2d6027362d2 100644
---- a/drivers/net/ifb.c
-+++ b/drivers/net/ifb.c
-@@ -59,9 +59,9 @@ static netdev_tx_t ifb_xmit(struct sk_buff *skb, struct net_device *dev);
- static int ifb_open(struct net_device *dev);
- static int ifb_close(struct net_device *dev);
- 
--static void ifb_ri_tasklet(unsigned long _txp)
-+static void ifb_ri_tasklet(struct tasklet_struct *t)
- {
--	struct ifb_q_private *txp = (struct ifb_q_private *)_txp;
-+	struct ifb_q_private *txp = from_tasklet(txp, t, ifb_tasklet);
- 	struct netdev_queue *txq;
- 	struct sk_buff *skb;
- 
-@@ -170,8 +170,7 @@ static int ifb_dev_init(struct net_device *dev)
- 		__skb_queue_head_init(&txp->tq);
- 		u64_stats_init(&txp->rsync);
- 		u64_stats_init(&txp->tsync);
--		tasklet_init(&txp->ifb_tasklet, ifb_ri_tasklet,
--			     (unsigned long)txp);
-+		tasklet_setup(&txp->ifb_tasklet, ifb_ri_tasklet);
- 		netif_tx_start_queue(netdev_get_tx_queue(dev, i));
- 	}
- 	return 0;
+diff --git a/drivers/net/usb/usbnet.c b/drivers/net/usb/usbnet.c
+index e45935a5856a..45bf0814939d 100644
+--- a/drivers/net/usb/usbnet.c
++++ b/drivers/net/usb/usbnet.c
+@@ -1708,8 +1708,7 @@ usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
+ 	skb_queue_head_init (&dev->txq);
+ 	skb_queue_head_init (&dev->done);
+ 	skb_queue_head_init(&dev->rxq_pause);
+-	dev->bh.func = usbnet_bh_tasklet;
+-	dev->bh.data = (unsigned long)&dev->delay;
++	dev->bh.func = (void(*) (unsigned long))usbnet_bh_tasklet;
+ 	INIT_WORK (&dev->kevent, usbnet_deferred_kevent);
+ 	init_usb_anchor(&dev->deferred);
+ 	timer_setup(&dev->delay, usbnet_bh, 0);
 -- 
 2.17.1
