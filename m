@@ -1,7 +1,7 @@
 From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:06 +0000
-Subject: [PATCH 2/2] net: caif: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200817084614.24263-5-allen.cryptic@gmail.com>
+Date: Mon, 17 Aug 2020 08:58:12 +0000
+Subject: [PATCH 7/9] net: r8152: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200817084614.24263-11-allen.cryptic@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200817084614.24263-1-allen.cryptic@gmail.com>
 In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
@@ -21,35 +21,35 @@ and from_tasklet() to pass the tasklet pointer explicitly.
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <allen.lkml@gmail.com>
 ---
- drivers/net/caif/caif_virtio.c | 8 +++-----
+ drivers/net/usb/r8152.c | 8 +++-----
  1 file changed, 3 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/caif/caif_virtio.c b/drivers/net/caif/caif_virtio.c
-index 80ea2e913c2b..23c2eb8ceeec 100644
---- a/drivers/net/caif/caif_virtio.c
-+++ b/drivers/net/caif/caif_virtio.c
-@@ -598,9 +598,9 @@ static netdev_tx_t cfv_netdev_tx(struct sk_buff *skb, struct net_device *netdev)
- 	return NETDEV_TX_OK;
+diff --git a/drivers/net/usb/r8152.c b/drivers/net/usb/r8152.c
+index 2b02fefd094d..6805686abfe7 100644
+--- a/drivers/net/usb/r8152.c
++++ b/drivers/net/usb/r8152.c
+@@ -2410,11 +2410,9 @@ static void tx_bottom(struct r8152 *tp)
+ 	} while (res = 0);
  }
  
--static void cfv_tx_release_tasklet(unsigned long drv)
-+static void cfv_tx_release_tasklet(struct tasklet_struct *t)
+-static void bottom_half(unsigned long data)
++static void bottom_half(struct tasklet_struct *t)
  {
--	struct cfv_info *cfv = (struct cfv_info *)drv;
-+	struct cfv_info *cfv = from_tasklet(cfv, t, tx_release_tasklet);
- 	cfv_release_used_buf(cfv->vq_tx);
- }
+-	struct r8152 *tp;
+-
+-	tp = (struct r8152 *)data;
++	struct r8152 *tp = from_tasklet(tp, t, tx_tl);
  
-@@ -716,9 +716,7 @@ static int cfv_probe(struct virtio_device *vdev)
- 	cfv->ctx.head = USHRT_MAX;
- 	netif_napi_add(netdev, &cfv->napi, cfv_rx_poll, CFV_DEFAULT_QUOTA);
+ 	if (test_bit(RTL8152_UNPLUG, &tp->flags))
+ 		return;
+@@ -6730,7 +6728,7 @@ static int rtl8152_probe(struct usb_interface *intf,
+ 	mutex_init(&tp->control);
+ 	INIT_DELAYED_WORK(&tp->schedule, rtl_work_func_t);
+ 	INIT_DELAYED_WORK(&tp->hw_phy_work, rtl_hw_phy_work_func_t);
+-	tasklet_init(&tp->tx_tl, bottom_half, (unsigned long)tp);
++	tasklet_setup(&tp->tx_tl, bottom_half);
+ 	tasklet_disable(&tp->tx_tl);
  
--	tasklet_init(&cfv->tx_release_tasklet,
--		     cfv_tx_release_tasklet,
--		     (unsigned long)cfv);
-+	tasklet_setup(&cfv->tx_release_tasklet, cfv_tx_release_tasklet);
- 
- 	/* Carrier is off until netdevice is opened */
- 	netif_carrier_off(netdev);
+ 	netdev->netdev_ops = &rtl8152_netdev_ops;
 -- 
 2.17.1
