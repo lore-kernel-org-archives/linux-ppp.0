@@ -1,7 +1,7 @@
 From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:11 +0000
-Subject: [PATCH 6/9] net: pegasus: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200817084614.24263-10-allen.cryptic@gmail.com>
+Date: Mon, 17 Aug 2020 08:58:06 +0000
+Subject: [PATCH 2/2] net: caif: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200817084614.24263-5-allen.cryptic@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200817084614.24263-1-allen.cryptic@gmail.com>
 In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
@@ -21,36 +21,35 @@ and from_tasklet() to pass the tasklet pointer explicitly.
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <allen.lkml@gmail.com>
 ---
- drivers/net/usb/pegasus.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/net/caif/caif_virtio.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/usb/pegasus.c b/drivers/net/usb/pegasus.c
-index 0ef7e1f443e3..addf904e7c65 100644
---- a/drivers/net/usb/pegasus.c
-+++ b/drivers/net/usb/pegasus.c
-@@ -565,12 +565,12 @@ static void read_bulk_callback(struct urb *urb)
- 	tasklet_schedule(&pegasus->rx_tl);
+diff --git a/drivers/net/caif/caif_virtio.c b/drivers/net/caif/caif_virtio.c
+index 80ea2e913c2b..23c2eb8ceeec 100644
+--- a/drivers/net/caif/caif_virtio.c
++++ b/drivers/net/caif/caif_virtio.c
+@@ -598,9 +598,9 @@ static netdev_tx_t cfv_netdev_tx(struct sk_buff *skb, struct net_device *netdev)
+ 	return NETDEV_TX_OK;
  }
  
--static void rx_fixup(unsigned long data)
-+static void rx_fixup(struct tasklet_struct *t)
+-static void cfv_tx_release_tasklet(unsigned long drv)
++static void cfv_tx_release_tasklet(struct tasklet_struct *t)
  {
- 	pegasus_t *pegasus;
- 	int status;
+-	struct cfv_info *cfv = (struct cfv_info *)drv;
++	struct cfv_info *cfv = from_tasklet(cfv, t, tx_release_tasklet);
+ 	cfv_release_used_buf(cfv->vq_tx);
+ }
  
--	pegasus = (pegasus_t *) data;
-+	pegasus = from_tasklet(pegasus, t, rx_tl);
- 	if (pegasus->flags & PEGASUS_UNPLUG)
- 		return;
+@@ -716,9 +716,7 @@ static int cfv_probe(struct virtio_device *vdev)
+ 	cfv->ctx.head = USHRT_MAX;
+ 	netif_napi_add(netdev, &cfv->napi, cfv_rx_poll, CFV_DEFAULT_QUOTA);
  
-@@ -1141,7 +1141,7 @@ static int pegasus_probe(struct usb_interface *intf,
- 		goto out1;
- 	}
+-	tasklet_init(&cfv->tx_release_tasklet,
+-		     cfv_tx_release_tasklet,
+-		     (unsigned long)cfv);
++	tasklet_setup(&cfv->tx_release_tasklet, cfv_tx_release_tasklet);
  
--	tasklet_init(&pegasus->rx_tl, rx_fixup, (unsigned long) pegasus);
-+	tasklet_setup(&pegasus->rx_tl, rx_fixup);
- 
- 	INIT_DELAYED_WORK(&pegasus->carrier_check, check_carrier);
- 
+ 	/* Carrier is off until netdevice is opened */
+ 	netif_carrier_off(netdev);
 -- 
 2.17.1
