@@ -1,43 +1,62 @@
 From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:02 +0000
-Subject: [PATCH 0/8] drivers: net: convert tasklets to use new tasklet_setup()
-Message-Id: <20200817084614.24263-1-allen.cryptic@gmail.com>
+Date: Mon, 17 Aug 2020 08:58:08 +0000
+Subject: [PATCH 3/9] net: cdc_ncm: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200817084614.24263-7-allen.cryptic@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20200817084614.24263-1-allen.cryptic@gmail.com>
+In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: m.grzeschik@pengutronix.de, davem@davemloft.net, paulus@samba.org, oliver@neukum.org, woojung.huh@microchip.com, petkan@nucleusys.com
-Cc: keescook@chromium.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, Allen Pais <allen.lkml@gmail.com>
+Cc: keescook@chromium.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, Allen Pais <allen.lkml@gmail.com>, Romain Perier <romain.perier@gmail.com>
 
 From: Allen Pais <allen.lkml@gmail.com>
 
-Commit 12cc923f1ccc ("tasklet: Introduce new initialization API")'
-introduced a new tasklet initialization API. This series converts 
-all the net/* drivers to use the new tasklet_setup() API
+In preparation for unconditionally passing the
+struct tasklet_struct pointer to all tasklet
+callbacks, switch to using the new tasklet_setup()
+and from_tasklet() to pass the tasklet pointer explicitly.
 
-Allen Pais (8):
-  net: dccp: convert tasklets to use new tasklet_setup() API
-  net: ipv4: convert tasklets to use new tasklet_setup() API
-  net: mac80211: convert tasklets to use new tasklet_setup() API
-  net: mac802154: convert tasklets to use new tasklet_setup() API
-  net: rds: convert tasklets to use new tasklet_setup() API
-  net: sched: convert tasklets to use new tasklet_setup() API
-  net: smc: convert tasklets to use new tasklet_setup() API
-  net: xfrm: convert tasklets to use new tasklet_setup() API
+Signed-off-by: Romain Perier <romain.perier@gmail.com>
+Signed-off-by: Allen Pais <allen.lkml@gmail.com>
+---
+ drivers/net/usb/cdc_ncm.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
- net/dccp/timer.c           | 10 +++++-----
- net/ipv4/tcp_output.c      |  8 +++-----
- net/mac80211/ieee80211_i.h |  4 ++--
- net/mac80211/main.c        | 14 +++++---------
- net/mac80211/tx.c          |  5 +++--
- net/mac80211/util.c        |  5 +++--
- net/mac802154/main.c       |  8 +++-----
- net/rds/ib_cm.c            | 14 ++++++--------
- net/sched/sch_atm.c        |  9 +++++----
- net/smc/smc_cdc.c          |  6 +++---
- net/smc/smc_wr.c           | 14 ++++++--------
- net/xfrm/xfrm_input.c      |  7 +++----
- 12 files changed, 47 insertions(+), 57 deletions(-)
-
+diff --git a/drivers/net/usb/cdc_ncm.c b/drivers/net/usb/cdc_ncm.c
+index e04f588538cc..57a95ef90385 100644
+--- a/drivers/net/usb/cdc_ncm.c
++++ b/drivers/net/usb/cdc_ncm.c
+@@ -61,7 +61,7 @@ static bool prefer_mbim;
+ module_param(prefer_mbim, bool, 0644);
+ MODULE_PARM_DESC(prefer_mbim, "Prefer MBIM setting on dual NCM/MBIM functions");
+ 
+-static void cdc_ncm_txpath_bh(unsigned long param);
++static void cdc_ncm_txpath_bh(struct tasklet_struct *t);
+ static void cdc_ncm_tx_timeout_start(struct cdc_ncm_ctx *ctx);
+ static enum hrtimer_restart cdc_ncm_tx_timer_cb(struct hrtimer *hr_timer);
+ static struct usb_driver cdc_ncm_driver;
+@@ -815,7 +815,7 @@ int cdc_ncm_bind_common(struct usbnet *dev, struct usb_interface *intf, u8 data_
+ 
+ 	hrtimer_init(&ctx->tx_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+ 	ctx->tx_timer.function = &cdc_ncm_tx_timer_cb;
+-	tasklet_init(&ctx->bh, cdc_ncm_txpath_bh, (unsigned long)dev);
++	tasklet_setup(&ctx->bh, cdc_ncm_txpath_bh);
+ 	atomic_set(&ctx->stop, 0);
+ 	spin_lock_init(&ctx->mtx);
+ 
+@@ -1468,9 +1468,9 @@ static enum hrtimer_restart cdc_ncm_tx_timer_cb(struct hrtimer *timer)
+ 	return HRTIMER_NORESTART;
+ }
+ 
+-static void cdc_ncm_txpath_bh(unsigned long param)
++static void cdc_ncm_txpath_bh(struct tasklet_struct *t)
+ {
+-	struct usbnet *dev = (struct usbnet *)param;
++	struct usbnet *dev = from_tasklet(dev, t, bh);
+ 	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
+ 
+ 	spin_lock_bh(&ctx->mtx);
 -- 
 2.17.1
