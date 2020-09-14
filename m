@@ -1,7 +1,7 @@
 From: Allen Pais <allen.lkml@gmail.com>
-Date: Mon, 14 Sep 2020 07:43:21 +0000
-Subject: [RESEND net-next v2 02/12] net: arcnet: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200914073131.803374-3-allen.lkml@gmail.com>
+Date: Mon, 14 Sep 2020 07:43:24 +0000
+Subject: [RESEND net-next v2 05/12] net: ppp: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200914073131.803374-6-allen.lkml@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200914073131.803374-1-allen.lkml@gmail.com>
 In-Reply-To: <20200914073131.803374-1-allen.lkml@gmail.com>
@@ -21,34 +21,77 @@ and from_tasklet() to pass the tasklet pointer explicitly.
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <apais@linux.microsoft.com>
 ---
- drivers/net/arcnet/arcnet.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ drivers/net/ppp/ppp_async.c   | 8 ++++----
+ drivers/net/ppp/ppp_synctty.c | 8 ++++----
+ 2 files changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/net/arcnet/arcnet.c b/drivers/net/arcnet/arcnet.c
-index e04efc0a5c97..69d8920e394b 100644
---- a/drivers/net/arcnet/arcnet.c
-+++ b/drivers/net/arcnet/arcnet.c
-@@ -393,9 +393,9 @@ static void arcnet_timer(struct timer_list *t)
- 	}
- }
+diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
+index 29a0917a81e6..2b66cf301b0e 100644
+--- a/drivers/net/ppp/ppp_async.c
++++ b/drivers/net/ppp/ppp_async.c
+@@ -101,7 +101,7 @@ static void ppp_async_input(struct asyncppp *ap, const unsigned char *buf,
+ 			    char *flags, int count);
+ static int ppp_async_ioctl(struct ppp_channel *chan, unsigned int cmd,
+ 			   unsigned long arg);
+-static void ppp_async_process(unsigned long arg);
++static void ppp_async_process(struct tasklet_struct *t);
  
--static void arcnet_reply_tasklet(unsigned long data)
-+static void arcnet_reply_tasklet(struct tasklet_struct *t)
+ static void async_lcp_peek(struct asyncppp *ap, unsigned char *data,
+ 			   int len, int inbound);
+@@ -179,7 +179,7 @@ ppp_asynctty_open(struct tty_struct *tty)
+ 	ap->lcp_fcs = -1;
+ 
+ 	skb_queue_head_init(&ap->rqueue);
+-	tasklet_init(&ap->tsk, ppp_async_process, (unsigned long) ap);
++	tasklet_setup(&ap->tsk, ppp_async_process);
+ 
+ 	refcount_set(&ap->refcnt, 1);
+ 	init_completion(&ap->dead);
+@@ -488,9 +488,9 @@ ppp_async_ioctl(struct ppp_channel *chan, unsigned int cmd, unsigned long arg)
+  * to the ppp_generic code, and to tell the ppp_generic code
+  * if we can accept more output now.
+  */
+-static void ppp_async_process(unsigned long arg)
++static void ppp_async_process(struct tasklet_struct *t)
  {
--	struct arcnet_local *lp = (struct arcnet_local *)data;
-+	struct arcnet_local *lp = from_tasklet(lp, t, reply_tasklet);
+-	struct asyncppp *ap = (struct asyncppp *) arg;
++	struct asyncppp *ap = from_tasklet(ap, t, tsk);
+ 	struct sk_buff *skb;
  
- 	struct sk_buff *ackskb, *skb;
- 	struct sock_exterr_skb *serr;
-@@ -483,8 +483,7 @@ int arcnet_open(struct net_device *dev)
- 		arc_cont(D_PROTO, "\n");
- 	}
+ 	/* process received packets */
+diff --git a/drivers/net/ppp/ppp_synctty.c b/drivers/net/ppp/ppp_synctty.c
+index 0f338752c38b..86ee5149f4f2 100644
+--- a/drivers/net/ppp/ppp_synctty.c
++++ b/drivers/net/ppp/ppp_synctty.c
+@@ -90,7 +90,7 @@ static struct sk_buff* ppp_sync_txmunge(struct syncppp *ap, struct sk_buff *);
+ static int ppp_sync_send(struct ppp_channel *chan, struct sk_buff *skb);
+ static int ppp_sync_ioctl(struct ppp_channel *chan, unsigned int cmd,
+ 			  unsigned long arg);
+-static void ppp_sync_process(unsigned long arg);
++static void ppp_sync_process(struct tasklet_struct *t);
+ static int ppp_sync_push(struct syncppp *ap);
+ static void ppp_sync_flush_output(struct syncppp *ap);
+ static void ppp_sync_input(struct syncppp *ap, const unsigned char *buf,
+@@ -177,7 +177,7 @@ ppp_sync_open(struct tty_struct *tty)
+ 	ap->raccm = ~0U;
  
--	tasklet_init(&lp->reply_tasklet, arcnet_reply_tasklet,
--		     (unsigned long)lp);
-+	tasklet_setup(&lp->reply_tasklet, arcnet_reply_tasklet);
+ 	skb_queue_head_init(&ap->rqueue);
+-	tasklet_init(&ap->tsk, ppp_sync_process, (unsigned long) ap);
++	tasklet_setup(&ap->tsk, ppp_sync_process);
  
- 	arc_printk(D_INIT, dev, "arcnet_open: resetting card.\n");
+ 	refcount_set(&ap->refcnt, 1);
+ 	init_completion(&ap->dead_cmp);
+@@ -480,9 +480,9 @@ ppp_sync_ioctl(struct ppp_channel *chan, unsigned int cmd, unsigned long arg)
+  * to the ppp_generic code, and to tell the ppp_generic code
+  * if we can accept more output now.
+  */
+-static void ppp_sync_process(unsigned long arg)
++static void ppp_sync_process(struct tasklet_struct *t)
+ {
+-	struct syncppp *ap = (struct syncppp *) arg;
++	struct syncppp *ap = from_tasklet(ap, t, tsk);
+ 	struct sk_buff *skb;
  
+ 	/* process received packets */
 -- 
 2.25.1
