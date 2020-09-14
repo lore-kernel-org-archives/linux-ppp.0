@@ -1,30 +1,53 @@
-From: Oliver Neukum <oneukum@suse.de>
-Date: Mon, 14 Sep 2020 08:02:47 +0000
-Subject: Re: [RESEND net-next v2 12/12] net: usbnet: convert tasklets to use new tasklet_setup() API
-Message-Id: <1600070567.2534.3.camel@suse.de>
+From: Allen Pais <allen.lkml@gmail.com>
+Date: Mon, 14 Sep 2020 07:43:30 +0000
+Subject: [RESEND net-next v2 11/12] net: rtl8150: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200914073131.803374-12-allen.lkml@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200914073131.803374-1-allen.lkml@gmail.com>
-         <20200914073131.803374-13-allen.lkml@gmail.com>
-In-Reply-To: <20200914073131.803374-13-allen.lkml@gmail.com>
+In-Reply-To: <20200914073131.803374-1-allen.lkml@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Allen Pais <allen.lkml@gmail.com>, davem@davemloft.net
-Cc: m.grzeschik@pengutronix.de, kuba@kernel.org, paulus@samba.org, woojung.huh@microchip.com, UNGLinuxDriver@microchip.com, petkan@nucleusys.com, netdev@vger.kernel.org, linux-usb@vger.kernel.org, linux-ppp@vger.kernel.org, Allen Pais <apais@linux.microsoft.com>, Romain Perier <romain.perier@gmail.com>
+To: davem@davemloft.net
+Cc: m.grzeschik@pengutronix.de, kuba@kernel.org, paulus@samba.org, oliver@neukum.org, woojung.huh@microchip.com, UNGLinuxDriver@microchip.com, petkan@nucleusys.com, netdev@vger.kernel.org, linux-usb@vger.kernel.org, linux-ppp@vger.kernel.org, Allen Pais <apais@linux.microsoft.com>, Romain Perier <romain.perier@gmail.com>
 
-Am Montag, den 14.09.2020, 13:01 +0530 schrieb Allen Pais:
-> From: Allen Pais <apais@linux.microsoft.com>
-> 
-> In preparation for unconditionally passing the
-> struct tasklet_struct pointer to all tasklet
-> callbacks, switch to using the new tasklet_setup()
-> and from_tasklet() to pass the tasklet pointer explicitly
-> and remove the .data field.
+From: Allen Pais <apais@linux.microsoft.com>
 
-Hi,
+In preparation for unconditionally passing the
+struct tasklet_struct pointer to all tasklet
+callbacks, switch to using the new tasklet_setup()
+and from_tasklet() to pass the tasklet pointer explicitly.
 
-how would bisecting be supposed to run smoothly, if this
-patch were applied? We'd pass a NULL pointer.
+Signed-off-by: Romain Perier <romain.perier@gmail.com>
+Signed-off-by: Allen Pais <apais@linux.microsoft.com>
+---
+ drivers/net/usb/rtl8150.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-	Regards
-		Oliver
+diff --git a/drivers/net/usb/rtl8150.c b/drivers/net/usb/rtl8150.c
+index 733f120c852b..d8f3b44efc08 100644
+--- a/drivers/net/usb/rtl8150.c
++++ b/drivers/net/usb/rtl8150.c
+@@ -589,9 +589,9 @@ static void free_skb_pool(rtl8150_t *dev)
+ 		dev_kfree_skb(dev->rx_skb_pool[i]);
+ }
+ 
+-static void rx_fixup(unsigned long data)
++static void rx_fixup(struct tasklet_struct *t)
+ {
+-	struct rtl8150 *dev = (struct rtl8150 *)data;
++	struct rtl8150 *dev = from_tasklet(dev, t, tl);
+ 	struct sk_buff *skb;
+ 	int status;
+ 
+@@ -890,7 +890,7 @@ static int rtl8150_probe(struct usb_interface *intf,
+ 		return -ENOMEM;
+ 	}
+ 
+-	tasklet_init(&dev->tl, rx_fixup, (unsigned long)dev);
++	tasklet_setup(&dev->tl, rx_fixup);
+ 	spin_lock_init(&dev->rx_pool_lock);
+ 
+ 	dev->udev = udev;
+-- 
+2.25.1
