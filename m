@@ -1,55 +1,51 @@
-From: Allen Pais <allen.cryptic@gmail.com>
-Date: Mon, 17 Aug 2020 08:58:05 +0000
-Subject: [PATCH] net: mvpp2: Prepare to use the new tasklet API
-Message-Id: <20200817084614.24263-4-allen.cryptic@gmail.com>
+From: Allen Pais <allen.lkml@gmail.com>
+Date: Mon, 14 Sep 2020 07:43:19 +0000
+Subject: [RESEND net-next v2 00/12]drivers: net: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200914073131.803374-1-allen.lkml@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20200817084614.24263-1-allen.cryptic@gmail.com>
-In-Reply-To: <20200817084614.24263-1-allen.cryptic@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: m.grzeschik@pengutronix.de, davem@davemloft.net, paulus@samba.org, oliver@neukum.org, woojung.huh@microchip.com, petkan@nucleusys.com
-Cc: keescook@chromium.org, netdev@vger.kernel.org, linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org, linux-usb@vger.kernel.org, Romain Perier <romain.perier@viveris.fr>, Romain Perier <romain.perier@gmail.com>, Allen Pais <allen.lkml@gmail.com>
+To: davem@davemloft.net
+Cc: m.grzeschik@pengutronix.de, kuba@kernel.org, paulus@samba.org, oliver@neukum.org, woojung.huh@microchip.com, UNGLinuxDriver@microchip.com, petkan@nucleusys.com, netdev@vger.kernel.org, linux-usb@vger.kernel.org, linux-ppp@vger.kernel.org, Allen Pais <apais@linux.microsoft.com>
 
-From: Romain Perier <romain.perier@viveris.fr>
+From: Allen Pais <apais@linux.microsoft.com>
 
-The future tasklet API will no longer allow to pass an arbitrary
-"unsigned long" data parameter. The tasklet data structure will need to
-be embedded into a data structure that will be retrieved from the tasklet
-handler. Currently, there are no ways to retrieve the "struct mvpp2_port
-*" from a given "struct mvpp2_port_pcpu *". This commit adds a new field
-to get the address of the main port for each pcpu context.
+ommit 12cc923f1ccc ("tasklet: Introduce new initialization API")'
+introduced a new tasklet initialization API. This series converts
+all the net/* drivers to use the new tasklet_setup() API
 
-Signed-off-by: Romain Perier <romain.perier@gmail.com>
-Signed-off-by: Allen Pais <allen.lkml@gmail.com>
----
- drivers/net/ethernet/marvell/mvpp2/mvpp2.h      | 1 +
- drivers/net/ethernet/marvell/mvpp2/mvpp2_main.c | 1 +
- 2 files changed, 2 insertions(+)
+This series is based on v5.9-rc5
 
-diff --git a/drivers/net/ethernet/marvell/mvpp2/mvpp2.h b/drivers/net/ethernet/marvell/mvpp2/mvpp2.h
-index 32753cc771bf..198860a4527d 100644
---- a/drivers/net/ethernet/marvell/mvpp2/mvpp2.h
-+++ b/drivers/net/ethernet/marvell/mvpp2/mvpp2.h
-@@ -861,6 +861,7 @@ struct mvpp2_port_pcpu {
- 	struct hrtimer tx_done_timer;
- 	struct net_device *dev;
- 	bool timer_scheduled;
-+	struct mvpp2_port *port;
- };
- 
- struct mvpp2_queue_vector {
-diff --git a/drivers/net/ethernet/marvell/mvpp2/mvpp2_main.c b/drivers/net/ethernet/marvell/mvpp2/mvpp2_main.c
-index 2a8a5842eaef..fb45f86dcb12 100644
---- a/drivers/net/ethernet/marvell/mvpp2/mvpp2_main.c
-+++ b/drivers/net/ethernet/marvell/mvpp2/mvpp2_main.c
-@@ -6025,6 +6025,7 @@ static int mvpp2_port_probe(struct platform_device *pdev,
- 		err = -ENOMEM;
- 		goto err_free_txq_pcpu;
- 	}
-+	port->pcpu->port = port;
- 
- 	if (!port->has_tx_irqs) {
- 		for (thread = 0; thread < priv->nthreads; thread++) {
+Allen Pais (12):
+  net: mvpp2: Prepare to use the new tasklet API
+  net: arcnet: convert tasklets to use new tasklet_setup() API
+  net: caif: convert tasklets to use new tasklet_setup() API
+  net: ifb: convert tasklets to use new tasklet_setup() API
+  net: ppp: convert tasklets to use new tasklet_setup() API
+  net: cdc_ncm: convert tasklets to use new tasklet_setup() API
+  net: hso: convert tasklets to use new tasklet_setup() API
+  net: lan78xx: convert tasklets to use new tasklet_setup() API
+  net: pegasus: convert tasklets to use new tasklet_setup() API
+  net: r8152: convert tasklets to use new tasklet_setup() API
+  net: rtl8150: convert tasklets to use new tasklet_setup() API
+  net: usbnet: convert tasklets to use new tasklet_setup() API
+
+ drivers/net/arcnet/arcnet.c                     |  7 +++----
+ drivers/net/caif/caif_virtio.c                  |  8 +++-----
+ drivers/net/ethernet/marvell/mvpp2/mvpp2.h      |  1 +
+ drivers/net/ethernet/marvell/mvpp2/mvpp2_main.c |  1 +
+ drivers/net/ifb.c                               |  7 +++----
+ drivers/net/ppp/ppp_async.c                     |  8 ++++----
+ drivers/net/ppp/ppp_synctty.c                   |  8 ++++----
+ drivers/net/usb/cdc_ncm.c                       |  8 ++++----
+ drivers/net/usb/hso.c                           | 10 +++++-----
+ drivers/net/usb/lan78xx.c                       |  6 +++---
+ drivers/net/usb/pegasus.c                       |  6 +++---
+ drivers/net/usb/r8152.c                         |  8 +++-----
+ drivers/net/usb/rtl8150.c                       |  6 +++---
+ drivers/net/usb/usbnet.c                        |  3 +--
+ 14 files changed, 41 insertions(+), 46 deletions(-)
+
 -- 
-2.17.1
+2.25.1
