@@ -1,7 +1,7 @@
 From: Allen Pais <allen.lkml@gmail.com>
-Date: Mon, 14 Sep 2020 07:43:24 +0000
-Subject: [RESEND net-next v2 05/12] net: ppp: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200914073131.803374-6-allen.lkml@gmail.com>
+Date: Mon, 14 Sep 2020 07:43:28 +0000
+Subject: [RESEND net-next v2 09/12] net: pegasus: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200914073131.803374-10-allen.lkml@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200914073131.803374-1-allen.lkml@gmail.com>
 In-Reply-To: <20200914073131.803374-1-allen.lkml@gmail.com>
@@ -21,77 +21,36 @@ and from_tasklet() to pass the tasklet pointer explicitly.
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <apais@linux.microsoft.com>
 ---
- drivers/net/ppp/ppp_async.c   | 8 ++++----
- drivers/net/ppp/ppp_synctty.c | 8 ++++----
- 2 files changed, 8 insertions(+), 8 deletions(-)
+ drivers/net/usb/pegasus.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
-index 29a0917a81e6..2b66cf301b0e 100644
---- a/drivers/net/ppp/ppp_async.c
-+++ b/drivers/net/ppp/ppp_async.c
-@@ -101,7 +101,7 @@ static void ppp_async_input(struct asyncppp *ap, const unsigned char *buf,
- 			    char *flags, int count);
- static int ppp_async_ioctl(struct ppp_channel *chan, unsigned int cmd,
- 			   unsigned long arg);
--static void ppp_async_process(unsigned long arg);
-+static void ppp_async_process(struct tasklet_struct *t);
+diff --git a/drivers/net/usb/pegasus.c b/drivers/net/usb/pegasus.c
+index e92cb51a2c77..1f11e586037f 100644
+--- a/drivers/net/usb/pegasus.c
++++ b/drivers/net/usb/pegasus.c
+@@ -565,12 +565,12 @@ static void read_bulk_callback(struct urb *urb)
+ 	tasklet_schedule(&pegasus->rx_tl);
+ }
  
- static void async_lcp_peek(struct asyncppp *ap, unsigned char *data,
- 			   int len, int inbound);
-@@ -179,7 +179,7 @@ ppp_asynctty_open(struct tty_struct *tty)
- 	ap->lcp_fcs = -1;
- 
- 	skb_queue_head_init(&ap->rqueue);
--	tasklet_init(&ap->tsk, ppp_async_process, (unsigned long) ap);
-+	tasklet_setup(&ap->tsk, ppp_async_process);
- 
- 	refcount_set(&ap->refcnt, 1);
- 	init_completion(&ap->dead);
-@@ -488,9 +488,9 @@ ppp_async_ioctl(struct ppp_channel *chan, unsigned int cmd, unsigned long arg)
-  * to the ppp_generic code, and to tell the ppp_generic code
-  * if we can accept more output now.
-  */
--static void ppp_async_process(unsigned long arg)
-+static void ppp_async_process(struct tasklet_struct *t)
+-static void rx_fixup(unsigned long data)
++static void rx_fixup(struct tasklet_struct *t)
  {
--	struct asyncppp *ap = (struct asyncppp *) arg;
-+	struct asyncppp *ap = from_tasklet(ap, t, tsk);
- 	struct sk_buff *skb;
+ 	pegasus_t *pegasus;
+ 	int status;
  
- 	/* process received packets */
-diff --git a/drivers/net/ppp/ppp_synctty.c b/drivers/net/ppp/ppp_synctty.c
-index 0f338752c38b..86ee5149f4f2 100644
---- a/drivers/net/ppp/ppp_synctty.c
-+++ b/drivers/net/ppp/ppp_synctty.c
-@@ -90,7 +90,7 @@ static struct sk_buff* ppp_sync_txmunge(struct syncppp *ap, struct sk_buff *);
- static int ppp_sync_send(struct ppp_channel *chan, struct sk_buff *skb);
- static int ppp_sync_ioctl(struct ppp_channel *chan, unsigned int cmd,
- 			  unsigned long arg);
--static void ppp_sync_process(unsigned long arg);
-+static void ppp_sync_process(struct tasklet_struct *t);
- static int ppp_sync_push(struct syncppp *ap);
- static void ppp_sync_flush_output(struct syncppp *ap);
- static void ppp_sync_input(struct syncppp *ap, const unsigned char *buf,
-@@ -177,7 +177,7 @@ ppp_sync_open(struct tty_struct *tty)
- 	ap->raccm = ~0U;
+-	pegasus = (pegasus_t *) data;
++	pegasus = from_tasklet(pegasus, t, rx_tl);
+ 	if (pegasus->flags & PEGASUS_UNPLUG)
+ 		return;
  
- 	skb_queue_head_init(&ap->rqueue);
--	tasklet_init(&ap->tsk, ppp_sync_process, (unsigned long) ap);
-+	tasklet_setup(&ap->tsk, ppp_sync_process);
+@@ -1141,7 +1141,7 @@ static int pegasus_probe(struct usb_interface *intf,
+ 		goto out1;
+ 	}
  
- 	refcount_set(&ap->refcnt, 1);
- 	init_completion(&ap->dead_cmp);
-@@ -480,9 +480,9 @@ ppp_sync_ioctl(struct ppp_channel *chan, unsigned int cmd, unsigned long arg)
-  * to the ppp_generic code, and to tell the ppp_generic code
-  * if we can accept more output now.
-  */
--static void ppp_sync_process(unsigned long arg)
-+static void ppp_sync_process(struct tasklet_struct *t)
- {
--	struct syncppp *ap = (struct syncppp *) arg;
-+	struct syncppp *ap = from_tasklet(ap, t, tsk);
- 	struct sk_buff *skb;
+-	tasklet_init(&pegasus->rx_tl, rx_fixup, (unsigned long) pegasus);
++	tasklet_setup(&pegasus->rx_tl, rx_fixup);
  
- 	/* process received packets */
+ 	INIT_DELAYED_WORK(&pegasus->carrier_check, check_carrier);
+ 
 -- 
 2.25.1
