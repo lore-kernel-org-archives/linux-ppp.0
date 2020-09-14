@@ -1,31 +1,39 @@
-From: David Miller <davem@davemloft.net>
-Date: Mon, 14 Sep 2020 20:24:38 +0000
+From: Saeed Mahameed <saeedm@nvidia.com>
+Date: Mon, 14 Sep 2020 21:16:25 +0000
 Subject: Re: [RESEND net-next v2 00/12]drivers: net: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200914.132438.1323071673363556958.davem@davemloft.net>
+Message-Id: <5ab44bd27936325201e8f71a30e74d8b9d6b34ee.camel@nvidia.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200914073131.803374-1-allen.lkml@gmail.com>
 In-Reply-To: <20200914073131.803374-1-allen.lkml@gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: allen.lkml@gmail.com
-Cc: m.grzeschik@pengutronix.de, kuba@kernel.org, paulus@samba.org, oliver@neukum.org, woojung.huh@microchip.com, UNGLinuxDriver@microchip.com, petkan@nucleusys.com, netdev@vger.kernel.org, linux-usb@vger.kernel.org, linux-ppp@vger.kernel.org, apais@linux.microsoft.com
+To: "davem@davemloft.net" <davem@davemloft.net>, "allen.lkml@gmail.com" <allen.lkml@gmail.com>
+Cc: "m.grzeschik@pengutronix.de" <m.grzeschik@pengutronix.de>, "linux-usb@vger.kernel.org" <linux-usb@vger.kernel.org>, "woojung.huh@microchip.com" <woojung.huh@microchip.com>, "petkan@nucleusys.com" <petkan@nucleusys.com>, "oliver@neukum.org" <oliver@neukum.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "kuba@kernel.org" <kuba@kernel.org>, "UNGLinuxDriver@microchip.com" <UNGLinuxDriver@microchip.com>, "paulus@samba.org" <paulus@samba.org>, "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "apais@linux.microsoft.com" <apais@linux.microsoft.com>
 
-From: Allen Pais <allen.lkml@gmail.com>
-Date: Mon, 14 Sep 2020 13:01:19 +0530
-
-> From: Allen Pais <apais@linux.microsoft.com>
-> 
-> ommit 12cc923f1ccc ("tasklet: Introduce new initialization API")'
-> introduced a new tasklet initialization API. This series converts
-> all the net/* drivers to use the new tasklet_setup() API
-> 
-> This series is based on v5.9-rc5
-
-I don't understand how this works, you're not passing the existing
-parameter any more so won't that crash until the final parts of the
-conversion?
-
-This is like a half-transformation that will break bisection.
-
-I'm not applying this series, sorry.
+T24gTW9uLCAyMDIwLTA5LTE0IGF0IDEzOjAxICswNTMwLCBBbGxlbiBQYWlzIHdyb3RlOg0KPiBG
+cm9tOiBBbGxlbiBQYWlzIDxhcGFpc0BsaW51eC5taWNyb3NvZnQuY29tPg0KPiANCj4gb21taXQg
+MTJjYzkyM2YxY2NjICgidGFza2xldDogSW50cm9kdWNlIG5ldyBpbml0aWFsaXphdGlvbiBBUEki
+KScNCj4gaW50cm9kdWNlZCBhIG5ldyB0YXNrbGV0IGluaXRpYWxpemF0aW9uIEFQSS4gVGhpcyBz
+ZXJpZXMgY29udmVydHMNCj4gYWxsIHRoZSBuZXQvKiBkcml2ZXJzIHRvIHVzZSB0aGUgbmV3IHRh
+c2tsZXRfc2V0dXAoKSBBUEkNCj4gDQo+IFRoaXMgc2VyaWVzIGlzIGJhc2VkIG9uIHY1LjktcmM1
+DQo+IA0KPiBBbGxlbiBQYWlzICgxMik6DQo+ICAgbmV0OiBtdnBwMjogUHJlcGFyZSB0byB1c2Ug
+dGhlIG5ldyB0YXNrbGV0IEFQSQ0KPiAgIG5ldDogYXJjbmV0OiBjb252ZXJ0IHRhc2tsZXRzIHRv
+IHVzZSBuZXcgdGFza2xldF9zZXR1cCgpIEFQSQ0KPiAgIG5ldDogY2FpZjogY29udmVydCB0YXNr
+bGV0cyB0byB1c2UgbmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4gICBuZXQ6IGlmYjogY29udmVy
+dCB0YXNrbGV0cyB0byB1c2UgbmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4gICBuZXQ6IHBwcDog
+Y29udmVydCB0YXNrbGV0cyB0byB1c2UgbmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4gICBuZXQ6
+IGNkY19uY206IGNvbnZlcnQgdGFza2xldHMgdG8gdXNlIG5ldyB0YXNrbGV0X3NldHVwKCkgQVBJ
+DQo+ICAgbmV0OiBoc286IGNvbnZlcnQgdGFza2xldHMgdG8gdXNlIG5ldyB0YXNrbGV0X3NldHVw
+KCkgQVBJDQo+ICAgbmV0OiBsYW43OHh4OiBjb252ZXJ0IHRhc2tsZXRzIHRvIHVzZSBuZXcgdGFz
+a2xldF9zZXR1cCgpIEFQSQ0KPiAgIG5ldDogcGVnYXN1czogY29udmVydCB0YXNrbGV0cyB0byB1
+c2UgbmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4gICBuZXQ6IHI4MTUyOiBjb252ZXJ0IHRhc2ts
+ZXRzIHRvIHVzZSBuZXcgdGFza2xldF9zZXR1cCgpIEFQSQ0KPiAgIG5ldDogcnRsODE1MDogY29u
+dmVydCB0YXNrbGV0cyB0byB1c2UgbmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4gICBuZXQ6IHVz
+Ym5ldDogY29udmVydCB0YXNrbGV0cyB0byB1c2UgbmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4g
+DQo+IA0KDQpZb3UgYXJlIG9ubHkgY29udmVydGluZyBkcml2ZXJzIHdoaWNoIGFyZSBwYXNzaW5n
+IHRoZSB0YXNrZWx0IHN0cnVjdCBhcw0KZGF0YSBwdHIsIG1vc3Qgb2Ygb3RoZXIgZHJpdmVycyBh
+cmUgcGFzc2luZyB0aGUgY29udGFpbmVyIG9mIHRoZQ0KdGFza2xldCBhcyBkYXRhLCB3aHkgbm90
+IGNvbnZlcnQgdGhlbSBhcyB3ZWxsLCBhbmQgbGV0IHRoZW0gdXNlDQpjb250YWluZXJfb2YgdG8g
+ZmluZCB0aGVpciBkYXRhID8gaXQgaXMgcmVhbGx5IHN0cmFpZ2h0IGZvcndhcmQgYW5kDQp3aWxs
+IGhlbHAgY29udmVydCBtb3N0IG9mIG5ldCBkcml2ZXIgaWYgbm90IGFsbC4NCg0K
