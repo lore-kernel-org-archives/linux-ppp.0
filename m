@@ -1,7 +1,7 @@
 From: Allen Pais <allen.lkml@gmail.com>
-Date: Mon, 14 Sep 2020 07:43:30 +0000
-Subject: [RESEND net-next v2 11/12] net: rtl8150: convert tasklets to use new tasklet_setup() API
-Message-Id: <20200914073131.803374-12-allen.lkml@gmail.com>
+Date: Mon, 14 Sep 2020 07:43:25 +0000
+Subject: [RESEND net-next v2 06/12] net: cdc_ncm: convert tasklets to use new tasklet_setup() API
+Message-Id: <20200914073131.803374-7-allen.lkml@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200914073131.803374-1-allen.lkml@gmail.com>
 In-Reply-To: <20200914073131.803374-1-allen.lkml@gmail.com>
@@ -21,33 +21,42 @@ and from_tasklet() to pass the tasklet pointer explicitly.
 Signed-off-by: Romain Perier <romain.perier@gmail.com>
 Signed-off-by: Allen Pais <apais@linux.microsoft.com>
 ---
- drivers/net/usb/rtl8150.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/net/usb/cdc_ncm.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/net/usb/rtl8150.c b/drivers/net/usb/rtl8150.c
-index 733f120c852b..d8f3b44efc08 100644
---- a/drivers/net/usb/rtl8150.c
-+++ b/drivers/net/usb/rtl8150.c
-@@ -589,9 +589,9 @@ static void free_skb_pool(rtl8150_t *dev)
- 		dev_kfree_skb(dev->rx_skb_pool[i]);
+diff --git a/drivers/net/usb/cdc_ncm.c b/drivers/net/usb/cdc_ncm.c
+index e04f588538cc..57a95ef90385 100644
+--- a/drivers/net/usb/cdc_ncm.c
++++ b/drivers/net/usb/cdc_ncm.c
+@@ -61,7 +61,7 @@ static bool prefer_mbim;
+ module_param(prefer_mbim, bool, 0644);
+ MODULE_PARM_DESC(prefer_mbim, "Prefer MBIM setting on dual NCM/MBIM functions");
+ 
+-static void cdc_ncm_txpath_bh(unsigned long param);
++static void cdc_ncm_txpath_bh(struct tasklet_struct *t);
+ static void cdc_ncm_tx_timeout_start(struct cdc_ncm_ctx *ctx);
+ static enum hrtimer_restart cdc_ncm_tx_timer_cb(struct hrtimer *hr_timer);
+ static struct usb_driver cdc_ncm_driver;
+@@ -815,7 +815,7 @@ int cdc_ncm_bind_common(struct usbnet *dev, struct usb_interface *intf, u8 data_
+ 
+ 	hrtimer_init(&ctx->tx_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+ 	ctx->tx_timer.function = &cdc_ncm_tx_timer_cb;
+-	tasklet_init(&ctx->bh, cdc_ncm_txpath_bh, (unsigned long)dev);
++	tasklet_setup(&ctx->bh, cdc_ncm_txpath_bh);
+ 	atomic_set(&ctx->stop, 0);
+ 	spin_lock_init(&ctx->mtx);
+ 
+@@ -1468,9 +1468,9 @@ static enum hrtimer_restart cdc_ncm_tx_timer_cb(struct hrtimer *timer)
+ 	return HRTIMER_NORESTART;
  }
  
--static void rx_fixup(unsigned long data)
-+static void rx_fixup(struct tasklet_struct *t)
+-static void cdc_ncm_txpath_bh(unsigned long param)
++static void cdc_ncm_txpath_bh(struct tasklet_struct *t)
  {
--	struct rtl8150 *dev = (struct rtl8150 *)data;
-+	struct rtl8150 *dev = from_tasklet(dev, t, tl);
- 	struct sk_buff *skb;
- 	int status;
+-	struct usbnet *dev = (struct usbnet *)param;
++	struct usbnet *dev = from_tasklet(dev, t, bh);
+ 	struct cdc_ncm_ctx *ctx = (struct cdc_ncm_ctx *)dev->data[0];
  
-@@ -890,7 +890,7 @@ static int rtl8150_probe(struct usb_interface *intf,
- 		return -ENOMEM;
- 	}
- 
--	tasklet_init(&dev->tl, rx_fixup, (unsigned long)dev);
-+	tasklet_setup(&dev->tl, rx_fixup);
- 	spin_lock_init(&dev->rx_pool_lock);
- 
- 	dev->udev = udev;
+ 	spin_lock_bh(&ctx->mtx);
 -- 
 2.25.1
