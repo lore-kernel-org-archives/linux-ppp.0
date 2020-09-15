@@ -1,48 +1,105 @@
-From: Allen Pais <apais@linux.microsoft.com>
-Date: Tue, 15 Sep 2020 04:24:51 +0000
+From: Saeed Mahameed <saeedm@nvidia.com>
+Date: Tue, 15 Sep 2020 04:41:28 +0000
 Subject: Re: [RESEND net-next v2 00/12]drivers: net: convert tasklets to use new tasklet_setup() API
-Message-Id: <87508263-99f1-c56a-5fb1-2f4700b6b375@linux.microsoft.com>
+Message-Id: <52bb16899e14923b7df195d6c9e68dad6a7a404b.camel@nvidia.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20200914073131.803374-1-allen.lkml@gmail.com>
- <5ab44bd27936325201e8f71a30e74d8b9d6b34ee.camel@nvidia.com>
-In-Reply-To: <5ab44bd27936325201e8f71a30e74d8b9d6b34ee.camel@nvidia.com>
+         <5ab44bd27936325201e8f71a30e74d8b9d6b34ee.camel@nvidia.com>
+         <87508263-99f1-c56a-5fb1-2f4700b6b375@linux.microsoft.com>
+In-Reply-To: <87508263-99f1-c56a-5fb1-2f4700b6b375@linux.microsoft.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Saeed Mahameed <saeedm@nvidia.com>, "davem@davemloft.net" <davem@davemloft.net>, "allen.lkml@gmail.com" <allen.lkml@gmail.com>
+To: "apais@linux.microsoft.com" <apais@linux.microsoft.com>, "davem@davemloft.net" <davem@davemloft.net>, "allen.lkml@gmail.com" <allen.lkml@gmail.com>
 Cc: "m.grzeschik@pengutronix.de" <m.grzeschik@pengutronix.de>, "linux-usb@vger.kernel.org" <linux-usb@vger.kernel.org>, "woojung.huh@microchip.com" <woojung.huh@microchip.com>, "petkan@nucleusys.com" <petkan@nucleusys.com>, "oliver@neukum.org" <oliver@neukum.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "kuba@kernel.org" <kuba@kernel.org>, "UNGLinuxDriver@microchip.com" <UNGLinuxDriver@microchip.com>, "paulus@samba.org" <paulus@samba.org>, "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>
 
-
-
->>
->> ommit 12cc923f1ccc ("tasklet: Introduce new initialization API")'
->> introduced a new tasklet initialization API. This series converts
->> all the net/* drivers to use the new tasklet_setup() API
->>
->> This series is based on v5.9-rc5
->>
->> Allen Pais (12):
->>    net: mvpp2: Prepare to use the new tasklet API
->>    net: arcnet: convert tasklets to use new tasklet_setup() API
->>    net: caif: convert tasklets to use new tasklet_setup() API
->>    net: ifb: convert tasklets to use new tasklet_setup() API
->>    net: ppp: convert tasklets to use new tasklet_setup() API
->>    net: cdc_ncm: convert tasklets to use new tasklet_setup() API
->>    net: hso: convert tasklets to use new tasklet_setup() API
->>    net: lan78xx: convert tasklets to use new tasklet_setup() API
->>    net: pegasus: convert tasklets to use new tasklet_setup() API
->>    net: r8152: convert tasklets to use new tasklet_setup() API
->>    net: rtl8150: convert tasklets to use new tasklet_setup() API
->>    net: usbnet: convert tasklets to use new tasklet_setup() API
->>
->>
-> 
-> You are only converting drivers which are passing the taskelt struct as
-> data ptr, most of other drivers are passing the container of the
-> tasklet as data, why not convert them as well, and let them use
-> container_of to find their data ? it is really straight forward and
-> will help convert most of net driver if not all.
-> 
-
-from_tasklet uses container_of internally. use of container_of is 
-avoided cause it end being really long.
+T24gVHVlLCAyMDIwLTA5LTE1IGF0IDA5OjQyICswNTMwLCBBbGxlbiBQYWlzIHdyb3RlOg0KPiA+
+ID4gb21taXQgMTJjYzkyM2YxY2NjICgidGFza2xldDogSW50cm9kdWNlIG5ldyBpbml0aWFsaXph
+dGlvbiBBUEkiKScNCj4gPiA+IGludHJvZHVjZWQgYSBuZXcgdGFza2xldCBpbml0aWFsaXphdGlv
+biBBUEkuIFRoaXMgc2VyaWVzIGNvbnZlcnRzDQo+ID4gPiBhbGwgdGhlIG5ldC8qIGRyaXZlcnMg
+dG8gdXNlIHRoZSBuZXcgdGFza2xldF9zZXR1cCgpIEFQSQ0KICAgICAgXl5eDQp0aGlzIGlzIG5v
+dCBhbGwgZHJpdmVycyAuLiANCg0Kc2VlIGJlbG93IA0KDQo+ID4gPiBUaGlzIHNlcmllcyBpcyBi
+YXNlZCBvbiB2NS45LXJjNQ0KPiA+ID4gDQo+ID4gPiBBbGxlbiBQYWlzICgxMik6DQo+ID4gPiAg
+ICBuZXQ6IG12cHAyOiBQcmVwYXJlIHRvIHVzZSB0aGUgbmV3IHRhc2tsZXQgQVBJDQo+ID4gPiAg
+ICBuZXQ6IGFyY25ldDogY29udmVydCB0YXNrbGV0cyB0byB1c2UgbmV3IHRhc2tsZXRfc2V0dXAo
+KSBBUEkNCj4gPiA+ICAgIG5ldDogY2FpZjogY29udmVydCB0YXNrbGV0cyB0byB1c2UgbmV3IHRh
+c2tsZXRfc2V0dXAoKSBBUEkNCj4gPiA+ICAgIG5ldDogaWZiOiBjb252ZXJ0IHRhc2tsZXRzIHRv
+IHVzZSBuZXcgdGFza2xldF9zZXR1cCgpIEFQSQ0KPiA+ID4gICAgbmV0OiBwcHA6IGNvbnZlcnQg
+dGFza2xldHMgdG8gdXNlIG5ldyB0YXNrbGV0X3NldHVwKCkgQVBJDQo+ID4gPiAgICBuZXQ6IGNk
+Y19uY206IGNvbnZlcnQgdGFza2xldHMgdG8gdXNlIG5ldyB0YXNrbGV0X3NldHVwKCkgQVBJDQo+
+ID4gPiAgICBuZXQ6IGhzbzogY29udmVydCB0YXNrbGV0cyB0byB1c2UgbmV3IHRhc2tsZXRfc2V0
+dXAoKSBBUEkNCj4gPiA+ICAgIG5ldDogbGFuNzh4eDogY29udmVydCB0YXNrbGV0cyB0byB1c2Ug
+bmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4gPiA+ICAgIG5ldDogcGVnYXN1czogY29udmVydCB0
+YXNrbGV0cyB0byB1c2UgbmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4gPiA+ICAgIG5ldDogcjgx
+NTI6IGNvbnZlcnQgdGFza2xldHMgdG8gdXNlIG5ldyB0YXNrbGV0X3NldHVwKCkgQVBJDQo+ID4g
+PiAgICBuZXQ6IHJ0bDgxNTA6IGNvbnZlcnQgdGFza2xldHMgdG8gdXNlIG5ldyB0YXNrbGV0X3Nl
+dHVwKCkgQVBJDQo+ID4gPiAgICBuZXQ6IHVzYm5ldDogY29udmVydCB0YXNrbGV0cyB0byB1c2Ug
+bmV3IHRhc2tsZXRfc2V0dXAoKSBBUEkNCj4gPiA+IA0KPiA+ID4gDQo+ID4gDQo+ID4gWW91IGFy
+ZSBvbmx5IGNvbnZlcnRpbmcgZHJpdmVycyB3aGljaCBhcmUgcGFzc2luZyB0aGUgdGFza2VsdA0K
+PiA+IHN0cnVjdCBhcw0KPiA+IGRhdGEgcHRyLCBtb3N0IG9mIG90aGVyIGRyaXZlcnMgYXJlIHBh
+c3NpbmcgdGhlIGNvbnRhaW5lciBvZiB0aGUNCj4gPiB0YXNrbGV0IGFzIGRhdGEsIHdoeSBub3Qg
+Y29udmVydCB0aGVtIGFzIHdlbGwsIGFuZCBsZXQgdGhlbSB1c2UNCj4gPiBjb250YWluZXJfb2Yg
+dG8gZmluZCB0aGVpciBkYXRhID8gaXQgaXMgcmVhbGx5IHN0cmFpZ2h0IGZvcndhcmQgYW5kDQo+
+ID4gd2lsbCBoZWxwIGNvbnZlcnQgbW9zdCBvZiBuZXQgZHJpdmVyIGlmIG5vdCBhbGwuDQo+ID4g
+DQo+IA0KPiBmcm9tX3Rhc2tsZXQgdXNlcyBjb250YWluZXJfb2YgaW50ZXJuYWxseS4gdXNlIG9m
+IGNvbnRhaW5lcl9vZiBpcyANCj4gYXZvaWRlZCBjYXVzZSBpdCBlbmQgYmVpbmcgcmVhbGx5IGxv
+bmcuDQoNCkkgdW5kZXJzdGFuZCB0aGF0LCB3aGF0IEkgbWVhbnQsIHlvdSBkaWRuJ3QgcmVhbGx5
+IGNvbnZlcnQgYWxsIGRyaXZlcnMsDQphcyB5b3UgY2xhaW0gaW4gdGhlIGNvdmVyIGxldHRlciwg
+YWxsIHlvdSBkaWQgaXMgY29udmVydGluZyBfX3NvbWVfXw0KZHJpdmVycyB3aGljaCBhcmUgcGFz
+c2luZyB0aGUgdGFza2xldCBwdHIgYXMgZGF0YSBwdHIuIGFsbCBvdGhlcg0KZHJpdmVycyB0aGF0
+IHVzZSB0YXNrbGV0X2luaXQgZGlmZmVyZW50bHkgYXJlIG5vdCBjb252ZXJ0ZWQsIGFuZCBpdA0K
+c2hvdWxkIGJlIHJlbGF0aXZlbHkgZWFzeSBhcyBpIGV4cGxhaW5lZCBhYm92ZS4gDQoNClRoZSBs
+aXN0IG9mIGRyaXZlcnMgdXNpbmcgdGFza2xldF9pbml0IGlzIGxvbmdlciB0aGFuIHdoYXQgeW91
+IHRvdWNoZWQNCmluIHlvdXIgc2VyaWVzOg0KDQogZHJpdmVycy9uZXQvYXJjbmV0L2FyY25ldC5j
+ICAgICAgICAgICAgICAgICAgICAgfCAgNyArKystLS0tDQogZHJpdmVycy9uZXQvY2FpZi9jYWlm
+X3ZpcnRpby5jICAgICAgICAgICAgICAgICAgfCAgOCArKystLS0tLQ0KIGRyaXZlcnMvbmV0L2V0
+aGVybmV0L21hcnZlbGwvbXZwcDIvbXZwcDIuaCAgICAgIHwgIDEgKw0KIGRyaXZlcnMvbmV0L2V0
+aGVybmV0L21hcnZlbGwvbXZwcDIvbXZwcDJfbWFpbi5jIHwgIDEgKw0KIGRyaXZlcnMvbmV0L2lm
+Yi5jICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDcgKysrLS0tLQ0KIGRyaXZlcnMv
+bmV0L3BwcC9wcHBfYXN5bmMuYyAgICAgICAgICAgICAgICAgICAgIHwgIDggKysrKy0tLS0NCiBk
+cml2ZXJzL25ldC9wcHAvcHBwX3N5bmN0dHkuYyAgICAgICAgICAgICAgICAgICB8ICA4ICsrKyst
+LS0tDQogZHJpdmVycy9uZXQvdXNiL2NkY19uY20uYyAgICAgICAgICAgICAgICAgICAgICAgfCAg
+OCArKysrLS0tLQ0KIGRyaXZlcnMvbmV0L3VzYi9oc28uYyAgICAgICAgICAgICAgICAgICAgICAg
+ICAgIHwgMTAgKysrKystLS0tLQ0KIGRyaXZlcnMvbmV0L3VzYi9sYW43OHh4LmMgICAgICAgICAg
+ICAgICAgICAgICAgIHwgIDYgKysrLS0tDQogZHJpdmVycy9uZXQvdXNiL3BlZ2FzdXMuYyAgICAg
+ICAgICAgICAgICAgICAgICAgfCAgNiArKystLS0NCiBkcml2ZXJzL25ldC91c2IvcjgxNTIuYyAg
+ICAgICAgICAgICAgICAgICAgICAgICB8ICA4ICsrKy0tLS0tDQogZHJpdmVycy9uZXQvdXNiL3J0
+bDgxNTAuYyAgICAgICAgICAgICAgICAgICAgICAgfCAgNiArKystLS0NCiBkcml2ZXJzL25ldC91
+c2IvdXNibmV0LmMgICAgICAgICAgICAgICAgICAgICAgICB8ICAzICstLQ0KIDE0IGZpbGVzIGNo
+YW5nZWQsIDQxIGluc2VydGlvbnMoKyksIDQ2IGRlbGV0aW9ucygtKQ0KDQpUaGUgZnVsbCBmaWxl
+L2RyaXZlciBsaXN0IDoNCg0KJCBnaXQgZ3JlcCAtbCB0YXNrbGV0X2luaXQgZHJpdmVycy9uZXQv
+IA0KZHJpdmVycy9uZXQvYXJjbmV0L2FyY25ldC5jDQpkcml2ZXJzL25ldC9jYWlmL2NhaWZfdmly
+dGlvLmMNCmRyaXZlcnMvbmV0L2V0aGVybmV0L2FsdGVvbi9hY2VuaWMuYw0KZHJpdmVycy9uZXQv
+ZXRoZXJuZXQvYW1kL3hnYmUveGdiZS1kcnYuYw0KZHJpdmVycy9uZXQvZXRoZXJuZXQvYW1kL3hn
+YmUveGdiZS1pMmMuYw0KZHJpdmVycy9uZXQvZXRoZXJuZXQvYW1kL3hnYmUveGdiZS1tZGlvLmMN
+CmRyaXZlcnMvbmV0L2V0aGVybmV0L2Jyb2FkY29tL2NuaWMuYw0KZHJpdmVycy9uZXQvZXRoZXJu
+ZXQvY2FkZW5jZS9tYWNiX21haW4uYw0KZHJpdmVycy9uZXQvZXRoZXJuZXQvY2F2aXVtL2xpcXVp
+ZGlvL2xpb19tYWluLmMNCmRyaXZlcnMvbmV0L2V0aGVybmV0L2Nhdml1bS9vY3Rlb24vb2N0ZW9u
+X21nbXQuYw0KZHJpdmVycy9uZXQvZXRoZXJuZXQvY2F2aXVtL3RodW5kZXIvbmljdmZfbWFpbi5j
+DQpkcml2ZXJzL25ldC9ldGhlcm5ldC9jaGVsc2lvL2N4Z2Ivc2dlLmMNCmRyaXZlcnMvbmV0L2V0
+aGVybmV0L2NoZWxzaW8vY3hnYjMvc2dlLmMNCmRyaXZlcnMvbmV0L2V0aGVybmV0L2NoZWxzaW8v
+Y3hnYjQvY3hnYjRfdGNfbXFwcmlvLmMNCmRyaXZlcnMvbmV0L2V0aGVybmV0L2NoZWxzaW8vY3hn
+YjQvc2dlLmMNCmRyaXZlcnMvbmV0L2V0aGVybmV0L2RsaW5rL3N1bmRhbmNlLmMNCmRyaXZlcnMv
+bmV0L2V0aGVybmV0L2h1YXdlaS9oaW5pYy9oaW5pY19od19lcXMuYw0KZHJpdmVycy9uZXQvZXRo
+ZXJuZXQvaWJtL2VoZWEvZWhlYV9tYWluLmMNCmRyaXZlcnMvbmV0L2V0aGVybmV0L2libS9pYm12
+bmljLmMNCmRyaXZlcnMvbmV0L2V0aGVybmV0L2ptZS5jDQpkcml2ZXJzL25ldC9ldGhlcm5ldC9t
+YXJ2ZWxsL3NrZ2UuYw0KZHJpdmVycy9uZXQvZXRoZXJuZXQvbWVsbGFub3gvbWx4NC9lcS5jDQpk
+cml2ZXJzL25ldC9ldGhlcm5ldC9tZWxsYW5veC9tbHg1L2NvcmUvZXEuYw0KZHJpdmVycy9uZXQv
+ZXRoZXJuZXQvbWVsbGFub3gvbWx4NS9jb3JlL2ZwZ2EvY29ubi5jDQpkcml2ZXJzL25ldC9ldGhl
+cm5ldC9tZWxsYW5veC9tbHhzdy9wY2kuYw0KZHJpdmVycy9uZXQvZXRoZXJuZXQvbWljcmVsL2tz
+ODg0Mi5jDQpkcml2ZXJzL25ldC9ldGhlcm5ldC9taWNyZWwva3N6ODg0eC5jDQpkcml2ZXJzL25l
+dC9ldGhlcm5ldC9uYXRzZW1pL25zODM4MjAuYw0KZHJpdmVycy9uZXQvZXRoZXJuZXQvbmV0cm9u
+b21lL25mcC9uZnBfbmV0X2NvbW1vbi5jDQpkcml2ZXJzL25ldC9ldGhlcm5ldC9uaS9uaXhnZS5j
+DQpkcml2ZXJzL25ldC9ldGhlcm5ldC9xbG9naWMvcWVkL3FlZF9pbnQuYw0KZHJpdmVycy9uZXQv
+ZXRoZXJuZXQvc2lsYW4vc2M5MjAzMS5jDQpkcml2ZXJzL25ldC9ldGhlcm5ldC9zbXNjL3NtYzkx
+eC5jDQpkcml2ZXJzL25ldC9pZmIuYw0KZHJpdmVycy9uZXQvcHBwL3BwcF9hc3luYy5jDQpkcml2
+ZXJzL25ldC9wcHAvcHBwX3N5bmN0dHkuYw0KZHJpdmVycy9uZXQvdXNiL2NkY19uY20uYw0KZHJp
+dmVycy9uZXQvdXNiL2hzby5jDQpkcml2ZXJzL25ldC91c2IvbGFuNzh4eC5jDQpkcml2ZXJzL25l
+dC91c2IvcGVnYXN1cy5jDQpkcml2ZXJzL25ldC91c2IvcjgxNTIuYw0KZHJpdmVycy9uZXQvdXNi
+L3J0bDgxNTAuYw0KZHJpdmVycy9uZXQvd2lyZWxlc3MvYXRoL2F0aDExay9wY2kuYw0KZHJpdmVy
+cy9uZXQvd2lyZWxlc3MvbWVkaWF0ZWsvbXQ3Ni9tYWM4MDIxMS5jDQpkcml2ZXJzL25ldC93aXJl
+bGVzcy9tZWRpYXRlay9tdDc2L210NzYwMy9pbml0LmMNCmRyaXZlcnMvbmV0L3dpcmVsZXNzL21l
+ZGlhdGVrL210NzYvbXQ3NjE1L21taW8uYw0KZHJpdmVycy9uZXQvd2lyZWxlc3MvbWVkaWF0ZWsv
+bXQ3Ni9tdDc2eDAyX2Rmcy5jDQpkcml2ZXJzL25ldC93aXJlbGVzcy9tZWRpYXRlay9tdDc2L210
+NzZ4MDJfbW1pby5jDQpkcml2ZXJzL25ldC93aXJlbGVzcy9tZWRpYXRlay9tdDc2L3VzYi5jDQpk
+cml2ZXJzL25ldC93aXJlbGVzcy9tZWRpYXRlay9tdDc2MDF1L2RtYS5jDQo
