@@ -1,50 +1,59 @@
-From: Emil Renner Berthing <kernel@esmil.dk>
-Date: Sat, 30 Jan 2021 23:47:29 +0000
-Subject: [PATCH 8/9] net: usb: r8152: use new tasklet API
-Message-Id: <20210130234730.26565-9-kernel@esmil.dk>
+From: Xie He <xie.he.0141@gmail.com>
+Date: Fri, 01 Jan 2021 01:37:44 +0000
+Subject: Re: [PATCH] net: remove disc_data_lock in ppp line discipline
+Message-Id: <20210101013744.72562-1-xie.he.0141@gmail.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20210130234730.26565-1-kernel@esmil.dk>
-In-Reply-To: <20210130234730.26565-1-kernel@esmil.dk>
+References: <20201228071550.15745-1-gao.yanB@h3c.com>
+In-Reply-To: <20201228071550.15745-1-gao.yanB@h3c.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: netdev@vger.kernel.org, linux-usb@vger.kernel.org, linux-ppp@vger.kernel.org
-Cc: Emil Renner Berthing <kernel@esmil.dk>, Michael Grzeschik <m.grzeschik@pengutronix.de>, "David S. Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, Paul Mackerras <paulus@samba.org>, Woojung Huh <woojung.huh@microchip.com>, UNGLinuxDriver@microchip.com, Petko Manolov <petkan@nucleusys.com>, Luc Van Oostenryck <luc.vanoostenryck@gmail.com>, Jing Xiangfeng <jingxiangfeng@huawei.com>, Oliver Neukum <oneukum@suse.com>, linux-kernel@vger.kernel.org
+To: Gao Yan <gao.yanB@h3c.com>
+Cc: paulus@samba.org, davem@davemloft.net, kuba@kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 
-This converts the driver to use the new tasklet API introduced in
-commit 12cc923f1ccc ("tasklet: Introduce new initialization API")
+> In tty layer, it use tty->ldisc_sem to proect tty_ldisc_ops.
+> So I think tty->ldisc_sem can also protect tty->disc_data;
 
-Signed-off-by: Emil Renner Berthing <kernel@esmil.dk>
----
- drivers/net/usb/r8152.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+It might help by CC'ing TTY people, so that we could get this reviewed by
+people who are familiar with TTY code.
 
-diff --git a/drivers/net/usb/r8152.c b/drivers/net/usb/r8152.c
-index 67cd6986634f..0d7d2938e21d 100644
---- a/drivers/net/usb/r8152.c
-+++ b/drivers/net/usb/r8152.c
-@@ -2393,11 +2393,9 @@ static void tx_bottom(struct r8152 *tp)
- 	} while (res = 0);
- }
- 
--static void bottom_half(unsigned long data)
-+static void bottom_half(struct tasklet_struct *t)
- {
--	struct r8152 *tp;
--
--	tp = (struct r8152 *)data;
-+	struct r8152 *tp = from_tasklet(tp, t, tx_tl);
- 
- 	if (test_bit(RTL8152_UNPLUG, &tp->flags))
- 		return;
-@@ -6714,7 +6712,7 @@ static int rtl8152_probe(struct usb_interface *intf,
- 	mutex_init(&tp->control);
- 	INIT_DELAYED_WORK(&tp->schedule, rtl_work_func_t);
- 	INIT_DELAYED_WORK(&tp->hw_phy_work, rtl_hw_phy_work_func_t);
--	tasklet_init(&tp->tx_tl, bottom_half, (unsigned long)tp);
-+	tasklet_setup(&tp->tx_tl, bottom_half);
- 	tasklet_disable(&tp->tx_tl);
- 
- 	netdev->netdev_ops = &rtl8152_netdev_ops;
--- 
-2.30.0
+Greg Kroah-Hartman <gregkh@linuxfoundation.org> (supporter:TTY LAYER)
+Jiri Slaby <jirislaby@kernel.org> (supporter:TTY LAYER)
+
+Thanks!
+
+> For examlpe,
+> When cpu A is running ppp_synctty_ioctl that hold the tty->ldisc_sem,
+> at the same time  if cpu B calls ppp_synctty_close, it will wait until
+> cpu A release tty->ldisc_sem. So I think it is unnecessary to have the
+> disc_data_lock;
+> 
+> cpu A                           cpu B
+> tty_ioctl                       tty_reopen
+>  ->hold tty->ldisc_sem            ->hold tty->ldisc_sem(write), failed
+>  ->ld->ops->ioctl                 ->wait...
+>  ->release tty->ldisc_sem         ->wait...OK,hold tty->ldisc_sem
+>                                     ->tty_ldisc_reinit
+>                                       ->tty_ldisc_close
+>                                         ->ld->ops->close
+
+IMHO an example might not be necessary. Examples are useful to show
+incorrectness. But we cannot show correctness by examples because
+examples are not exhaustive.
+
+BTW, there're some typos:
+"proect" -> "protect"
+"examlpe" -> "example"
+"that hold ..." -> "that holds ..."
+"cpu A release ..." -> "cpu A releases ..."
+
+>   * FIXME: this is no longer true. The _close path for the ldisc is
+>   * now guaranteed to be sane.
+>   */
+
+>   *
+>   * FIXME: Fixed in tty_io nowadays.
+>   */
+
+Since you are removing "disc_data_lock", please update (or remove) these
+two comments. Thanks!
