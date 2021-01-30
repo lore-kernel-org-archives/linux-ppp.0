@@ -1,7 +1,7 @@
 From: Emil Renner Berthing <kernel@esmil.dk>
-Date: Sat, 30 Jan 2021 23:47:27 +0000
-Subject: [PATCH 6/9] net: usb: lan78xx: use new tasklet API
-Message-Id: <20210130234730.26565-7-kernel@esmil.dk>
+Date: Sat, 30 Jan 2021 23:47:23 +0000
+Subject: [PATCH 2/9] caif_virtio: use new tasklet API
+Message-Id: <20210130234730.26565-3-kernel@esmil.dk>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20210130234730.26565-1-kernel@esmil.dk>
 In-Reply-To: <20210130234730.26565-1-kernel@esmil.dk>
@@ -16,33 +16,35 @@ commit 12cc923f1ccc ("tasklet: Introduce new initialization API")
 
 Signed-off-by: Emil Renner Berthing <kernel@esmil.dk>
 ---
- drivers/net/usb/lan78xx.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/net/caif/caif_virtio.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/usb/lan78xx.c b/drivers/net/usb/lan78xx.c
-index bf243edeb064..e81c5699c952 100644
---- a/drivers/net/usb/lan78xx.c
-+++ b/drivers/net/usb/lan78xx.c
-@@ -3375,9 +3375,9 @@ static void lan78xx_rx_bh(struct lan78xx_net *dev)
- 		netif_wake_queue(dev->net);
+diff --git a/drivers/net/caif/caif_virtio.c b/drivers/net/caif/caif_virtio.c
+index 47a6d62b7511..106f089eb2a8 100644
+--- a/drivers/net/caif/caif_virtio.c
++++ b/drivers/net/caif/caif_virtio.c
+@@ -598,9 +598,9 @@ static netdev_tx_t cfv_netdev_tx(struct sk_buff *skb, struct net_device *netdev)
+ 	return NETDEV_TX_OK;
  }
  
--static void lan78xx_bh(unsigned long param)
-+static void lan78xx_bh(struct tasklet_struct *t)
+-static void cfv_tx_release_tasklet(unsigned long drv)
++static void cfv_tx_release_tasklet(struct tasklet_struct *t)
  {
--	struct lan78xx_net *dev = (struct lan78xx_net *)param;
-+	struct lan78xx_net *dev = from_tasklet(dev, t, bh);
- 	struct sk_buff *skb;
- 	struct skb_data *entry;
+-	struct cfv_info *cfv = (struct cfv_info *)drv;
++	struct cfv_info *cfv = from_tasklet(cfv, t, tx_release_tasklet);
+ 	cfv_release_used_buf(cfv->vq_tx);
+ }
  
-@@ -3655,7 +3655,7 @@ static int lan78xx_probe(struct usb_interface *intf,
- 	skb_queue_head_init(&dev->txq_pend);
- 	mutex_init(&dev->phy_mutex);
+@@ -716,9 +716,7 @@ static int cfv_probe(struct virtio_device *vdev)
+ 	cfv->ctx.head = USHRT_MAX;
+ 	netif_napi_add(netdev, &cfv->napi, cfv_rx_poll, CFV_DEFAULT_QUOTA);
  
--	tasklet_init(&dev->bh, lan78xx_bh, (unsigned long)dev);
-+	tasklet_setup(&dev->bh, lan78xx_bh);
- 	INIT_DELAYED_WORK(&dev->wq, lan78xx_delayedwork);
- 	init_usb_anchor(&dev->deferred);
+-	tasklet_init(&cfv->tx_release_tasklet,
+-		     cfv_tx_release_tasklet,
+-		     (unsigned long)cfv);
++	tasklet_setup(&cfv->tx_release_tasklet, cfv_tx_release_tasklet);
  
+ 	/* Carrier is off until netdevice is opened */
+ 	netif_carrier_off(netdev);
 -- 
 2.30.0
