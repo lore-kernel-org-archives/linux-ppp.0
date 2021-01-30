@@ -1,7 +1,7 @@
 From: Emil Renner Berthing <kernel@esmil.dk>
-Date: Sat, 30 Jan 2021 23:47:23 +0000
-Subject: [PATCH 2/9] caif_virtio: use new tasklet API
-Message-Id: <20210130234730.26565-3-kernel@esmil.dk>
+Date: Sat, 30 Jan 2021 23:47:30 +0000
+Subject: [PATCH 9/9] net: usb: rtl8150: use new tasklet API
+Message-Id: <20210130234730.26565-10-kernel@esmil.dk>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20210130234730.26565-1-kernel@esmil.dk>
 In-Reply-To: <20210130234730.26565-1-kernel@esmil.dk>
@@ -16,35 +16,33 @@ commit 12cc923f1ccc ("tasklet: Introduce new initialization API")
 
 Signed-off-by: Emil Renner Berthing <kernel@esmil.dk>
 ---
- drivers/net/caif/caif_virtio.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ drivers/net/usb/rtl8150.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/net/caif/caif_virtio.c b/drivers/net/caif/caif_virtio.c
-index 47a6d62b7511..106f089eb2a8 100644
---- a/drivers/net/caif/caif_virtio.c
-+++ b/drivers/net/caif/caif_virtio.c
-@@ -598,9 +598,9 @@ static netdev_tx_t cfv_netdev_tx(struct sk_buff *skb, struct net_device *netdev)
- 	return NETDEV_TX_OK;
+diff --git a/drivers/net/usb/rtl8150.c b/drivers/net/usb/rtl8150.c
+index bf8a60533f3e..7656f2a3afd9 100644
+--- a/drivers/net/usb/rtl8150.c
++++ b/drivers/net/usb/rtl8150.c
+@@ -577,9 +577,9 @@ static void free_skb_pool(rtl8150_t *dev)
+ 		dev_kfree_skb(dev->rx_skb_pool[i]);
  }
  
--static void cfv_tx_release_tasklet(unsigned long drv)
-+static void cfv_tx_release_tasklet(struct tasklet_struct *t)
+-static void rx_fixup(unsigned long data)
++static void rx_fixup(struct tasklet_struct *t)
  {
--	struct cfv_info *cfv = (struct cfv_info *)drv;
-+	struct cfv_info *cfv = from_tasklet(cfv, t, tx_release_tasklet);
- 	cfv_release_used_buf(cfv->vq_tx);
- }
+-	struct rtl8150 *dev = (struct rtl8150 *)data;
++	struct rtl8150 *dev = from_tasklet(dev, t, tl);
+ 	struct sk_buff *skb;
+ 	int status;
  
-@@ -716,9 +716,7 @@ static int cfv_probe(struct virtio_device *vdev)
- 	cfv->ctx.head = USHRT_MAX;
- 	netif_napi_add(netdev, &cfv->napi, cfv_rx_poll, CFV_DEFAULT_QUOTA);
+@@ -878,7 +878,7 @@ static int rtl8150_probe(struct usb_interface *intf,
+ 		return -ENOMEM;
+ 	}
  
--	tasklet_init(&cfv->tx_release_tasklet,
--		     cfv_tx_release_tasklet,
--		     (unsigned long)cfv);
-+	tasklet_setup(&cfv->tx_release_tasklet, cfv_tx_release_tasklet);
+-	tasklet_init(&dev->tl, rx_fixup, (unsigned long)dev);
++	tasklet_setup(&dev->tl, rx_fixup);
+ 	spin_lock_init(&dev->rx_pool_lock);
  
- 	/* Carrier is off until netdevice is opened */
- 	netif_carrier_off(netdev);
+ 	dev->udev = udev;
 -- 
 2.30.0
