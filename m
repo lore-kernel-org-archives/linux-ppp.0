@@ -1,7 +1,7 @@
 From: Emil Renner Berthing <kernel@esmil.dk>
-Date: Sat, 30 Jan 2021 23:47:22 +0000
-Subject: [PATCH 1/9] arcnet: use new tasklet API
-Message-Id: <20210130234730.26565-2-kernel@esmil.dk>
+Date: Sat, 30 Jan 2021 23:47:26 +0000
+Subject: [PATCH 5/9] net: usb: hso: use new tasklet API
+Message-Id: <20210130234730.26565-6-kernel@esmil.dk>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20210130234730.26565-1-kernel@esmil.dk>
 In-Reply-To: <20210130234730.26565-1-kernel@esmil.dk>
@@ -16,34 +16,37 @@ commit 12cc923f1ccc ("tasklet: Introduce new initialization API")
 
 Signed-off-by: Emil Renner Berthing <kernel@esmil.dk>
 ---
- drivers/net/arcnet/arcnet.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ drivers/net/usb/hso.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/net/arcnet/arcnet.c b/drivers/net/arcnet/arcnet.c
-index e04efc0a5c97..69d8920e394b 100644
---- a/drivers/net/arcnet/arcnet.c
-+++ b/drivers/net/arcnet/arcnet.c
-@@ -393,9 +393,9 @@ static void arcnet_timer(struct timer_list *t)
- 	}
- }
- 
--static void arcnet_reply_tasklet(unsigned long data)
-+static void arcnet_reply_tasklet(struct tasklet_struct *t)
+diff --git a/drivers/net/usb/hso.c b/drivers/net/usb/hso.c
+index ef6dd012b8c4..31d51346786a 100644
+--- a/drivers/net/usb/hso.c
++++ b/drivers/net/usb/hso.c
+@@ -1213,9 +1213,10 @@ static void hso_std_serial_read_bulk_callback(struct urb *urb)
+  * This needs to be a tasklet otherwise we will
+  * end up recursively calling this function.
+  */
+-static void hso_unthrottle_tasklet(unsigned long data)
++static void hso_unthrottle_tasklet(struct tasklet_struct *t)
  {
--	struct arcnet_local *lp = (struct arcnet_local *)data;
-+	struct arcnet_local *lp = from_tasklet(lp, t, reply_tasklet);
+-	struct hso_serial *serial = (struct hso_serial *)data;
++	struct hso_serial *serial = from_tasklet(serial, t,
++						 unthrottle_tasklet);
+ 	unsigned long flags;
  
- 	struct sk_buff *ackskb, *skb;
- 	struct sock_exterr_skb *serr;
-@@ -483,8 +483,7 @@ int arcnet_open(struct net_device *dev)
- 		arc_cont(D_PROTO, "\n");
- 	}
- 
--	tasklet_init(&lp->reply_tasklet, arcnet_reply_tasklet,
--		     (unsigned long)lp);
-+	tasklet_setup(&lp->reply_tasklet, arcnet_reply_tasklet);
- 
- 	arc_printk(D_INIT, dev, "arcnet_open: resetting card.\n");
- 
+ 	spin_lock_irqsave(&serial->serial_lock, flags);
+@@ -1264,9 +1265,8 @@ static int hso_serial_open(struct tty_struct *tty, struct file *filp)
+ 		serial->rx_state = RX_IDLE;
+ 		/* Force default termio settings */
+ 		_hso_serial_set_termios(tty, NULL);
+-		tasklet_init(&serial->unthrottle_tasklet,
+-			     hso_unthrottle_tasklet,
+-			     (unsigned long)serial);
++		tasklet_setup(&serial->unthrottle_tasklet,
++			      hso_unthrottle_tasklet);
+ 		result = hso_start_serial_device(serial->parent, GFP_KERNEL);
+ 		if (result) {
+ 			hso_stop_serial_device(serial->parent);
 -- 
 2.30.0
