@@ -1,7 +1,7 @@
 From: Emil Renner Berthing <kernel@esmil.dk>
-Date: Sat, 30 Jan 2021 23:47:28 +0000
-Subject: [PATCH 7/9] net: usb: pegasus: use new tasklet API
-Message-Id: <20210130234730.26565-8-kernel@esmil.dk>
+Date: Sat, 30 Jan 2021 23:47:24 +0000
+Subject: [PATCH 3/9] ifb: use new tasklet API
+Message-Id: <20210130234730.26565-4-kernel@esmil.dk>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <20210130234730.26565-1-kernel@esmil.dk>
 In-Reply-To: <20210130234730.26565-1-kernel@esmil.dk>
@@ -16,36 +16,34 @@ commit 12cc923f1ccc ("tasklet: Introduce new initialization API")
 
 Signed-off-by: Emil Renner Berthing <kernel@esmil.dk>
 ---
- drivers/net/usb/pegasus.c | 7 +++----
+ drivers/net/ifb.c | 7 +++----
  1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/net/usb/pegasus.c b/drivers/net/usb/pegasus.c
-index 32e1335c94ad..9a907182569c 100644
---- a/drivers/net/usb/pegasus.c
-+++ b/drivers/net/usb/pegasus.c
-@@ -553,12 +553,11 @@ static void read_bulk_callback(struct urb *urb)
- 	tasklet_schedule(&pegasus->rx_tl);
- }
+diff --git a/drivers/net/ifb.c b/drivers/net/ifb.c
+index fa63d4dee0ba..ab7022582154 100644
+--- a/drivers/net/ifb.c
++++ b/drivers/net/ifb.c
+@@ -59,9 +59,9 @@ static netdev_tx_t ifb_xmit(struct sk_buff *skb, struct net_device *dev);
+ static int ifb_open(struct net_device *dev);
+ static int ifb_close(struct net_device *dev);
  
--static void rx_fixup(unsigned long data)
-+static void rx_fixup(struct tasklet_struct *t)
+-static void ifb_ri_tasklet(unsigned long _txp)
++static void ifb_ri_tasklet(struct tasklet_struct *t)
  {
--	pegasus_t *pegasus;
-+	pegasus_t *pegasus = from_tasklet(pegasus, t, rx_tl);
- 	int status;
+-	struct ifb_q_private *txp = (struct ifb_q_private *)_txp;
++	struct ifb_q_private *txp = from_tasklet(txp, t, ifb_tasklet);
+ 	struct netdev_queue *txq;
+ 	struct sk_buff *skb;
  
--	pegasus = (pegasus_t *) data;
- 	if (pegasus->flags & PEGASUS_UNPLUG)
- 		return;
- 
-@@ -1129,7 +1128,7 @@ static int pegasus_probe(struct usb_interface *intf,
- 		goto out1;
+@@ -170,8 +170,7 @@ static int ifb_dev_init(struct net_device *dev)
+ 		__skb_queue_head_init(&txp->tq);
+ 		u64_stats_init(&txp->rsync);
+ 		u64_stats_init(&txp->tsync);
+-		tasklet_init(&txp->ifb_tasklet, ifb_ri_tasklet,
+-			     (unsigned long)txp);
++		tasklet_setup(&txp->ifb_tasklet, ifb_ri_tasklet);
+ 		netif_tx_start_queue(netdev_get_tx_queue(dev, i));
  	}
- 
--	tasklet_init(&pegasus->rx_tl, rx_fixup, (unsigned long) pegasus);
-+	tasklet_setup(&pegasus->rx_tl, rx_fixup);
- 
- 	INIT_DELAYED_WORK(&pegasus->carrier_check, check_carrier);
- 
+ 	return 0;
 -- 
 2.30.0
