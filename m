@@ -1,110 +1,48 @@
-From: Gao Yan <gao.yanB@h3c.com>
-Date: Mon, 28 Dec 2020 07:15:50 +0000
-Subject: [PATCH] net: remove disc_data_lock in ppp line discipline
-Message-Id: <20201228071550.15745-1-gao.yanB@h3c.com>
+From: Emil Renner Berthing <kernel@esmil.dk>
+Date: Sat, 30 Jan 2021 23:47:27 +0000
+Subject: [PATCH 6/9] net: usb: lan78xx: use new tasklet API
+Message-Id: <20210130234730.26565-7-kernel@esmil.dk>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <20210130234730.26565-1-kernel@esmil.dk>
+In-Reply-To: <20210130234730.26565-1-kernel@esmil.dk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: paulus@samba.org, davem@davemloft.net, kuba@kernel.org
-Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Gao Yan <gao.yanB@h3c.com>
+To: netdev@vger.kernel.org, linux-usb@vger.kernel.org, linux-ppp@vger.kernel.org
+Cc: Emil Renner Berthing <kernel@esmil.dk>, Michael Grzeschik <m.grzeschik@pengutronix.de>, "David S. Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, Paul Mackerras <paulus@samba.org>, Woojung Huh <woojung.huh@microchip.com>, UNGLinuxDriver@microchip.com, Petko Manolov <petkan@nucleusys.com>, Luc Van Oostenryck <luc.vanoostenryck@gmail.com>, Jing Xiangfeng <jingxiangfeng@huawei.com>, Oliver Neukum <oneukum@suse.com>, linux-kernel@vger.kernel.org
 
-In tty layer, it use tty->ldisc_sem to proect tty_ldisc_ops.
-So I think tty->ldisc_sem can also protect tty->disc_data;
-For examlpe,
-When cpu A is running ppp_synctty_ioctl that hold the tty->ldisc_sem,
-at the same time  if cpu B calls ppp_synctty_close, it will wait until
-cpu A release tty->ldisc_sem. So I think it is unnecessary to have the
-disc_data_lock;
+This converts the driver to use the new tasklet API introduced in
+commit 12cc923f1ccc ("tasklet: Introduce new initialization API")
 
-cpu A                           cpu B
-tty_ioctl                       tty_reopen
- ->hold tty->ldisc_sem            ->hold tty->ldisc_sem(write), failed
- ->ld->ops->ioctl                 ->wait...
- ->release tty->ldisc_sem         ->wait...OK,hold tty->ldisc_sem
-                                    ->tty_ldisc_reinit
-                                      ->tty_ldisc_close
-                                        ->ld->ops->close
-
-Signed-off-by: Gao Yan <gao.yanB@h3c.com>
+Signed-off-by: Emil Renner Berthing <kernel@esmil.dk>
 ---
- drivers/net/ppp/ppp_async.c   | 11 ++---------
- drivers/net/ppp/ppp_synctty.c | 12 ++----------
- 2 files changed, 4 insertions(+), 19 deletions(-)
+ drivers/net/usb/lan78xx.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
-index 29a0917a8..20b50facd 100644
---- a/drivers/net/ppp/ppp_async.c
-+++ b/drivers/net/ppp/ppp_async.c
-@@ -127,17 +127,13 @@ static const struct ppp_channel_ops async_ops = {
-  * FIXME: this is no longer true. The _close path for the ldisc is
-  * now guaranteed to be sane.
-  */
--static DEFINE_RWLOCK(disc_data_lock);
- 
- static struct asyncppp *ap_get(struct tty_struct *tty)
- {
--	struct asyncppp *ap;
-+	struct asyncppp *ap = tty->disc_data;
- 
--	read_lock(&disc_data_lock);
--	ap = tty->disc_data;
- 	if (ap != NULL)
- 		refcount_inc(&ap->refcnt);
--	read_unlock(&disc_data_lock);
- 	return ap;
+diff --git a/drivers/net/usb/lan78xx.c b/drivers/net/usb/lan78xx.c
+index bf243edeb064..e81c5699c952 100644
+--- a/drivers/net/usb/lan78xx.c
++++ b/drivers/net/usb/lan78xx.c
+@@ -3375,9 +3375,9 @@ static void lan78xx_rx_bh(struct lan78xx_net *dev)
+ 		netif_wake_queue(dev->net);
  }
  
-@@ -214,12 +210,9 @@ ppp_asynctty_open(struct tty_struct *tty)
- static void
- ppp_asynctty_close(struct tty_struct *tty)
+-static void lan78xx_bh(unsigned long param)
++static void lan78xx_bh(struct tasklet_struct *t)
  {
--	struct asyncppp *ap;
-+	struct asyncppp *ap = tty->disc_data;
+-	struct lan78xx_net *dev = (struct lan78xx_net *)param;
++	struct lan78xx_net *dev = from_tasklet(dev, t, bh);
+ 	struct sk_buff *skb;
+ 	struct skb_data *entry;
  
--	write_lock_irq(&disc_data_lock);
--	ap = tty->disc_data;
- 	tty->disc_data = NULL;
--	write_unlock_irq(&disc_data_lock);
- 	if (!ap)
- 		return;
+@@ -3655,7 +3655,7 @@ static int lan78xx_probe(struct usb_interface *intf,
+ 	skb_queue_head_init(&dev->txq_pend);
+ 	mutex_init(&dev->phy_mutex);
  
-diff --git a/drivers/net/ppp/ppp_synctty.c b/drivers/net/ppp/ppp_synctty.c
-index 0f338752c..53fb68e29 100644
---- a/drivers/net/ppp/ppp_synctty.c
-+++ b/drivers/net/ppp/ppp_synctty.c
-@@ -129,17 +129,12 @@ ppp_print_buffer (const char *name, const __u8 *buf, int count)
-  *
-  * FIXME: Fixed in tty_io nowadays.
-  */
--static DEFINE_RWLOCK(disc_data_lock);
--
- static struct syncppp *sp_get(struct tty_struct *tty)
- {
--	struct syncppp *ap;
-+	struct syncppp *ap = tty->disc_data;
- 
--	read_lock(&disc_data_lock);
--	ap = tty->disc_data;
- 	if (ap != NULL)
- 		refcount_inc(&ap->refcnt);
--	read_unlock(&disc_data_lock);
- 	return ap;
- }
- 
-@@ -213,12 +208,9 @@ ppp_sync_open(struct tty_struct *tty)
- static void
- ppp_sync_close(struct tty_struct *tty)
- {
--	struct syncppp *ap;
-+	struct syncppp *ap = tty->disc_data;
- 
--	write_lock_irq(&disc_data_lock);
--	ap = tty->disc_data;
- 	tty->disc_data = NULL;
--	write_unlock_irq(&disc_data_lock);
- 	if (!ap)
- 		return;
+-	tasklet_init(&dev->bh, lan78xx_bh, (unsigned long)dev);
++	tasklet_setup(&dev->bh, lan78xx_bh);
+ 	INIT_DELAYED_WORK(&dev->wq, lan78xx_delayedwork);
+ 	init_usb_anchor(&dev->deferred);
  
 -- 
-2.17.1
+2.30.0
