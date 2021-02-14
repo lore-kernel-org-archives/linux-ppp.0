@@ -1,59 +1,65 @@
-From: Xie He <xie.he.0141@gmail.com>
-Date: Fri, 01 Jan 2021 01:37:44 +0000
-Subject: Re: [PATCH] net: remove disc_data_lock in ppp line discipline
-Message-Id: <20210101013744.72562-1-xie.he.0141@gmail.com>
+From: Nicholas Humfrey <njh@aelius.com>
+Date: Sun, 14 Feb 2021 01:03:28 +0000
+Subject: Configuring pppd to accept link-local IPv6 interface id from remote peer
+Message-Id: <d529e496-ac5f-9498-0e3d-1fa1ec2c4750@aelius.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20201228071550.15745-1-gao.yanB@h3c.com>
-In-Reply-To: <20201228071550.15745-1-gao.yanB@h3c.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: Gao Yan <gao.yanB@h3c.com>
-Cc: paulus@samba.org, davem@davemloft.net, kuba@kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+To: linux-ppp@vger.kernel.org
 
-> In tty layer, it use tty->ldisc_sem to proect tty_ldisc_ops.
-> So I think tty->ldisc_sem can also protect tty->disc_data;
+Hi,
 
-It might help by CC'ing TTY people, so that we could get this reviewed by
-people who are familiar with TTY code.
+I originally asked this question on the "Unix and Linux" StackExchange:
+https://unix.stackexchange.com/questions/634033/configuring-pppd-to-accept-link-local-ipv6-address-from-remote-peer
 
-Greg Kroah-Hartman <gregkh@linuxfoundation.org> (supporter:TTY LAYER)
-Jiri Slaby <jirislaby@kernel.org> (supporter:TTY LAYER)
+But i suspect it is a bit too niche and have not had a response there.
 
-Thanks!
 
-> For examlpe,
-> When cpu A is running ppp_synctty_ioctl that hold the tty->ldisc_sem,
-> at the same time  if cpu B calls ppp_synctty_close, it will wait until
-> cpu A release tty->ldisc_sem. So I think it is unnecessary to have the
-> disc_data_lock;
-> 
-> cpu A                           cpu B
-> tty_ioctl                       tty_reopen
->  ->hold tty->ldisc_sem            ->hold tty->ldisc_sem(write), failed
->  ->ld->ops->ioctl                 ->wait...
->  ->release tty->ldisc_sem         ->wait...OK,hold tty->ldisc_sem
->                                     ->tty_ldisc_reinit
->                                       ->tty_ldisc_close
->                                         ->ld->ops->close
+I have two pppd (v2.4.7) instances running, talking to each over over a 
+serial port link. But I can't work out how to get the 'client' pppd to 
+accept the link-local IPv6 interface identifier provided by the 'server' 
+pppd. I am trying to use static addresses so I know the link-local IP 
+address of the remote peer.
 
-IMHO an example might not be necessary. Examples are useful to show
-incorrectness. But we cannot show correctness by examples because
-examples are not exhaustive.
+On the 'server' I am running:
+   pppd file ./ppp-options ipv6 ::1,::2 /dev/ttyAMA0 115200
 
-BTW, there're some typos:
-"proect" -> "protect"
-"examlpe" -> "example"
-"that hold ..." -> "that holds ..."
-"cpu A release ..." -> "cpu A releases ..."
+And on the 'client', I am running:
+   pppd file ./ppp-options ipv6cp-accept-local /dev/ttyAMA0 115200
 
->   * FIXME: this is no longer true. The _close path for the ldisc is
->   * now guaranteed to be sane.
->   */
+This is the contents of ppp-options on both:
+   nodetach
+   noauth
+   persist
+   local
+   noip
+   +ipv6
 
->   *
->   * FIXME: Fixed in tty_io nowadays.
->   */
+The pppd man page says:
+   ipv6cp-accept-local
+     With this option, pppd will accept the peer's idea of our local 
+IPv6 interface
+     identifier, even if the local IPv6 interface identifier was 
+specified in an option.
 
-Since you are removing "disc_data_lock", please update (or remove) these
-two comments. Thanks!
+But that doesn't seem to be the behaviour I am experiencing.
+
+The client always just uses a locally chosen interface identifier 
+instead. It was suggested to me to try setting the 'client' local 
+interface identifier to all-zero but I have not found a way of doing 
+this through configuration. Or alternatively get the 'server' to Nack 
+the clients choice of interface identifier - but I'm not sure how to 
+achieve that with pppd.
+
+I have now managed to get it working by hacking ipv6cp.c to keep the 
+local identifier as all-zero, by disabling a couple of calls to 
+eui64_magic_nz. But I am not sure what the proper solution is.
+
+Does there need to be an IPv6 equivalent to 'noipdefault' to use in 
+conjunction with 'ipv6cp-accept-local'?
+
+Thanks,
+
+nick.
+
