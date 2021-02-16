@@ -1,7 +1,7 @@
-From: Nicholas Humfrey <njh@aelius.com>
-Date: Tue, 16 Feb 2021 00:10:54 +0000
+From: Benjamin Cama <benoar@dolka.fr>
+Date: Tue, 16 Feb 2021 10:04:47 +0000
 Subject: Re: Configuring pppd to accept link-local IPv6 interface id from remote peer
-Message-Id: <c0eb49d2-c33e-1ffc-db2d-1dd2e5e0a1ff@aelius.com>
+Message-Id: <072169f215e68427ba9b65caac3c3effef3b971c.camel@dolka.fr>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <d529e496-ac5f-9498-0e3d-1fa1ec2c4750@aelius.com>
 In-Reply-To: <d529e496-ac5f-9498-0e3d-1fa1ec2c4750@aelius.com>
@@ -10,73 +10,94 @@ Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 To: linux-ppp@vger.kernel.org
 
+Hi Nicholas,
 
-On 14/02/2021 16:23, James Carlson wrote:
-> On 2021-02-13 20:03, Nicholas Humfrey wrote:
->> Hi,
->>
->> I originally asked this question on the "Unix and Linux" StackExchange:
->> https://unix.stackexchange.com/questions/634033/configuring-pppd-to-accept-link-local-ipv6-address-from-remote-peer
-> Do you have a debug trace?  I don't see one in that posting or here, so
-> it's hard to know exactly what we're commenting on.
+[Cc'ing the list if I may, as it may be useful]
 
-Debug trace is in a Gist, linked to in the StackExchange question. I 
-have just updated the Gist to include both the 'client', 'server' and 
-the pppd options file:
+Le mardi 16 février 2021 à 00:56 +0000, Nicholas Humfrey a écrit :
+>  > It is a very small change that is basically activated on the “client”-
+>  > side with:
+>  >
+>  >   ipv6 ::,
+>  >
+>  > thus sending a zero identifier for our side.
+> 
+> 
+> I just tried applying your patch to Git master (5191399) and 
+> successfully compiled it.
 
-https://gist.github.com/njh/ab3282f43c72dcf6932b3693eb7dfca4
+Thanks for testing!
 
+> However when running this on my 'client':
+> ./pppd/pppd file ~/ppp-options ipv6 ::, ipv6cp-accept-local /dev/ttyAMA0 
+> 115200
+> 
+> Then it seemed to fail to negotiate the link-local address. Here is the 
+> output:
+> https://gist.github.com/njh/437713988b108880a8fe23ed10168c0c
 
->> I have two pppd (v2.4.7) instances running, talking to each over over a
->> serial port link. But I can't work out how to get the 'client' pppd to
->> accept the link-local IPv6 interface identifier provided by the 'server'
->> pppd. I am trying to use static addresses so I know the link-local IP
->> address of the remote peer.
-> Perhaps a silly question, but why?  Link locals are used only for the
-> IPv6 router discovery, neighbor discovery, and routing protocol
-> communication.  Why would anyone care what numbers are assigned as long
-> as the two ends are distinct?
+It seems it keeps sending ConfReq for the zero identifier… strange.
+Here is the output with the patched version from last june when I wrote
+it, latest git at the time (some time after 2.4.8), which works:
 
-A very reasonable question! I am partly doing this as a learning 
-exercise. But I think it is also useful for debugging and diagnostics. 
-If they can be any two unique identifiers (to that link), it seems 
-useful to be able to make them more easily human readable.
+   using channel 19
+   Using interface ppp0
+   Connect: ppp0 <--> /dev/pts/18
+   rcvd [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0xfc846b9d> <pcomp> <accomp>]
+   sent [LCP ConfReq id=0x1 <asyncmap 0x0> <magic 0x29314916> <pcomp> <accomp>]
+   sent [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0xfc846b9d> <pcomp> <accomp>]
+   rcvd [LCP ConfAck id=0x1 <asyncmap 0x0> <magic 0x29314916> <pcomp> <accomp>]
+   sent [LCP EchoReq id=0x0 magic=0x29314916]
+   sent [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
+   sent [IPV6CP ConfReq id=0x1 <addr fe80::0000:0000:0000:0000>]
+   rcvd [LCP EchoReq id=0x0 magic=0xfc846b9d]
+   sent [LCP EchoRep id=0x0 magic=0x29314916]
+   rcvd [CCP ConfReq id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
+   sent [CCP ConfAck id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
+   rcvd [IPV6CP ConfReq id=0x1 <addr fe80::0000:0000:0000:0001>]
+   sent [IPV6CP ConfAck id=0x1 <addr fe80::0000:0000:0000:0001>]
+   rcvd [LCP EchoRep id=0x0 magic=0xfc846b9d]
+   rcvd [CCP ConfAck id=0x1 <deflate 15> <deflate(old#) 15> <bsd v1 15>]
+   Deflate (15) compression enabled
+   rcvd [IPV6CP ConfNak id=0x1 <addr fe80::0000:0000:0000:0002>]
+   sent [IPV6CP ConfReq id=0x2 <addr fe80::0000:0000:0000:0002>]
+   rcvd [IPV6CP ConfAck id=0x2 <addr fe80::0000:0000:0000:0002>]
+   local  LL address fe80::0000:0000:0000:0002
+   remote LL address fe80::0000:0000:0000:0001
+   Script /etc/ppp/ipv6-up started (pid 11628)
+   Script /etc/ppp/ipv6-up finished (pid 11628), status = 0x0
+   ^CTerminating on signal 2
+   Script /etc/ppp/ipv6-down started (pid 11655)
+   sent [LCP TermReq id=0x2 "User request"]
+   Script /etc/ppp/ipv6-down finished (pid 11655), status = 0x0
+   Child process sudo /home/benoar/Dev/ppp/pppd/pppd notty noauth noip +ipv6 ipv6 ::1,::2 (pid 11617) terminated with signal 2
+   Modem hangup
+   Connection terminated.
+   Connect time 0.1 minutes.
+   Sent 120 bytes, received 120 bytes.
 
-The PPP protocol describes a number of different ways to assign 
-interface identifiers and pppd supports a number of them. Why does the 
-functionality exist (even if a bit broken)?
+   It correctly gets nacked when sending zero iid, and then acks the given
+   identifier. BTW, I use a quick “self-test” for development testing:
 
+   sudo ./pppd/pppd pty "sudo $(pwd)/pppd/pppd notty noauth noip +ipv6 ipv6 ::1,::2" noauth nodetach noip +ipv6 ipv6 ::, debug
 
->> The pppd man page says:
->>    ipv6cp-accept-local
->>      With this option, pppd will accept the peer's idea of our local IPv6
->> interface
->>      identifier, even if the local IPv6 interface identifier was
->> specified in an option.
-> This means that we'll accept the peer's IPV6CP Configure-Nak message
-> suggesting a different address rather than sticking to our guns.  It
-> doesn't mean we won't start out with a legitimate identifier.
+   But with latest git and my patch, I indeed get the same trace as you.
 
-So I guess it is only useable when using a PPP implementation other than 
-Linux pppd?
+   > In my hack, rather than changing the definition of what a valid 
+> Interface Identifier is, I instead looked for the calls to eui64_magic() 
+> and commented them out.
 
-As there is no way to configure the 'server' to Nack the clients chosen 
-identifier?
+The VALIDID macro was sparsely used and fitted my use-case well, so I
+went with that.
 
+> Looking at the git master branch, it looks like Pali Rohár is actively 
+> working in this space:
+> 
+> https://github.com/paulusmack/ppp/commits/master
 
->> I have now managed to get it working by hacking ipv6cp.c to keep the
->> local identifier as all-zero, by disabling a couple of calls to
->> eui64_magic_nz. But I am not sure what the proper solution is.
->>
->> Does there need to be an IPv6 equivalent to 'noipdefault' to use in
->> conjunction with 'ipv6cp-accept-local'?
-> Yes, I agree there could probably be an option ("noipv6default",
-> perhaps) to do this, if only for testing reasons.  But given the lack of
-> a compelling application for it, it's hard to see why.
+Well, I'll give a look to find what's wrong.
 
-I like the idea of it being explicit - and not change the 
-existing/expected behaviour of the existing 'ipv6' option.
-
-
-nick.
-
+Thanks for your feedback!
+Regards,
+--
+benjamin
