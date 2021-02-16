@@ -1,7 +1,7 @@
-From: Benjamin Cama <benoar@dolka.fr>
-Date: Sun, 14 Feb 2021 23:15:53 +0000
+From: Nicholas Humfrey <njh@aelius.com>
+Date: Tue, 16 Feb 2021 00:10:54 +0000
 Subject: Re: Configuring pppd to accept link-local IPv6 interface id from remote peer
-Message-Id: <0dd1a7673eb530e20ff0f680a2c181511b8d2f94.camel@dolka.fr>
+Message-Id: <c0eb49d2-c33e-1ffc-db2d-1dd2e5e0a1ff@aelius.com>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <d529e496-ac5f-9498-0e3d-1fa1ec2c4750@aelius.com>
 In-Reply-To: <d529e496-ac5f-9498-0e3d-1fa1ec2c4750@aelius.com>
@@ -10,82 +10,73 @@ Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 To: linux-ppp@vger.kernel.org
 
-Le dimanche 14 février 2021 à 17:46 -0500, James Carlson a écrit :
-> On 2021-02-14 16:24, Benjamin Cama wrote:
-> > Well, I actually sent last year a patch (attached again to this
-> > message) to Paul and Cc'ed here about sending a zero identifier to do
-> > exactly (to my understanding) what Nicholas is intending to do: let the
-> > “server”-side choose the interface identifier.
-> > 
-> > It is a very small change that is basically activated on the “client”-
-> > side with:
-> > 
-> >   ipv6 ::,
-> > 
-> > thus sending a zero identifier for our side. It worked quite well for
-> > my work case (virtual serial links), where having short addresses when
-> > autoconfiguring helps a lot, too. I couldn't resist also citing the
-> > “stability to global scope addresses” argument from the RFC, which is
-> > indeed relevant to me, at least.
-> 
-> I assume that's a reference to autoconf behavior.  It's actually not
-> required that autoconf uses the same lower 64 bits to form those
-> addresses, though it it often does.
 
-Well, it was the default for a very long time, and is still used for
-“permanent addresses” that are still always configured anyway.
+On 14/02/2021 16:23, James Carlson wrote:
+> On 2021-02-13 20:03, Nicholas Humfrey wrote:
+>> Hi,
+>>
+>> I originally asked this question on the "Unix and Linux" StackExchange:
+>> https://unix.stackexchange.com/questions/634033/configuring-pppd-to-accept-link-local-ipv6-address-from-remote-peer
+> Do you have a debug trace?  I don't see one in that posting or here, so
+> it's hard to know exactly what we're commenting on.
 
-> And even where it does, it's
-> certainly possible to use other mechanisms to do the "right thing."  In
-> Linux I believe you can set the client portion for stateless autoconf
-> with something like:
-> 
->   ip token set ::123/64 dev ppp0
-> 
-> I'd do that in an ipv6-up script.
+Debug trace is in a Gist, linked to in the StackExchange question. I 
+have just updated the Gist to include both the 'client', 'server' and 
+the pppd options file:
 
-Well, I was not aware of the tokenized interface identifier support in
-iproute2, even if this was kind of envisioned in the RFC (although the
-manual here only cites a draft as formal reference…). Thanks for
-letting me know!
+https://gist.github.com/njh/ab3282f43c72dcf6932b3693eb7dfca4
 
-> But, yeah, that's the only possible reason I can see to care about it,
-> and it seems like a pretty weak one to me.  (Usually you'll want more
-> than just a static address, and DHCPv6 gives you DNS and other really
-> handy bits as well.)
 
-I agree this is not the most useful feature I witnessed. To be more
-precise on my use-case, this is about knowing in advance, from the
-server-side, what will the client address be *when they are not
-provisionned* for a particular id, but just use autoconf for the prefix
-*and the iid part*, if one could call this mechanism “iid
-autoconfiguration”. In this case, I also get resolvers through RA, and
-even client registration in the DNS —if this was what you thought
-about— can be then done on the server-side, as iid and thus global
-address is deterministic (*if acknowledged* at IPv6CP level, which is a
-small caveat I did not take into account, I admit; thus my suggestion
-above about failing, then: maybe this would need a patch for that,
-too?).
+>> I have two pppd (v2.4.7) instances running, talking to each over over a
+>> serial port link. But I can't work out how to get the 'client' pppd to
+>> accept the link-local IPv6 interface identifier provided by the 'server'
+>> pppd. I am trying to use static addresses so I know the link-local IP
+>> address of the remote peer.
+> Perhaps a silly question, but why?  Link locals are used only for the
+> IPv6 router discovery, neighbor discovery, and routing protocol
+> communication.  Why would anyone care what numbers are assigned as long
+> as the two ends are distinct?
 
-> > What do you think about it?
-> 
-> That's a much more elegant configuration option than my suggestion.  I
-> like it.
+A very reasonable question! I am partly doing this as a learning 
+exercise. But I think it is also useful for debugging and diagnostics. 
+If they can be any two unique identifiers (to that link), it seems 
+useful to be able to make them more easily human readable.
 
-To be fair, I did not check *all the cases* where the state machine
-could stumble on zero iid. I *think* this is ok as zero is check here
-and there, but I would prefer someone most knowledgeable double-check
-it.
+The PPP protocol describes a number of different ways to assign 
+interface identifiers and pppd supports a number of them. Why does the 
+functionality exist (even if a bit broken)?
 
-> (I don't like the idea that people seem to care about IPv6 link-local
-> addresses.  Not at all.  But I like the change, especially if it means
-> the question doesn't need to be answered again.)
 
-Well, people are afraid of it when they see beginners misuse it (which
-is very often the case). But stable global addressing and non-globally
-addressed link with stable link-local addresses (e.g. inter-router
-links, etc) can be very useful too for advanced use.
+>> The pppd man page says:
+>>    ipv6cp-accept-local
+>>      With this option, pppd will accept the peer's idea of our local IPv6
+>> interface
+>>      identifier, even if the local IPv6 interface identifier was
+>> specified in an option.
+> This means that we'll accept the peer's IPV6CP Configure-Nak message
+> suggesting a different address rather than sticking to our guns.  It
+> doesn't mean we won't start out with a legitimate identifier.
 
-Thanks for your comments.
---
-Benjamin
+So I guess it is only useable when using a PPP implementation other than 
+Linux pppd?
+
+As there is no way to configure the 'server' to Nack the clients chosen 
+identifier?
+
+
+>> I have now managed to get it working by hacking ipv6cp.c to keep the
+>> local identifier as all-zero, by disabling a couple of calls to
+>> eui64_magic_nz. But I am not sure what the proper solution is.
+>>
+>> Does there need to be an IPv6 equivalent to 'noipdefault' to use in
+>> conjunction with 'ipv6cp-accept-local'?
+> Yes, I agree there could probably be an option ("noipv6default",
+> perhaps) to do this, if only for testing reasons.  But given the lack of
+> a compelling application for it, it's hard to see why.
+
+I like the idea of it being explicit - and not change the 
+existing/expected behaviour of the existing 'ipv6' option.
+
+
+nick.
+
