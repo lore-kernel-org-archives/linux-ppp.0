@@ -1,37 +1,21 @@
-From: patchwork-bot+netdevbpf@kernel.org
-Date: Wed, 31 Mar 2021 00:10:09 +0000
-Subject: Re: [PATCH] ppp: deflate: Remove useless call "zlib_inflateEnd"
-Message-Id: <161714940934.32754.10257093294349777080.git-patchwork-notify@kernel.org>
+From: lyl2019@mail.ustc.edu.cn
+Date: Thu, 11 Mar 2021 12:34:44 +0000
+Subject: [BUG] net/ppp: A use after free in ppp_unregister_channe
+Message-Id: <6057386d.ca12.1782148389e.Coremail.lyl2019@mail.ustc.edu.cn>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <1617097890-27020-1-git-send-email-jiapeng.chong@linux.alibaba.com>
-In-Reply-To: <1617097890-27020-1-git-send-email-jiapeng.chong@linux.alibaba.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
-Cc: paulus@samba.org, davem@davemloft.net, kuba@kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+To: paulus@samba.org, davem@davemloft.net
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 
-Hello:
+File: drivers/net/ppp/ppp_generic.c
 
-This patch was applied to netdev/net-next.git (refs/heads/master):
+In ppp_unregister_channel, pch could be freed in ppp_unbridge_channels()
+but after that pch is still in use. Inside the function ppp_unbridge_channels,
+if "pchbb = pch" is true and then pch will be freed.
 
-On Tue, 30 Mar 2021 17:51:30 +0800 you wrote:
-> Fix the following whitescan warning:
-> 
-> Calling "zlib_inflateEnd(&state->strm)" is only useful for its return
-> value, which is ignored.
-> 
-> Reported-by: Abaci Robot <abaci@linux.alibaba.com>
-> Signed-off-by: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
-> 
-> [...]
+I checked the commit history and found that this problem is introduced from
+4cf476ced45d7 ("ppp: add PPPIOCBRIDGECHAN and PPPIOCUNBRIDGECHAN ioctls").
 
-Here is the summary with links:
-  - ppp: deflate: Remove useless call "zlib_inflateEnd"
-    https://git.kernel.org/netdev/net-next/c/dc5fa2073f63
-
-You are awesome, thank you!
---
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+I have no idea about how to generate a suitable patch, sorry.
