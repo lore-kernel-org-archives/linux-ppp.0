@@ -1,67 +1,48 @@
-From: Tom Parkin <tparkin@katalix.com>
-Date: Fri, 12 Mar 2021 10:12:58 +0000
-Subject: Re: [BUG] net/ppp: A use after free in ppp_unregister_channe
-Message-Id: <20210312101258.GA4951@katalix.com>
-MIME-Version: 1
-Content-Type: multipart/mixed; boundary="Dxnq1zWXvFF0Q93v"
+From: lyl2019@mail.ustc.edu.cn
+Date: Fri, 12 Mar 2021 14:47:53 +0000
+Subject: Re: Re: [BUG] net/ppp: A use after free in ppp_unregister_channe
+Message-Id: <2ad7aaa2.fcad.17826e87afb.Coremail.lyl2019@mail.ustc.edu.cn>
 List-Id: <linux-ppp.vger.kernel.org>
 References: <6057386d.ca12.1782148389e.Coremail.lyl2019@mail.ustc.edu.cn>
-In-Reply-To: <6057386d.ca12.1782148389e.Coremail.lyl2019@mail.ustc.edu.cn>
-To: lyl2019@mail.ustc.edu.cn
+ <20210312101258.GA4951@katalix.com>
+In-Reply-To: <20210312101258.GA4951@katalix.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: Tom Parkin <tparkin@katalix.com>
 Cc: paulus@samba.org, davem@davemloft.net, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 
-
---Dxnq1zWXvFF0Q93v
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Thanks for the report!
-
-On  Thu, Mar 11, 2021 at 20:34:44 +0800, lyl2019@mail.ustc.edu.cn wrote:
-> File: drivers/net/ppp/ppp_generic.c
->=20
-> In ppp_unregister_channel, pch could be freed in ppp_unbridge_channels()
-> but after that pch is still in use. Inside the function ppp_unbridge_chan=
-nels,
-> if "pchbb =3D=3D pch" is true and then pch will be freed.
-
-Do you have a way to reproduce a use-after-free scenario?
-
-=46rom static analysis I'm not sure how pch would be freed in
-ppp_unbridge_channels when called via. ppp_unregister_channel.
-
-In theory (at least!) the caller of ppp_register_net_channel holds=20
-a reference on struct channel which ppp_unregister_channel drops.
-
-Each channel in a bridged pair holds a reference on the other.
-
-Hence on return from ppp_unbridge_channels, the channel should not have
-been freed (in this code path) because the ppp_register_net_channel
-reference has not yet been dropped.
-
-Maybe there is an issue with the reference counting or a race of some
-sort?
-
-> I checked the commit history and found that this problem is introduced fr=
-om
-> 4cf476ced45d7 ("ppp: add PPPIOCBRIDGECHAN and PPPIOCUNBRIDGECHAN ioctls").
->=20
-> I have no idea about how to generate a suitable patch, sorry.
-
---Dxnq1zWXvFF0Q93v
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCgAdFiEEsUkgyDzMwrj81nq0lIwGZQq6i9AFAmBLPqIACgkQlIwGZQq6
-i9BImgf/VhpowGVVPkfWqgkYkfOsWZfxmDueUkeoSFD2dVhLeTNU/jnOGI400Cc0
-Yk+sEFL4fqmjZPjsjIGBlhdpndQJbW+yCKh+G/xmU9ynd9xe+0KrP0WpToJ5Dd3+
-1aCU4n1y5h8MhP6i0BuFe4KQ7K0SSIoSqubAyAF56bHp15arsHGaFB5clBQwy/Nj
-LBW4St5DNAOQTc9heT+s+rhC6LSzXJgz9URaGkwbPtFuFIYmkloFvTRwqC3YJGCQ
-OKF6B3w3uow6gxIX/K3MSRsrDiktsYRNiK1jqOM7l8Jm9qP1EaarbqdCN7W5RhBk
-GecNJWitncHg1zyx+SvpFTVJbxjxYA==
-=npR2
------END PGP SIGNATURE-----
-
---Dxnq1zWXvFF0Q93v--
+DQoNCg0KPiAtLS0tLeWOn+Wni+mCruS7ti0tLS0tDQo+IOWPkeS7tuS6ujogIlRvbSBQYXJraW4i
+IDx0cGFya2luQGthdGFsaXguY29tPg0KPiDlj5HpgIHml7bpl7Q6IDIwMjEtMDMtMTIgMTg6MTI6
+NTggKOaYn+acn+S6lCkNCj4g5pS25Lu25Lq6OiBseWwyMDE5QG1haWwudXN0Yy5lZHUuY24NCj4g
+5oqE6YCBOiBwYXVsdXNAc2FtYmEub3JnLCBkYXZlbUBkYXZlbWxvZnQubmV0LCBsaW51eC1wcHBA
+dmdlci5rZXJuZWwub3JnLCBuZXRkZXZAdmdlci5rZXJuZWwub3JnLCBsaW51eC1rZXJuZWxAdmdl
+ci5rZXJuZWwub3JnDQo+IOS4u+mimDogUmU6IFtCVUddIG5ldC9wcHA6IEEgdXNlIGFmdGVyIGZy
+ZWUgaW4gcHBwX3VucmVnaXN0ZXJfY2hhbm5lDQo+IA0KPiBUaGFua3MgZm9yIHRoZSByZXBvcnQh
+DQo+IA0KPiBPbiAgVGh1LCBNYXIgMTEsIDIwMjEgYXQgMjA6MzQ6NDQgKzA4MDAsIGx5bDIwMTlA
+bWFpbC51c3RjLmVkdS5jbiB3cm90ZToNCj4gPiBGaWxlOiBkcml2ZXJzL25ldC9wcHAvcHBwX2dl
+bmVyaWMuYw0KPiA+IA0KPiA+IEluIHBwcF91bnJlZ2lzdGVyX2NoYW5uZWwsIHBjaCBjb3VsZCBi
+ZSBmcmVlZCBpbiBwcHBfdW5icmlkZ2VfY2hhbm5lbHMoKQ0KPiA+IGJ1dCBhZnRlciB0aGF0IHBj
+aCBpcyBzdGlsbCBpbiB1c2UuIEluc2lkZSB0aGUgZnVuY3Rpb24gcHBwX3VuYnJpZGdlX2NoYW5u
+ZWxzLA0KPiA+IGlmICJwY2hiYiA9PSBwY2giIGlzIHRydWUgYW5kIHRoZW4gcGNoIHdpbGwgYmUg
+ZnJlZWQuDQo+IA0KPiBEbyB5b3UgaGF2ZSBhIHdheSB0byByZXByb2R1Y2UgYSB1c2UtYWZ0ZXIt
+ZnJlZSBzY2VuYXJpbz8NCj4gDQo+IEZyb20gc3RhdGljIGFuYWx5c2lzIEknbSBub3Qgc3VyZSBo
+b3cgcGNoIHdvdWxkIGJlIGZyZWVkIGluDQo+IHBwcF91bmJyaWRnZV9jaGFubmVscyB3aGVuIGNh
+bGxlZCB2aWEuIHBwcF91bnJlZ2lzdGVyX2NoYW5uZWwuDQo+IA0KPiBJbiB0aGVvcnkgKGF0IGxl
+YXN0ISkgdGhlIGNhbGxlciBvZiBwcHBfcmVnaXN0ZXJfbmV0X2NoYW5uZWwgaG9sZHMgDQo+IGEg
+cmVmZXJlbmNlIG9uIHN0cnVjdCBjaGFubmVsIHdoaWNoIHBwcF91bnJlZ2lzdGVyX2NoYW5uZWwg
+ZHJvcHMuDQo+IA0KPiBFYWNoIGNoYW5uZWwgaW4gYSBicmlkZ2VkIHBhaXIgaG9sZHMgYSByZWZl
+cmVuY2Ugb24gdGhlIG90aGVyLg0KPiANCj4gSGVuY2Ugb24gcmV0dXJuIGZyb20gcHBwX3VuYnJp
+ZGdlX2NoYW5uZWxzLCB0aGUgY2hhbm5lbCBzaG91bGQgbm90IGhhdmUNCj4gYmVlbiBmcmVlZCAo
+aW4gdGhpcyBjb2RlIHBhdGgpIGJlY2F1c2UgdGhlIHBwcF9yZWdpc3Rlcl9uZXRfY2hhbm5lbA0K
+PiByZWZlcmVuY2UgaGFzIG5vdCB5ZXQgYmVlbiBkcm9wcGVkLg0KPiANCj4gTWF5YmUgdGhlcmUg
+aXMgYW4gaXNzdWUgd2l0aCB0aGUgcmVmZXJlbmNlIGNvdW50aW5nIG9yIGEgcmFjZSBvZiBzb21l
+DQo+IHNvcnQ/DQo+IA0KPiA+IEkgY2hlY2tlZCB0aGUgY29tbWl0IGhpc3RvcnkgYW5kIGZvdW5k
+IHRoYXQgdGhpcyBwcm9ibGVtIGlzIGludHJvZHVjZWQgZnJvbQ0KPiA+IDRjZjQ3NmNlZDQ1ZDcg
+KCJwcHA6IGFkZCBQUFBJT0NCUklER0VDSEFOIGFuZCBQUFBJT0NVTkJSSURHRUNIQU4gaW9jdGxz
+IikuDQo+ID4gDQo+ID4gSSBoYXZlIG5vIGlkZWEgYWJvdXQgaG93IHRvIGdlbmVyYXRlIGEgc3Vp
+dGFibGUgcGF0Y2gsIHNvcnJ5Lg0KDQpUaGlzIGlzc3VlIHdhcyByZXBvcnRlZCBieSBhIHBhdGgt
+c2Vuc2l0aXZlIHN0YXRpYyBhbmFseXplciBkZXZlbG9wZWQgYnkgb3VyIExhYiwNCnRodXMgaSBo
+YXZlIG5vdCBhIGNyYXNoIG9yIGJ1ZyBsb2cuDQoNCkFzIHRoZSByZXR1cm4gdHlwZSBvZiBwcHBf
+dW5icmlkZ2VfY2hhbm5lbHMoKSBpcyBhIGludCwgY2FuIHdlIHJldHVybiBhIHZhbHVlIHRvDQpp
+bmZvcm0gY2FsbGVyIHRoYXQgdGhlIGNoYW5uZWwgaXMgZnJlZWQ/DQoNCg=
