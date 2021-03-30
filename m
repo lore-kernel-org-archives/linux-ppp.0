@@ -1,22 +1,36 @@
-From: Jakub Kicinski <kuba@kernel.org>
-Date: Wed, 03 Feb 2021 04:07:27 +0000
-Subject: Re: [PATCH 0/9] drivers: net: update tasklet_init callers
-Message-Id: <20210202200727.4641cd7e@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
+From: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+Date: Tue, 30 Mar 2021 09:51:30 +0000
+Subject: [PATCH] ppp: deflate: Remove useless call "zlib_inflateEnd"
+Message-Id: <1617097890-27020-1-git-send-email-jiapeng.chong@linux.alibaba.com>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20210130234730.26565-1-kernel@esmil.dk>
-In-Reply-To: <20210130234730.26565-1-kernel@esmil.dk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: Emil Renner Berthing <kernel@esmil.dk>
-Cc: netdev@vger.kernel.org, linux-usb@vger.kernel.org, linux-ppp@vger.kernel.org, Michael Grzeschik <m.grzeschik@pengutronix.de>, "David S. Miller" <davem@davemloft.net>, Paul Mackerras <paulus@samba.org>, Woojung Huh <woojung.huh@microchip.com>, UNGLinuxDriver@microchip.com, Petko Manolov <petkan@nucleusys.com>, Luc Van Oostenryck <luc.vanoostenryck@gmail.com>, Jing Xiangfeng <jingxiangfeng@huawei.com>, Oliver Neukum <oneukum@suse.com>, linux-kernel@vger.kernel.org
+To: paulus@samba.org
+Cc: davem@davemloft.net, kuba@kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
 
-On Sun, 31 Jan 2021 00:47:21 +0100 Emil Renner Berthing wrote:
-> This updates the remaining callers of tasklet_init() in drivers/net
-> to the new API introduced in 
-> commit 12cc923f1ccc ("tasklet: Introduce new initialization API")
-> 
-> All changes are done by coccinelle using the following semantic patch.
-> Coccinelle needs a little help parsing drivers/net/arcnet/arcnet.c
+Fix the following whitescan warning:
 
-Applied, thanks!
+Calling "zlib_inflateEnd(&state->strm)" is only useful for its return
+value, which is ignored.
+
+Reported-by: Abaci Robot <abaci@linux.alibaba.com>
+Signed-off-by: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+---
+ drivers/net/ppp/ppp_deflate.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/net/ppp/ppp_deflate.c b/drivers/net/ppp/ppp_deflate.c
+index c457f84..e6d48e5 100644
+--- a/drivers/net/ppp/ppp_deflate.c
++++ b/drivers/net/ppp/ppp_deflate.c
+@@ -279,7 +279,6 @@ static void z_decomp_free(void *arg)
+ 	struct ppp_deflate_state *state = (struct ppp_deflate_state *) arg;
+ 
+ 	if (state) {
+-		zlib_inflateEnd(&state->strm);
+ 		vfree(state->strm.workspace);
+ 		kfree(state);
+ 	}
+-- 
+1.8.3.1
