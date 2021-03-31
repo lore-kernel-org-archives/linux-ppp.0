@@ -1,36 +1,37 @@
-From: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
-Date: Tue, 30 Mar 2021 09:51:30 +0000
-Subject: [PATCH] ppp: deflate: Remove useless call "zlib_inflateEnd"
-Message-Id: <1617097890-27020-1-git-send-email-jiapeng.chong@linux.alibaba.com>
+From: patchwork-bot+netdevbpf@kernel.org
+Date: Wed, 31 Mar 2021 00:10:09 +0000
+Subject: Re: [PATCH] ppp: deflate: Remove useless call "zlib_inflateEnd"
+Message-Id: <161714940934.32754.10257093294349777080.git-patchwork-notify@kernel.org>
 List-Id: <linux-ppp.vger.kernel.org>
+References: <1617097890-27020-1-git-send-email-jiapeng.chong@linux.alibaba.com>
+In-Reply-To: <1617097890-27020-1-git-send-email-jiapeng.chong@linux.alibaba.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: paulus@samba.org
-Cc: davem@davemloft.net, kuba@kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+To: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+Cc: paulus@samba.org, davem@davemloft.net, kuba@kernel.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 
-Fix the following whitescan warning:
+Hello:
 
-Calling "zlib_inflateEnd(&state->strm)" is only useful for its return
-value, which is ignored.
+This patch was applied to netdev/net-next.git (refs/heads/master):
 
-Reported-by: Abaci Robot <abaci@linux.alibaba.com>
-Signed-off-by: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
----
- drivers/net/ppp/ppp_deflate.c | 1 -
- 1 file changed, 1 deletion(-)
+On Tue, 30 Mar 2021 17:51:30 +0800 you wrote:
+> Fix the following whitescan warning:
+> 
+> Calling "zlib_inflateEnd(&state->strm)" is only useful for its return
+> value, which is ignored.
+> 
+> Reported-by: Abaci Robot <abaci@linux.alibaba.com>
+> Signed-off-by: Jiapeng Chong <jiapeng.chong@linux.alibaba.com>
+> 
+> [...]
 
-diff --git a/drivers/net/ppp/ppp_deflate.c b/drivers/net/ppp/ppp_deflate.c
-index c457f84..e6d48e5 100644
---- a/drivers/net/ppp/ppp_deflate.c
-+++ b/drivers/net/ppp/ppp_deflate.c
-@@ -279,7 +279,6 @@ static void z_decomp_free(void *arg)
- 	struct ppp_deflate_state *state = (struct ppp_deflate_state *) arg;
- 
- 	if (state) {
--		zlib_inflateEnd(&state->strm);
- 		vfree(state->strm.workspace);
- 		kfree(state);
- 	}
--- 
-1.8.3.1
+Here is the summary with links:
+  - ppp: deflate: Remove useless call "zlib_inflateEnd"
+    https://git.kernel.org/netdev/net-next/c/dc5fa2073f63
+
+You are awesome, thank you!
+--
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
