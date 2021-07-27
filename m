@@ -1,35 +1,56 @@
-From: James Carlson <carlsonj@workingcode.com>
-Date: Sat, 31 Jul 2021 18:36:03 +0000
-Subject: Re: [bug report] ppp: fix 'ppp_mp_reconstruct bad seq' errors
-Message-Id: <f2558693-c7e4-8a70-94f0-09119b146e1c@workingcode.com>
+From: Arnd Bergmann <arnd@kernel.org>
+Date: Tue, 27 Jul 2021 13:45:09 +0000
+Subject: [PATCH net-next v3 23/31] ppp: use ndo_siocdevprivate
+Message-Id: <20210727134517.1384504-24-arnd@kernel.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20210729141617.GC1267@kili>
-In-Reply-To: <20210729141617.GC1267@kili>
+References: <20210727134517.1384504-1-arnd@kernel.org>
+In-Reply-To: <20210727134517.1384504-1-arnd@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, Jakub Kicinski <kuba@kernel.org>, "David S. Miller" <davem@davemloft.net>, Arnd Bergmann <arnd@arndb.de>, Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
 
-On 7/30/21 1:15 PM, James Carlson wrote:
-> On 7/30/21 4:48 AM, Dan Carpenter wrote:
->>> --> 2840 		ppp->nextseq = PPP_MP_CB(tail)->sequence + 1;
->>>                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
->>
->> Here is where Smatch complains.
-> 
-> If that's Smatch's analysis of the situation, then Smatch is wrong.
-> It's a bogus warning.
+From: Arnd Bergmann <arnd@arndb.de>
 
-For what it's worth, it's not my code, and I agree that it's at least a 
-bit hard to follow, and may well harbor bugs.  If you're suggesting 
-either some kind of suppression directive (I tried looking for some 
-Smatch documentation but couldn't find much to suggest that's possible, 
-though I guess now that you'd be the one who knows for sure), or adding 
-something like "u32 nextseq = PPP_CB(tail)->sequence + 1;" around line 
-2795, and then using "ppp->nextseq = nextseq;" on 2840, then I'd be in 
-favor of that, at least to make the tool happy.
+ppp has a custom statistics interface using SIOCDEVPRIVATE
+ioctl commands that works correctly in compat mode.
 
-Is there an equivalent of "/* LINTED: tail pointer still ok */" here?
+Convert it to use ndo_siocdevprivate as a cleanup.
 
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ drivers/net/ppp/ppp_generic.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 930e49ef15f6..216a9f4e9750 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -1452,11 +1452,11 @@ ppp_start_xmit(struct sk_buff *skb, struct net_device *dev)
+ }
+ 
+ static int
+-ppp_net_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
++ppp_net_siocdevprivate(struct net_device *dev, struct ifreq *ifr,
++		       void __user *addr, int cmd)
+ {
+ 	struct ppp *ppp = netdev_priv(dev);
+ 	int err = -EFAULT;
+-	void __user *addr = (void __user *) ifr->ifr_ifru.ifru_data;
+ 	struct ppp_stats stats;
+ 	struct ppp_comp_stats cstats;
+ 	char *vers;
+@@ -1585,7 +1585,7 @@ static const struct net_device_ops ppp_netdev_ops = {
+ 	.ndo_init	 = ppp_dev_init,
+ 	.ndo_uninit      = ppp_dev_uninit,
+ 	.ndo_start_xmit  = ppp_start_xmit,
+-	.ndo_do_ioctl    = ppp_net_ioctl,
++	.ndo_siocdevprivate = ppp_net_siocdevprivate,
+ 	.ndo_get_stats64 = ppp_get_stats64,
+ 	.ndo_fill_forward_path = ppp_fill_forward_path,
+ };
 -- 
-James Carlson         42.703N 71.076W         <carlsonj@workingcode.com>
+2.29.2
