@@ -1,48 +1,113 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Date: Mon, 02 Aug 2021 12:37:22 +0000
-Subject: Re: [bug report] ppp: fix 'ppp_mp_reconstruct bad seq' errors
-Message-Id: <20210802123722.GI25548@kadam>
+From: =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali@kernel.org>
+Date: Sat, 07 Aug 2021 16:00:50 +0000
+Subject: [PATCH] ppp: Fix generating ppp unit id when ifname is not specified
+Message-Id: <20210807160050.17687-1-pali@kernel.org>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20210729141617.GC1267@kili>
-In-Reply-To: <20210729141617.GC1267@kili>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+To: Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, Guillaume Nault <g.nault@alphalink.fr>
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
 
-On Sat, Jul 31, 2021 at 02:36:03PM -0400, James Carlson wrote:
-> On 7/30/21 1:15 PM, James Carlson wrote:
-> > On 7/30/21 4:48 AM, Dan Carpenter wrote:
-> > > > --> 2840 		ppp->nextseq = PPP_MP_CB(tail)->sequence + 1;
-> > > >                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> > > 
-> > > Here is where Smatch complains.
-> > 
-> > If that's Smatch's analysis of the situation, then Smatch is wrong.
-> > It's a bogus warning.
-> 
-> For what it's worth, it's not my code, and I agree that it's at least a bit
-> hard to follow, and may well harbor bugs.  If you're suggesting either some
-> kind of suppression directive (I tried looking for some Smatch documentation
-> but couldn't find much to suggest that's possible, though I guess now that
-> you'd be the one who knows for sure), or adding something like "u32 nextseq
-> = PPP_CB(tail)->sequence + 1;" around line 2795, and then using
-> "ppp->nextseq = nextseq;" on 2840, then I'd be in favor of that, at least to
-> make the tool happy.
+When registering new ppp interface via PPPIOCNEWUNIT ioctl then kernel has
+to choose interface name as this ioctl API does not support specifying it.
 
-No. No.  Never change the code just to make the tool happy.  Of course,
-I misread this in two different ways because the first time I didn't
-spot the break statement and the second time I got skb_queue_walk_safe()
-and skb_queue_walk_from_safe().  But it's not really hard to read if
-you're more familiar with those macros.
+Kernel in this case register new interface with name "ppp<id>" where <id>
+is the ppp unit id, which can be obtained via PPPIOCGUNIT ioctl. This
+applies also in the case when registering new ppp interface via rtnl
+without supplying IFLA_IFNAME.
 
-I've investigated this and it turns out the problem is a kind of known
-issue with how Smatch parses lists.  I've avoided fixing this for years
-because parsing lists correctly will be a big slow down and it's a
-quite a big project but probably I should just fix it.  Maybe later this
-year.
+PPPIOCNEWUNIT ioctl allows to specify own ppp unit id which will kernel
+assign to ppp interface, in case this ppp id is not already used by other
+ppp interface.
 
-regards,
-dan carpenter
+In case user does not specify ppp unit id then kernel choose the first free
+ppp unit id. This applies also for case when creating ppp interface via
+rtnl method as it does not provide a way for specifying own ppp unit id.
 
+If some network interface (does not have to be ppp) has name "ppp<id>"
+with this first free ppp id then PPPIOCNEWUNIT ioctl or rtnl call fails.
 
+And registering new ppp interface is not possible anymore, until interface
+which holds conflicting name is renamed. Or when using rtnl method with
+custom interface name in IFLA_IFNAME.
+
+As list of allocated / used ppp unit ids is not possible to retrieve from
+kernel to userspace, userspace has no idea what happens nor which interface
+is doing this conflict.
+
+So change the algorithm how ppp unit id is generated. And choose the first
+number which is not neither used as ppp unit id nor in some network
+interface with pattern "ppp<id>".
+
+This issue can be simply reproduced by following pppd call when there is no
+ppp interface registered and also no interface with name pattern "ppp<id>":
+
+    pppd ifname ppp1 +ipv6 noip noauth nolock local nodetach pty "pppd +ipv=
+6 noip noauth nolock local nodetach notty"
+
+Or by creating the one ppp interface (which gets assigned ppp unit id 0),
+renaming it to "ppp1" and then trying to create a new ppp interface (which
+will always fails as next free ppp unit id is 1, but network interface with
+name "ppp1" exists).
+
+This patch fixes above described issue by generating new and new ppp unit
+id until some non-conflicting id with network interfaces is generated.
+
+Signed-off-by: Pali Roh=C3=A1r <pali@kernel.org>
+Cc: stable@vger.kernel.org
+---
+ drivers/net/ppp/ppp_generic.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 1c6ba5a5e081..9506abd8d7e1 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -284,7 +284,7 @@ static struct channel *ppp_find_channel(struct ppp_net =
+*pn, int unit);
+ static int ppp_connect_channel(struct channel *pch, int unit);
+ static int ppp_disconnect_channel(struct channel *pch);
+ static void ppp_destroy_channel(struct channel *pch);
+-static int unit_get(struct idr *p, void *ptr);
++static int unit_get(struct idr *p, void *ptr, int min);
+ static int unit_set(struct idr *p, void *ptr, int n);
+ static void unit_put(struct idr *p, int n);
+ static void *unit_find(struct idr *p, int n);
+@@ -1155,9 +1155,20 @@ static int ppp_unit_register(struct ppp *ppp, int un=
+it, bool ifname_is_set)
+ 	mutex_lock(&pn->all_ppp_mutex);
+=20
+ 	if (unit < 0) {
+-		ret =3D unit_get(&pn->units_idr, ppp);
++		ret =3D unit_get(&pn->units_idr, ppp, 0);
+ 		if (ret < 0)
+ 			goto err;
++		if (!ifname_is_set) {
++			while (1) {
++				snprintf(ppp->dev->name, IFNAMSIZ, "ppp%i", ret);
++				if (!__dev_get_by_name(ppp->ppp_net, ppp->dev->name))
++					break;
++				unit_put(&pn->units_idr, ret);
++				ret =3D unit_get(&pn->units_idr, ppp, ret + 1);
++				if (ret < 0)
++					goto err;
++			}
++		}
+ 	} else {
+ 		/* Caller asked for a specific unit number. Fail with -EEXIST
+ 		 * if unavailable. For backward compatibility, return -EEXIST
+@@ -3530,9 +3541,9 @@ static int unit_set(struct idr *p, void *ptr, int n)
+ }
+=20
+ /* get new free unit number and associate pointer with it */
+-static int unit_get(struct idr *p, void *ptr)
++static int unit_get(struct idr *p, void *ptr, int min)
+ {
+-	return idr_alloc(p, ptr, 0, 0, GFP_KERNEL);
++	return idr_alloc(p, ptr, min, 0, GFP_KERNEL);
+ }
+=20
+ /* put unit number back to a pool */
+--=20
+2.20.1
