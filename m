@@ -1,97 +1,78 @@
 From: Guillaume Nault <gnault@redhat.com>
-Date: Thu, 12 Aug 2021 19:12:57 +0000
+Date: Mon, 16 Aug 2021 16:11:14 +0000
 Subject: Re: [PATCH] ppp: Add rtnl attribute IFLA_PPP_UNIT_ID for specifying ppp unit id
-Message-Id: <20210812191257.GB10725@pc-23.home>
+Message-Id: <20210816161114.GA3611@pc-32.home>
 List-Id: <linux-ppp.vger.kernel.org>
-References: <20210807163749.18316-1-pali@kernel.org>
- <20210809122546.758e41de@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
- <20210809193109.mw6ritfdu27uhie7@pali>
- <20210810153941.GB14279@pc-32.home>
- <20210810160450.eluiktsp7oentxo3@pali>
- <20210811171918.GD15488@pc-32.home>
- <20210811175449.5hrwoevw7xv2jxxn@pali>
- <20210812091941.GA3525@pc-23.home>
- <20210812140918.lfll55przd4ajtc7@pali>
-In-Reply-To: <20210812140918.lfll55przd4ajtc7@pali>
+References: <20210810153941.GB14279@pc-32.home>
+ <BN0P223MB0327A247724B7AE211D2E84EA7F79@BN0P223MB0327.NAMP223.PROD.OUTLOOK.COM>
+ <20210810171626.z6bgvizx4eaafrbb@pali>
+ <2f10b64e-ba50-d8a5-c40a-9b9bd4264155@workingcode.com>
+ <20210811173811.GE15488@pc-32.home>
+ <20210811180401.owgmie36ydx62iep@pali>
+ <20210812092847.GB3525@pc-23.home>
+ <20210812134845.npj3m3vzkrmhx6uy@pali>
+ <20210812182645.GA10725@pc-23.home>
+ <20210812190440.fknfthdk3mazm6px@pali>
+In-Reply-To: <20210812190440.fknfthdk3mazm6px@pali>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 To: Pali =?iso-8859-1?Q?Roh=E1r?= <pali@kernel.org>
-Cc: Jakub Kicinski <kuba@kernel.org>, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: James Carlson <carlsonj@workingcode.com>, Chris Fowler <cfowler@outpostsentinel.com>, Jakub Kicinski <kuba@kernel.org>, Paul Mackerras <paulus@samba.org>, "David S. Miller" <davem@davemloft.net>, "linux-ppp@vger.kernel.org" <linux-ppp@vger.kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 
-On Thu, Aug 12, 2021 at 04:09:18PM +0200, Pali Roh=E1r wrote:
-> The problem is that ppp from rtnl is of the same class as ppp from
-> ioctl. And if you want to use ppp, you still have to use lot of ioctl
-> calls as rtnl does not implement them. And these ioctl calls use ppp
-> unit id, not interface id / interface name.
+On Thu, Aug 12, 2021 at 09:04:40PM +0200, Pali Roh=E1r wrote:
+> The point here is that there is application (pppd) which allows
+> specifying custom unit id as an option argument. Also it allows to call
+> external applications (at some events) with sharing file descriptors.
+> And it is one of the options how to touch part of ppp connection via
+> external scripts / applications. You start pppd for /dev/ttyUSB<N> with
+> unit id <N> and then in external script you use <N> for ioctls. And I do
+> not know if there is a way how to retrieve unit id in those external
+> scripts. There was already discussion about marking all file descriptors
+> in pppd as close-on-exec and it was somehow rejected as it will broke
+> custom scripts / applications which pppd invokes on events. So looks
+> like that people are using these "features" of pppd.
 
-Indeed, the netlink api only replaces ioctl(PPPIOCNEWUNIT). It's
-technically feasible to implement other ppp unit ioctls with netlink,
-but I didn't do that because:
-  * some of them make no sense,
-  * netlink wouldn't bring any advantage over ioctl() for these cases
-    (and ppp is ioctl-centric anyway, so users will have to write
-    ioctl() calls no matter what).
+Potential external pppd scripts, that depend on the unit id, may be a
+valid use case for letting the netlink api define this identifier (if
+pppd ever gets netlink support).
 
-If there was a bright future for ppp in sight, I'd certainly work on a
-new modern ioctl-less api. But in the current situation, that'd be just
-feature duplication and code churn.
-
-> So in the end you can use RTM_NEWLINK and then control ppp via ioctls.
-> And for controlling you have to known that ppp unit id.
+> Option "unit" in pppd specifies ppp unit id. And if new API (rtnl) would
+> not provide equivalent for allowing to specify it then migrating pppd
+> from ioctl to rtnl is not possible without breaking compatibility.
 >=20
-> If you are using ppp over serial devices, you can "simplify" it by
-> forcing mapping that serial number device matches ppp unit id. And then
-> you do not have to use dynamic ids (and need for call PPPIOCGUNIT).
+> As you already described, we can simulate setting default interface name
+> in pppd application. But above usage or any other which expose pppd API
+> to other application is not possible to simulate.
 
-How is dropping a single PPPIOCGUNIT call going to simplify the code
-while you have to write netlink message handlers?
+If the pppd project is interested in adding support for the netlink
+api, then I'm fine with adding this feature. I just want to make sure
+that it'll have a real world use case.
 
-> With dynamic unit id allocation (which is currently the only option when
-> creating ppp via rtnl) for single ppp connection you need to know:
-> * id of serial tty device
-> * id of channel bound to tty device
-> * id of network interface
-> * id of ppp unit bound to network interface
-
-I see you're not working with L2TPv2 :). A few more things you'd need
-to add to the list:
- * a UDP socket,
- * a tunnel id,
- * a session id,
- * a tunnel file descriptor,
- * a session file descriptor,
- * a new ioctl() to figure out which channel id is assigned to your
-   L2TP session,
- * a bunch of setsockopt() to configure the whole thing,
- * ...
-(and I'm not counting the ioctl() calls necessary to set up the channel,
-which also apply to your use case).
-
-Really, I'm sorry, but the possibility to drop a single PPPIOCGUNIT
-call isn't going to simplify the ppp landscape.
-
-> > As I already proposed, we can add an attribute to make the interface
-> > name independant from the unit id.
+> So I think we need to first decide or solve issue if rtnl ppp API should
+> provide same functionality as ioctl ppp API. If answer is yes, then some
+> kind of specifying custom ppp unit id is required. If answer is no (e.g.
+> because we do not want ppp unit id in rtnl API as it looks legacy and
+> has issues) then rtnl ppp API cannot be used by ppp as it cannot provide
+> all existing / supported features without breaking legacy compatibility.
 >=20
-> I agree, that above proposal with a new attribute which makes interface
-> name independent from the ppp unit id is a good idea. Probably it should
-> have been default rtnl behavior (but now it is too late for changing
-> default behavior).
+> I see pros & cons for both answers. Not supporting legacy code paths in
+> new code/API is the way how to clean up code and prevent repeating old
+> historic issues. But if new code/API is not fully suitable for pppd --
+> which is de-facto standard Linux userspace implementation -- does it
+> make sense to have it? Or does it mean to also implement new userspace
+> part of implementation (e.g. pppd2) to avoid these legacy / historic
+> issues? Or... is not whole ppp protocol just legacy part of our history
+> which should not be used in new modern setups? And for "legacy usage" is
+> current implementation enough and it does not make sense to invest time
+> into this area? I cannot answer to these questions, but I think it is
+> something quite important as it can show what should be direction and
+> future of ppp subsystem.
 
-Well, it was the default, until a collegue complained and I accepted to
-align the default device name with the original ioctl() behaviour. But
-the beauty of netlink is that we can revise this behaviour without
-breaking compatibility.
+PPP isn't legacy, but very few people are interested in working on and
+maintaining the code.
 
-> But prior adding this attribute, we first need a way how to retrieve
-> interface name of newly created interface. Which we agreed that
-> NLM_F_ECHO for RTM_NEWLINK/NLM_F_CREATE is needed.
+Do you have plans for adding netlink support to pppd? If so, is the
+project ready to accept such code?
 
-Yes, that'd be ideal. That might require quite some work though (I
-haven't looked in detail). At last resort, if adding NLM_F_ECHO
-support to rtnl proves too hard, it might be possible to add a call to
-get the device name associated to a ppp unit file descriptor.
-
-At least know I understand why we had this conversation about
-NLM_F_ECHO :).
+BTW, sorry for the delay.
