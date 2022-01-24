@@ -2,29 +2,32 @@ Return-Path: <linux-ppp-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 86F24C433EF
-	for <linux-ppp@archiver.kernel.org>; Mon, 24 Jan 2022 20:12:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BC052C433EF
+	for <linux-ppp@archiver.kernel.org>; Mon, 24 Jan 2022 22:07:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1345082AbiAXUL5 (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Mon, 24 Jan 2022 15:11:57 -0500
-Received: from ams.source.kernel.org ([145.40.68.75]:38688 "EHLO
-        ams.source.kernel.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1355678AbiAXTv3 (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Mon, 24 Jan 2022 14:51:29 -0500
+        id S1347342AbiAXWHH (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Mon, 24 Jan 2022 17:07:07 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55352 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1456647AbiAXVjo (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Mon, 24 Jan 2022 16:39:44 -0500
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 48113C06124E;
+        Mon, 24 Jan 2022 12:25:43 -0800 (PST)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id 387CEB810BD;
-        Mon, 24 Jan 2022 19:51:28 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 57E20C340E7;
-        Mon, 24 Jan 2022 19:51:26 +0000 (UTC)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id DD2AB61382;
+        Mon, 24 Jan 2022 20:25:42 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BE12BC340E5;
+        Mon, 24 Jan 2022 20:25:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-        s=korg; t=1643053887;
-        bh=JtPGXf7Elp4J0SujJGD2ep04bNZGi9qcDiiU1d/KAgw=;
+        s=korg; t=1643055942;
+        bh=3Ie9qEr5vFzrRtWIyCpzGwEkWAOWkxsiFMPjgFxG8B4=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=2SCqP4SvxPyIZw+p8AUCC4wHubdOsJJrMkoLPzNMTqIAcW6l3ftSNyrKGZqx/RoIP
-         LnupAEnut64/2P1vWkqu5KL9rgjhXeLi7qYG1CfvGF/4RSbEz2fuTOb9V1aydQBxkB
-         ydjPy9q2lf5nsIJb3O8uo6c4iiIiRqP200TvlXww=
+        b=GuZU7qIIPxd1Ii6GzJUN8d3POqgU396Hp1la2i9NF2HHIZajVYy6e7xEnsvEwz1Ue
+         c7QjxZMMJs5c+4x53lhGc3CxJqEVt+6ImCOldmbAjtxaSASWW0z6aZLsEm2NSp6Iak
+         8qhbB0jXF1yCcKUd9V9mNqSLx0rbCrQQ+2kv8viM=
 From:   Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 To:     linux-kernel@vger.kernel.org
 Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -34,12 +37,12 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Guillaume Nault <gnault@redhat.com>,
         "David S. Miller" <davem@davemloft.net>,
         Sasha Levin <sashal@kernel.org>
-Subject: [PATCH 5.10 208/563] ppp: ensure minimum packet size in ppp_write()
-Date:   Mon, 24 Jan 2022 19:39:33 +0100
-Message-Id: <20220124184031.630830705@linuxfoundation.org>
+Subject: [PATCH 5.15 317/846] ppp: ensure minimum packet size in ppp_write()
+Date:   Mon, 24 Jan 2022 19:37:14 +0100
+Message-Id: <20220124184111.838647966@linuxfoundation.org>
 X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20220124184024.407936072@linuxfoundation.org>
-References: <20220124184024.407936072@linuxfoundation.org>
+In-Reply-To: <20220124184100.867127425@linuxfoundation.org>
+References: <20220124184100.867127425@linuxfoundation.org>
 User-Agent: quilt/0.66
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -113,7 +116,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 33b2e0fb68bbb..2b9815ec4a622 100644
+index fb52cd175b45d..829d6ada1704c 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
 @@ -69,6 +69,8 @@
@@ -125,7 +128,7 @@ index 33b2e0fb68bbb..2b9815ec4a622 100644
  /*
   * An instance of /dev/ppp can be associated with either a ppp
   * interface unit or a ppp channel.  In both cases, file->private_data
-@@ -496,6 +498,9 @@ static ssize_t ppp_write(struct file *file, const char __user *buf,
+@@ -497,6 +499,9 @@ static ssize_t ppp_write(struct file *file, const char __user *buf,
  
  	if (!pf)
  		return -ENXIO;
@@ -135,7 +138,7 @@ index 33b2e0fb68bbb..2b9815ec4a622 100644
  	ret = -ENOMEM;
  	skb = alloc_skb(count + pf->hdrlen, GFP_KERNEL);
  	if (!skb)
-@@ -1632,7 +1637,7 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
+@@ -1764,7 +1769,7 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
  	}
  
  	++ppp->stats64.tx_packets;
