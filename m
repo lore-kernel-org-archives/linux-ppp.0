@@ -2,153 +2,114 @@ Return-Path: <linux-ppp-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1477C433EF
-	for <linux-ppp@archiver.kernel.org>; Mon, 24 Jan 2022 23:37:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 20CB5C433EF
+	for <linux-ppp@archiver.kernel.org>; Fri, 28 Jan 2022 11:13:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1847027AbiAXXhq (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Mon, 24 Jan 2022 18:37:46 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45666 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1841089AbiAXW5g (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Mon, 24 Jan 2022 17:57:36 -0500
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E5EC5C055ABF;
-        Mon, 24 Jan 2022 13:12:04 -0800 (PST)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 762CE6131F;
-        Mon, 24 Jan 2022 21:12:04 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 614E9C340E5;
-        Mon, 24 Jan 2022 21:12:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-        s=korg; t=1643058723;
-        bh=WGPI17vQVAo2cE77Umhe/pZ01t6CYtWwSryzGlKR4Ac=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=fAX2Xyov3G8BudDESXrh4rUzLqRV0kO/7KoSsy5bamKnkwTJhAKDk9QBQHGqmH66f
-         MVxTbgJ27fcU1CUgXeWUOCas2V02N+rUj6DrnYkkdZ/kI47QfRvVemC+w8mPiPEqXL
-         +50M0G9rUhvb6ZAMiYVL/jjtoDcra5rds6UQZTyM=
-From:   Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-To:     linux-kernel@vger.kernel.org
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        stable@vger.kernel.org, Eric Dumazet <edumazet@google.com>,
-        Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org,
-        syzbot <syzkaller@googlegroups.com>,
-        Guillaume Nault <gnault@redhat.com>,
-        "David S. Miller" <davem@davemloft.net>,
-        Sasha Levin <sashal@kernel.org>
-Subject: [PATCH 5.16 0382/1039] ppp: ensure minimum packet size in ppp_write()
-Date:   Mon, 24 Jan 2022 19:36:11 +0100
-Message-Id: <20220124184138.152052701@linuxfoundation.org>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20220124184125.121143506@linuxfoundation.org>
-References: <20220124184125.121143506@linuxfoundation.org>
-User-Agent: quilt/0.66
+        id S1348080AbiA1LM7 (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Fri, 28 Jan 2022 06:12:59 -0500
+Received: from avasout-peh-002.plus.net ([212.159.14.18]:36739 "EHLO
+        avasout-peh-002.plus.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1348016AbiA1LM7 (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Fri, 28 Jan 2022 06:12:59 -0500
+X-Greylist: delayed 451 seconds by postgrey-1.27 at vger.kernel.org; Fri, 28 Jan 2022 06:12:58 EST
+Received: from eridani.co.uk ([80.229.22.202])
+        by smtp with ESMTP
+        id DP4FnSaME62fnDP4HnsbUT; Fri, 28 Jan 2022 11:05:25 +0000
+X-Clacks-Overhead: "GNU Terry Pratchett"
+X-CM-Score: 0.00
+X-CNFS-Analysis: v=2.4 cv=QMYL+iHL c=1 sm=1 tr=0 ts=61f3cdf5
+ a=bO/0ZkoMyjkM0TH5D5b4lw==:117 a=bO/0ZkoMyjkM0TH5D5b4lw==:17
+ a=IkcTkHD0fZMA:10 a=DghFqjY3_ZEA:10 a=uG_GEBPmjrQ0yI7iqjoA:9 a=QEXdDO2ut3YA:10
+Received: from [192.168.96.218] (AlmaVM8.int.eridani.co.uk [192.168.96.218])
+        by eridani.co.uk (8.14.4/8.14.4) with ESMTP id 20SB5NfG004766
+        for <linux-ppp@vger.kernel.org>; Fri, 28 Jan 2022 11:05:23 GMT
+X-Clacks-Overhead: "GNU Terry Pratchett"
+Message-ID: <34c707f1-1200-c17b-436e-f820617d6a6e@matrixnetwork.co.uk>
+Date:   Fri, 28 Jan 2022 11:05:23 +0000
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.4.0
+Content-Language: en-GB
+To:     linux-ppp@vger.kernel.org
+From:   Michael McConnell <mike@matrixnetwork.co.uk>
+Subject: [PATCH] Multi-factor authentication plugin hook
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-CMAE-Envelope: MS4xfNcOeT5rMfUVs704mHj8kTQ91Pgcz8EQsGUg3Z0Z35uMMGss0Y9kNz6f1uud2QZU7Jx3TlYsB0VAK/1RvZqKCDs/qVRyCS83h/Uw/lLBdituo6OGDgzM
+ pJQ2ELOmfxvixAzl5JKZl82YXTFhbLldd/UqxVnvZNpymzaiMihZpfORYBfmKDVVF1yPcJuG1XwrwlqARvBFZCHsAI7fH3Cb6KQ=
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-From: Eric Dumazet <edumazet@google.com>
+Hi,
 
-[ Upstream commit 44073187990d5629804ce0627525f6ea5cfef171 ]
+This patch introduces a plugin for MFA support for PPP servers.
 
-It seems pretty clear ppp layer assumed user space
-would always be kind to provide enough data
-in their write() to a ppp device.
+This initial version has only been tested for CHAP logins, as that is
+what we are using at work thus what I can test.  It is in production use
+on our L2TP VPN server with a plugin that calls out to Duo.  It will
+likely require expanding to cover all client-to-server authentication
+paths.
 
-This patch makes sure user provides at least
-2 bytes.
+The idea here is simple, for a MFA platform that just requires the
+username being authenticated, this allows a plugin that will go off and
+do this. Unlike the existing authentication hooks, this is enabled for
+server-side use.
 
-It adds PPP_PROTO_LEN macro that could replace
-in net-next many occurrences of hard-coded 2 value.
+It won't work with those MFAs that require a one-time password to be 
+entered in addition to the regular password, but does work for those 
+that push an authentication request to an app on a mobile phone.
 
-I replaced only one occurrence to ease backports
-to stable kernels.
+I am sharing this in the off-chance that it might be useful to somebody.
 
-The bug manifests in the following report:
+Michael McConnell
+Fri 28 Jan 2022
 
-BUG: KMSAN: uninit-value in ppp_send_frame+0x28d/0x27c0 drivers/net/ppp/ppp_generic.c:1740
- ppp_send_frame+0x28d/0x27c0 drivers/net/ppp/ppp_generic.c:1740
- __ppp_xmit_process+0x23e/0x4b0 drivers/net/ppp/ppp_generic.c:1640
- ppp_xmit_process+0x1fe/0x480 drivers/net/ppp/ppp_generic.c:1661
- ppp_write+0x5cb/0x5e0 drivers/net/ppp/ppp_generic.c:513
- do_iter_write+0xb0c/0x1500 fs/read_write.c:853
- vfs_writev fs/read_write.c:924 [inline]
- do_writev+0x645/0xe00 fs/read_write.c:967
- __do_sys_writev fs/read_write.c:1040 [inline]
- __se_sys_writev fs/read_write.c:1037 [inline]
- __x64_sys_writev+0xe5/0x120 fs/read_write.c:1037
- do_syscall_x64 arch/x86/entry/common.c:51 [inline]
- do_syscall_64+0x54/0xd0 arch/x86/entry/common.c:82
- entry_SYSCALL_64_after_hwframe+0x44/0xae
+diff -urN ppp-2.4.9.orig/pppd/auth.c ppp-2.4.9/pppd/auth.c
+--- ppp-2.4.9.orig/pppd/auth.c  2021-01-04 23:06:37.000000000 +0000
++++ ppp-2.4.9/pppd/auth.c       2022-01-28 10:47:21.190270504 +0000
+@@ -202,6 +202,9 @@
 
-Uninit was created at:
- slab_post_alloc_hook mm/slab.h:524 [inline]
- slab_alloc_node mm/slub.c:3251 [inline]
- __kmalloc_node_track_caller+0xe0c/0x1510 mm/slub.c:4974
- kmalloc_reserve net/core/skbuff.c:354 [inline]
- __alloc_skb+0x545/0xf90 net/core/skbuff.c:426
- alloc_skb include/linux/skbuff.h:1126 [inline]
- ppp_write+0x11d/0x5e0 drivers/net/ppp/ppp_generic.c:501
- do_iter_write+0xb0c/0x1500 fs/read_write.c:853
- vfs_writev fs/read_write.c:924 [inline]
- do_writev+0x645/0xe00 fs/read_write.c:967
- __do_sys_writev fs/read_write.c:1040 [inline]
- __se_sys_writev fs/read_write.c:1037 [inline]
- __x64_sys_writev+0xe5/0x120 fs/read_write.c:1037
- do_syscall_x64 arch/x86/entry/common.c:51 [inline]
- do_syscall_64+0x54/0xd0 arch/x86/entry/common.c:82
- entry_SYSCALL_64_after_hwframe+0x44/0xae
+  int (*allowed_address_hook)(u_int32_t addr) = NULL;
 
-Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
-Signed-off-by: Eric Dumazet <edumazet@google.com>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: linux-ppp@vger.kernel.org
-Reported-by: syzbot <syzkaller@googlegroups.com>
-Acked-by: Guillaume Nault <gnault@redhat.com>
-Signed-off-by: David S. Miller <davem@davemloft.net>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- drivers/net/ppp/ppp_generic.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 1180a0e2445fb..3ab24988198fe 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -69,6 +69,8 @@
- #define MPHDRLEN	6	/* multilink protocol header length */
- #define MPHDRLEN_SSN	4	/* ditto with short sequence numbers */
- 
-+#define PPP_PROTO_LEN	2
++/* Hook for a plugin to perform MFA given the user/client name */
++int (*auth_mfa_hook) __P((char *mfauser)) = NULL;
 +
- /*
-  * An instance of /dev/ppp can be associated with either a ppp
-  * interface unit or a ppp channel.  In both cases, file->private_data
-@@ -497,6 +499,9 @@ static ssize_t ppp_write(struct file *file, const char __user *buf,
- 
- 	if (!pf)
- 		return -ENXIO;
-+	/* All PPP packets should start with the 2-byte protocol */
-+	if (count < PPP_PROTO_LEN)
-+		return -EINVAL;
- 	ret = -ENOMEM;
- 	skb = alloc_skb(count + pf->hdrlen, GFP_KERNEL);
- 	if (!skb)
-@@ -1764,7 +1769,7 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
- 	}
- 
- 	++ppp->stats64.tx_packets;
--	ppp->stats64.tx_bytes += skb->len - 2;
-+	ppp->stats64.tx_bytes += skb->len - PPP_PROTO_LEN;
- 
- 	switch (proto) {
- 	case PPP_IP:
--- 
-2.34.1
+  #ifdef HAVE_MULTILINK
+  /* Hook for plugin to hear when an interface joins a multilink bundle */
+  void (*multilink_join_hook)(void) = NULL;
+@@ -1454,6 +1457,10 @@
+      slprintf(user, sizeof(user), "%.*v", userlen, auser);
+      *msg = "";
 
++    /* Try MFA, if the plugin returns nonzero we fail to authenticate */
++    if (auth_mfa_hook)
++      if ( (*auth_mfa_hook)(user) ) return UPAP_AUTHNAK;
++
+      /*
+       * Check if a plugin wants to handle this.
+       */
+@@ -1812,6 +1819,10 @@
+             free_wordlist(addrs);
+      }
 
++    /* Try MFA, if the plugin returns nonzero we fail to authenticate */
++    if (auth_mfa_hook)
++      if ( (*auth_mfa_hook)(client) ) return 0;
++
+      len = strlen(secbuf);
+      if (len > MAXSECRETLEN) {
+         error("Secret for %s on %s is too long", client, server);
+diff -urN ppp-2.4.9.orig/pppd/pppd.h ppp-2.4.9/pppd/pppd.h
+--- ppp-2.4.9.orig/pppd/pppd.h  2021-01-04 23:06:37.000000000 +0000
++++ ppp-2.4.9/pppd/pppd.h       2022-01-28 10:47:21.192289610 +0000
+@@ -767,6 +767,9 @@
+  extern int (*eaptls_passwd_hook)(char *user, char *passwd);
+  #endif
 
++/* Hook for a plugin to perform MFA given the user/client name */
++extern int (*auth_mfa_hook) __P((char *mfauser));
++
+  /* Let a plugin snoop sent and received packets.  Useful for L2TP */
+  extern void (*snoop_recv_hook)(unsigned char *p, int len);
+  extern void (*snoop_send_hook)(unsigned char *p, int len);
