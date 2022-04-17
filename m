@@ -2,114 +2,63 @@ Return-Path: <linux-ppp-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 20CB5C433EF
-	for <linux-ppp@archiver.kernel.org>; Fri, 28 Jan 2022 11:13:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D386EC433EF
+	for <linux-ppp@archiver.kernel.org>; Sun, 17 Apr 2022 01:41:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1348080AbiA1LM7 (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Fri, 28 Jan 2022 06:12:59 -0500
-Received: from avasout-peh-002.plus.net ([212.159.14.18]:36739 "EHLO
-        avasout-peh-002.plus.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1348016AbiA1LM7 (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Fri, 28 Jan 2022 06:12:59 -0500
-X-Greylist: delayed 451 seconds by postgrey-1.27 at vger.kernel.org; Fri, 28 Jan 2022 06:12:58 EST
-Received: from eridani.co.uk ([80.229.22.202])
-        by smtp with ESMTP
-        id DP4FnSaME62fnDP4HnsbUT; Fri, 28 Jan 2022 11:05:25 +0000
-X-Clacks-Overhead: "GNU Terry Pratchett"
-X-CM-Score: 0.00
-X-CNFS-Analysis: v=2.4 cv=QMYL+iHL c=1 sm=1 tr=0 ts=61f3cdf5
- a=bO/0ZkoMyjkM0TH5D5b4lw==:117 a=bO/0ZkoMyjkM0TH5D5b4lw==:17
- a=IkcTkHD0fZMA:10 a=DghFqjY3_ZEA:10 a=uG_GEBPmjrQ0yI7iqjoA:9 a=QEXdDO2ut3YA:10
-Received: from [192.168.96.218] (AlmaVM8.int.eridani.co.uk [192.168.96.218])
-        by eridani.co.uk (8.14.4/8.14.4) with ESMTP id 20SB5NfG004766
-        for <linux-ppp@vger.kernel.org>; Fri, 28 Jan 2022 11:05:23 GMT
-X-Clacks-Overhead: "GNU Terry Pratchett"
-Message-ID: <34c707f1-1200-c17b-436e-f820617d6a6e@matrixnetwork.co.uk>
-Date:   Fri, 28 Jan 2022 11:05:23 +0000
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.4.0
-Content-Language: en-GB
+        id S233184AbiDQBnc (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Sat, 16 Apr 2022 21:43:32 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45192 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S232729AbiDQBnb (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Sat, 16 Apr 2022 21:43:31 -0400
+Received: from mail-pl1-x643.google.com (mail-pl1-x643.google.com [IPv6:2607:f8b0:4864:20::643])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 34BB11EC66
+        for <linux-ppp@vger.kernel.org>; Sat, 16 Apr 2022 18:40:58 -0700 (PDT)
+Received: by mail-pl1-x643.google.com with SMTP id 12so9882062pll.12
+        for <linux-ppp@vger.kernel.org>; Sat, 16 Apr 2022 18:40:58 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=date:from:to:message-id:subject:mime-version
+         :content-transfer-encoding;
+        bh=iYw8m6UcpLeQWrcfWcsD9C3f3LbzzVjBBnGezDBOqSE=;
+        b=MBuEGKFq3ny2anVTCeO6TGU0n6dx2tJa+GD7OcPZgX3ei0iYySiGfGWcHPWTH7xdNu
+         Xmce+Mbd8InoVQrdL0rrU0m8/vycvYBpw9vLuMS7tKo8/3PNSl/zJTqJqPrIPvX6zVow
+         INuf5SBfLTRwlooQgkLQdD35wLAGRoYvBqEECEn+psAXQ0SLF1umeJMNOuELkLXmaR0k
+         SLzuRpD40qXAqPpECsJpJ75etlRjdWfkPy0eJvDp7gNGZmFYw36znSM4gQ3ltbd5dqzC
+         /krhdqSN5tOK5ZavnaCKb3PeKrmFS9UbUK6/iMTRT9M4vp6/R/6xHm5ZZWeW1wgtPqCY
+         /nYQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=x-gm-message-state:date:from:to:message-id:subject:mime-version
+         :content-transfer-encoding;
+        bh=iYw8m6UcpLeQWrcfWcsD9C3f3LbzzVjBBnGezDBOqSE=;
+        b=i2ehOBWdWr4xMxj7UxgmdWTUguvW0Vse+H2pY75hvqIAeLKPIYzZj0UJVg2otzNkhn
+         aCtGSGYPDQdCgSHfh/2GbFcfK+fd3ZnDL5R9PWM3h+FA/5yaB/iteAlIbLIbYslw/dSy
+         wds5hlif4rr9PD4Nikin6FyFPlfK7HXBXRylIDqc+jiKLDKpXRkQz3Bt4eEdCzmupunh
+         jcoKCHTEh3jm+zD+dnPbkPIrtzh1so9YsTDhm4jckVv2KmV9E2eZJRrqJPop3DTHmUvS
+         8+Le8MKf6eHOzi4q361xbM1FY4zja4uErhSG623qypeUQx1vc81q8RDuKkVPlZ/s3QKo
+         HAKg==
+X-Gm-Message-State: AOAM532v9LoUU7hXINY+/foAUvwVH57U3FswWXwGeiKdOFfy1VZz+pmk
+        xWHLnAyfXq18zG83vM2/Dy3G9S2LcJ4=
+X-Google-Smtp-Source: ABdhPJy1cZ9ojcu4Y4IBiDjFdW1TL1LPkzbyY01W90G8T/mO5/zJhYPLyx1FaUnWpF4Uhtx7TBeRmQ==
+X-Received: by 2002:a17:902:ead4:b0:158:f6ff:86a9 with SMTP id p20-20020a170902ead400b00158f6ff86a9mr1315145pld.28.1650159657507;
+        Sat, 16 Apr 2022 18:40:57 -0700 (PDT)
+Received: from localhost ([2409:4052:2e0e:f258::a04b:1707])
+        by smtp.gmail.com with ESMTPSA id s7-20020aa78bc7000000b005082ddeb6f8sm7242766pfd.199.2022.04.16.18.40.55
+        for <linux-ppp@vger.kernel.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sat, 16 Apr 2022 18:40:56 -0700 (PDT)
+Date:   Sun, 17 Apr 2022 07:10:53 +0530 (GMT+05:30)
+From:   manju6kanwar10@gmail.com
 To:     linux-ppp@vger.kernel.org
-From:   Michael McConnell <mike@matrixnetwork.co.uk>
-Subject: [PATCH] Multi-factor authentication plugin hook
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Message-ID: <89800172.10.1650159653162@localhost>
+Subject: Market research shows
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-X-CMAE-Envelope: MS4xfNcOeT5rMfUVs704mHj8kTQ91Pgcz8EQsGUg3Z0Z35uMMGss0Y9kNz6f1uud2QZU7Jx3TlYsB0VAK/1RvZqKCDs/qVRyCS83h/Uw/lLBdituo6OGDgzM
- pJQ2ELOmfxvixAzl5JKZl82YXTFhbLldd/UqxVnvZNpymzaiMihZpfORYBfmKDVVF1yPcJuG1XwrwlqARvBFZCHsAI7fH3Cb6KQ=
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-Hi,
-
-This patch introduces a plugin for MFA support for PPP servers.
-
-This initial version has only been tested for CHAP logins, as that is
-what we are using at work thus what I can test.  It is in production use
-on our L2TP VPN server with a plugin that calls out to Duo.  It will
-likely require expanding to cover all client-to-server authentication
-paths.
-
-The idea here is simple, for a MFA platform that just requires the
-username being authenticated, this allows a plugin that will go off and
-do this. Unlike the existing authentication hooks, this is enabled for
-server-side use.
-
-It won't work with those MFAs that require a one-time password to be 
-entered in addition to the regular password, but does work for those 
-that push an authentication request to an app on a mobile phone.
-
-I am sharing this in the off-chance that it might be useful to somebody.
-
-Michael McConnell
-Fri 28 Jan 2022
-
-diff -urN ppp-2.4.9.orig/pppd/auth.c ppp-2.4.9/pppd/auth.c
---- ppp-2.4.9.orig/pppd/auth.c  2021-01-04 23:06:37.000000000 +0000
-+++ ppp-2.4.9/pppd/auth.c       2022-01-28 10:47:21.190270504 +0000
-@@ -202,6 +202,9 @@
-
-  int (*allowed_address_hook)(u_int32_t addr) = NULL;
-
-+/* Hook for a plugin to perform MFA given the user/client name */
-+int (*auth_mfa_hook) __P((char *mfauser)) = NULL;
-+
-  #ifdef HAVE_MULTILINK
-  /* Hook for plugin to hear when an interface joins a multilink bundle */
-  void (*multilink_join_hook)(void) = NULL;
-@@ -1454,6 +1457,10 @@
-      slprintf(user, sizeof(user), "%.*v", userlen, auser);
-      *msg = "";
-
-+    /* Try MFA, if the plugin returns nonzero we fail to authenticate */
-+    if (auth_mfa_hook)
-+      if ( (*auth_mfa_hook)(user) ) return UPAP_AUTHNAK;
-+
-      /*
-       * Check if a plugin wants to handle this.
-       */
-@@ -1812,6 +1819,10 @@
-             free_wordlist(addrs);
-      }
-
-+    /* Try MFA, if the plugin returns nonzero we fail to authenticate */
-+    if (auth_mfa_hook)
-+      if ( (*auth_mfa_hook)(client) ) return 0;
-+
-      len = strlen(secbuf);
-      if (len > MAXSECRETLEN) {
-         error("Secret for %s on %s is too long", client, server);
-diff -urN ppp-2.4.9.orig/pppd/pppd.h ppp-2.4.9/pppd/pppd.h
---- ppp-2.4.9.orig/pppd/pppd.h  2021-01-04 23:06:37.000000000 +0000
-+++ ppp-2.4.9/pppd/pppd.h       2022-01-28 10:47:21.192289610 +0000
-@@ -767,6 +767,9 @@
-  extern int (*eaptls_passwd_hook)(char *user, char *passwd);
-  #endif
-
-+/* Hook for a plugin to perform MFA given the user/client name */
-+extern int (*auth_mfa_hook) __P((char *mfauser));
-+
-  /* Let a plugin snoop sent and received packets.  Useful for L2TP */
-  extern void (*snoop_recv_hook)(unsigned char *p, int len);
-  extern void (*snoop_send_hook)(unsigned char *p, int len);
+Greetings, hopefully 2022 is treating you well so far.
+Some organizations plan to stick with staffers working from their homes as opposed to large offices through the rest of this year and possibly beyond. Are you planning to increase your investment in collaboration as a result?
