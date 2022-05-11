@@ -2,89 +2,108 @@ Return-Path: <linux-ppp-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 27A41C433EF
-	for <linux-ppp@archiver.kernel.org>; Wed,  4 May 2022 16:46:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5F5C8C433EF
+	for <linux-ppp@archiver.kernel.org>; Wed, 11 May 2022 08:24:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236981AbiEDQtq convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-ppp@archiver.kernel.org>);
-        Wed, 4 May 2022 12:49:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49890 "EHLO
+        id S243605AbiEKIYL (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Wed, 11 May 2022 04:24:11 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59176 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1353615AbiEDQtn (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Wed, 4 May 2022 12:49:43 -0400
-X-Greylist: delayed 1523 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 04 May 2022 09:46:06 PDT
-Received: from mail.megasoftsol.com (mail.megasoftsol.com [43.231.250.141])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BAE8D2E9D6
-        for <linux-ppp@vger.kernel.org>; Wed,  4 May 2022 09:46:06 -0700 (PDT)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.megasoftsol.com (Postfix) with ESMTP id 8BC7F907443
-        for <linux-ppp@vger.kernel.org>; Wed,  4 May 2022 21:38:53 +0530 (IST)
-Received: from mail.megasoftsol.com ([127.0.0.1])
-        by localhost (mail.megasoftsol.com [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id LiK7LmVPM_fw for <linux-ppp@vger.kernel.org>;
-        Wed,  4 May 2022 21:38:52 +0530 (IST)
-Received: from localhost (localhost [127.0.0.1])
-        by mail.megasoftsol.com (Postfix) with ESMTP id 913B3907437
-        for <linux-ppp@vger.kernel.org>; Wed,  4 May 2022 21:38:52 +0530 (IST)
-X-Virus-Scanned: amavisd-new at megasoftsol.com
-Received: from mail.megasoftsol.com ([127.0.0.1])
-        by localhost (mail.megasoftsol.com [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id SzNSjtsS3Hd7 for <linux-ppp@vger.kernel.org>;
-        Wed,  4 May 2022 21:38:52 +0530 (IST)
-Received: from johnlewis.com (unknown [20.97.211.134])
-        (Authenticated sender: admin)
-        by mail.megasoftsol.com (Postfix) with ESMTPSA id 9984E90742D
-        for <linux-ppp@vger.kernel.org>; Wed,  4 May 2022 21:38:51 +0530 (IST)
-Reply-To: robert_turner@johnlewis-trades.com
-From:   John Lewis & Partnersip <robert.turner44@johnlewis.com>
-To:     linux-ppp@vger.kernel.org
-Subject: 5/04/2022 Product Inquiry (JL)
-Date:   04 May 2022 16:11:19 +0000
-Message-ID: <20220504123943.DFAC70E80E69066E@johnlewis.com>
+        with ESMTP id S243621AbiEKIYL (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Wed, 11 May 2022 04:24:11 -0400
+Received: from mout.kundenserver.de (mout.kundenserver.de [217.72.192.75])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6AF3966687;
+        Wed, 11 May 2022 01:24:09 -0700 (PDT)
+Received: from mail-yb1-f181.google.com ([209.85.219.181]) by
+ mrelayeu.kundenserver.de (mreue108 [213.165.67.113]) with ESMTPSA (Nemesis)
+ id 1MQvL7-1nStfM0uhD-00O1RW; Wed, 11 May 2022 10:24:07 +0200
+Received: by mail-yb1-f181.google.com with SMTP id m190so2574877ybf.4;
+        Wed, 11 May 2022 01:24:06 -0700 (PDT)
+X-Gm-Message-State: AOAM530F/rs7V40kHDEiGuNXLmrG/p7lbti7GItpjdQdtPDsDX0Tf/tE
+        ZwKWpgjgof6PPdqA5c39yuZvq0kzhQ+zjD1n7gQ=
+X-Google-Smtp-Source: ABdhPJyFouUq4CPyqHhoX+wyzUMdk5CW1I4lCwx2Vb0ywqtufH4ws3JEs5ZA78mXb7f9SpKUbRnNZIcDW9YXE5YZ5Uk=
+X-Received: by 2002:a25:31c2:0:b0:641:660f:230f with SMTP id
+ x185-20020a2531c2000000b00641660f230fmr21930869ybx.472.1652257445777; Wed, 11
+ May 2022 01:24:05 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: 8BIT
+References: <20220509150130.1047016-1-kuba@kernel.org> <CAK8P3a0FVM8g0LG3_mHJ1xX3Bs9cxae8ez7b9qvGOD+aJdc8Dw@mail.gmail.com>
+ <20220509103216.180be080@kernel.org> <9cac4fbd-9557-b0b8-54fa-93f0290a6fb8@schmorgal.com>
+ <CAK8P3a1AA181LqQSxnToSVx0e5wmneUsOKfmnxVMsUNh465C_Q@mail.gmail.com> <d7076f95-b25b-3694-1ec2-9b9ff93633b7@schmorgal.com>
+In-Reply-To: <d7076f95-b25b-3694-1ec2-9b9ff93633b7@schmorgal.com>
+From:   Arnd Bergmann <arnd@arndb.de>
+Date:   Wed, 11 May 2022 10:23:49 +0200
+X-Gmail-Original-Message-ID: <CAK8P3a3Tj=aJM_-x17uw1yJ-5+DgKX6APgEaO0sa=aRBKya1XQ@mail.gmail.com>
+Message-ID: <CAK8P3a3Tj=aJM_-x17uw1yJ-5+DgKX6APgEaO0sa=aRBKya1XQ@mail.gmail.com>
+Subject: Re: [PATCH net-next] net: appletalk: remove Apple/Farallon LocalTalk
+ PC support
+To:     Doug Brown <doug@schmorgal.com>
+Cc:     Arnd Bergmann <arnd@arndb.de>, Jakub Kicinski <kuba@kernel.org>,
+        David Miller <davem@davemloft.net>,
+        Networking <netdev@vger.kernel.org>,
+        Paolo Abeni <pabeni@redhat.com>,
+        Eric Dumazet <edumazet@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Jiapeng Chong <jiapeng.chong@linux.alibaba.com>,
+        "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>,
+        Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+X-Provags-ID: V03:K1:Z952orSfTHyBgIXeXcsCvkvztAO+z1GduLlvnq7aygZujRIllvc
+ hUFlMYrOZdxt9lwEPuMJecBzlTNrib9a3u9Ow3h5lW+H3yLWs+syKF4GE3HYAHdQkuJ4/O7
+ ba/OhYTIY2ccNzxU6ViK01x9kwwidCH1neRoMV1on/zCXK8wCGzETtiSh2Fp5jlKuyCekUi
+ VcZfXBRPV6LPDQPr7SZgA==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:OTZcUvRBuKc=:WmoD9sIBRr16VnoGQSyzME
+ 8RvP6ktOq78ojRnfrRfF6RDAQeDYLhgit3zM13qWaUC+DuH7foox/ulDjTsfK9ozt+TkF4ghp
+ 3xLvDY/rWbsaDypIwLrhrWbHXD9fmPsqez1J4wKGplKZmd4O6N/alVmZB4zOLEHJa2jH9gpB+
+ pxwJ0rEVbxPg/TIMT3T5hfgqcJFpulas+LejUOa6mAiENzYBeDNtBm0HDNYajyJ4VFR3CBb6y
+ 5QwFiy7Kqx6rBDVok0uHEb2G8CXj+QA56IO9VPC6TdYB58AnfUQny7oOdpkCVoIV9UmKHbnrV
+ Inig72kmNfE/kokOBnJYg7IWT4HC4ZH2bZS0mkJR1/bCSkO0WWz6OiT4EORGKYh1dK9D2jGk3
+ XWyjqn508Oep5btcvIxh9UZK1gCp2a9RYrrobNznvRNgdXG+A0qwiVeBT2k4bRGxz8gHWTY2T
+ l4D82Z1xDhF8iDeGwsKpcq/Le7kI70E6sU0YkoZ4xrVWPsrW+8sMGX/SA+aRhyw+nAhgYR/qg
+ Iiq0lGIFLI2YD4rHfkiFei/HzH6/JJBCqukCJV+5+9+aow/azZs7AQD2mpjM7Gc4yFHNE5d3g
+ th3znq+GymAL+kVwcXtWmbTyeNGC96lW1EPkBgb7tqQPtOMze4492ZDKhELkNDgHCYgjyhn7h
+ h/9DeaavpwCriJM04Vqy+nQi7oJgLXaf4JnZJx9jWj9hizCgYOpF5tner/TOC7E7FwNI=
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-Dear linux-ppp
- 
- 
-The famous brand John Lewis & Partners, is UK's largest multi-
-channel retailer with over 126 shops and multiple expansion in 
-Africa furnished by European/Asian/American products. We are 
-sourcing new products to attract new customers and also retain 
-our existing ones, create new partnerships with companies dealing 
-with different kinds of goods globally.
- 
-Your company's products are of interest to our market as we have 
-an amazing market for your products.
- 
-Provide us your current catalog through email to review more. We 
-hope to be able to order with you and start a long-term friendly, 
-respectable and solid business partnership. Please we would 
-appreciate it if you could send us your stock availability via 
-email if any.
- 
- 
-Our payment terms are 15 days net in Europe, 30 days Net in UK 
-and 30 days net in Asia/USA as we have operated with over 5297 
-suppliers around the globe for the past 50 years now. For 
-immediate response Send your reply to "robert_turner@johnlewis-
-trades.com" for us to be able to treat with care and urgency.
- 
- 
- 
-Best Regards
- 
- 
-Rob Turner
-Head Of Procurement Operations
-John Lewis & Partners.
-robert_turner@johnlewis-trades.com
-Tel: +44-7451-274090
-WhatsApp: +447497483925
-www.johnlewis.com
-REGISTERED OFFICE: 171 VICTORIA STREET, LONDON SW1E 5NN
+On Wed, May 11, 2022 at 2:20 AM Doug Brown <doug@schmorgal.com> wrote:
+>
+> On 5/9/2022 11:48 PM, Arnd Bergmann wrote:
+> > If I understand this correct, this means we could remove all of
+> > drivers/net/appletalk/ except for the CONFIG_ATALK Kconfig entry,
+> > and also remove net/appletalk/dev.c and a few bits of net/appletalk
+> > that reference localtalk device structures and their ioctls, right?
+> Yes, I believe so. At that point, would Kconfig get moved to
+> net/appletalk instead? (Just wondering out of my own curiosity!)
+> > What about appletalk over PPP (phase1 probing in aarp.c) and
+> > ARPHRD_LOCALTLK support in drivers/net/tun.c? Are these still
+> > useful without localtalk device support?
+>
+> I don't feel qualified enough to answer those ones definitively, but it
+> looks to me like the ARPHRD_LOCALTLK support in net/tun.c could be
+> stripped out, because tun_get_addr_len only gets called on a struct
+> net_device's type, and stripping out LocalTalk would make that condition
+> impossible (I think?)
+
+Right, I came to the same conclusion here.
+
+> The AppleTalk over PPP stuff probably allows Linux to be an AppleTalk
+> Remote Access server. I'm not aware of anyone using that capability, (or
+> if it even still works) but I would consider it distinct from LocalTalk.
+
+I dug around in the early git history for this one, but I'm also not
+sure if this is meant to still work. I see that PPPTALK support was added
+to net/appletalk by Alan Cox in linux-1.3.78 (1996), based on the localtalk
+support, and it continues to exist there along ethertalk and localtalk.
+
+I also looked at the git history for the pppd user space, and I find no
+indication of appletalk ever being supported there, this all looks
+IPv4/IPv6 specific. There was support for PPP_IPX until it was
+dropped this year (the kernel side got removed in 2018), but never
+for PPP_AT.
+Adding Paul Mackerras to Cc, he might know more about it.
+
+> I would definitely be happy to test any patches to make sure that
+> EtherTalk still works with netatalk afterward!
+
+       Arnd
