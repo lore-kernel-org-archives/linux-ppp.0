@@ -2,49 +2,55 @@ Return-Path: <linux-ppp-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E671C19F2D
-	for <linux-ppp@archiver.kernel.org>; Tue,  9 Aug 2022 16:44:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4932CC19F2D
+	for <linux-ppp@archiver.kernel.org>; Sun, 14 Aug 2022 00:18:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230272AbiHIQoX (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Tue, 9 Aug 2022 12:44:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57988 "EHLO
+        id S229584AbiHNAS4 (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Sat, 13 Aug 2022 20:18:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58812 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S244278AbiHIQoW (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Tue, 9 Aug 2022 12:44:22 -0400
-X-Greylist: delayed 15900 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Tue, 09 Aug 2022 09:44:20 PDT
-Received: from cp3.xcloud.pro (ip231.ip-91-134-180.eu [91.134.180.231])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43C341FCC8
-        for <linux-ppp@vger.kernel.org>; Tue,  9 Aug 2022 09:44:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=tecnologicamente.pro; s=mail; h=Content-Transfer-Encoding:Content-Type:
-        MIME-Version:Message-ID:Reply-To:From:Date:Subject:To:Sender:Cc:Content-ID:
-        Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-        :Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
-        List-Subscribe:List-Post:List-Owner:List-Archive;
-        bh=W4yzViSmRxDPx+fbWdGYNGRNbJWPuHceLUOty/XplU8=; b=dXS2zgediHfvTB3q5NSterYMIN
-        C6aW4FbAl8FbaiNEShdWPECjQp5TS0xMFYVuNR/jneA6OHGK2FLof8eK2YD//0Bbju3b8daJ8ZZgR
-        HYJn+dKZKE9yKFkNrmFlN9rJxAI1VOCP5RyhtTvac4z8upXbQcrnh9OqfLb0pZ9sx5Q8=;
-Received: from usrcp3 by cp3.xcloud.pro with local (Exim 4.90_1)
-        (envelope-from <usrcp3@cp3.xcloud.pro>)
-        id 1oLOCd-0006XE-2Z
-        for linux-ppp@vger.kernel.org; Tue, 09 Aug 2022 14:19:19 +0200
-To:     linux-ppp@vger.kernel.org
-Subject: "EINE FINANZKRISE KANN SIE SEHR REICH MACHEN!"
-Date:   Tue, 9 Aug 2022 12:19:19 +0000
-From:   "tecnologicamente.pro" <info@tecnologicamente.pro>
-Reply-To: info@tecnologicamente.pro
-Message-ID: <1DE7ynwdoN6KhqHdeH4WFy9cxtscj78AtbyFrFtmEOM@tecnologicamente.pro>
+        with ESMTP id S229555AbiHNASz (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Sat, 13 Aug 2022 20:18:55 -0400
+X-Greylist: delayed 451 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Sat, 13 Aug 2022 17:18:55 PDT
+Received: from a2nlsmtp01-04.prod.iad2.secureserver.net (a2nlsmtp01-04.prod.iad2.secureserver.net [198.71.225.38])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0455F2B198
+        for <linux-ppp@vger.kernel.org>; Sat, 13 Aug 2022 17:18:54 -0700 (PDT)
+Received: from localhost ([107.180.108.44])
+        by : HOSTING RELAY : with ESMTP
+        id N1CvoM00Y44O5N1CvoGxv7; Sat, 13 Aug 2022 17:10:21 -0700
+X-CMAE-Analysis: v=2.4 cv=eNzWMFl1 c=1 sm=1 tr=0 ts=62f83d6e
+ a=F7MhwyYOWpzEINzF8p7CQg==:117 a=F7MhwyYOWpzEINzF8p7CQg==:17
+ a=IkcTkHD0fZMA:10 a=96GJKQGblXAA:10 a=puQWGBksFvoA:10 a=VwQbUJbxAAAA:8
+ a=q1ofUB1UAAAA:8 a=SJ6oPd7JuWyPdxjXGu8A:9 a=QEXdDO2ut3YA:10 a=u8X3LzO250wA:10
+ a=AjGcO6oz07-iQ99wixmX:22 a=OlRZHtw8lRvH8tEO4Sdy:22
+X-SECURESERVER-ACCT: mwp42728684
+To:     info@soccercityteam.com, linux-ppp@vger.kernel.org
+Subject: =?us-ascii?Q?Contact_Form_"BlockFi:_$72,000_per_day_on_crypt?=  =?us-ascii?Q?ocurrency"?=
+Date:   Sun, 14 Aug 2022 00:10:21 +0000
+From:   Soccer City Team Sales <info@soccercityteam.com>
+Reply-To: linux-ppp@vger.kernel.org
+Message-ID: <qo0EEbK0K8Yp03zHlAlS2k7M2pSyifydZAmfGqSzgck@soccercityteam.com>
 X-Mailer: PHPMailer 6.6.0 (https://github.com/PHPMailer/PHPMailer)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+X-CMAE-Envelope: MS4xfHRLQoythINR1QkHsnIGgP/RU+Mt/86NPD+jfNlCJe0R4+nk901eze0EPONUXJbVsii3Aza2LQjGOSl7sDuAogpiablVaNGyxoU16LrawL3cNVyOlWDN
+ av+kSrBpXUjsju1qz3OHOWFPnaivXntcFNmUoANqnxaOBpJjFuTkTmwf2mRqy5m5xnwa6J868LKPZQVLWTuk4D7w5+ZRA6p8UqeCk9ReLa52PWVwrqieehxv
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-Messaggio/Richiesta:
-DIE WELTFINANZKRISE KANN SIE REICH MACHEN! https://telegra.ph/Deutschland-hat-eine-neue-Einnahmequelle-von-599505-Euro-pro-Woche-08-07
+Thank you for reaching out. We will get back to you as soon as possible.
 
 --
-Questa mail è stata inviata dal modulo di contatto presente su tecnologicamente.pro
+
+From: EdwardBed <linux-ppp@vger.kernel.org>
+Subject: BlockFi: $72,000 per day on cryptocurrency
+
+Phone:
+84238254666
+Message Body:
+$250 for 5 minutes on investments http://yankees-news.burn-permits.com/DW-4076
+
+-- 
+This e-mail was sent from a contact form on Soccer City Team
 
