@@ -2,46 +2,46 @@ Return-Path: <linux-ppp-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A294ECAAA3
-	for <linux-ppp@archiver.kernel.org>; Fri, 26 Aug 2022 10:07:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 650DDECAAD5
+	for <linux-ppp@archiver.kernel.org>; Tue,  6 Sep 2022 10:19:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S245537AbiHZKHz (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Fri, 26 Aug 2022 06:07:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32844 "EHLO
+        id S233745AbiIFKT5 (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Tue, 6 Sep 2022 06:19:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53998 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S245368AbiHZKHX (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Fri, 26 Aug 2022 06:07:23 -0400
-X-Greylist: delayed 847 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 26 Aug 2022 03:06:12 PDT
+        with ESMTP id S232059AbiIFKTz (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Tue, 6 Sep 2022 06:19:55 -0400
 Received: from relay-b01.edpnet.be (relay-b01.edpnet.be [212.71.1.221])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B718B13D2D
-        for <linux-ppp@vger.kernel.org>; Fri, 26 Aug 2022 03:06:12 -0700 (PDT)
-X-ASG-Debug-ID: 1661507521-15c43430cdccab80001-vz1ewb
-Received: from srv21.vandijck-laurijssen.be (77.109.105.105.adsl.dyn.edpnet.net [77.109.105.105]) by relay-b01.edpnet.be with ESMTP id G3gAQw8Rpb0F7t0t for <linux-ppp@vger.kernel.org>; Fri, 26 Aug 2022 11:52:01 +0200 (CEST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EBEC0186F4
+        for <linux-ppp@vger.kernel.org>; Tue,  6 Sep 2022 03:19:51 -0700 (PDT)
+X-ASG-Debug-ID: 1662459588-15c43430ca14c11c0001-vz1ewb
+Received: from srv21.vandijck-laurijssen.be (94.105.120.187.dyn.edpnet.net [94.105.120.187]) by relay-b01.edpnet.be with ESMTP id S4soGJMAMUQXCnR1 for <linux-ppp@vger.kernel.org>; Tue, 06 Sep 2022 12:19:48 +0200 (CEST)
 X-Barracuda-Envelope-From: dev.kurt@vandijck-laurijssen.be
-X-Barracuda-Effective-Source-IP: 77.109.105.105.adsl.dyn.edpnet.net[77.109.105.105]
-X-Barracuda-Apparent-Source-IP: 77.109.105.105
+X-Barracuda-Effective-Source-IP: 94.105.120.187.dyn.edpnet.net[94.105.120.187]
+X-Barracuda-Apparent-Source-IP: 94.105.120.187
 Received: from x1.vandijck-laurijssen.be (x1.vandijck-laurijssen.be [IPv6:fd01::1a1d:eaff:fe02:d339])
-        by srv21.vandijck-laurijssen.be (Postfix) with ESMTPSA id 242391B0170;
-        Fri, 26 Aug 2022 11:52:01 +0200 (CEST)
+        by srv21.vandijck-laurijssen.be (Postfix) with ESMTPSA id 2057B2D4F
+        for <linux-ppp@vger.kernel.org>; Tue,  6 Sep 2022 12:19:48 +0200 (CEST)
+Date:   Tue, 6 Sep 2022 12:19:46 +0200
 From:   Kurt Van Dijck <dev.kurt@vandijck-laurijssen.be>
 To:     linux-ppp@vger.kernel.org
-Cc:     Kurt Van Dijck <dev.kurt@vandijck-laurijssen.be>
-Subject: [PATCH] pppd: add noresolvconf option
-Date:   Fri, 26 Aug 2022 11:51:40 +0200
-X-ASG-Orig-Subj: [PATCH] pppd: add noresolvconf option
-Message-Id: <20220826095140.6974-1-dev.kurt@vandijck-laurijssen.be>
-X-Mailer: git-send-email 2.35.1
+Subject: RESEND: [PATCH] pppd: add noresolvconf option
+Message-ID: <YxcewpV/B4ZyDxmL@x1.vandijck-laurijssen.be>
+X-ASG-Orig-Subj: RESEND: [PATCH] pppd: add noresolvconf option
+Mail-Followup-To: linux-ppp@vger.kernel.org
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Barracuda-Connect: 77.109.105.105.adsl.dyn.edpnet.net[77.109.105.105]
-X-Barracuda-Start-Time: 1661507521
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+X-Mailer: git-send-email 2.35.1
+X-Barracuda-Connect: 94.105.120.187.dyn.edpnet.net[94.105.120.187]
+X-Barracuda-Start-Time: 1662459588
 X-Barracuda-URL: https://212.71.1.221:443/cgi-mod/mark.cgi
 X-Virus-Scanned: by bsmtpd at edpnet.be
 X-Barracuda-Scan-Msg-Size: 2567
 X-Barracuda-BRTS-Status: 1
 X-Barracuda-Spam-Score: 0.00
 X-Barracuda-Spam-Status: No, SCORE=0.00 using global scores of TAG_LEVEL=1000.0 QUARANTINE_LEVEL=1000.0 KILL_LEVEL=7.0 tests=
-X-Barracuda-Spam-Report: Code version 3.2, rules version 3.2.3.100342
+X-Barracuda-Spam-Report: Code version 3.2, rules version 3.2.3.100594
         Rule breakdown below
          pts rule name              description
         ---- ---------------------- --------------------------------------------------
