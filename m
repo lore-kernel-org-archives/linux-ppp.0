@@ -2,178 +2,113 @@ Return-Path: <linux-ppp-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D7EFCFA373D
-	for <linux-ppp@archiver.kernel.org>; Sun, 30 Oct 2022 10:06:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EF755C433FE
+	for <linux-ppp@archiver.kernel.org>; Mon, 21 Nov 2022 18:29:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230070AbiJ3KGk (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Sun, 30 Oct 2022 06:06:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53348 "EHLO
+        id S229605AbiKUS3R (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Mon, 21 Nov 2022 13:29:17 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42200 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229441AbiJ3KGk (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Sun, 30 Oct 2022 06:06:40 -0400
-Received: from mail-ej1-x633.google.com (mail-ej1-x633.google.com [IPv6:2a00:1450:4864:20::633])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3EA381A0;
-        Sun, 30 Oct 2022 03:06:39 -0700 (PDT)
-Received: by mail-ej1-x633.google.com with SMTP id b2so22863242eja.6;
-        Sun, 30 Oct 2022 03:06:39 -0700 (PDT)
+        with ESMTP id S229604AbiKUS3Q (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Mon, 21 Nov 2022 13:29:16 -0500
+Received: from mail-yb1-xb4a.google.com (mail-yb1-xb4a.google.com [IPv6:2607:f8b0:4864:20::b4a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D01FFD06F3
+        for <linux-ppp@vger.kernel.org>; Mon, 21 Nov 2022 10:29:15 -0800 (PST)
+Received: by mail-yb1-xb4a.google.com with SMTP id t5-20020a5b07c5000000b006dfa2102debso11635643ybq.4
+        for <linux-ppp@vger.kernel.org>; Mon, 21 Nov 2022 10:29:15 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:mime-version:from:to:cc:subject
+        d=google.com; s=20210112;
+        h=cc:to:from:subject:message-id:mime-version:date:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=KNk7ZNiVH3ImAqj0kSmZACI8FqLd5viyCJ9HhBYf3kQ=;
-        b=p34yqM+RHJ5uSSTbVyrdOICfqzpdUYnaa9sv7ZWD7rhBE+rLmFbqGfK0KmSlGRpIc+
-         zux3erF/Rb2AZ4Zk34rrR7v+M96VdbuC2FQ7Y/E8gn2q+t4Nj6lAgeSWYfKbA8k6YIuq
-         AcOOrtmmCMyAiutpajcTkmIjX7kUePHtsi8swFe96p65mPeAAfybYvqa0gWXcyYk9wSg
-         NYede4ux5uhdP13rx3l91Jz1hfYQlhgeTgriOx7BgNlvfnfgaXRVFaeFlGhKZ9HdWI6x
-         5qWsyhiMo1FTGzMibFadNLlgoQGV1rPf9hK/EwqeMhwqIU0Kr1fKPtIKTEec5QoTK/d3
-         17iw==
+        bh=EpRKKSjGU4jU5Fg7oLYgcrsizQF6B4l3aKjhPZhJTYQ=;
+        b=WGyPIRvE7xm89yZZC0yh7Y/evxJvHEVZ6kEII7KWNOY7r3r2gWDfaerXYm1jwJ68jn
+         lA4IESJ9ahupM3UT4DYXtfNk5qudY+GL+nWYTk68EcR675T9JZ1uqNfcOrmw+EOuPb+7
+         r4IobcByfs5zDRlp1t5/AO++HaxGuq3MW1xpPj33EdveELYOrd3DvLFsg1K9PstXV4pf
+         CHqFF+1O3Nw7K91kLY55gNMj2CmLG4KYG382goF5EqXc+SOyI6cKaIog2nEFdBQhX/yd
+         M0mcUwv+DjOBBUjzqFwJ2rwg5rhXMJUkSWp11ozbNKVQkI+cijCOYqQISeeCrVr/1XPV
+         8G4Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:mime-version:x-gm-message-state
+        h=cc:to:from:subject:message-id:mime-version:date:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=KNk7ZNiVH3ImAqj0kSmZACI8FqLd5viyCJ9HhBYf3kQ=;
-        b=IwZdIypNsdn5bkC22E/KTBCsBRBXyY/piLXhz9uqrOF8N6BQtLZnZdWLGBx5zLbGNo
-         EWXAcIcUenVrN6Heu90xAQIHlLIZEUgeXc5ZwbJN3wCxBl83rlbePRXHy5Lu45Vw/5xM
-         LEA28uEbjDyHAlSG/LeZhuYJX6eDdqWae08I6en6NhyrBsTlcywsFukpP7DaUik7LoAC
-         Kp3OEpwhXMROst9+5YjxZOoEhCT6ofzpB+hnN9cvBJPqQdxjMwexEH7rVJTHBSsaK4ph
-         zu0Z8csFvY6R1pyJPpu5CepE6l/vNB9fqCva92vbLgWqmC6di2Q43OIQAErpiDIFOEWw
-         +DEA==
-X-Gm-Message-State: ACrzQf1lZowquhBIBrjtR+NwVveTuNY7wC++IeuezcTnyo4BBwp5QeaH
-        Jnvd2zbK4dfXjK6Cdjj2AX6H9UWa/UNg30yyZQU=
-X-Google-Smtp-Source: AMsMyM6roRgpaPqYbU28anLsZgZVIb1DqO4lJiEc0aWffhM9qq2gzAIrMkq6mjwhGd3He+C1S1M5EkPw+mDpqdIM+2I=
-X-Received: by 2002:a17:907:2da6:b0:78d:3cf1:9132 with SMTP id
- gt38-20020a1709072da600b0078d3cf19132mr7579393ejc.299.1667124397592; Sun, 30
- Oct 2022 03:06:37 -0700 (PDT)
-MIME-Version: 1.0
-From:   Wei Chen <harperchen1110@gmail.com>
-Date:   Sun, 30 Oct 2022 18:05:59 +0800
-Message-ID: <CAO4mrfexGm_9=cLK+67ryXhG3bLtAwYn7j15iPV+KkMLKuOJPw@mail.gmail.com>
-Subject: INFO: task hung in ppp_ioctl
-To:     paulus@samba.org, davem@davemloft.net, kuba@kernel.org,
-        ast@kernel.org, daniel@iogearbox.net, andrii@kernel.org,
-        kafai@fb.com, songliubraving@fb.com, yhs@fb.com,
-        john.fastabend@gmail.com, kpsingh@kernel.org
-Cc:     linux-ppp@vger.kernel.org, netdev@vger.kernel.org,
-        linux-kernel@vger.kernel.org, bpf@vger.kernel.org
+        bh=EpRKKSjGU4jU5Fg7oLYgcrsizQF6B4l3aKjhPZhJTYQ=;
+        b=fGh7wJMTJY7DiZ9ODmivfAoZZurK8jSo/YZx8U8TeLxCdMUk5l4qLHYYvI+d+XjL+3
+         KALqfgWvXajt67GRaJVyliHi9BN9lpYcLhRRd3ZDFP6vIC9S6l9UnKZeABrbO2frzndw
+         yHfqIe2Jgt3rC0YuHwFN99h3sQwCHhBPVcWJLwbLnlgYgCwE8ThC9i/L3exKKL0anlG9
+         Hn7a3eyjeo9kswbVnQbl2CYv1cS++jM7HBXwaTPuBZinVtCV2zN+SS7LVim+x4/j8rcl
+         mddCdUfKeJsmmvD74hHi0/Y155G0vp9PcnRnAl035P4MHyIl4ZyS/57hWsdyYdKBUzbf
+         Bx7w==
+X-Gm-Message-State: ANoB5pnm3OfJiZPkfiZ585c/I4N6omIa7LOnQDPrgP3+18SUlS22q4tc
+        xdxPm+P4jC4nR4R5skUgiZQcZfk=
+X-Google-Smtp-Source: AA0mqf6ndnxDk4mb2nv00gdQZTM/qoTHu4mqJPKEzXtmHvNAnQr6dyOZC4fxSojVnefOxuNCqOXyUEQ=
+X-Received: from sdf.c.googlers.com ([fda3:e722:ac3:cc00:7f:e700:c0a8:5935])
+ (user=sdf job=sendgmr) by 2002:a25:cf42:0:b0:6dd:cb46:84f1 with SMTP id
+ f63-20020a25cf42000000b006ddcb4684f1mr2617387ybg.159.1669055354696; Mon, 21
+ Nov 2022 10:29:14 -0800 (PST)
+Date:   Mon, 21 Nov 2022 10:29:13 -0800
+Mime-Version: 1.0
+X-Mailer: git-send-email 2.38.1.584.g0f3c55d4c2-goog
+Message-ID: <20221121182913.2166006-1-sdf@google.com>
+Subject: [PATCH net-next] ppp: associate skb with a device at tx
+From:   Stanislav Fomichev <sdf@google.com>
+To:     netdev@vger.kernel.org
+Cc:     davem@davemloft.net, edumazet@google.com, kuba@kernel.org,
+        pabeni@redhat.com, Stanislav Fomichev <sdf@google.com>,
+        Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org,
+        syzbot+41cab52ab62ee99ed24a@syzkaller.appspotmail.com
 Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-Dear Linux Developer,
+Syzkaller triggered flow dissector warning with the following:
 
-Recently when using our tool to fuzz kernel, the following crash was triggered:
+r0 = openat$ppp(0xffffffffffffff9c, &(0x7f0000000000), 0xc0802, 0x0)
+ioctl$PPPIOCNEWUNIT(r0, 0xc004743e, &(0x7f00000000c0))
+ioctl$PPPIOCSACTIVE(r0, 0x40107446, &(0x7f0000000240)={0x2, &(0x7f0000000180)=[{0x20, 0x0, 0x0, 0xfffff034}, {0x6}]})
+pwritev(r0, &(0x7f0000000040)=[{&(0x7f0000000140)='\x00!', 0x2}], 0x1, 0x0, 0x0)
 
-HEAD commit: 64570fbc14f8 Linux 5.15-rc5
-git tree: upstream
-compiler: gcc 8.0.1
-console output:
-https://drive.google.com/file/d/1CZaZY-5qhU8R8Kx9yRxH3uk-Z-4Klr-H/view?usp=share_link
-kernel config: https://drive.google.com/file/d/1uDOeEYgJDcLiSOrx9W8v2bqZ6uOA_55t/view?usp=share_link
+[    9.485814] WARNING: CPU: 3 PID: 329 at net/core/flow_dissector.c:1016 __skb_flow_dissect+0x1ee0/0x1fa0
+[    9.485929]  skb_get_poff+0x53/0xa0
+[    9.485937]  bpf_skb_get_pay_offset+0xe/0x20
+[    9.485944]  ? ppp_send_frame+0xc2/0x5b0
+[    9.485949]  ? _raw_spin_unlock_irqrestore+0x40/0x60
+[    9.485958]  ? __ppp_xmit_process+0x7a/0xe0
+[    9.485968]  ? ppp_xmit_process+0x5b/0xb0
+[    9.485974]  ? ppp_write+0x12a/0x190
+[    9.485981]  ? do_iter_write+0x18e/0x2d0
+[    9.485987]  ? __import_iovec+0x30/0x130
+[    9.485997]  ? do_pwritev+0x1b6/0x240
+[    9.486016]  ? trace_hardirqs_on+0x47/0x50
+[    9.486023]  ? __x64_sys_pwritev+0x24/0x30
+[    9.486026]  ? do_syscall_64+0x3d/0x80
+[    9.486031]  ? entry_SYSCALL_64_after_hwframe+0x63/0xcd
 
-Unfortunately, I don't have any reproducer for this crash yet.
+Flow dissector tries to find skb net namespace either via device
+or via socket. Neigher is set in ppp_send_frame, so let's manually
+use ppp->dev.
 
-IMPORTANT: if you fix the bug, please add the following tag to the commit:
-Reported-by: Wei Chen <harperchen1110@gmail.com>
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: linux-ppp@vger.kernel.org
+Reported-by: syzbot+41cab52ab62ee99ed24a@syzkaller.appspotmail.com
+Signed-off-by: Stanislav Fomichev <sdf@google.com>
+---
+ drivers/net/ppp/ppp_generic.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-INFO: task syz-executor.0:21121 blocked for more than 143 seconds.
-      Not tainted 5.15.0-rc5 #1
-"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-task:syz-executor.0  state:D stack:13736 pid:21121 ppid: 20431 flags:0x00004004
-Call Trace:
- __schedule+0x4a1/0x1720
- schedule+0x36/0xe0
- schedule_preempt_disabled+0xf/0x20
- __mutex_lock+0x67a/0x9a0
- ppp_ioctl+0x1247/0x1ee0
- __x64_sys_ioctl+0xe8/0x140
- do_syscall_64+0x34/0xb0
- entry_SYSCALL_64_after_hwframe+0x44/0xae
-RIP: 0033:0x4692c9
-RSP: 002b:00007f36d6808c38 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
-RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 00000000004692c9
-RDX: 0000000020000040 RSI: 00000000c004743e RDI: 0000000000000004
-RBP: 000000000119bfb0 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 000000000119bfac
-R13: 0000000000000000 R14: 000000000119bfa0 R15: 00007ffeb87bf8c0
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 9206c660a72e..d4c821c8cf57 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -1743,6 +1743,8 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
+ 	int len;
+ 	unsigned char *cp;
+ 
++	skb->dev = ppp->dev;
++
+ 	if (proto < 0x8000) {
+ #ifdef CONFIG_PPP_FILTER
+ 		/* check if we should pass this packet */
+-- 
+2.38.1.584.g0f3c55d4c2-goog
 
-Showing all locks held in the system:
-1 lock held by khungtaskd/29:
- #0: ffffffff8641dee0 (rcu_read_lock){....}-{1:2}, at:
-debug_show_all_locks+0x15/0x17a
-1 lock held by in:imklog/6162:
- #0: ffff88800f6a1af0 (&f->f_pos_lock){+.+.}-{3:3}, at: __fdget_pos+0x92/0xa0
-3 locks held by kworker/1:8/7427:
- #0: ffff8881070edb38 ((wq_completion)ipv6_addrconf){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #1: ffffc90005197e68 ((addr_chk_work).work){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #2: ffffffff86897be8 (rtnl_mutex){+.+.}-{3:3}, at:
-addrconf_verify_work+0xa/0x20
-5 locks held by kworker/u4:4/2032:
- #0: ffff888100046938 ((wq_completion)netns){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #1: ffffc900050cfe68 (net_cleanup_work){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #2: ffffffff86893750 (pernet_ops_rwsem){++++}-{3:3}, at: cleanup_net+0x4f/0x540
- #3: ffffffff86897be8 (rtnl_mutex){+.+.}-{3:3}, at:
-default_device_exit_batch+0x81/0x1d0
- #4: ffffffff864205b0 (rcu_state.barrier_mutex){+.+.}-{3:3}, at:
-rcu_barrier+0x2b/0x280
-3 locks held by kworker/0:54/20464:
- #0: ffff888009856738 ((wq_completion)events){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #1: ffffc9000177be68 ((linkwatch_work).work){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #2: ffffffff86897be8 (rtnl_mutex){+.+.}-{3:3}, at: linkwatch_event+0xb/0x40
-3 locks held by kworker/0:55/20465:
- #0: ffff888009856f38
-((wq_completion)events_power_efficient){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #1: ffffc9000178be68 ((reg_check_chans).work){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #2: ffffffff86897be8 (rtnl_mutex){+.+.}-{3:3}, at:
-reg_check_chans_work+0x37/0x7f0
-3 locks held by kworker/0:144/20554:
- #0: ffff888009856738 ((wq_completion)events){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #1: ffffc90002a73e68 (deferred_process_work){+.+.}-{0:0}, at:
-process_one_work+0x327/0x9f0
- #2: ffffffff86897be8 (rtnl_mutex){+.+.}-{3:3}, at:
-switchdev_deferred_process_work+0xa/0x20
-2 locks held by syz-executor.0/21121:
- #0: ffffffff866c6ec8 (ppp_mutex){+.+.}-{3:3}, at: ppp_ioctl+0x3c/0x1ee0
- #1: ffffffff86897be8 (rtnl_mutex){+.+.}-{3:3}, at: ppp_ioctl+0x1247/0x1ee0
-
-=============================================
-
-NMI backtrace for cpu 0
-CPU: 0 PID: 29 Comm: khungtaskd Not tainted 5.15.0-rc5 #1
-Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
-rel-1.13.0-48-gd9c812dda519-prebuilt.qemu.org 04/01/2014
-Call Trace:
- dump_stack_lvl+0xcd/0x134
- nmi_cpu_backtrace.cold.8+0xf3/0x118
- nmi_trigger_cpumask_backtrace+0x18f/0x1c0
- watchdog+0x9a0/0xb10
- kthread+0x1a6/0x1e0
- ret_from_fork+0x1f/0x30
-Sending NMI from CPU 0 to CPUs 1:
-NMI backtrace for cpu 1
-CPU: 1 PID: 2988 Comm: systemd-journal Not tainted 5.15.0-rc5 #1
-Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
-rel-1.13.0-48-gd9c812dda519-prebuilt.qemu.org 04/01/2014
-RIP: 0033:0x7f9ecd0d80f4
-Code: c0 0f 84 df 00 00 00 49 8d 2c 08 48 3b 6f 60 48 89 fb 77 42 8d
-7e ff 48 8d 43 30 83 ff 07 bf 00 00 00 00 0f 43 f7 48 83 ec 08 <48> 8b
-bb 48 01 00 00 41 51 49 89 c9 50 89 f1 41 50 44 0f b6 c2 8b
-RSP: 002b:00007ffc82797cd8 EFLAGS: 00000216
-RAX: 000056106a359cd0 RBX: 000056106a359ca0 RCX: 000000000024cc20
-RDX: 0000000000000000 RSI: 0000000000000006 RDI: 0000000000000000
-RBP: 00000000002591a8 R08: 000000000000c588 R09: 00007ffc82797d20
-R10: 00000000000a43ba R11: 00007f9ec8b7d760 R12: 0000000000000001
-R13: 00007ffc82797d98 R14: 0000000000000006 R15: 00007ffc82797d20
-FS:  00007f9ecd3e98c0 GS:  0000000000000000
-
-Best,
-Wei
