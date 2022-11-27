@@ -2,62 +2,65 @@ Return-Path: <linux-ppp-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A855C4332F
-	for <linux-ppp@archiver.kernel.org>; Wed, 23 Nov 2022 22:59:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ECC97C4321E
+	for <linux-ppp@archiver.kernel.org>; Sun, 27 Nov 2022 19:52:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229565AbiKWW74 (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Wed, 23 Nov 2022 17:59:56 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52662 "EHLO
+        id S229554AbiK0TwJ (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Sun, 27 Nov 2022 14:52:09 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59636 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229471AbiKWW7z (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Wed, 23 Nov 2022 17:59:55 -0500
-Received: from mail-pj1-x1036.google.com (mail-pj1-x1036.google.com [IPv6:2607:f8b0:4864:20::1036])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D539259170
-        for <linux-ppp@vger.kernel.org>; Wed, 23 Nov 2022 14:59:54 -0800 (PST)
-Received: by mail-pj1-x1036.google.com with SMTP id ci10so10868092pjb.1
-        for <linux-ppp@vger.kernel.org>; Wed, 23 Nov 2022 14:59:54 -0800 (PST)
+        with ESMTP id S229436AbiK0TwI (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Sun, 27 Nov 2022 14:52:08 -0500
+Received: from mail-wr1-x42e.google.com (mail-wr1-x42e.google.com [IPv6:2a00:1450:4864:20::42e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 82FA465C7
+        for <linux-ppp@vger.kernel.org>; Sun, 27 Nov 2022 11:52:07 -0800 (PST)
+Received: by mail-wr1-x42e.google.com with SMTP id v1so13803646wrt.11
+        for <linux-ppp@vger.kernel.org>; Sun, 27 Nov 2022 11:52:07 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20210112;
-        h=content-transfer-encoding:mime-version:subject:message-id:to:from
-         :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=o07omFriqnhNOjfhpCiCirEGK3M8lz5V4M5BDPl7N1Y=;
-        b=bO5ZCGEwmV69YwjCPQbA2RHNFcQkLNyr0tgMyLOsikJMRHlh36j8ObYTTwTV25pYia
-         L5bgVPOL1Fvc45I5oqJCsUabAc8tdeva/7Yh6TAavpGOgl2iab9Za2en3352aXqLPRlV
-         4CuPp72uXoRjxaLKpFVAZ44lvS1I+ZYJMz2GYifX1Z0qkPif0WbtAvErvN0go0GNBm+A
-         6GnuJ29PVU0FiU5s/7K2wk6VSuLbTDuz8tv23LpfIjG3QAfr8wdArtEJS/RGmPDpS+rk
-         VmYt+KDhe8PEXM10sLVRYH484tsntR+WSJpyiMhTnLAWyXgOzUcVsfiw7NwzaUKtWNJ4
-         WTXw==
+        h=to:subject:message-id:date:mime-version:from:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=biw1utCmNyI+ef9futimPqL2qrgw3YwY9eWMD1oBQZg=;
+        b=og7VgS1YbenSoQq97lC3cI8xrZ+c6/m06QA25RBZNPUpDdb2ZnUb0c7AaWtyI9fRhK
+         1gm+q1zZGNoyUFJDyxditRYrB4ta8lgRM/8PYx+FCfYTlS4kX34ITMnvNJ4rCawKeY3m
+         5zeTbleCJ9IrrR/4+bkUYKIdfns34X164U7qj91dQPRy+/9xLUQr+0jNmeJHoJkcLvXz
+         pQ33uy+3M/gM1yFwwLlPT0rFljtiwZqGPnJqR4g+yG5TzQfYMsB4U8FULwrROxd6RBoK
+         wRkuLW8qSnNYbVhmJ13cNkGU3/679IfG+v+9dPLYClOjPBtWQs04yk/MaXJZJ6NTkEhY
+         wB8g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20210112;
-        h=content-transfer-encoding:mime-version:subject:message-id:to:from
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=o07omFriqnhNOjfhpCiCirEGK3M8lz5V4M5BDPl7N1Y=;
-        b=e6BF6Uc+fpGCsmJbQEQLloeRKqJTXLzuWou4O1xidqzCu6u+BaBVyZpQLkeAxkb/wD
-         9n472xvBzpl4zYhrll5geAzvRdWNcxpoebgz2qN5iqD8bUyrkKDM2Wpqqxm5foTK4Wpq
-         6n+CNIszPGCjg2g871jDOFiRTybzMv4avLF2RQPBIB08iltwVtGbp4bUuUhVm+Y8HMKY
-         T19AxhtjCxwVJIsf2UWQoXMcuacDPD8lyVzBnF71EI6ahhT1oXsWVVvL5+yiJRrjCt3O
-         eLauPhUTEIXtMaKLivKmEJGIso+3wvJJyhh3BwL6LckM4sxAz/cUQ0k74z2fwALrQ99m
-         MvnA==
-X-Gm-Message-State: ANoB5pniKFeErbYALqzGJYLpvuyVExnJhNTFQ9dYfyjajQ+3672FqKSq
-        SCVY8978paXNJMW9SvshSfbW/F6Gwgs=
-X-Google-Smtp-Source: AA0mqf76qMrmpe5DwPKKDyEZZracL6GP3T6tTLRD+Qb0VPNQ+X/WhTejA2SVRIpmJtxsUCEVCjH+1Q==
-X-Received: by 2002:a17:90a:bc4b:b0:212:d796:d30f with SMTP id t11-20020a17090abc4b00b00212d796d30fmr32798105pjv.9.1669244394291;
-        Wed, 23 Nov 2022 14:59:54 -0800 (PST)
-Received: from localhost ([2401:4900:547a:9239:d8fa:2460:729b:457e])
-        by smtp.gmail.com with ESMTPSA id p3-20020a170902e74300b00188a7bce192sm14906609plf.264.2022.11.23.14.59.52
-        for <linux-ppp@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 23 Nov 2022 14:59:53 -0800 (PST)
-Date:   Thu, 24 Nov 2022 04:29:49 +0530 (GMT+05:30)
-From:   mr.chorotia@gmail.com
+        h=to:subject:message-id:date:mime-version:from:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=biw1utCmNyI+ef9futimPqL2qrgw3YwY9eWMD1oBQZg=;
+        b=ntiYzlFunrht5KsWOZ9qZRx34NGc0v8RzRSE+vgTTFsaAzL/Iz9txCvaVEF+4JgfnN
+         GFxCxLvh+vALyQahjO+i7n9X5PhDzH1TROXzp7pH3jF+b8Q3fE4wDER/KcPer9b9bcuc
+         8NNNkB+ADLfRT/ACYFWyK0bmV8+oi62pMdJlacu/dSy9N7ZpdylHADwLklvx2dcCXwZk
+         MghgPib+5elS91JnEV2afnYTVBL/FbRWxXct100XKStcIqkxwjx7HmRBX+hyGW5WwxJb
+         +7O0ke5S6AR22XG67QZV8k+w2OCNYilxjNOjCskZLj8/JEMBWwa1XXvLYLAsf/ag2T+g
+         9QfA==
+X-Gm-Message-State: ANoB5pnU0T0Jfwwn09mvW9QH84kafu814f8tY8PyipOdSmxWQlzaXtou
+        zXnCOGVQp+psGlH0Up1tg+debxe1YPZCaKzDCrj8HKkV9zjrlzMJ
+X-Google-Smtp-Source: AA0mqf6tQYgL8malWf8Az5zT1nPrkkTnpUw5DuiZKVM0QvAu8MJCDGWgSz74m1uoSZNoIWLzBsmcH0pvNfse/lIzGD8=
+X-Received: by 2002:a05:6000:c5:b0:236:596f:acb4 with SMTP id
+ q5-20020a05600000c500b00236596facb4mr28211993wrx.586.1669578725889; Sun, 27
+ Nov 2022 11:52:05 -0800 (PST)
+Received: from 332509754669 named unknown by gmailapi.google.com with
+ HTTPREST; Sun, 27 Nov 2022 13:52:05 -0600
+From:   HAROLD COOPER <haroldcooper810@gmail.com>
+Mime-Version: 1.0
+Date:   Sun, 27 Nov 2022 13:52:05 -0600
+Message-ID: <CA+0JWioEiXDxENFppsK1PZTjk289FgjTZFnsv58MMOCbUpfJvw@mail.gmail.com>
+Subject: HARD HAT
 To:     linux-ppp@vger.kernel.org
-Message-ID: <8791865.53.1669244389958@localhost>
-Subject: =?UTF-8?Q?Decision_makers_have_told_us=E2=80=A6?=
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-Salutations. Many organizations now consider business objectives and technology objectives to be completely equal in the eyes of key stakeholders. This is the logical conclusion after decades of technology advancements.
+To whom it may concern,
+I would like to order HARD HAT . I would be glad if you could email me
+back with the types and pricing you carry at the moment .
+
+Regards ,
+Mr HAROLD COOPER
+PH: 813 750 7707
