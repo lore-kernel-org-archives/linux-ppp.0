@@ -1,54 +1,51 @@
-Return-Path: <linux-ppp-owner@kernel.org>
+Return-Path: <linux-ppp-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4EC84C46467
-	for <linux-ppp@archiver.kernel.org>; Sun, 18 Dec 2022 17:13:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A29C4C4708D
+	for <linux-ppp@archiver.kernel.org>; Wed, 28 Dec 2022 15:55:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233400AbiLRRNI (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Sun, 18 Dec 2022 12:13:08 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34988 "EHLO
+        id S234163AbiL1PzG (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Wed, 28 Dec 2022 10:55:06 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42602 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233625AbiLRRKW (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Sun, 18 Dec 2022 12:10:22 -0500
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 886D51EAF6;
-        Sun, 18 Dec 2022 08:23:44 -0800 (PST)
+        with ESMTP id S234155AbiL1PzD (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Wed, 28 Dec 2022 10:55:03 -0500
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 328FD18B11;
+        Wed, 28 Dec 2022 07:55:02 -0800 (PST)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 0AAD060C40;
-        Sun, 18 Dec 2022 16:23:44 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 206F4C43392;
-        Sun, 18 Dec 2022 16:23:42 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1671380623;
-        bh=U+cQHrDmIK+r9qwVg+CRg/eCGO+GgpLzZ8wc3TPMRA0=;
+        by dfw.source.kernel.org (Postfix) with ESMTPS id BA92761563;
+        Wed, 28 Dec 2022 15:55:01 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C6C13C433D2;
+        Wed, 28 Dec 2022 15:55:00 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
+        s=korg; t=1672242901;
+        bh=xFDclNvplgYnbL3uJh3dyEBsxCIi4aefQA4vqwNoo4E=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=oRvKOQ+3jcOnu3tc0kPfowfUdqnOt2ERnuOECf84ZP4zewFGK04M+RYD7CR8p3gVJ
-         5AdamElk84Yb+2ccHkEv0De+k4tTbs4We6MqaVYYfWO+jSEEf6XOSns0xXAWYDn+jU
-         yzvnvwADsj2z70UGSXeVQcaZQVv1232foSp7mkFyRQ3ByPlUEupkxpTvBKkJqA0Ieg
-         tLqgG6C2RRxYEpjN28S7FLyXqDlXr7gXNfopPjSdGTGbRufVchboCeec+4droonNsG
-         7aaPkOcaP55GMmCebGbhLNZvLZD2PpHJED7IlsLsaGE74JIAU8bz/TE8Nc8V8O3ykU
-         xjbIruA4gcXBw==
-From:   Sasha Levin <sashal@kernel.org>
-To:     linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc:     Stanislav Fomichev <sdf@google.com>,
-        Paul Mackerras <paulus@samba.org>, linux-ppp@vger.kernel.org,
+        b=yGfuxXEU3kAuvAW+bLUfiZKWReF2OfVlzbgIiAwR3RT2v9l193k9WfDTPSG8jKX5V
+         yWfg3BClt6BhzNyPZQo8CcMSUNEWTsKP53ffFK80lqbapQ7Lmuv3842t1OejOW8bCX
+         /IbgZ+koEI1LjAuJPUrktsYs9FRlzmyzvRlrfIZc=
+From:   Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+To:     stable@vger.kernel.org
+Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        patches@lists.linux.dev, Paul Mackerras <paulus@samba.org>,
+        linux-ppp@vger.kernel.org,
         syzbot+41cab52ab62ee99ed24a@syzkaller.appspotmail.com,
-        "David S . Miller" <davem@davemloft.net>,
-        Sasha Levin <sashal@kernel.org>, edumazet@google.com,
-        kuba@kernel.org, pabeni@redhat.com, netdev@vger.kernel.org,
-        bpf@vger.kernel.org
-Subject: [PATCH AUTOSEL 4.9 14/20] ppp: associate skb with a device at tx
-Date:   Sun, 18 Dec 2022 11:22:59 -0500
-Message-Id: <20221218162305.935724-14-sashal@kernel.org>
-X-Mailer: git-send-email 2.35.1
-In-Reply-To: <20221218162305.935724-1-sashal@kernel.org>
-References: <20221218162305.935724-1-sashal@kernel.org>
+        Stanislav Fomichev <sdf@google.com>,
+        "David S. Miller" <davem@davemloft.net>,
+        Sasha Levin <sashal@kernel.org>
+Subject: [PATCH 5.15 659/731] ppp: associate skb with a device at tx
+Date:   Wed, 28 Dec 2022 15:42:46 +0100
+Message-Id: <20221228144315.595464158@linuxfoundation.org>
+X-Mailer: git-send-email 2.39.0
+In-Reply-To: <20221228144256.536395940@linuxfoundation.org>
+References: <20221228144256.536395940@linuxfoundation.org>
+User-Agent: quilt/0.67
 MIME-Version: 1.0
-X-stable: review
-X-Patchwork-Hint: Ignore
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
@@ -96,10 +93,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 6287d2ad77c6..f6cf25cba16e 100644
+index 829d6ada1704..c1f11d1df4cd 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -1541,6 +1541,8 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
+@@ -1742,6 +1742,8 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
  	int len;
  	unsigned char *cp;
  
@@ -110,4 +107,6 @@ index 6287d2ad77c6..f6cf25cba16e 100644
  		/* check if we should pass this packet */
 -- 
 2.35.1
+
+
 
