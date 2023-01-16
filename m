@@ -2,32 +2,32 @@ Return-Path: <linux-ppp-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3771AC677F1
-	for <linux-ppp@archiver.kernel.org>; Thu, 12 Jan 2023 14:36:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D0573C54EBE
+	for <linux-ppp@archiver.kernel.org>; Mon, 16 Jan 2023 16:39:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238117AbjALOgU (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Thu, 12 Jan 2023 09:36:20 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55612 "EHLO
+        id S233643AbjAPQjh (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Mon, 16 Jan 2023 11:39:37 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33044 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238322AbjALOfw (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Thu, 12 Jan 2023 09:35:52 -0500
-Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 85F04E09;
-        Thu, 12 Jan 2023 06:26:17 -0800 (PST)
+        with ESMTP id S233539AbjAPQjP (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Mon, 16 Jan 2023 11:39:15 -0500
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2B641367C6;
+        Mon, 16 Jan 2023 08:27:50 -0800 (PST)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by ams.source.kernel.org (Postfix) with ESMTPS id B40B1B81E69;
-        Thu, 12 Jan 2023 14:26:15 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E575EC433D2;
-        Thu, 12 Jan 2023 14:26:13 +0000 (UTC)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id 3CD7861058;
+        Mon, 16 Jan 2023 16:27:50 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 49821C43396;
+        Mon, 16 Jan 2023 16:27:49 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-        s=korg; t=1673533574;
-        bh=SU5gQxjmxcP5PhWrbb1g4VIPNmm6lnz7Hd1YiqIAeAs=;
+        s=korg; t=1673886469;
+        bh=mZ8UvLfDsKgykeZh6NMW3/QLEABOpBenoQEbhEUsugg=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=lPoSf4DiRBX/B1oqK4xEhxFquHF6Vfcpbg9l8I80Zkrn9ZVCk/hbNaWPMl0PrDXan
-         WTuRC/cqFsNyHjdvKZKv7wGXRGC4c+31QmDqa9Z6K3o7us3/PLgSQeig1oz+MEVtKC
-         pWv4IngcwHVZ3shVQVHt7DSi/CDCGWtSuj0OXixI=
+        b=0ZqQnWQ72lpPChxoWsDJ1NnjA0GOqnT9e8EU9Aq/m+bc6rrKIA+whzcgpURGWKRH8
+         Y8re9y4lOhotvThaDacJ2Okj39K3EhzWuCwfOZJjN8ukZJndXjlHiGiBn66+Uj7Htk
+         DIq366AWGA1ZG4uh2Ed7i3FQSV7JsO1Rnq87rSlE=
 From:   Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 To:     stable@vger.kernel.org
 Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -37,12 +37,12 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Stanislav Fomichev <sdf@google.com>,
         "David S. Miller" <davem@davemloft.net>,
         Sasha Levin <sashal@kernel.org>
-Subject: [PATCH 5.10 522/783] ppp: associate skb with a device at tx
-Date:   Thu, 12 Jan 2023 14:53:58 +0100
-Message-Id: <20230112135548.398825970@linuxfoundation.org>
+Subject: [PATCH 5.4 415/658] ppp: associate skb with a device at tx
+Date:   Mon, 16 Jan 2023 16:48:23 +0100
+Message-Id: <20230116154928.587682624@linuxfoundation.org>
 X-Mailer: git-send-email 2.39.0
-In-Reply-To: <20230112135524.143670746@linuxfoundation.org>
-References: <20230112135524.143670746@linuxfoundation.org>
+In-Reply-To: <20230116154909.645460653@linuxfoundation.org>
+References: <20230116154909.645460653@linuxfoundation.org>
 User-Agent: quilt/0.67
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -93,10 +93,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 2b9815ec4a62..b825c6a9b6dd 100644
+index a085213dc2ea..078c0f474f96 100644
 --- a/drivers/net/ppp/ppp_generic.c
 +++ b/drivers/net/ppp/ppp_generic.c
-@@ -1610,6 +1610,8 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
+@@ -1522,6 +1522,8 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
  	int len;
  	unsigned char *cp;
  
