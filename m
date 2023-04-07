@@ -2,37 +2,37 @@ Return-Path: <linux-ppp-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F1EEC6FD18
-	for <linux-ppp@archiver.kernel.org>; Wed, 29 Mar 2023 07:35:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 149B6C76196
+	for <linux-ppp@archiver.kernel.org>; Fri,  7 Apr 2023 08:04:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230157AbjC2Hf0 (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Wed, 29 Mar 2023 03:35:26 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41692 "EHLO
+        id S231982AbjDGIEp (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Fri, 7 Apr 2023 04:04:45 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47796 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230260AbjC2He7 (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Wed, 29 Mar 2023 03:34:59 -0400
-Received: from mail.craftsplex.pl (mail.craftsplex.pl [162.19.155.126])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EBFCF5245
-        for <linux-ppp@vger.kernel.org>; Wed, 29 Mar 2023 00:32:20 -0700 (PDT)
-Received: by mail.craftsplex.pl (Postfix, from userid 1002)
-        id 3040022A08; Wed, 29 Mar 2023 07:30:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=craftsplex.pl;
-        s=mail; t=1680075068;
-        bh=PcMncQpBfIZCnTOfZJY5G1G+gaLn4c9QPfFvoXrE4rA=;
+        with ESMTP id S239024AbjDGIEn (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Fri, 7 Apr 2023 04:04:43 -0400
+Received: from mail.feshiecree.pl (mail.feshiecree.pl [89.40.114.103])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7CBD09ECE
+        for <linux-ppp@vger.kernel.org>; Fri,  7 Apr 2023 01:04:42 -0700 (PDT)
+Received: by mail.feshiecree.pl (Postfix, from userid 1001)
+        id 196088C472; Fri,  7 Apr 2023 08:57:13 +0100 (BST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=feshiecree.pl;
+        s=mail; t=1680854305;
+        bh=hFxZwVw4rIL+JwfEOGI47p+fdoVOAeqVswP6NWoHSHQ=;
         h=Date:From:To:Subject:From;
-        b=GfOCEjJN6Tjb15oldTwvfk0468OvbXOmiMtLVhMM8drlKKeq7GnxEHncooOdsCVz9
-         Qj/R8bZPaEMOlVAyzTfY0Qwj+hrCM1c8v78Q+zX+fJFG8Qm+4cLyz+h7A/R64959QN
-         dd8LftulENSaxciU0M9HUMgOzrxU4szNMXQxyWULdaUACPz5p9dhCsXaywlLjBI2bu
-         oP4Vxg40o/nctKXGwkvDDBGmSTKaFmx3r6nErWslIKjAOARSD5jcokr1kj/bSgmkFC
-         YqTpRTK/2I9AQ4v8lFwgFJUyZoY4L5E1PllngtX5IQy4Vh7NEor2pJ8VNgS7eQArHp
-         PacAAozIySPEw==
-Received: by mail.craftsplex.pl for <linux-ppp@vger.kernel.org>; Wed, 29 Mar 2023 07:29:54 GMT
-Message-ID: <20230329072937-0.1.58.kro3.0.rgkwj6j77c@craftsplex.pl>
-Date:   Wed, 29 Mar 2023 07:29:54 GMT
-From:   "Kamil Tralewski" <kamil.tralewski@craftsplex.pl>
+        b=xn8yYhzUd7sdf68P6c57RJw1AdbK2rofv7pKcIFqLdqzgICsG18wRnB4EkFZKHEqx
+         gIwOxSDU3MmxWiZFUuG45IEdUpN4pX+bhV53OdqaHn4JvutaCGiWr0Srn5v+yM+eeZ
+         rYTi40RW9LrJAU+o2oKDI1oe8a2XZklWQsNvdy6d+tx+sMRaRiGKKUMnOblZfe84Li
+         Oap7N8sr2asquMpaCG8b8yeL6SAaxg1SvhjEEmdk2Mmb6IImzsETjWjwhYmqxoerly
+         VsvWo2OMVED1OjFMuJJ6Zhs4YfzwqB7/vfo4MGz0Wa4vQ1po/xEOjAuLG61I3p8pz8
+         agmx6gZqS1rpw==
+Received: by mail.feshiecree.pl for <linux-ppp@vger.kernel.org>; Fri,  7 Apr 2023 07:56:07 GMT
+Message-ID: <20230407074501-0.1.1w.7lfd.0.qu7f7xahtj@feshiecree.pl>
+Date:   Fri,  7 Apr 2023 07:56:07 GMT
+From:   "Krystian Wieczorek" <krystian.wieczorek@feshiecree.pl>
 To:     <linux-ppp@vger.kernel.org>
-Subject: =?UTF-8?Q?S=C5=82owa_kluczowe_do_wypozycjonowania?=
-X-Mailer: mail.craftsplex.pl
+Subject: W sprawie samochodu
+X-Mailer: mail.feshiecree.pl
 MIME-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
@@ -42,16 +42,21 @@ X-Mailing-List: linux-ppp@vger.kernel.org
 
 Dzie=C5=84 dobry,
 
-zapozna=C5=82em si=C4=99 z Pa=C5=84stwa ofert=C4=85 i z przyjemno=C5=9Bci=
-=C4=85 przyznaj=C4=99, =C5=BCe przyci=C4=85ga uwag=C4=99 i zach=C4=99ca d=
-o dalszych rozm=C3=B3w.=20
+chcieliby=C5=9Bmy zapewni=C4=87 Pa=C5=84stwu kompleksowe rozwi=C4=85zania=
+, je=C5=9Bli chodzi o system monitoringu GPS.
 
-Pomy=C5=9Bla=C5=82em, =C5=BCe mo=C5=BCe m=C3=B3g=C5=82bym mie=C4=87 sw=C3=
-=B3j wk=C5=82ad w Pa=C5=84stwa rozw=C3=B3j i pom=C3=B3c dotrze=C4=87 z t=C4=
-=85 ofert=C4=85 do wi=C4=99kszego grona odbiorc=C3=B3w. Pozycjonuj=C4=99 =
-strony www, dzi=C4=99ki czemu generuj=C4=85 =C5=9Bwietny ruch w sieci.
+Precyzyjne monitorowanie pojazd=C3=B3w na mapach cyfrowych, =C5=9Bledzeni=
+e ich parametr=C3=B3w eksploatacyjnych w czasie rzeczywistym oraz kontrol=
+a paliwa to kluczowe funkcjonalno=C5=9Bci naszego systemu.=20
 
-Mo=C5=BCemy porozmawia=C4=87 w najbli=C5=BCszym czasie?
+Organizowanie pracy pracownik=C3=B3w jest dzi=C4=99ki temu prostsze i bar=
+dziej efektywne, a oszcz=C4=99dno=C5=9Bci i optymalizacja w zakresie pono=
+szonych koszt=C3=B3w, maj=C4=85 dla ka=C5=BCdego przedsi=C4=99biorcy ogro=
+mne znaczenie.
+
+Dopasujemy nasz=C4=85 ofert=C4=99 do Pa=C5=84stwa oczekiwa=C5=84 i potrze=
+b organizacji. Czy mogliby=C5=9Bmy porozmawia=C4=87 o naszej propozycji?
+
 
 Pozdrawiam
-Kamil Tralewski
+Krystian Wieczorek
