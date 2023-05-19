@@ -2,126 +2,68 @@ Return-Path: <linux-ppp-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BBE0BC77B71
-	for <linux-ppp@archiver.kernel.org>; Fri, 21 Apr 2023 15:12:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 000D4C77B7F
+	for <linux-ppp@archiver.kernel.org>; Fri, 19 May 2023 08:30:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231848AbjDUPM1 (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Fri, 21 Apr 2023 11:12:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50752 "EHLO
+        id S230006AbjESIaY (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Fri, 19 May 2023 04:30:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58468 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232508AbjDUPM1 (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Fri, 21 Apr 2023 11:12:27 -0400
-Received: from hosting.isp.bg (hosting.isp.bg [78.108.251.2])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 204DA12CB0
-        for <linux-ppp@vger.kernel.org>; Fri, 21 Apr 2023 08:12:23 -0700 (PDT)
-Received: from [192.168.0.102] (crazy-user.25.100.countrybg.net [87.246.25.100])
-        (using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by hosting.isp.bg (Postfix) with ESMTPSA id 0D0A86401866
-        for <linux-ppp@vger.kernel.org>; Fri, 21 Apr 2023 18:12:21 +0300 (EEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=isp.bg; s=default;
-        t=1682089942; bh=eKwPFaBHrIn2nEwn0ncn9Bf7RmXkPbAhnGFTPEj2JH4=;
-        h=Date:To:From:Subject;
-        b=24CYLpk8mC2Ab+XMkYwOeUTiQ9w2L1DuEooXnY4QQpjEUHaRrrbFRZcvZ/CeBGhbM
-         jsFCygapI35E5iKKOFQpDJVfQ63gY2G25zBao2/8fs8PLaKcRfDMCk4QNkJMlG05I+
-         FvWt54c2a/kXq10Vb5b3SvnJouJ1fkA0nEHfsDFA=
-Message-ID: <bc6a5031-f533-d8ca-cb2d-3d5329091a07@isp.bg>
-Date:   Fri, 21 Apr 2023 18:12:21 +0300
+        with ESMTP id S229627AbjESIaY (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Fri, 19 May 2023 04:30:24 -0400
+X-Greylist: delayed 548 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Fri, 19 May 2023 01:30:19 PDT
+Received: from mail.mojafirma24biz.pl (mail.mojafirma24biz.pl [94.177.230.123])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 37B7410C9
+        for <linux-ppp@vger.kernel.org>; Fri, 19 May 2023 01:30:19 -0700 (PDT)
+Received: by mail.mojafirma24biz.pl (Postfix, from userid 1002)
+        id 36CE683D91; Fri, 19 May 2023 10:21:04 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=mojafirma24biz.pl;
+        s=mail; t=1684484469;
+        bh=QbP1U00PseMsQKCCzubvpt4P1svntDdd/QYVIBIcXDg=;
+        h=Date:From:To:Subject:From;
+        b=SFI4eVlxhDCIGxoiA1Q3ik24//pm3HBWg7d+Oazx5r/DpvsrAySmq1EbQoDXzr/3Z
+         hfGgWUDDXeLAbsjYOZajJ47P/htyHv6PsVCFolmOEgf4X9umTy6HNKM8lCdydSRCy/
+         1CWdZMkY74l3x/lbNm0lCVs0ltkskDmfH4T5FKo+1FVZZKk72XKjeia3B5XV3CzY6g
+         GzdidwSXbVERUQ4OB2LW2XYQVSkj3BwsAmVGbKZEakUm/kFKVQk5RdlzPDhl2BRPYV
+         A0yYYmJoDqw6mOUP/4sdtSs60ktEtilWo29c6CBVqYoe0+53b2+3yL48FxIn66hJX1
+         Jjla49tC79pdQ==
+Received: by mail.mojafirma24biz.pl for <linux-ppp@vger.kernel.org>; Fri, 19 May 2023 08:21:00 GMT
+Message-ID: <20230519093257-0.1.d.18np.0.accyn8m55d@mojafirma24biz.pl>
+Date:   Fri, 19 May 2023 08:21:00 GMT
+From:   "Adam Wyrwisz" <adam.wyrwisz@mojafirma24biz.pl>
+To:     <linux-ppp@vger.kernel.org>
+Subject: Fotowoltaika dla biznesu
+X-Mailer: mail.mojafirma24biz.pl
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.9.1
-Content-Language: en-US
-To:     linux-ppp@vger.kernel.org
-From:   Peter Developer <developer@isp.bg>
-Subject: pppd-2.5_plugins_radius_bug.plaintext
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-Hi,
+Dzie=C5=84 dobry,
 
-Sorry for My English, it's not My native language.
+w zwi=C4=85zku z nieustannie rosn=C4=85cymi cenami produkt=C3=B3w i us=C5=
+=82ug - wiele firmy stawia na rozwi=C4=85zania, kt=C3=B3re pomog=C4=85 zm=
+niejszy=C4=87 wydatki zwi=C4=85zane z prowadzeniem dzia=C5=82alno=C5=9Bci=
+, a jednym z nich jest wyb=C3=B3r instalacji fotowoltaicznych.=20
 
-I use pppd with FreeRADIUS server for pppoe server.
+Wszystkim odbiorcom szukaj=C4=85cym mo=C5=BCliwo=C5=9Bci obni=C5=BCenia k=
+oszt=C3=B3w energii elektrycznej, wychodzimy naprzeciw =C5=9Bwiadcz=C4=85=
+c kompleksow=C4=85 obs=C5=82ug=C4=99 inwestycji w fotowoltaik=C4=99.=20
 
-In DEBIAN 11 Linux with, I noticed these messages in /var/daemon.log:
+Jako jedyna na rynku firma zapewniamy 12 lat gwarancji, audyt po monta=C5=
+=BCowy, a tak=C5=BCe kalkulacj=C4=99 oszcz=C4=99dno=C5=9Bci po monta=C5=BC=
+u fotowoltaiki.
 
-RADIUS: Can't read config file /etc/radiusclient/radiusclient.conf
+Umo=C5=BCliwiamy leasing z odroczon=C4=85 sp=C5=82at=C4=85 i bez wk=C5=82=
+adu w=C5=82asnego, gwarantujemy wsparcie w pozyskaniu odpowiedniego =C5=BA=
+r=C3=B3d=C5=82a finansowania i pomoc w przypadku wnioskowania o dotacj=C4=
+=99.
 
-The problem is in: pppd/plugins/radius/config.c file.
+Czy chcieliby Pa=C5=84stwo zapozna=C4=87 si=C4=99 z mo=C5=BCliwo=C5=9Bcia=
+mi inwestycji w PV dopasowanymi do Pa=C5=84stwa obiektu?
 
-In function:
-int rc_read_config(char *filename)
-between rows 236 to 260 we have:
-|switch (option->type) {|
-|    case OT_STR:|
-|    if (set_option_str(filename, line, option, p) < 0)|
-|            fclose(configfd);|
-|            return (-1);|
-|        break;|
-|    case OT_INT:|
-|        if (set_option_int(filename, line, option, p) < 0)|
-|            fclose(configfd);|
-|            return (-1);|
-|        break;|
-|    case OT_SRV:|
-|        if (set_option_srv(filename, line, option, p) < 0)|
-|            fclose(configfd);|
-|            return (-1);|
-|        break;|
-|    case OT_AUO:|
-|        if (set_option_auo(filename, line, option, p) < 0)|
-|            fclose(configfd);|
-|            return (-1);|
-|    break;|
-|        default:|
-|        fatal("rc_read_config: impossible case branch!");|
-|        abort();|
-|}|
 
-Operators after if is python like syntax, but this is C/C++
-
-It must be:
-|switch (option->type) {|
-|    case OT_STR:|
-|        if (set_option_str(filename, line, option, p) < 0) {|
-|            fclose(configfd);|
-|            return (-1);|
-|    }|
-|break;|
-|    case OT_INT:|
-|        if (set_option_int(filename, line, option, p) < 0) {|
-|            fclose(configfd);|
-|            return (-1);|
-|        }|
-|        break;|
-|    case OT_SRV:|
-|        if (set_option_srv(filename, line, option, p) < 0) {|
-|            fclose(configfd);|
-|            return (-1);|
-|        }|
-|        break;|
-|    case OT_AUO:|
-|        if (set_option_auo(filename, line, option, p) < 0) {|
-|            fclose(configfd);|
-|            return (-1);|
-|        }|
-|        break;|
-|    default:|
-|        fatal("rc_read_config: impossible case branch!");|
-|        abort();|
-|}|
-
-with out curly braces operator: return(-1) is executed immediately in 
-first iteration,
-
-independent of if result(true or false).
-
-and config file is not reading never.
-
-After fix this problem all work fine!
-
-I hope this post will save someone time.
-
+Pozdrawiam
+Adam Wyrwisz
