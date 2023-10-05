@@ -2,57 +2,47 @@ Return-Path: <linux-ppp-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 738ACE8FDDA
-	for <linux-ppp@archiver.kernel.org>; Wed,  4 Oct 2023 07:48:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 29E77E92723
+	for <linux-ppp@archiver.kernel.org>; Thu,  5 Oct 2023 18:11:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232666AbjJDHss (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Wed, 4 Oct 2023 03:48:48 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47940 "EHLO
+        id S229475AbjJESKe (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Thu, 5 Oct 2023 14:10:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54926 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232694AbjJDHsr (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Wed, 4 Oct 2023 03:48:47 -0400
-X-Greylist: delayed 437 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 04 Oct 2023 00:48:41 PDT
-Received: from mail.citycodes.pl (mail.citycodes.pl [158.255.215.195])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 32DBDAB
-        for <linux-ppp@vger.kernel.org>; Wed,  4 Oct 2023 00:48:41 -0700 (PDT)
-Received: by mail.citycodes.pl (Postfix, from userid 1001)
-        id 374601F442; Wed,  4 Oct 2023 09:40:54 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=citycodes.pl; s=mail;
-        t=1696405283; bh=mMhfBvhM53FtUQl1P3lyeSY5aDBQYiR8qQBy6YFQHi0=;
-        h=Date:From:To:Subject:From;
-        b=UCxSjhJgzwoBzUUbHaDJ3ZryfVwo3909PStof318yfQjCEwUpRQwtu8r9mh04LQMD
-         GQFs8XDAr50Ctti0VKdJ3vAiAM9md6rjB5trl6CNYH1hSUoGwmUGe9LbAxUACbRSI4
-         iWKX+GfZrePaQ3sPsg/l3TShx2NXR/TNsA8ojVS1e+RSJot2Fi+Cqj4rGDflFSgP8t
-         Go/1CyShrKr2xT7vVeWH5TN7QqOy2vqbh2sT7pcAqFwHTXxQaHqefw0BKYrpLbojOL
-         jxpV4Fo9MehmzM7qX+uifU10NjtxXWjDKdXGMw2fp/wkyZa+K3U9Mp/pxkYvZxYxVq
-         SvkUB7VG5Rbyg==
-Received: by mail.citycodes.pl for <linux-ppp@vger.kernel.org>; Wed,  4 Oct 2023 07:40:44 GMT
-Message-ID: <20231004084500-0.1.7v.j0hi.0.fb8jg2kkgg@citycodes.pl>
-Date:   Wed,  4 Oct 2023 07:40:44 GMT
-From:   "Kamil Lasek" <kamil.lasek@citycodes.pl>
-To:     <linux-ppp@vger.kernel.org>
-Subject: =?UTF-8?Q?Rozszerzenie_Programu_M=C3=B3j_Pr=C4=85d_5.0?=
-X-Mailer: mail.citycodes.pl
+        with ESMTP id S232499AbjJESKA (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Thu, 5 Oct 2023 14:10:00 -0400
+X-Greylist: delayed 527 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 05 Oct 2023 11:09:42 PDT
+Received: from w4.tutanota.de (w4.tutanota.de [81.3.6.165])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 312D710DA
+        for <linux-ppp@vger.kernel.org>; Thu,  5 Oct 2023 11:09:42 -0700 (PDT)
+Received: from tutadb.w10.tutanota.de (unknown [192.168.1.10])
+        by w4.tutanota.de (Postfix) with ESMTP id 1ED59106031E
+        for <linux-ppp@vger.kernel.org>; Thu,  5 Oct 2023 18:00:53 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1696528853;
+        s=s1; d=tutanota.com;
+        h=From:From:To:To:Subject:Subject:Content-Description:Content-ID:Content-Type:Content-Type:Content-Transfer-Encoding:Content-Transfer-Encoding:Cc:Date:Date:In-Reply-To:MIME-Version:MIME-Version:Message-ID:Message-ID:Reply-To:References:Sender;
+        bh=e/N5L51U8kCfdHaWyBtVQHGNoGZyMEOAdgqa+V1jBro=;
+        b=i4aSEisvai1hyeRkF8PKqMhiP0tYLKl03gA83VW7IT/jb43vMyMBnmIxoBIBgwyA
+        vV2bQ6erp4oBrdNBKFT/mr2Fhq02upuVLtQANCxEAIvhkOCEYy4eqFmL9c2CPMZD4To
+        x2cXWxQcAJVpQ+sfEMqu5QTsg0M4kbraDWNqZvMuj8mulyF6dP8ML6QCPOg7Vs8Aj4R
+        nWc/bhlzax3L1jHFtfFnUyUgU/lUGrgkpdEJkiO6bzrhEUfBRalFBpWJ7fSdojsJfSi
+        QruXMX+wCnah5+pdyiFQgIemLAz300U1+urX86XX9YcpCzS3KcrDFWbc/bwZyKZJyNp
+        Zep50z6XkQ==
+Date:   Thu, 5 Oct 2023 20:00:53 +0200 (CEST)
+From:   Sagar Acharya <sagaracharya@tutanota.com>
+To:     Linux Ppp <linux-ppp@vger.kernel.org>
+Message-ID: <Ng-zxyt--3-9@tutanota.com>
+Subject: Support for udp
 MIME-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-Szanowni Pa=C5=84stwo!
+Does pppd support udp? I am able to access tcp but not udp with pppd.
+Thanking you
+Sagar Acharya
+https://humaaraartha.in/selfdost/selfdost.html
 
-W ramach nowej edycji programu M=C3=B3j Pr=C4=85d mog=C4=85 otrzyma=C4=87=
- Pa=C5=84stwo dofinansowanie na zakup i monta=C5=BC fotowoltaiki i/lub ma=
-gazynu energii. Maksymalna kwota dofinansowania wynosi 58 tys. z=C5=82.=20
-
-Jako firma wyspecjalizowana w tym zakresie zajmiemy si=C4=99 Pa=C5=84stwa=
- wnioskiem o dofinansowanie oraz instalacj=C4=85 i serwisem dopasowanych =
-do Pa=C5=84stwa budynku paneli s=C5=82onecznych.
-
-B=C4=99d=C4=99 wdzi=C4=99czny za informacj=C4=99 czy s=C4=85 Pa=C5=84stwo=
- zainteresowani.
-
-
-Pozdrawiam,
-Kamil Lasek
+Kindly cc me as I am not subscribed.
