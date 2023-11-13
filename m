@@ -2,82 +2,81 @@ Return-Path: <linux-ppp-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 613E2C4167D
-	for <linux-ppp@archiver.kernel.org>; Fri, 10 Nov 2023 18:17:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 31DECC4332F
+	for <linux-ppp@archiver.kernel.org>; Mon, 13 Nov 2023 01:22:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235667AbjKJSRQ (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Fri, 10 Nov 2023 13:17:16 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57768 "EHLO
+        id S229994AbjKMBWD (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
+        Sun, 12 Nov 2023 20:22:03 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40632 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1344747AbjKJSPD (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Fri, 10 Nov 2023 13:15:03 -0500
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 82D562B7B1;
-        Fri, 10 Nov 2023 03:10:26 -0800 (PST)
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 259BBC433C9;
-        Fri, 10 Nov 2023 11:10:26 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1699614626;
-        bh=VANhbifJBmxX82iSvi3j5Suzpz+UxaoUuMz9KrgLM4U=;
-        h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-        b=SO+khfQriRtIoMUpWGYD8eeQtg8JB6eVetLxcGWqxLQIJa74GHN2Ll6Os4T1Z/rMH
-         8f9Njr02z9bnw55UQWDKi35POjwdLXLuG5yuahUr078ocdzaGdMtb5kOML/emN2J7Y
-         J5dXmXtcCaCuxn9Tnc8JNwni3OIHG4rHcofzam7Ox8AQBaPCzBXFYPV1qW4cUzro3+
-         Zn0vOLZrb9EZlfb7qQcL0AY4Dx81CZOx2PaT2d1pbypV2KGZnQa7z7o/t99vHFhOPI
-         MKc1bh5/gqbaavxe/08I1dPvZoyY/qVqFqIMLRHB+aIOCYhCdChg0Q8+vjKfttWA/S
-         6hCD+xXpzhRgA==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-        by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 0D993E00084;
-        Fri, 10 Nov 2023 11:10:26 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH net] tty: Fix uninit-value access in ppp_sync_receive()
-From:   patchwork-bot+netdevbpf@kernel.org
-Message-Id: <169961462605.23529.6945068344166343230.git-patchwork-notify@kernel.org>
-Date:   Fri, 10 Nov 2023 11:10:26 +0000
-References: <20231108154420.1474853-1-syoshida@redhat.com>
-In-Reply-To: <20231108154420.1474853-1-syoshida@redhat.com>
-To:     Shigeru Yoshida <syoshida@redhat.com>
-Cc:     davem@davemloft.net, edumazet@google.com, kuba@kernel.org,
-        pabeni@redhat.com, linux-ppp@vger.kernel.org,
-        netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+        with ESMTP id S229789AbjKMBWC (ORCPT
+        <rfc822;linux-ppp@vger.kernel.org>); Sun, 12 Nov 2023 20:22:02 -0500
+Received: from mail-ua1-x92b.google.com (mail-ua1-x92b.google.com [IPv6:2607:f8b0:4864:20::92b])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1EB851BFB
+        for <linux-ppp@vger.kernel.org>; Sun, 12 Nov 2023 17:21:59 -0800 (PST)
+Received: by mail-ua1-x92b.google.com with SMTP id a1e0cc1a2514c-7ba8e3107c9so1548305241.1
+        for <linux-ppp@vger.kernel.org>; Sun, 12 Nov 2023 17:21:59 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1699838518; x=1700443318; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:subject:references
+         :in-reply-to:message-id:cc:to:from:date:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=3vNurDf4CzF9QkoO3QEAYVk3z0Y7lyIAVjWoGpsctJQ=;
+        b=KB/5dor3DmCO5wfvgSADINlKWtFIpzd9TDcqHZHCA+g09UTRvBOIHkdXcqNcqAwDNm
+         FDA+wf7A2rzBkl3ybVkpmFmUqVQQhy0yvt0Ay0vzEjGjtgVMxNO02p1NGyrS4Tr0XFhI
+         bgG6eEJ1iVVpMLfeeMgRh/VA4N3PZ0Kr7aoI1My5pQ/LEtkLXzAOJ/RWFkHYYb6VATJY
+         o7Ophfh8UkAJblmMhMM17l/yObcuAyDojdjohcx4qTKIOYI9UVZxA/wZZrQ3bLBAgyE9
+         XfX/f1RCGD0euHrHUCQS6jCMz/qLNCaUA7UUDjSVgL5wTyGBsG3jgJEypjPTrNnm5o5s
+         AuMw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1699838518; x=1700443318;
+        h=content-transfer-encoding:mime-version:subject:references
+         :in-reply-to:message-id:cc:to:from:date:x-gm-message-state:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=3vNurDf4CzF9QkoO3QEAYVk3z0Y7lyIAVjWoGpsctJQ=;
+        b=RzbTPSn0DZ1y6jH5KaCGTIZY8Nk2Rp28W1lkVSSPJj5+VVUYCtKpsMukxv6e5rDSfD
+         Gr4pLDxWZwqrPp4SUC1PBUyoZ8qn3HNs26BpxAyM8lW0TYL9DNCA+qZG2Z0RSt+8MAOk
+         nXGEqAxbkFWGblsKBYSh5UO1FONGFmKwp1DfJvxZL8gljm4PmV6EEf5xuYFL81X8jRNs
+         Zvx1fnqwBKvJt3WKlRz5gGhtrwvTOV++cUD/H7FlwRASK3qb7cKlRB15W0TU7gjw+giY
+         UU/PBZVAKcUnTdYbKXGRGJDEkodfjFv43GI8d4aYQMETXpdctQ25tloi6ptRs/uTYHRB
+         x0pw==
+X-Gm-Message-State: AOJu0YxbWGFakWygpBlwWx7noXxh0L6Y8snMOz/dzy5jmFD/yjBTwYg/
+        6Um423DkEqJlP+3MNEibpZCVFGjkzh8=
+X-Google-Smtp-Source: AGHT+IFvsR+EXsTXVaIKfanbSgbZXFubJrFTNZFIMGaXHuLkIN1rDz2U7ADVLdtVMPCG7yLQJ9N1GQ==
+X-Received: by 2002:a05:6102:1481:b0:45d:9cb0:28fc with SMTP id d1-20020a056102148100b0045d9cb028fcmr6669986vsv.9.1699838518048;
+        Sun, 12 Nov 2023 17:21:58 -0800 (PST)
+Received: from localhost (240.157.150.34.bc.googleusercontent.com. [34.150.157.240])
+        by smtp.gmail.com with ESMTPSA id i25-20020ac84899000000b0041cc2852f62sm1559620qtq.5.2023.11.12.17.21.57
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 12 Nov 2023 17:21:57 -0800 (PST)
+Date:   Sun, 12 Nov 2023 20:21:57 -0500
+From:   Willem de Bruijn <willemdebruijn.kernel@gmail.com>
+To:     William Tambe <tambewilliam@gmail.com>,
+        Paul Mackerras <paulus@ozlabs.org>
+Cc:     linux-ppp@vger.kernel.org
+Message-ID: <65517a353b434_a2295294bc@willemb.c.googlers.com.notmuch>
+In-Reply-To: <CAF8i9mO24ByRSjNR6N0ym-LU30z-NTfiw=Q_+Dvx6L6baEq0HQ@mail.gmail.com>
+References: <CAF8i9mO42DbVzPhz9cpaL2frpYUyOcSC7qdx6r6bYxkS+QYrKw@mail.gmail.com>
+ <ZRpj0LotoVlBRWs7@cleo>
+ <CAF8i9mO24ByRSjNR6N0ym-LU30z-NTfiw=Q_+Dvx6L6baEq0HQ@mail.gmail.com>
+Subject: Re: [PATCH] drivers/net/slip: prevent data alignment fault
+Mime-Version: 1.0
+Content-Type: text/plain;
+ charset=utf-8
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
 
-Hello:
+William Tambe wrote:
+> Thanks, sending v2 of the patch that uses put_unaligned() here, and
+> get_unaligned().
 
-This patch was applied to netdev/net.git (main)
-by David S. Miller <davem@davemloft.net>:
+I can't find your v2 archived in lore, so responding to this thread.
 
-On Thu,  9 Nov 2023 00:44:20 +0900 you wrote:
-> KMSAN reported the following uninit-value access issue:
-> 
-> =====================================================
-> BUG: KMSAN: uninit-value in ppp_sync_input drivers/net/ppp/ppp_synctty.c:690 [inline]
-> BUG: KMSAN: uninit-value in ppp_sync_receive+0xdc9/0xe70 drivers/net/ppp/ppp_synctty.c:334
->  ppp_sync_input drivers/net/ppp/ppp_synctty.c:690 [inline]
->  ppp_sync_receive+0xdc9/0xe70 drivers/net/ppp/ppp_synctty.c:334
->  tiocsti+0x328/0x450 drivers/tty/tty_io.c:2295
->  tty_ioctl+0x808/0x1920 drivers/tty/tty_io.c:2694
->  vfs_ioctl fs/ioctl.c:51 [inline]
->  __do_sys_ioctl fs/ioctl.c:871 [inline]
->  __se_sys_ioctl+0x211/0x400 fs/ioctl.c:857
->  __x64_sys_ioctl+0x97/0xe0 fs/ioctl.c:857
->  do_syscall_x64 arch/x86/entry/common.c:51 [inline]
->  do_syscall_64+0x44/0x110 arch/x86/entry/common.c:82
->  entry_SYSCALL_64_after_hwframe+0x63/0x6b
-> 
-> [...]
+If you want a patch merged to networking, you'll have to cc
+netdev@vger.kernel.org and the networking maintainers.
 
-Here is the summary with links:
-  - [net] tty: Fix uninit-value access in ppp_sync_receive()
-    https://git.kernel.org/netdev/net/c/719639853d88
-
-You are awesome, thank you!
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+Consider running scripts/get_maintainer.pl and also see
+https://www.kernel.org/doc/Documentation/process/maintainer-netdev.rst
 
