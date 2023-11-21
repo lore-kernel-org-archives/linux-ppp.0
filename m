@@ -1,75 +1,43 @@
-Return-Path: <linux-ppp-owner@vger.kernel.org>
-X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
-	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A7C0C4332F
-	for <linux-ppp@archiver.kernel.org>; Mon, 13 Nov 2023 11:10:29 +0000 (UTC)
-Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229595AbjKMLKa (ORCPT <rfc822;linux-ppp@archiver.kernel.org>);
-        Mon, 13 Nov 2023 06:10:30 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56368 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229658AbjKMLK3 (ORCPT
-        <rfc822;linux-ppp@vger.kernel.org>); Mon, 13 Nov 2023 06:10:29 -0500
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ED19F10E2;
-        Mon, 13 Nov 2023 03:10:24 -0800 (PST)
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 8D12AC433CC;
-        Mon, 13 Nov 2023 11:10:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1699873824;
-        bh=ExY8ABX+iV1daP2D0jLDdL7Fvhf76TXH+N7JEGyRTRI=;
-        h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-        b=utTQ57/7tis1IBrFNvNhsfTp8PD2nGin4E3EZxjUcgTEUlGlmZXTsOlx34/fl80Lz
-         yAZG7Oyqi2x5UIdUVf+UxVBbYn9H9PvA4SpY/ATQBZgxCb98EjU0g7ALaZ09tOslY/
-         gf5wYeZBKTijG6uoAG1Bsi7mR9agqcErfzvcFI0ySG/4mSbY/UAIIZ3LeDG4WLnVph
-         qkCXI7tnTwRpddt5wHt1pIzCCvBwiCIw97ThPLhnc9NByj0vFKDgGiPx7XaMgIBBQd
-         CxvMneHmCLbqwvHdrBJXleCKa5KmHIUAgn91R+khUKFx2SSapqPuoIIbaSsyiaLaSV
-         IsLBEdHFld3yw==
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (localhost.localdomain [127.0.0.1])
-        by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id 6A69BC04DD9;
-        Mon, 13 Nov 2023 11:10:24 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH net] ppp: limit MRU to 64K
-From:   patchwork-bot+netdevbpf@kernel.org
-Message-Id: <169987382443.356.16944997528877845349.git-patchwork-notify@kernel.org>
-Date:   Mon, 13 Nov 2023 11:10:24 +0000
-References: <20231113031705.803615-1-willemdebruijn.kernel@gmail.com>
-In-Reply-To: <20231113031705.803615-1-willemdebruijn.kernel@gmail.com>
-To:     Willem de Bruijn <willemdebruijn.kernel@gmail.com>
-Cc:     netdev@vger.kernel.org, davem@davemloft.net, kuba@kernel.org,
-        edumazet@google.com, pabeni@redhat.com, linux-ppp@vger.kernel.org,
-        stable@vger.kernel.org, mitch@sfgoth.com, mostrows@earthlink.net,
-        jchapman@katalix.com, willemb@google.com,
-        syzbot+6177e1f90d92583bcc58@syzkaller.appspotmail.com
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B734217CA
+	for <linux-ppp@vger.kernel.org>; Tue, 21 Nov 2023 00:57:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="LD8vNAwf"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1456BC433C8;
+	Tue, 21 Nov 2023 00:57:25 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
+	s=korg; t=1700528245;
+	bh=WydedWHI5hgSzmjYaAgFcEvQrWisnvd0Tah1sl3VwoE=;
+	h=Date:From:To:Subject:From;
+	b=LD8vNAwfhT29vyVRiSwbCOQgwQivReJdwmBvSgC8BGvkL7WjyYq0RJ+0+LtJNdj+8
+	 2v8+3T/V6FnP2VZmscqp+9oVMA8uKrJ6a6PPuvtKRiXNzcOHVPKZ6GZv/lEuKAE3/p
+	 36D8g6U93o5Y5KGoKLxp2uCEgiVc2bbM4PFwPHGY=
+Date: Mon, 20 Nov 2023 19:57:24 -0500
+From: Konstantin Ryabitsev <konstantin@linuxfoundation.org>
+To: linux-ppp@vger.kernel.org
+Subject: PSA: this list has moved to new vger infra (no action required)
+Message-ID: <20231120-small-marvellous-stingray-251ef0@nitro>
 Precedence: bulk
-List-ID: <linux-ppp.vger.kernel.org>
 X-Mailing-List: linux-ppp@vger.kernel.org
+List-Id: <linux-ppp.vger.kernel.org>
+List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-Hello:
+Hello, all:
 
-This patch was applied to netdev/net.git (main)
-by David S. Miller <davem@davemloft.net>:
+This list has been migrated to new vger infrastructure. No action is required
+on your part and there should be no change in how you interact with this list.
 
-On Sun, 12 Nov 2023 22:16:32 -0500 you wrote:
-> From: Willem de Bruijn <willemb@google.com>
-> 
-> ppp_sync_ioctl allows setting device MRU, but does not sanity check
-> this input.
-> 
-> Limit to a sane upper bound of 64KB.
-> 
-> [...]
+This message acts as a verification test that the archives are properly
+updating.
 
-Here is the summary with links:
-  - [net] ppp: limit MRU to 64K
-    https://git.kernel.org/netdev/net/c/c0a2a1b0d631
+If something isn't working or looking right, please reach out to
+helpdesk@kernel.org.
 
-You are awesome, thank you!
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
-
+Best regards,
+-K
