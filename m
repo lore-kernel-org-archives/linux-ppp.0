@@ -1,35 +1,55 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from out-174.mta1.migadu.com (out-174.mta1.migadu.com [95.215.58.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CCA77255E29;
-	Fri, 21 Feb 2025 23:50:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12791206F34
+	for <linux-ppp@vger.kernel.org>; Sat, 22 Feb 2025 09:26:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1740181803; cv=none; b=dwZ0+xrvXraIoMK56T2e5hkFh7NEFt+8z69iCb8l7pLZ8HFNRktaUyQrr3qMTHjRJpNNoqkKclyCTZay1m1fNq/u05l+XligLbk3+unw4Saqu7x4p3mML9DnsNX4gQ0ly1J4kQxiQdTq4luViar1OqYoon3jjE/C/l1CgMSD9QY=
+	t=1740216389; cv=none; b=T5/eZYR9Rk5s/pFtz3dM3OmHmLFL0/0ImekJH57oMEswSQ0fJr6F+xXDcCtZTRPM8CHvBJhfaejJLhPPhOHrY6uKtW4Qa6ZqYrmOSyRAKgt1CIEeT7hN182+HRXyQImslQ7V4CrHWYXKOe8GKVjY6JY9ySbm86RTh+mffvSixC4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1740181803; c=relaxed/simple;
-	bh=CTqJ/KmzI6Gqn0P8GISxBeKnxm42pSWuEHz+MsnFwsw=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=Ha7J3DmgFjjEBnRmUT017nVDVLuzmzmoktZ6FWv+lOI8nY7RpPm00cNzupT2+BR5Eu1efsI8XFet4/WLFH05K2agSuTiZSTH+odPOzwqWtTlPB42SUTY7H2UbR6XnLFlUrGMJpLBIPnhDIbVJ/UVk3kvxx1gO/mhoi4rWg1pVgQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=BDu9ISbE; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1740216389; c=relaxed/simple;
+	bh=sfIpC4mK60ZTxM8L5Lg3oNfU+bsuIGzSy6AGc6+L+74=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=Kfxzx1K4RDco732ZfljRHjiVeMf8qN0gZ+kO5YPjNypheBv0nYLIrwCcwJBrOBmLkLVOeJd7lSRR8pHDDD2FsatLmkv7A1m7p8cm6Q/Yxacl3Hzuc5tYkp0w488wbHcSmc8AD+vsY0P1tN57ZMXuIasqgVzjwNzDURZwP/RNnbw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=XYst5pqH; arc=none smtp.client-ip=95.215.58.174
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="BDu9ISbE"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4D170C4CEE8;
-	Fri, 21 Feb 2025 23:50:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1740181802;
-	bh=CTqJ/KmzI6Gqn0P8GISxBeKnxm42pSWuEHz+MsnFwsw=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=BDu9ISbENe4QBTzFvL3z1yzMFvK03RKEkTbSwfBUkHNtTUh87YeINV9ofzYEHWC3S
-	 jZzNU5gsxWbwLeHefuhEiZ9tiDlx3f/7HNbz6+540xOxAjI7PR0td6mH30Y3+TKUgF
-	 LvyTFKZzhdtpcsU6ypDidAaK+ncYlAPPafKV4INeuNv7tC9FhmAMN0Vo6m1FyHhHaY
-	 CchC7RgW86hAUItr0fS49w52qJFaotrHr/KW9nOdhhDez05BFc79K9glnKMMjqoXTE
-	 2B5QJHf8bMDZ6dD1+XamNosy4PieEtpvxtm9eOjBTRJHtAiLr3CyiD+AQA01DPTnNn
-	 +FzWQRl5jE+uA==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 710DC380CEEC;
-	Fri, 21 Feb 2025 23:50:34 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="XYst5pqH"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1740216385;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=tdgFqFXXtd2PsA/56XMx8Rklb2PiwMNcWaN1bikm/tE=;
+	b=XYst5pqH/ObdTqPVLmnwxWcsYwNoZwvPpQc2HFwBJoXoSTiy15eALlQ6UOgftY0KcQxXAx
+	N1pYOPF+7gqVS9tlPyRPPFa+9eHUnbUR17v7EVFmJKIWLNCl80giCbxW0vNQstQwqg2lDV
+	w6/W5Y8Xe1gs/Yf9IIoxxbZNrYoCZLg=
+From: Jiayuan Chen <jiayuan.chen@linux.dev>
+To: bpf@vger.kernel.org,
+	netdev@vger.kernel.org
+Cc: andrew+netdev@lunn.ch,
+	davem@davemloft.net,
+	edumazet@google.com,
+	kuba@kernel.org,
+	pabeni@redhat.com,
+	horms@kernel.org,
+	ricardo@marliere.net,
+	jiayuan.chen@linux.dev,
+	viro@zeniv.linux.org.uk,
+	dmantipov@yandex.ru,
+	aleksander.lobakin@intel.com,
+	linux-ppp@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	mrpre@163.com,
+	syzbot+853242d9c9917165d791@syzkaller.appspotmail.com
+Subject: [PATCH net-next v3 1/1] ppp: Fix KMSAN warning by initializing 2-byte header
+Date: Sat, 22 Feb 2025 17:25:56 +0800
+Message-ID: <20250222092556.274267-2-jiayuan.chen@linux.dev>
+In-Reply-To: <20250222092556.274267-1-jiayuan.chen@linux.dev>
+References: <20250222092556.274267-1-jiayuan.chen@linux.dev>
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
@@ -37,74 +57,49 @@ List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH net-next v10 00/13] net: Improve netns handling in rtnetlink
-From: patchwork-bot+netdevbpf@kernel.org
-Message-Id: 
- <174018183327.2240430.4249639047640655494.git-patchwork-notify@kernel.org>
-Date: Fri, 21 Feb 2025 23:50:33 +0000
-References: <20250219125039.18024-1-shaw.leon@gmail.com>
-In-Reply-To: <20250219125039.18024-1-shaw.leon@gmail.com>
-To: Xiao Liang <shaw.leon@gmail.com>
-Cc: netdev@vger.kernel.org, linux-kselftest@vger.kernel.org,
- kuniyu@amazon.com, kuba@kernel.org, davem@davemloft.net, dsahern@kernel.org,
- edumazet@google.com, pabeni@redhat.com, andrew+netdev@lunn.ch,
- horms@kernel.org, shuah@kernel.org, donald.hunter@gmail.com,
- alex.aring@gmail.com, stefan@datenfreihafen.org, miquel.raynal@bootlin.com,
- steffen.klassert@secunet.com, herbert@gondor.apana.org.au,
- linux-rdma@vger.kernel.org, linux-can@vger.kernel.org,
- osmocom-net-gprs@lists.osmocom.org, bpf@vger.kernel.org,
- linux-ppp@vger.kernel.org, wireguard@lists.zx2c4.com,
- linux-wireless@vger.kernel.org, b.a.t.m.a.n@lists.open-mesh.org,
- bridge@lists.linux.dev, linux-wpan@vger.kernel.org,
- linux-kernel@vger.kernel.org
+X-Migadu-Flow: FLOW_OUT
 
-Hello:
+The PPP driver adds an extra 2-byte header to enable socket filters to run
+correctly. However, the driver only initializes the first byte, which
+indicates the direction. For normal BPF programs, this is not a problem
+since they only read the first byte.
 
-This series was applied to netdev/net-next.git (main)
-by Jakub Kicinski <kuba@kernel.org>:
+Nevertheless, for carefully crafted BPF programs, if they read the second
+byte, this will trigger a KMSAN warning for reading uninitialized data.
 
-On Wed, 19 Feb 2025 20:50:26 +0800 you wrote:
-> This patch series includes some netns-related improvements and fixes for
-> rtnetlink, to make link creation more intuitive:
-> 
->  1) Creating link in another net namespace doesn't conflict with link
->     names in current one.
->  2) Refector rtnetlink link creation. Create link in target namespace
->     directly.
-> 
-> [...]
+Reported-by: syzbot+853242d9c9917165d791@syzkaller.appspotmail.com
+Closes: https://lore.kernel.org/bpf/000000000000dea025060d6bc3bc@google.com/
+Signed-off-by: Jiayuan Chen <jiayuan.chen@linux.dev>
+---
+ drivers/net/ppp/ppp_generic.c | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
 
-Here is the summary with links:
-  - [net-next,v10,01/13] rtnetlink: Lookup device in target netns when creating link
-    https://git.kernel.org/netdev/net-next/c/ec061546c6cf
-  - [net-next,v10,02/13] rtnetlink: Pack newlink() params into struct
-    https://git.kernel.org/netdev/net-next/c/69c7be1b903f
-  - [net-next,v10,03/13] net: Use link/peer netns in newlink() of rtnl_link_ops
-    https://git.kernel.org/netdev/net-next/c/cf517ac16ad9
-  - [net-next,v10,04/13] ieee802154: 6lowpan: Validate link netns in newlink() of rtnl_link_ops
-    https://git.kernel.org/netdev/net-next/c/3533717581dd
-  - [net-next,v10,05/13] net: ip_tunnel: Don't set tunnel->net in ip_tunnel_init()
-    https://git.kernel.org/netdev/net-next/c/9e17b2a1a097
-  - [net-next,v10,06/13] net: ip_tunnel: Use link netns in newlink() of rtnl_link_ops
-    https://git.kernel.org/netdev/net-next/c/eacb1160536e
-  - [net-next,v10,07/13] net: ipv6: Init tunnel link-netns before registering dev
-    https://git.kernel.org/netdev/net-next/c/db014522f356
-  - [net-next,v10,08/13] net: ipv6: Use link netns in newlink() of rtnl_link_ops
-    https://git.kernel.org/netdev/net-next/c/5e72ce3e3980
-  - [net-next,v10,09/13] net: xfrm: Use link netns in newlink() of rtnl_link_ops
-    https://git.kernel.org/netdev/net-next/c/5314e3d68455
-  - [net-next,v10,10/13] rtnetlink: Remove "net" from newlink params
-    https://git.kernel.org/netdev/net-next/c/9c0fc091dc01
-  - [net-next,v10,11/13] rtnetlink: Create link directly in target net namespace
-    https://git.kernel.org/netdev/net-next/c/7ca486d08a30
-  - [net-next,v10,12/13] selftests: net: Add python context manager for netns entering
-    https://git.kernel.org/netdev/net-next/c/030329416232
-  - [net-next,v10,13/13] selftests: net: Add test cases for link and peer netns
-    https://git.kernel.org/netdev/net-next/c/85cb3711acb8
-
-You are awesome, thank you!
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 4583e15ad03a..29a7a21cb096 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -1762,10 +1762,17 @@ ppp_send_frame(struct ppp *ppp, struct sk_buff *skb)
+ 
+ 	if (proto < 0x8000) {
+ #ifdef CONFIG_PPP_FILTER
+-		/* check if we should pass this packet */
+-		/* the filter instructions are constructed assuming
+-		   a four-byte PPP header on each packet */
+-		*(u8 *)skb_push(skb, 2) = 1;
++		/* Check if we should pass this packet.
++		 * The filter instructions are constructed assuming
++		 * a four-byte PPP header on each packet. The first byte
++		 * indicates the direction, and the second byte is meaningless,
++		 * but we still need to initialize it to prevent crafted BPF
++		 * programs from reading them which would cause reading of
++		 * uninitialized data.
++		 */
++		skb_push(skb, 2);
++		skb->data[0] = 1;
++		skb->data[1] = 0;
+ 		if (ppp->pass_filter &&
+ 		    bpf_prog_run(ppp->pass_filter, skb) == 0) {
+ 			if (ppp->debug & 1)
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.47.1
 
