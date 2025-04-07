@@ -1,22 +1,22 @@
 Received: from plesk.hostmyservers.fr (plesk.hostmyservers.fr [45.145.164.37])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9DE301CCEF0;
-	Mon,  7 Apr 2025 14:17:13 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7CCD1D79B3;
+	Mon,  7 Apr 2025 14:17:53 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.145.164.37
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744035435; cv=none; b=UVBvIwo0fbxN4nXWgcdY8zkkhi8HMk+mZp69v7mfm4zVXdcTDbSCePNq1zp8lGPc+JeKUgwgbbLM5ZzoSgmuc9oMNVOcXc+LKOYNlQhX3Pw+yxWS3TIyHMKhBt00K+WA6FDPsBbPCzmLs1cMorhYJeh7mVhBs/Vrl+Jfj+m2o5w=
+	t=1744035475; cv=none; b=DMbF5KpIdsQi0Re1/iIGX12SMexcyNy2hm9WviBBkb219ENN2EwnmI+IZ45n3ImBem5qBx9lOWEF82wfyEIdTA49WHScCCc/i0SXpKoFnI20RU3WBd2ybb8dlosX6V8O/K5BZEm5fvTj/Q2jFCLOo+0L5BYRKYYZNjVbjS+reEI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744035435; c=relaxed/simple;
-	bh=6eP8cjtyo3Q8s1Sd2g+u3JRNHnc4nVIEsVfAIGpdbww=;
+	s=arc-20240116; t=1744035475; c=relaxed/simple;
+	bh=ERmC0VihSwVE+kfQl3h22QpzW0EQ3aDUpCiKyvDOEq0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lUg5E6R5hKf+97ElpPOILKpYl0j51OCHwbbUmUmNys/m5t+0hNLoahnPj81oq+E/wrECoOLsMohjRAg7mSoxJDi7RlQQ3Yyo9QXqIILtcyCaDKxgzpoY1NUP33uXni2wPuD6kfl5MXtjtn1lhXU+gsegHY8AE1iAt7lPSYNMtdI=
+	 MIME-Version; b=Eo+ekFPfD7+CvtQ4g6pdvhrspyhFzNklIKJmFw5X4onnfeusOy+DbU2i+pwYOimlYuihGmQQ80babPLnkS2maq4rLZ9t4E5m+JVTm3ADAwxQmSy1ZCc0mROwfVEe3GCLPHQqP/gxLULCYsW8OpnFXzF7u596LatdGWSDolFajgI=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=arnaud-lcm.com; spf=pass smtp.mailfrom=arnaud-lcm.com; arc=none smtp.client-ip=45.145.164.37
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=arnaud-lcm.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arnaud-lcm.com
 Received: from arnaudlcm-X570-UD.. (unknown [IPv6:2a01:e0a:3e8:c0d0:3b93:9152:d50e:6d45])
-	by plesk.hostmyservers.fr (Postfix) with ESMTPSA id 2DC1728D8AF;
-	Mon,  7 Apr 2025 14:17:11 +0000 (UTC)
+	by plesk.hostmyservers.fr (Postfix) with ESMTPSA id D37DB28D8AF;
+	Mon,  7 Apr 2025 14:17:51 +0000 (UTC)
 Authentication-Results: Plesk;
 	spf=pass (sender IP is 2a01:e0a:3e8:c0d0:3b93:9152:d50e:6d45) smtp.mailfrom=contact@arnaud-lcm.com smtp.helo=arnaudlcm-X570-UD..
 Received-SPF: pass (Plesk: connection is authenticated)
@@ -32,8 +32,8 @@ Cc: andrew+netdev@lunn.ch,
 	pabeni@redhat.com,
 	syzkaller-bugs@googlegroups.com
 Subject: Re: [syzbot]
-Date: Mon,  7 Apr 2025 16:17:05 +0200
-Message-ID: <20250407141705.92770-1-contact@arnaud-lcm.com>
+Date: Mon,  7 Apr 2025 16:17:47 +0200
+Message-ID: <20250407141747.92874-1-contact@arnaud-lcm.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <67ae3912.050a0220.21dd3.0021.GAE@google.com>
 References: <67ae3912.050a0220.21dd3.0021.GAE@google.com>
@@ -44,12 +44,12 @@ List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-PPP-Message-ID: <174403543168.31791.15923234631150712621@Plesk>
+X-PPP-Message-ID: <174403547232.32667.4417870378199395325@Plesk>
 X-PPP-Vhost: arnaud-lcm.com
 
 Author: contact@arnaud-lcm.com
 
-#syz test: git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+#syz test
 
 diff --git a/drivers/net/ppp/ppp_synctty.c b/drivers/net/ppp/ppp_synctty.c
 index 644e99fc3623..520d895acc60 100644
