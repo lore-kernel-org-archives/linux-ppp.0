@@ -1,67 +1,79 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 24AFC33FE09;
-	Mon,  9 Mar 2026 21:01:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 02CD437A490;
+	Tue, 10 Mar 2026 02:20:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773090089; cv=none; b=Qmk/ls8+hDXa+v8OpdTbkMx4I2NiH2ftaOZvXs32b1h7NL0ie9mrXWsY/gckf63elXbxeTAptprcLr4krBCoSX2zNOXYZgSOVc1pN0SI8tIiLGL28XLGqvmKtiQdnN1g3Pq3bZv54Vh6qMPGKZ5jdRPnKIalkPUlO973XL7Mmn8=
+	t=1773109218; cv=none; b=cfD+XoyHg7h2QP1Rf/htuhheIVGPRUzS9CZChSBvBl74bFAKMfXO5N36Pzao8YonM0ll1PUePJWmfAlUGFCTxEHhx1rJEe7PUvzqOiTsln/AnI0zFu7zRim7t9uiFHPaisKlWMuXlnAbxLU6ziATf/vCKiYhx6gXJ9Ov/VVZQFs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773090089; c=relaxed/simple;
-	bh=eWuwbM/YVSHop4C2+irDcn4M6R812zJY3pH6YRcKOH0=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=nT+VXPZyznjbd5iisdcu2f8L1oDcFxlmsTbDS/9cODbvAuCd0kF2u+SRAgKGBoqv4GCYiMQAcfe+7qhunyadoDqdZEpW2JuVGf14y+RWps3QQYPDdGq8QH5y0DFwi4gZUXN94XBkI8wXdKds6SbRujgzKpvLXzuguekYXYf/2bQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VN2G6eGh; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1773109218; c=relaxed/simple;
+	bh=+Ef/bFPooCB7v7OTPo0B2SvGWKKa3ASfNvgFzMW4b3k=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=pskXGplTzhlS1qcVcnTc9JuWHy+DuT6wFfyEePFPO0FTYc1/UhBDMbC+LpSqhm+zItHzhnW5jIpc4nb4VFiM3vWR2K3TWML0fLcJSv8Jkoo/ENbzA1k3mVzxERD93kxdW5jQvUDa4T0QSDYlWE9mt5dFfEE8iX/e5xctejqXUdo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=g0INe24Y; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VN2G6eGh"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 38C6EC4CEF7;
-	Mon,  9 Mar 2026 21:01:28 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="g0INe24Y"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A70C4C4CEF7;
+	Tue, 10 Mar 2026 02:20:17 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1773090088;
-	bh=eWuwbM/YVSHop4C2+irDcn4M6R812zJY3pH6YRcKOH0=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=VN2G6eGhskvUChY8yyvklZoy8uenXvU6kqtOk05QtHv+MEkajT5HOSu8asxDNGnDG
-	 y25ZrbP+1xVs7OizRBPv5P08o/nmLnM5UsqARA6zAjz0zGYmqXGU0XTOE3MK3oFC/K
-	 /DSLbvgW2GQi3vuVV660EsElmySC2d7cNKeqGpMNwleetgrmX3Fa77actvKxg/sJSH
-	 6XrS0xSgLXBw5bJm3pefoPRPpGlH1A7V8phrKK4sigXynaMCiuASEOsAI8v+fYekYn
-	 Bc5JK0He9E4VKl7HojpuIIAJ6fVRM48vFnJFLuc0qsOiGirvADuoOqvNA1V6PHRr1L
-	 Woi94iVO+RTLQ==
-Date: Mon, 9 Mar 2026 14:01:27 -0700
-From: Jakub Kicinski <kuba@kernel.org>
-To: Qingfang Deng <dqfext@gmail.com>
-Cc: linux-ppp@vger.kernel.org, Andrew Lunn <andrew+netdev@lunn.ch>, "David
- S. Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, Paolo
- Abeni <pabeni@redhat.com>, David Ahern <dsahern@kernel.org>, Simon Horman
- <horms@kernel.org>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
- Felix Fietkau <nbd@nbd.name>, Willem de Bruijn <willemb@google.com>
-Subject: Re: [PATCH net-next v5] net: pppoe: implement GRO/GSO support
-Message-ID: <20260309140127.465b6ccd@kernel.org>
-In-Reply-To: <CALW65jatv71b7G6jpr4g-6j520RjLBDJMH8uta5MPJHmEM1S1g@mail.gmail.com>
-References: <20260305013852.3769-1-dqfext@gmail.com>
-	<20260306170411.49912ae1@kernel.org>
-	<CALW65jatv71b7G6jpr4g-6j520RjLBDJMH8uta5MPJHmEM1S1g@mail.gmail.com>
+	s=k20201202; t=1773109217;
+	bh=+Ef/bFPooCB7v7OTPo0B2SvGWKKa3ASfNvgFzMW4b3k=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=g0INe24Yo7Mpz1/ekg37jPAqYkmJKAZDgA7WzIPZBNnfz7/ILERJlB5DW6SjfpiIh
+	 mD57c27b14B8aTAIAYb4jDww9N59t1NU75bIdGMcArfpWW3N4rzAc/zQYfW0uiD5aB
+	 18kCfPWJWtX5CjLww4oOjgYxw+8I//MUV5fFBW4X/IdB+aY0z5ZMK64H0dC4FVY78K
+	 iIJdIkVtrY2zWi7wqwg/QkI7mH/JiQsD5BKTeoo5g3OiAoQjjwCNCO0mLatcMElCY1
+	 bJGtFthOWdm0PQt3FEmxA88CAOdsJ6sDWADz4imOFmIshSBi+tJpGRIXRB1q9vuIfR
+	 z47l+MXiu0hTQ==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 02DA13808200;
+	Tue, 10 Mar 2026 02:20:16 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH net-next] ppp: simplify input error handling
+From: patchwork-bot+netdevbpf@kernel.org
+Message-Id: 
+ <177310921454.2028885.14368988773145653916.git-patchwork-notify@kernel.org>
+Date: Tue, 10 Mar 2026 02:20:14 +0000
+References: <20260306093649.1048232-1-dqfext@gmail.com>
+In-Reply-To: <20260306093649.1048232-1-dqfext@gmail.com>
+To: Qingfang Deng <dqfext@gmail.com>
+Cc: andrew+netdev@lunn.ch, davem@davemloft.net, edumazet@google.com,
+ kuba@kernel.org, pabeni@redhat.com, mitch@sfgoth.com, horms@kernel.org,
+ linux-ppp@vger.kernel.org, netdev@vger.kernel.org,
+ linux-kernel@vger.kernel.org
 
-On Mon, 9 Mar 2026 18:46:59 +0800 Qingfang Deng wrote:
-> > Please add some selftests.  
+Hello:
+
+This patch was applied to netdev/net-next.git (main)
+by Jakub Kicinski <kuba@kernel.org>:
+
+On Fri,  6 Mar 2026 17:36:49 +0800 you wrote:
+> Currently, ppp_input_error() indicates an error by allocating a 0-length
+> skb and calling ppp_do_recv(). It takes an error code argument, which is
+> stored in skb->cb, but not used by ppp_receive_frame().
 > 
-> I haven't written a kselftest before. What tests should I include?
+> Simplify the error handling by removing the unused parameter and the
+> unnecessary skb allocation. Instead, call ppp_receive_error() directly
+> from ppp_input_error() under the recv lock, and the length check in
+> ppp_receive_frame() can be removed.
 > 
-> I think I can add a local ppp server and client over veth, and test
-> the connection with ping and iperf3.
+> [...]
 
-We have tools/testing/selftests/drivers/net/gro.c and associated Python
-test. (note I have ambiguous feelings about adding ppp cases to this
-file vs creating a new test, adding Willem to CC maybe he has some
-guidance)
+Here is the summary with links:
+  - [net-next] ppp: simplify input error handling
+    https://git.kernel.org/netdev/net-next/c/abb0eb0b033a
 
-The test itself should send and receive raw packets using packet
-sockets. That way you can easily inject arbitrary fragmented frames 
-on one end and check if they are coalesced correctly on the other.
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
+
