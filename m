@@ -1,46 +1,54 @@
-Received: from out-184.mta0.migadu.com (out-184.mta0.migadu.com [91.218.175.184])
+Received: from out-177.mta1.migadu.com (out-177.mta1.migadu.com [95.215.58.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5100435EDA4
-	for <linux-ppp@vger.kernel.org>; Wed,  8 Apr 2026 01:52:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.184
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03F1934A3C5
+	for <linux-ppp@vger.kernel.org>; Wed,  8 Apr 2026 02:43:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775613121; cv=none; b=Ay0UdAzY/4mw5Ji2zZ1+aVFrL9F2CAiVRO1Z+VIR9yk8vIxtsi+csSnQHaNc0b3341b1BVRTZ4Qzxwd6NJxTOKJsLZiLMYOKmdBpl2TG/ocJUY+v3FjN+2W5Hw6fVjjRqjssyG0coOxB/t+XddvIvjMSGEltrY7L0ZBVQzhQ4TU=
+	t=1775616200; cv=none; b=fpinQKDMXwHK4a/neOj9OhR3Q9Xxeez7tj0F0XFhNACJ2jtxCwTPzVLhlueUd7MUN5EP4Toc6mWXJ0CRx//ztwlAFSrTMnIF9CS7FEYcdyywTpPWZUOa4TD5BPadurUfohxnSH1DCLUy6u6Q7qATx5iCkWAGHVhvzfpuQ3ALLe4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775613121; c=relaxed/simple;
-	bh=Ta6AbvpaQKsB+xbANDMPvvgsDTmaP0zw1a4aSz+TAlo=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=i61ryFX9gPZuijb7mveOYqGsdr96KnM4wzA/+wbYm/3oSdesQw5U+G5rq3Sm3dsoTZ29efbog32A9xdYsD1NB2JDZ//KfkoJMoS5RA9wMxcI5WNUdWAHFjwZ2Z0G/MHs/l+dClRFURb382ZuHWaX54nZKFIja7YQUsd2cfJPJss=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=EjZvaDfd; arc=none smtp.client-ip=91.218.175.184
+	s=arc-20240116; t=1775616200; c=relaxed/simple;
+	bh=wc8ebE65UOu1ysogv3ZDcnkX89LztJOefOmPbTNJMjM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=oR7nE9kkBIvFQe0R6AeeOv5VJkRV62Ad7G8W67kxj5gw6pNLeshsP6NqggnQvIcs3LxKSrEcnXhYSY17q3noFx3vGR8kVDqAEPyoch3i0PkB77OlA0KV5suxM4iWn3NpQIlhFVx+1YKOUpbqk2zw0xOfwmjZ0OpqrSUE2WVaUN8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=xapIOMIZ; arc=none smtp.client-ip=95.215.58.177
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="EjZvaDfd"
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="xapIOMIZ"
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1775613108;
+	t=1775616186;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding;
-	bh=Iml5tzxAij83Kcy1JFiKcagKYg83tbdrbaf1N6ZaV+E=;
-	b=EjZvaDfdWhvhMHNkEgJrN6DKVIyz4OgrB4R2CZdmSy5qp67zQf/fXra9qaoxxuPOt6YCmz
-	h4LUbBgyioUPdGCoQl6Dh0f/JoGDj1IlI1UiE6PR3Ivs4j/YhHwQnquk6LW9nF7aNmiNiB
-	cxZS81Hg49lZUHvz2Jatb27DFL5uiTo=
+	bh=33eXA0SOhVw75BGKPw1R2kGeIPnZ2JkRRsLUeSlZmUo=;
+	b=xapIOMIZk4e7lMBCgcYMriHiENqeJAhP8uQd+H+AUKoYG8k+TVFEgQ5EEvaEipnTkAJmf+
+	ifi/tG3wafn1351xGoueKxXPHWoA9pNbW90gLoPegDDkxYpwRU5xuPOEi2ad5VEOeWe1BE
+	/9l1ktPhKJDdjioI/um1tYBa5jqklrQ=
 From: Qingfang Deng <qingfang.deng@linux.dev>
-To: Michal Ostrowski <mostrows@gmail.com>,
+To: linux-ppp@vger.kernel.org,
 	Andrew Lunn <andrew+netdev@lunn.ch>,
 	"David S. Miller" <davem@davemloft.net>,
 	Eric Dumazet <edumazet@google.com>,
 	Jakub Kicinski <kuba@kernel.org>,
 	Paolo Abeni <pabeni@redhat.com>,
-	Kees Cook <kees@kernel.org>,
-	Dawid Osuchowski <dawid.osuchowski@linux.intel.com>,
+	Michal Ostrowski <mostrows@gmail.com>,
 	Qingfang Deng <qingfang.deng@linux.dev>,
+	Yue Haibing <yuehaibing@huawei.com>,
+	Breno Leitao <leitao@debian.org>,
+	Kuniyuki Iwashima <kuniyu@google.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Kees Cook <kees@kernel.org>,
 	netdev@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Cc: linux-ppp@vger.kernel.org
-Subject: [PATCH net-next 1/2] pppox: remove sk_pppox() helper
-Date: Wed,  8 Apr 2026 09:51:33 +0800
-Message-ID: <20260408015138.280687-1-qingfang.deng@linux.dev>
+Cc: Paul Mackerras <paulus@ozlabs.org>,
+	Jaco Kroon <jaco@uls.co.za>,
+	James Carlson <carlsonj@workingcode.com>,
+	Wojciech Drewek <wojciech.drewek@intel.com>,
+	Guillaume Nault <gnault@redhat.com>
+Subject: [PATCH net v2] pppoe: drop PFC frames
+Date: Wed,  8 Apr 2026 10:42:39 +0800
+Message-ID: <20260408024245.312732-1-qingfang.deng@linux.dev>
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
@@ -50,113 +58,102 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
-The sk member can be directly accessed from struct pppox_sock without
-relying on type casting. Remove the sk_pppox() helper and update all
-call sites to use po->sk directly.
+RFC 2516 Section 7 states that Protocol Field Compression (PFC) is NOT
+RECOMMENDED for PPPoE. In practice, pppd does not support negotiating
+PFC for PPPoE sessions, and the current PPPoE driver assumes an
+uncompressed (2-byte) protocol field. However, the generic PPP layer
+function ppp_input() is not aware of the negotiation result, and still
+accepts PFC frames.
 
+If a peer with a broken implementation or an attacker sends a frame with
+a compressed (1-byte) protocol field, the subsequent PPP payload is
+shifted by one byte. This causes the network header to be 4-byte
+misaligned, which may trigger unaligned access exceptions on some
+architectures.
+
+To reduce the attack surface, drop PPPoE PFC frames. Introduce
+ppp_skb_is_compressed_proto() helper function to be used in both
+ppp_generic.c and pppoe.c to avoid open-coding.
+
+Fixes: 224cf5ad14c0 ("ppp: Move the PPP drivers")
 Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
 ---
- drivers/net/ppp/pppoe.c  | 10 +++++-----
- drivers/net/ppp/pptp.c   |  6 +++---
- include/linux/if_pppox.h |  5 -----
- 3 files changed, 8 insertions(+), 13 deletions(-)
+v2: retarget to net, and add a helper function
+ https://lore.kernel.org/netdev/20260403083926.68320-1-qingfang.deng@linux.dev/
 
-diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
-index 1ac61c273b28..d546a7af0d54 100644
---- a/drivers/net/ppp/pppoe.c
-+++ b/drivers/net/ppp/pppoe.c
-@@ -231,7 +231,7 @@ static inline struct pppox_sock *get_item(struct pppoe_net *pn, __be16 sid,
- 	struct pppox_sock *po;
- 
- 	po = __get_item(pn, sid, addr, ifindex);
--	if (po && !refcount_inc_not_zero(&sk_pppox(po)->sk_refcnt))
-+	if (po && !refcount_inc_not_zero(&po->sk.sk_refcnt))
- 		po = NULL;
- 
- 	return po;
-@@ -273,7 +273,7 @@ static void pppoe_flush_dev(struct net_device *dev)
- 			if (!po)
- 				break;
- 
--			sk = sk_pppox(po);
-+			sk = &po->sk;
- 
- 			/* We always grab the socket lock, followed by the
- 			 * hash_lock, in that order.  Since we should hold the
-@@ -413,7 +413,7 @@ static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
- 	if (!po)
- 		goto drop;
- 
--	return __sk_receive_skb(sk_pppox(po), skb, 0, 1, false);
-+	return __sk_receive_skb(&po->sk, skb, 0, 1, false);
- 
- drop:
- 	kfree_skb(skb);
-@@ -425,7 +425,7 @@ static void pppoe_unbind_sock_work(struct work_struct *work)
+ drivers/net/ppp/ppp_generic.c |  2 +-
+ drivers/net/ppp/pppoe.c       |  8 +++++++-
+ include/linux/ppp_defs.h      | 14 ++++++++++++++
+ 3 files changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index cb29a6968c63..eb1503b389ef 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -2251,7 +2251,7 @@ ppp_do_recv(struct ppp *ppp, struct sk_buff *skb, struct channel *pch)
+  */
+ static void __ppp_decompress_proto(struct sk_buff *skb)
  {
- 	struct pppox_sock *po = container_of(work, struct pppox_sock,
- 					     proto.pppoe.padt_work);
--	struct sock *sk = sk_pppox(po);
-+	struct sock *sk = &po->sk;
- 
- 	lock_sock(sk);
- 	if (po->pppoe_dev) {
-@@ -469,7 +469,7 @@ static int pppoe_disc_rcv(struct sk_buff *skb, struct net_device *dev,
- 	po = get_item(pn, ph->sid, eth_hdr(skb)->h_source, dev->ifindex);
- 	if (po)
- 		if (!schedule_work(&po->proto.pppoe.padt_work))
--			sock_put(sk_pppox(po));
-+			sock_put(&po->sk);
- 
- abort:
- 	kfree_skb(skb);
-diff --git a/drivers/net/ppp/pptp.c b/drivers/net/ppp/pptp.c
-index b18acd810561..cc8c102122d8 100644
---- a/drivers/net/ppp/pptp.c
-+++ b/drivers/net/ppp/pptp.c
-@@ -62,7 +62,7 @@ static struct pppox_sock *lookup_chan(u16 call_id, __be32 s_addr)
- 		if (opt->dst_addr.sin_addr.s_addr != s_addr)
- 			sock = NULL;
- 		else
--			sock_hold(sk_pppox(sock));
-+			sock_hold(&sock->sk);
- 	}
- 	rcu_read_unlock();
- 
-@@ -164,7 +164,7 @@ static int pptp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
- 	struct iphdr  *iph;
- 	int    max_headroom;
- 
--	if (sk_pppox(po)->sk_state & PPPOX_DEAD)
-+	if (po->sk.sk_state & PPPOX_DEAD)
- 		goto tx_drop;
- 
- 	rt = pptp_route_output(po, &fl4);
-@@ -375,7 +375,7 @@ static int pptp_rcv(struct sk_buff *skb)
- 	if (po) {
- 		skb_dst_drop(skb);
- 		nf_reset_ct(skb);
--		return sk_receive_skb(sk_pppox(po), skb, 0);
-+		return sk_receive_skb(&po->sk, skb, 0);
- 	}
- drop:
- 	kfree_skb(skb);
-diff --git a/include/linux/if_pppox.h b/include/linux/if_pppox.h
-index 8bbf676c2a85..636772693f9a 100644
---- a/include/linux/if_pppox.h
-+++ b/include/linux/if_pppox.h
-@@ -57,11 +57,6 @@ static inline struct pppox_sock *pppox_sk(struct sock *sk)
- 	return (struct pppox_sock *)sk;
+-	if (skb->data[0] & 0x01)
++	if (ppp_skb_is_compressed_proto(skb))
+ 		*(u8 *)skb_push(skb, 1) = 0x00;
  }
  
--static inline struct sock *sk_pppox(struct pppox_sock *po)
--{
--	return (struct sock *)po;
--}
--
- struct module;
+diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
+index 1ac61c273b28..4cd10c908711 100644
+--- a/drivers/net/ppp/pppoe.c
++++ b/drivers/net/ppp/pppoe.c
+@@ -393,7 +393,7 @@ static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
+ 	if (skb_mac_header_len(skb) < ETH_HLEN)
+ 		goto drop;
  
- struct pppox_proto {
+-	if (!pskb_may_pull(skb, sizeof(struct pppoe_hdr)))
++	if (!pskb_may_pull(skb, PPPOE_SES_HLEN))
+ 		goto drop;
+ 
+ 	ph = pppoe_hdr(skb);
+@@ -403,6 +403,12 @@ static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
+ 	if (skb->len < len)
+ 		goto drop;
+ 
++	/* skb->data points to the PPP protocol header after skb_pull_rcsum.
++	 * Drop PFC frames.
++	 */
++	if (ppp_skb_is_compressed_proto(skb))
++		goto drop;
++
+ 	if (pskb_trim_rcsum(skb, len))
+ 		goto drop;
+ 
+diff --git a/include/linux/ppp_defs.h b/include/linux/ppp_defs.h
+index b74209e5a11e..ba6e53655b93 100644
+--- a/include/linux/ppp_defs.h
++++ b/include/linux/ppp_defs.h
+@@ -8,10 +8,24 @@
+ #define _PPP_DEFS_H_
+ 
+ #include <linux/crc-ccitt.h>
++#include <linux/skbuff.h>
+ #include <uapi/linux/ppp_defs.h>
+ 
+ #define PPP_FCS(fcs, c) crc_ccitt_byte(fcs, c)
+ 
++/**
++ * ppp_skb_is_compressed_proto - checks if PPP protocol in a skb is compressed
++ * @skb: skb to check
++ *
++ * Returns true iff the PPP protocol field is compressed (the least significant
++ * bit of the most significant octet is 1).
++ * skb->data must point to the PPP protocol header.
++ */
++static inline bool ppp_skb_is_compressed_proto(const struct sk_buff *skb)
++{
++	return unlikely(skb->data[0] & 0x01);
++}
++
+ /**
+  * ppp_proto_is_valid - checks if PPP protocol is valid
+  * @proto: PPP protocol
 -- 
 2.43.0
 
