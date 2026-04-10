@@ -1,59 +1,47 @@
-Received: from out-174.mta0.migadu.com (out-174.mta0.migadu.com [91.218.175.174])
+Received: from out-171.mta1.migadu.com (out-171.mta1.migadu.com [95.215.58.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97E0430AACB;
-	Fri, 10 Apr 2026 03:36:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A09751A304A
+	for <linux-ppp@vger.kernel.org>; Fri, 10 Apr 2026 05:50:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775792219; cv=none; b=psqu0vWU/gNwIIQddeQuluahjV/gVOljf7OaZNavjiAwSt40PjQoJEjtwxwzVc6ktXR/liM7yqHOBcXg1KVItZ7GZsXH6ixRJFjoCyY6pWYM2vLDYbIkc5oRMwacSHjbn7Hxl68XO80OkO2d8xFMMHmKdfkVpZys7RZ8zb4/7Ro=
+	t=1775800213; cv=none; b=T4SWtocc4mW9IMZcgjOTz3FBG/QHFmI2AyjKerspOmNtdJDMiNB1L38yymFHWJsvl5+3Gi+hB6STw8g3rTXd4fweCeJtV1/YQKWBelXHng7YU0RjLjsTLuQSQ1U6+8FiWNwnUR0nlY/gjicsKSNPl8Mf2awlxNhJcnKJLC2viUc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775792219; c=relaxed/simple;
-	bh=qOvRNxr5Cs+kIujf5Omcxxoc0SIvL5nuVH71WgX7zAQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=tvTIwv17/SVyxlWldZBt050XuC1uIy+W98fU4nBGyow1Z3VJza/SKpIFHZdazTLs7mRXYJ4ZY9vk1daVjV7sAGghTYpIf5oEPO9CouhYJwABUxnV+nuubobZtwzQz8Cgkal+G9upUtOZbfqlZzXCP+7hFOWiRHk5eCp56yNz3Vs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=OPUBEwGz; arc=none smtp.client-ip=91.218.175.174
+	s=arc-20240116; t=1775800213; c=relaxed/simple;
+	bh=lJY14HAgjlbDC5MMgj0Y9Z8jZCb6/15Ltu9d7vK6pco=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=bCexVmTEln8jubGDwXZL+373r9DI0rmy7oQn6iIs7r2LZ4WmMs0uhLObuuxcgCd8xnMaAlcSiLlecTEkhdonpAbc4czCdkXDr0oYdIZJ8mp4vHQfA7t6UR852LI3u/NbpCm93FKCRecvVV9g0XJgqNfJYYZLjBxZNfC7JUDeFzg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=N8sAclcM; arc=none smtp.client-ip=95.215.58.171
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="OPUBEwGz"
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="N8sAclcM"
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1775792215;
+	t=1775800209;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=QAJ9K4xL9oDCb2SK19yKakNMeycMiF95YjwaYyavShE=;
-	b=OPUBEwGzY2co+p0AEcBKlsjfkOhx0y6rAbqhwI5SI7d2Yzrp+zBVHIdNpqUM1CsMF7zwgO
-	KfWQCchMFxI11y9sAdp0JQ00Er7Osfn42U19WWQfxnf9pr25iTYftgHwybXa9cMveKmHI1
-	z1lBoy8WtH0fKIq3DfVWYSt2PLIPhKw=
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=aXAjkhsgn8oMAhQg8wQ1MCqTT2QGwagc/KA0hb1OpXU=;
+	b=N8sAclcMYqNkU9hC+N3b6T/pvE3OyrA3cR+86pu/K7A5gXhql9qGKB9AgaarHZpPsbv92/
+	v/qffi4SLSg0iugkMFWTMABIlm26HTc9NXhPGcJKdTlPJcAsD0eJU8WBFi1IEz3GsGktEy
+	Kd6W/uf5yFF8g5HUdSraqnL71hzKcO4=
 From: Qingfang Deng <qingfang.deng@linux.dev>
-To: linux-ppp@vger.kernel.org,
-	Andrew Lunn <andrew+netdev@lunn.ch>,
+To: Andrew Lunn <andrew+netdev@lunn.ch>,
 	"David S. Miller" <davem@davemloft.net>,
 	Eric Dumazet <edumazet@google.com>,
 	Jakub Kicinski <kuba@kernel.org>,
 	Paolo Abeni <pabeni@redhat.com>,
 	Qingfang Deng <qingfang.deng@linux.dev>,
-	Guillaume Nault <gnault@redhat.com>,
-	Breno Leitao <leitao@debian.org>,
-	Kuniyuki Iwashima <kuniyu@google.com>,
 	Kees Cook <kees@kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Guillaume Nault <gnault@redhat.com>,
 	Eric Woudstra <ericwouds@gmail.com>,
-	Sam Protsenko <semen.protsenko@linaro.org>,
+	Dawid Osuchowski <dawid.osuchowski@linux.intel.com>,
 	netdev@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Cc: Paul Mackerras <paulus@ozlabs.org>,
-	Jaco Kroon <jaco@uls.co.za>,
-	James Carlson <carlsonj@workingcode.com>,
-	Wojciech Drewek <wojciech.drewek@intel.com>,
-	Marcin Szycik <marcin.szycik@linux.intel.com>
-Subject: [PATCH net v4 2/2] pppoe: drop PFC frames
-Date: Fri, 10 Apr 2026 11:36:21 +0800
-Message-ID: <20260410033627.93786-2-qingfang.deng@linux.dev>
-In-Reply-To: <20260410033627.93786-1-qingfang.deng@linux.dev>
-References: <20260410033627.93786-1-qingfang.deng@linux.dev>
+Cc: linux-ppp@vger.kernel.org
+Subject: [PATCH net-next v2 1/2] pppox: remove sk_pppox() helper
+Date: Fri, 10 Apr 2026 13:49:49 +0800
+Message-ID: <20260410054954.114031-1-qingfang.deng@linux.dev>
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
@@ -63,106 +51,116 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
-RFC 2516 Section 7 states that Protocol Field Compression (PFC) is NOT
-RECOMMENDED for PPPoE. In practice, pppd does not support negotiating
-PFC for PPPoE sessions, and the current PPPoE driver assumes an
-uncompressed (2-byte) protocol field. However, the generic PPP layer
-function ppp_input() is not aware of the negotiation result, and still
-accepts PFC frames.
+The sk member can be directly accessed from struct pppox_sock without
+relying on type casting. Remove the sk_pppox() helper and update all
+call sites to use po->sk directly.
 
-If a peer with a broken implementation or an attacker sends a frame with
-a compressed (1-byte) protocol field, the subsequent PPP payload is
-shifted by one byte. This causes the network header to be 4-byte
-misaligned, which may trigger unaligned access exceptions on some
-architectures.
-
-To reduce the attack surface, drop PPPoE PFC frames. Introduce
-ppp_skb_is_compressed_proto() helper function to be used in both
-ppp_generic.c and pppoe.c to avoid open-coding.
-
-Fixes: 7fb1b8ca8fa1 ("ppp: Move PFC decompression to PPP generic layer")
 Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
 ---
-Changes in v4:
- Update Fixes tag as suggested by AI review
- Link to v3: https://lore.kernel.org/r/20260409031107.616630-2-qingfang.deng@linux.dev
-Changes in v3:
- Fix kdoc warning
- Link to v2: https://lore.kernel.org/r/20260408024245.312732-1-qingfang.deng@linux.dev
+Changes in v2: none
+ Link to v1: https://lore.kernel.org/r/20260408015138.280687-1-qingfang.deng@linux.dev
 
- drivers/net/ppp/ppp_generic.c |  2 +-
- drivers/net/ppp/pppoe.c       |  8 +++++++-
- include/linux/ppp_defs.h      | 16 ++++++++++++++++
- 3 files changed, 24 insertions(+), 2 deletions(-)
+ drivers/net/ppp/pppoe.c  | 10 +++++-----
+ drivers/net/ppp/pptp.c   |  6 +++---
+ include/linux/if_pppox.h |  5 -----
+ 3 files changed, 8 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index b097d1b38ac9..853da966ad46 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -2242,7 +2242,7 @@ ppp_do_recv(struct ppp *ppp, struct sk_buff *skb, struct channel *pch)
-  */
- static void __ppp_decompress_proto(struct sk_buff *skb)
- {
--	if (skb->data[0] & 0x01)
-+	if (ppp_skb_is_compressed_proto(skb))
- 		*(u8 *)skb_push(skb, 1) = 0x00;
- }
- 
 diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
-index 1ac61c273b28..4cd10c908711 100644
+index 1ac61c273b28..d546a7af0d54 100644
 --- a/drivers/net/ppp/pppoe.c
 +++ b/drivers/net/ppp/pppoe.c
-@@ -393,7 +393,7 @@ static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
- 	if (skb_mac_header_len(skb) < ETH_HLEN)
+@@ -231,7 +231,7 @@ static inline struct pppox_sock *get_item(struct pppoe_net *pn, __be16 sid,
+ 	struct pppox_sock *po;
+ 
+ 	po = __get_item(pn, sid, addr, ifindex);
+-	if (po && !refcount_inc_not_zero(&sk_pppox(po)->sk_refcnt))
++	if (po && !refcount_inc_not_zero(&po->sk.sk_refcnt))
+ 		po = NULL;
+ 
+ 	return po;
+@@ -273,7 +273,7 @@ static void pppoe_flush_dev(struct net_device *dev)
+ 			if (!po)
+ 				break;
+ 
+-			sk = sk_pppox(po);
++			sk = &po->sk;
+ 
+ 			/* We always grab the socket lock, followed by the
+ 			 * hash_lock, in that order.  Since we should hold the
+@@ -413,7 +413,7 @@ static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
+ 	if (!po)
  		goto drop;
  
--	if (!pskb_may_pull(skb, sizeof(struct pppoe_hdr)))
-+	if (!pskb_may_pull(skb, PPPOE_SES_HLEN))
- 		goto drop;
+-	return __sk_receive_skb(sk_pppox(po), skb, 0, 1, false);
++	return __sk_receive_skb(&po->sk, skb, 0, 1, false);
  
- 	ph = pppoe_hdr(skb);
-@@ -403,6 +403,12 @@ static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
- 	if (skb->len < len)
- 		goto drop;
+ drop:
+ 	kfree_skb(skb);
+@@ -425,7 +425,7 @@ static void pppoe_unbind_sock_work(struct work_struct *work)
+ {
+ 	struct pppox_sock *po = container_of(work, struct pppox_sock,
+ 					     proto.pppoe.padt_work);
+-	struct sock *sk = sk_pppox(po);
++	struct sock *sk = &po->sk;
  
-+	/* skb->data points to the PPP protocol header after skb_pull_rcsum.
-+	 * Drop PFC frames.
-+	 */
-+	if (ppp_skb_is_compressed_proto(skb))
-+		goto drop;
-+
- 	if (pskb_trim_rcsum(skb, len))
- 		goto drop;
+ 	lock_sock(sk);
+ 	if (po->pppoe_dev) {
+@@ -469,7 +469,7 @@ static int pppoe_disc_rcv(struct sk_buff *skb, struct net_device *dev,
+ 	po = get_item(pn, ph->sid, eth_hdr(skb)->h_source, dev->ifindex);
+ 	if (po)
+ 		if (!schedule_work(&po->proto.pppoe.padt_work))
+-			sock_put(sk_pppox(po));
++			sock_put(&po->sk);
  
-diff --git a/include/linux/ppp_defs.h b/include/linux/ppp_defs.h
-index 45c0947fa404..6e9587ce651c 100644
---- a/include/linux/ppp_defs.h
-+++ b/include/linux/ppp_defs.h
-@@ -8,8 +8,24 @@
- #define _PPP_DEFS_H_
+ abort:
+ 	kfree_skb(skb);
+diff --git a/drivers/net/ppp/pptp.c b/drivers/net/ppp/pptp.c
+index b18acd810561..cc8c102122d8 100644
+--- a/drivers/net/ppp/pptp.c
++++ b/drivers/net/ppp/pptp.c
+@@ -62,7 +62,7 @@ static struct pppox_sock *lookup_chan(u16 call_id, __be32 s_addr)
+ 		if (opt->dst_addr.sin_addr.s_addr != s_addr)
+ 			sock = NULL;
+ 		else
+-			sock_hold(sk_pppox(sock));
++			sock_hold(&sock->sk);
+ 	}
+ 	rcu_read_unlock();
  
- #include <linux/crc-ccitt.h>
-+#include <linux/skbuff.h>
- #include <uapi/linux/ppp_defs.h>
+@@ -164,7 +164,7 @@ static int pptp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
+ 	struct iphdr  *iph;
+ 	int    max_headroom;
  
- #define PPP_FCS(fcs, c) crc_ccitt_byte(fcs, c)
+-	if (sk_pppox(po)->sk_state & PPPOX_DEAD)
++	if (po->sk.sk_state & PPPOX_DEAD)
+ 		goto tx_drop;
  
-+/**
-+ * ppp_skb_is_compressed_proto - checks if PPP protocol in a skb is compressed
-+ * @skb: skb to check
-+ *
-+ * Check if the PPP protocol field is compressed (the least significant
-+ * bit of the most significant octet is 1). skb->data must point to the PPP
-+ * protocol header.
-+ *
-+ * Return: Whether the PPP protocol field is compressed.
-+ */
-+static inline bool ppp_skb_is_compressed_proto(const struct sk_buff *skb)
-+{
-+	return unlikely(skb->data[0] & 0x01);
-+}
-+
- #endif /* _PPP_DEFS_H_ */
+ 	rt = pptp_route_output(po, &fl4);
+@@ -375,7 +375,7 @@ static int pptp_rcv(struct sk_buff *skb)
+ 	if (po) {
+ 		skb_dst_drop(skb);
+ 		nf_reset_ct(skb);
+-		return sk_receive_skb(sk_pppox(po), skb, 0);
++		return sk_receive_skb(&po->sk, skb, 0);
+ 	}
+ drop:
+ 	kfree_skb(skb);
+diff --git a/include/linux/if_pppox.h b/include/linux/if_pppox.h
+index 8bbf676c2a85..636772693f9a 100644
+--- a/include/linux/if_pppox.h
++++ b/include/linux/if_pppox.h
+@@ -57,11 +57,6 @@ static inline struct pppox_sock *pppox_sk(struct sock *sk)
+ 	return (struct pppox_sock *)sk;
+ }
+ 
+-static inline struct sock *sk_pppox(struct pppox_sock *po)
+-{
+-	return (struct sock *)po;
+-}
+-
+ struct module;
+ 
+ struct pppox_proto {
 -- 
 2.43.0
 
