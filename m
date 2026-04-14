@@ -1,94 +1,169 @@
-Received: from leontynka.twibright.com (leontynka.twibright.com [109.81.181.203])
+Received: from out-186.mta0.migadu.com (out-186.mta0.migadu.com [91.218.175.186])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C643B3BFE33
-	for <linux-ppp@vger.kernel.org>; Mon, 13 Apr 2026 13:05:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=109.81.181.203
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27F4B1DCB24
+	for <linux-ppp@vger.kernel.org>; Tue, 14 Apr 2026 02:14:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.186
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776085529; cv=none; b=Z4VexucWWDW8smL4D8cbf8Hblt4ZXxK5Ev0sOUF+vhGDm2+hI4HLPmSfq95XFh0xYtW3oYKqLNr9ceZ7H3Tf8yj3h7vjRbWM8LOmVtJd2eJMPAqwOYPLRlmn/xV7neZoNaLbk1WiF/u0b/OZIYzfWKqR7L6l2jZ8QW+BcTgTOxA=
+	t=1776132854; cv=none; b=cyZwZGCJi8v+fmWNP5a973UhyZZUsN1akYjfsLIR8plLhxcd9pftrIrbQtffV3TJkNZIb2Cl5D3l6tuBG2B3rdpT/XfwyiaQwkbHRtEvlEOpEC66FSAwoK5LfcMaziEkOnAk5mVhd9lQRCUOzBSva4uYR1LePC8WcvqB3387gj4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776085529; c=relaxed/simple;
-	bh=lU96/eWiSwo35db3SxlORzvO4/XtWkGOBcqNqiRilYI=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type; b=XmNIt+Knfj1GWhDQK2qPKlWcyV+an9qWEkCInTYA+jUnSinCznPR67Ki+yp/a9Lz8Al1odzMGR+LXnQJgjDw1/Uo4/zuMrRygPk80nqauBzqR+iZMeIIOLAuMpxJTHn/U3RmRtaoqQTt3+uoRQ7GCpxeiYBkPMLaHcu3n2Nc36I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=twibright.com; spf=pass smtp.mailfrom=twibright.com; arc=none smtp.client-ip=109.81.181.203
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=twibright.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=twibright.com
-Received: from mikulas (helo=localhost)
-	by leontynka.twibright.com with local-esmtp (Exim 4.96)
-	(envelope-from <mikulas@twibright.com>)
-	id 1wCGY3-000Rj9-29
-	for linux-ppp@vger.kernel.org;
-	Mon, 13 Apr 2026 14:37:51 +0200
-Date: Mon, 13 Apr 2026 14:37:51 +0200 (CEST)
-From: Mikulas Patocka <mikulas@twibright.com>
-To: linux-ppp@vger.kernel.org
-Subject: pppd and IPv6 routes
-Message-ID: <9ce2170f-f0bb-2d48-c64a-4d5027290e92@twibright.com>
+	s=arc-20240116; t=1776132854; c=relaxed/simple;
+	bh=723IGzpIiYRTW1HKqyAyT8h2Yx8UuC2XxwBYyg+HGus=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=OyermsB2b3ybJKJiHUrJFmwBrPBqT13vBUIAayVfAsJY6quPks5wTs0ggYoYLW6UKhqBbsGCWiWk+6YEhvzzx260ss+xHJOn07wFteewFW9EzSOrcZOdtl8G3pUBkph8HS0rxyC3v8/NI2Flv2ujboY/e/u4743akj5oAhID5wE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=tYcgF+jI; arc=none smtp.client-ip=91.218.175.186
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="tYcgF+jI"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1776132850;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=4Wbmy/a9gqKJwNpYShcTiMCxp21HIntu0hhOBpqeZJw=;
+	b=tYcgF+jIwU/OfWlrR+lhZjYoCfL60SrUYHBMMoo/EB1hlt4p7CrTxB90vhG1DpQMqRXMBt
+	WiPUsFpMPgzTb7X67kcRhewSdrXPrWSBFnfXYLj5HhuQvsQAJE6NcUjN9dNqP1r0OZ1Zzu
+	mKYboVeKEoINrJ+BeCyRvUhiAtJZYqE=
+From: Qingfang Deng <qingfang.deng@linux.dev>
+To: linux-ppp@vger.kernel.org,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	"David S. Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Qingfang Deng <qingfang.deng@linux.dev>,
+	Breno Leitao <leitao@debian.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Kees Cook <kees@kernel.org>,
+	Kuniyuki Iwashima <kuniyu@google.com>,
+	Guillaume Nault <gnault@redhat.com>,
+	Eric Woudstra <ericwouds@gmail.com>,
+	Simon Horman <horms@kernel.org>,
+	Sam Protsenko <semen.protsenko@linaro.org>,
+	netdev@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Cc: Paul Mackerras <paulus@ozlabs.org>,
+	Jaco Kroon <jaco@uls.co.za>,
+	James Carlson <carlsonj@workingcode.com>,
+	Wojciech Drewek <wojciech.drewek@intel.com>,
+	Marcin Szycik <marcin.szycik@linux.intel.com>
+Subject: [PATCH net v5 2/2] pppoe: drop PFC frames
+Date: Tue, 14 Apr 2026 10:13:49 +0800
+Message-ID: <20260414021353.23471-2-qingfang.deng@linux.dev>
+In-Reply-To: <20260414021353.23471-1-qingfang.deng@linux.dev>
+References: <20260414021353.23471-1-qingfang.deng@linux.dev>
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-Hi
+RFC 2516 Section 7 states that Protocol Field Compression (PFC) is NOT
+RECOMMENDED for PPPoE. In practice, pppd does not support negotiating
+PFC for PPPoE sessions, and the current PPPoE driver assumes an
+uncompressed (2-byte) protocol field. However, the generic PPP layer
+function ppp_input() is not aware of the negotiation result, and still
+accepts PFC frames.
 
-I have a problem with pppd and IPv6. I use pppd 2.4.9 from Debian 12.
+If a peer with a broken implementation or an attacker sends a frame with
+a compressed (1-byte) protocol field, the subsequent PPP payload is
+shifted by one byte. This causes the network header to be 4-byte
+misaligned, which may trigger unaligned access exceptions on some
+architectures.
 
-I get this ppp0 device from my ISP (using ppp-over-ethernet):
-23: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1492 state UNKNOWN qlen 3
-    inet6 2a00:1028:8391:4349:4839:8541:daa4:adcf/64 scope global dynamic mngtmpaddr
-       valid_lft 86287sec preferred_lft 3487sec
-    inet6 fe80::4839:8541:daa4:adcf peer fe80::e681:84ff:fec2:4b34/128 scope link
-       valid_lft forever preferred_lft forever
+To reduce the attack surface, drop PPPoE PFC frames. Introduce
+ppp_skb_is_compressed_proto() helper function to be used in both
+ppp_generic.c and pppoe.c to avoid open-coding.
 
-I run wide-dhcpv6-client, it sends "dhcp6 solicit" to "ff02::1:2":
-fe80::4839:8541:daa4:adcf.dhcpv6-client > ff02::1:2.dhcpv6-server: dhcp6 solicit
-I receive dhcp6 advertise from the ISP:
-e681:84ff:fec2:4b34.dhcpv6-server > fe80::4839:8541:daa4:adcf.dhcpv6-client: dhcp6 advertise
+Fixes: 7fb1b8ca8fa1 ("ppp: Move PFC decompression to PPP generic layer")
+Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
+Reviewed-by: Simon Horman <horms@kernel.org>
+---
+Changes in v5: add Reviewed-by tag from Simon
+ Link to v4: https://lore.kernel.org/netdev/20260410033627.93786-2-qingfang.deng@linux.dev/
 
-The problem is that the kernel doesn't pass the packet to the dhcp6c 
-daemon, it rejects the packet with a redirect to itself:
-fe80::4839:8541:daa4:adcf > fe80::e681:84ff:fec2:4b34: ICMP6, redirect, fe80::4839:8541:daa4:adcf to fe80::4839:8541:daa4:adcf, length 176
+ drivers/net/ppp/ppp_generic.c |  2 +-
+ drivers/net/ppp/pppoe.c       |  8 +++++++-
+ include/linux/ppp_defs.h      | 16 ++++++++++++++++
+ 3 files changed, 24 insertions(+), 2 deletions(-)
 
-According to RFC, redirect to itself means that the sender should send the 
-packet to the same interface to a different host.
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index b097d1b38ac9..853da966ad46 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -2242,7 +2242,7 @@ ppp_do_recv(struct ppp *ppp, struct sk_buff *skb, struct channel *pch)
+  */
+ static void __ppp_decompress_proto(struct sk_buff *skb)
+ {
+-	if (skb->data[0] & 0x01)
++	if (ppp_skb_is_compressed_proto(skb))
+ 		*(u8 *)skb_push(skb, 1) = 0x00;
+ }
+ 
+diff --git a/drivers/net/ppp/pppoe.c b/drivers/net/ppp/pppoe.c
+index d546a7af0d54..bdd61c504a1c 100644
+--- a/drivers/net/ppp/pppoe.c
++++ b/drivers/net/ppp/pppoe.c
+@@ -393,7 +393,7 @@ static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
+ 	if (skb_mac_header_len(skb) < ETH_HLEN)
+ 		goto drop;
+ 
+-	if (!pskb_may_pull(skb, sizeof(struct pppoe_hdr)))
++	if (!pskb_may_pull(skb, PPPOE_SES_HLEN))
+ 		goto drop;
+ 
+ 	ph = pppoe_hdr(skb);
+@@ -403,6 +403,12 @@ static int pppoe_rcv(struct sk_buff *skb, struct net_device *dev,
+ 	if (skb->len < len)
+ 		goto drop;
+ 
++	/* skb->data points to the PPP protocol header after skb_pull_rcsum.
++	 * Drop PFC frames.
++	 */
++	if (ppp_skb_is_compressed_proto(skb))
++		goto drop;
++
+ 	if (pskb_trim_rcsum(skb, len))
+ 		goto drop;
+ 
+diff --git a/include/linux/ppp_defs.h b/include/linux/ppp_defs.h
+index b7e57fdbd413..b1d1f46d7d3b 100644
+--- a/include/linux/ppp_defs.h
++++ b/include/linux/ppp_defs.h
+@@ -8,6 +8,7 @@
+ #define _PPP_DEFS_H_
+ 
+ #include <linux/crc-ccitt.h>
++#include <linux/skbuff.h>
+ #include <uapi/linux/ppp_defs.h>
+ 
+ #define PPP_FCS(fcs, c) crc_ccitt_byte(fcs, c)
+@@ -25,4 +26,19 @@ static inline bool ppp_proto_is_valid(u16 proto)
+ 	return !!((proto & 0x0101) == 0x0001);
+ }
+ 
++/**
++ * ppp_skb_is_compressed_proto - checks if PPP protocol in a skb is compressed
++ * @skb: skb to check
++ *
++ * Check if the PPP protocol field is compressed (the least significant
++ * bit of the most significant octet is 1). skb->data must point to the PPP
++ * protocol header.
++ *
++ * Return: Whether the PPP protocol field is compressed.
++ */
++static inline bool ppp_skb_is_compressed_proto(const struct sk_buff *skb)
++{
++	return unlikely(skb->data[0] & 0x01);
++}
++
+ #endif /* _PPP_DEFS_H_ */
+-- 
+2.43.0
 
-"ping fe80::e681:84ff:fec2:4b34%ppp0" also doesn't work - tcpdump shows 
-that the reply arrives, but the kernel rejects it with a redirect to 
-itself.
-
-There are the following routes set up on the ppp0 interface:
-
-anycast 2a00:1028:8391:4349:: dev ppp0 proto kernel metric 0 pref medium
-2a00:1028:8391:4349::/64 dev ppp0 proto kernel metric 256 expires 85949sec pref medium
-fe80::fe80::4839:8541:daa4:adcf dev ppp0 proto kernel metric 256 pref medium
-fe80::e681:84ff:fec2:4b34 dev ppp0 proto kernel metric 256 pref medium
-multicast ff00::/8 dev ppp0 proto kernel metric 256 pref medium
-default via fe80::e681:84ff:fec2:4b34 dev ppp0 proto ra metric 1024 
-expires 4049sec hoplimit 64 pref medium
-
-If I delete the route to "fe80::fe80::4839:8541:daa4:adcf" and add the 
-same route with the "local' specifier, the problem is fixed, ping works 
-and dhcp6c correctly receives the responses and sets up IPv6 addresses in 
-the inner network:
-
-# ip -6 route del fe80::4839:8541:daa4:adcf dev ppp0
-# ip -6 route add local fe80::4839:8541:daa4:adcf dev ppp0
-
-So, the question is - why doesn't pppd set the local route as "local"? Is 
-it a bug in pppd? Or a bug in the kernel?
-
-I tried to set up the local route in 
-/etc/ppp/ipv6-up.d/wide-dhcpv6-client, but it is not reliable, sometimes 
-it works and sometimes it doesn't, the script is probably racing with pppd 
-setting the routes:
-
-#!/bin/sh
-sleep 3
-ip -6 route del "$PPP_LOCAL" dev ppp0
-ip -6 route add local "$PPP_LOCAL" dev ppp0
-systemctl restart wide-dhcpv6-client.service
-
-Mikulas
