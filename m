@@ -1,140 +1,144 @@
-Received: from out-174.mta0.migadu.com (out-174.mta0.migadu.com [91.218.175.174])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oo1-f79.google.com (mail-oo1-f79.google.com [209.85.161.79])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B32B430E84B;
-	Tue, 14 Apr 2026 02:14:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 08F8D3BBA15
+	for <linux-ppp@vger.kernel.org>; Tue, 14 Apr 2026 09:14:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.79
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776132857; cv=none; b=GYYtYSzeNSoDqNxrR3DXYX0CDsQuBQGRD0YZjAKpy7xHLqltEA0STaDjnmOA/8g1Yd5Xa6gC4W/Ce/p3Y7oih0UTLOtV5Ki3i71n1qbcZAokkRnMrJhyAJgaN5BiiHGG3UaKLPMAHjGzcHD9HoWt0gLJ3XZyFF/rUTKil3O6y5c=
+	t=1776158073; cv=none; b=cBv38vIWyv/HqaUg+RapEOSqnhUsVOoZfK1uEEiWO0TuANcoma4eZ4oPrq9Ouiuiw2q9mqRV6z62kzD7gdkyupVqjqXJ6UhdHJivEM5br9zV/ICT4dgoYDLIKIwaWoTJwlF7lb0kL8rsIYfIK9cK1XIXvHd5z2mU8tk86TZSV6g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776132857; c=relaxed/simple;
-	bh=15hvOEUVolfqLY/3GRmuKMMK8IGZvy6zYa6C4vGqAC0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=cqUN9XNXFFgzjqpGjBSiJB0BmgYkAW+CY5kFnh17z3irQW9xMQo53gPhV1oYvy441HEx3t1QC03X4r6Ng5IxPr0DwL4qIA456YMOGGWMdqy2U0ilgTlUJZlvVXuX1z1vdW2t56l4gR5CbyCULYYzCl2LViT4mZENib4YrLnatm4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=JdDe3pl9; arc=none smtp.client-ip=91.218.175.174
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="JdDe3pl9"
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1776132843;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=VU7wHNF/ZTF16Bs6j/dZXcxIbUnQ1DSNxe0KY2TrNZk=;
-	b=JdDe3pl9ds/WG8fwb0SXIVZurb48gX4bq8sgV/lNXHO7MxvU/aPqRPTYv5LA7OfQtSPvC3
-	Ymz3a8VvwPFUu+2eHB/QMQgzdY8svlCBT4MAlmaFUifVe4/XxpvzFMFH3R+by2djWcGkcY
-	fx7PW9FBk9UuKB7fq0QU0XuRN0/juBE=
-From: Qingfang Deng <qingfang.deng@linux.dev>
-To: linux-ppp@vger.kernel.org,
-	"David S. Miller" <davem@davemloft.net>,
-	Eric Dumazet <edumazet@google.com>,
-	Jakub Kicinski <kuba@kernel.org>,
-	Paolo Abeni <pabeni@redhat.com>,
-	Simon Horman <horms@kernel.org>,
-	Qingfang Deng <qingfang.deng@linux.dev>,
-	Tony Nguyen <anthony.l.nguyen@intel.com>,
-	Guillaume Nault <gnault@redhat.com>,
-	Wojciech Drewek <wojciech.drewek@intel.com>,
-	netdev@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Cc: Paul Mackerras <paulus@ozlabs.org>,
-	Jaco Kroon <jaco@uls.co.za>,
-	James Carlson <carlsonj@workingcode.com>,
-	Marcin Szycik <marcin.szycik@linux.intel.com>
-Subject: [PATCH net v5 1/2] flow_dissector: do not dissect PPPoE PFC frames
-Date: Tue, 14 Apr 2026 10:13:48 +0800
-Message-ID: <20260414021353.23471-1-qingfang.deng@linux.dev>
+	s=arc-20240116; t=1776158073; c=relaxed/simple;
+	bh=GPNEvwTV3YCZM/IQhX2qX/16wfmzdwPlkAEZNY2yz18=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=MqBpVVTtOIwuKzdMk4MKoCbPoSEdcIqNHmQO98gMuLI1wl9vb42xniUnHEZFH2ZCkb514FJ0GJaSNTXannMU4QU8AoxuJfDAOf17GEdZUidQwizv1+Ws5ndwKqW8WMMrYit78cctOQdQJ+RrOZu/bX6Bhc3wHvSL/8iiSYbt07g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.161.79
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oo1-f79.google.com with SMTP id 006d021491bc7-689b18091ebso11777542eaf.1
+        for <linux-ppp@vger.kernel.org>; Tue, 14 Apr 2026 02:14:30 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1776158070; x=1776762870;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=c4/P5vYiyQeQxekanU/M1VkImZhr/JuEMOleJPaKHW0=;
+        b=VxFcAUmPUaZxvMVsst0gNlepXagphZiHbIyA5LlgNMn3z87mRfvS89Edlzp0hgFkuw
+         KpWBo+ZkHEdBfMTedD6+fz6FH7BaJECDZCQZoWh6eMWLTXBmSPXpsXH6aeh8IITnIccv
+         3O7VEG5VPP8ujNTeb/tl9KYlcYsW+6ekRBSN6npQ3h88bbgUWzkJ40SHDzUKJx6mdruQ
+         m90ZKoW7utVBv5WNn3dPCRvo1q2UhdG6nbQr5NxghcbzA3ObMpiHNrP3TAmsPbXheY7/
+         XHPW2j2FSIFG55ovJPVH0Mu3ySxayB2jbYJS83vmoP0528w6igRKuYIFr/mnX9cd3pj4
+         erjQ==
+X-Forwarded-Encrypted: i=1; AFNElJ+hVrC65zPrDYgRacOl6GcaihupyXCd4KAsyZg1V67gk8uicL/QwyusbzY/EIu+GDp0nmXPBKroX8o=@vger.kernel.org
+X-Gm-Message-State: AOJu0YznoQvUZp5GsxqGax1BJ7/DJWPjL/txLdfjSsoHmdcJrymemOM6
+	aRnvq9pdP32bB22HE7K7SuJMXvv/eEKjzttey8AhyROTUOspZuPFaaIOUQ78Vgw7UzPMxTXLfRB
+	vJqRR+tKMVnn6RJ+81UrvtqZz9c+boC434/my7tdW4LXdqOOU3obkP4Em4mQ=
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+X-Received: by 2002:a05:6820:628d:b0:683:a6e:970a with SMTP id
+ 006d021491bc7-68a6b54c90cmr7115601eaf.40.1776158069823; Tue, 14 Apr 2026
+ 02:14:29 -0700 (PDT)
+Date: Tue, 14 Apr 2026 02:14:29 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <69de0575.a00a0220.468cb.005c.GAE@google.com>
+Subject: [syzbot] [ppp?] KMSAN: uninit-value in ppp_sync_receive (4)
+From: syzbot <syzbot+88679c919eb801bd16f8@syzkaller.appspotmail.com>
+To: andrew+netdev@lunn.ch, davem@davemloft.net, edumazet@google.com, 
+	kuba@kernel.org, linux-kernel@vger.kernel.org, linux-ppp@vger.kernel.org, 
+	netdev@vger.kernel.org, pabeni@redhat.com, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-RFC 2516 Section 7 states that Protocol Field Compression (PFC) is NOT
-RECOMMENDED for PPPoE. In practice, pppd does not support negotiating
-PFC for PPPoE sessions, and the flow dissector driver has assumed an
-uncompressed frame until the blamed commit.
+Hello,
 
-During the review process of that commit [1], support for PFC is
-suggested. However, having a compressed (1-byte) protocol field means
-the subsequent PPP payload is shifted by one byte, causing 4-byte
-misalignment for the network header and an unaligned access exception
-on some architectures.
+syzbot found the following issue on:
 
-The exception can be reproduced by sending a PPPoE PFC frame to an
-ethernet interface of a MIPS board, with RPS enabled, even if no PPPoE
-session is active on that interface:
+HEAD commit:    9a9c8ce300cd Merge tag 'kbuild-fixes-7.0-4' of git://git.k..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=112a874e580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=963de479f54c6dbb
+dashboard link: https://syzkaller.appspot.com/bug?extid=88679c919eb801bd16f8
+compiler:       Debian clang version 21.1.8 (++20251221033036+2078da43e25a-1~exp1~20251221153213.50), Debian LLD 21.1.8
 
-$ 0   : 00000000 80c40000 00000000 85144817
-$ 4   : 00000008 00000100 80a75758 81dc9bb8
-$ 8   : 00000010 8087ae2c 0000003d 00000000
-$12   : 000000e0 00000039 00000000 00000000
-$16   : 85043240 80a75758 81dc9bb8 00006488
-$20   : 0000002f 00000007 85144810 80a70000
-$24   : 81d1bda0 00000000
-$28   : 81dc8000 81dc9aa8 00000000 805ead08
-Hi    : 00009d51
-Lo    : 2163358a
-epc   : 805e91f0 __skb_flow_dissect+0x1b0/0x1b50
-ra    : 805ead08 __skb_get_hash_net+0x74/0x12c
-Status: 11000403        KERNEL EXL IE
-Cause : 40800010 (ExcCode 04)
-BadVA : 85144817
-PrId  : 0001992f (MIPS 1004Kc)
-Call Trace:
-[<805e91f0>] __skb_flow_dissect+0x1b0/0x1b50
-[<805ead08>] __skb_get_hash_net+0x74/0x12c
-[<805ef330>] get_rps_cpu+0x1b8/0x3fc
-[<805fca70>] netif_receive_skb_list_internal+0x324/0x364
-[<805fd120>] napi_complete_done+0x68/0x2a4
-[<8058de5c>] mtk_napi_rx+0x228/0xfec
-[<805fd398>] __napi_poll+0x3c/0x1c4
-[<805fd754>] napi_threaded_poll_loop+0x234/0x29c
-[<805fd848>] napi_threaded_poll+0x8c/0xb0
-[<80053544>] kthread+0x104/0x12c
-[<80002bd8>] ret_from_kernel_thread+0x14/0x1c
+Unfortunately, I don't have any reproducer for this issue yet.
 
-Code: 02d51821  1060045b  00000000 <8c640000> 3084000f  2c820005  144001a2  00042080  8e220000
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/3e2ad23d804a/disk-9a9c8ce3.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/a3dde4990296/vmlinux-9a9c8ce3.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/256e0a89d22c/bzImage-9a9c8ce3.xz
 
-To reduce the attack surface and maintain performance, do not process
-PPPoE PFC frames.
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+88679c919eb801bd16f8@syzkaller.appspotmail.com
 
-[1] https://patch.msgid.link/20220630231016.GA392@debian.home
-Fixes: 46126db9c861 ("flow_dissector: Add PPPoE dissectors")
-Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
+=====================================================
+BUG: KMSAN: uninit-value in ppp_sync_input drivers/net/ppp/ppp_synctty.c:684 [inline]
+BUG: KMSAN: uninit-value in ppp_sync_receive+0x626/0xfa0 drivers/net/ppp/ppp_synctty.c:334
+ ppp_sync_input drivers/net/ppp/ppp_synctty.c:684 [inline]
+ ppp_sync_receive+0x626/0xfa0 drivers/net/ppp/ppp_synctty.c:334
+ tty_ldisc_receive_buf+0x1f7/0x2c0 drivers/tty/tty_buffer.c:391
+ tty_port_default_receive_buf+0xd7/0x1a0 drivers/tty/tty_port.c:37
+ receive_buf drivers/tty/tty_buffer.c:445 [inline]
+ flush_to_ldisc+0x43e/0xe40 drivers/tty/tty_buffer.c:495
+ process_one_work kernel/workqueue.c:3276 [inline]
+ process_scheduled_works+0xb82/0x1e80 kernel/workqueue.c:3359
+ worker_thread+0xee4/0x1590 kernel/workqueue.c:3440
+ kthread+0x53f/0x600 kernel/kthread.c:436
+ ret_from_fork+0x20f/0x910 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+
+Uninit was created at:
+ slab_post_alloc_hook mm/slub.c:4545 [inline]
+ slab_alloc_node mm/slub.c:4866 [inline]
+ __do_kmalloc_node mm/slub.c:5259 [inline]
+ __kmalloc_noprof+0x486/0x1680 mm/slub.c:5272
+ kmalloc_noprof include/linux/slab.h:954 [inline]
+ tty_buffer_alloc drivers/tty/tty_buffer.c:180 [inline]
+ __tty_buffer_request_room+0x3d4/0x7a0 drivers/tty/tty_buffer.c:273
+ __tty_insert_flip_string_flags+0x157/0x6e0 drivers/tty/tty_buffer.c:309
+ tty_insert_flip_char include/linux/tty_flip.h:77 [inline]
+ uart_insert_char+0x368/0x930 drivers/tty/serial/serial_core.c:3431
+ serial8250_read_char+0x1ba/0x670 drivers/tty/serial/8250/8250_port.c:1643
+ serial8250_rx_chars drivers/tty/serial/8250/8250_port.c:1660 [inline]
+ serial8250_handle_irq_locked+0x6d4/0xa40 drivers/tty/serial/8250/8250_port.c:1820
+ serial8250_handle_irq+0x187/0x730 drivers/tty/serial/8250/8250_port.c:1841
+ serial8250_default_handle_irq+0x116/0x370 drivers/tty/serial/8250/8250_port.c:1855
+ serial8250_interrupt+0xcb/0x420 drivers/tty/serial/8250/8250_core.c:86
+ __handle_irq_event_percpu+0x13c/0xf90 kernel/irq/handle.c:209
+ handle_irq_event_percpu kernel/irq/handle.c:246 [inline]
+ handle_irq_event+0xe0/0x2a0 kernel/irq/handle.c:263
+ handle_edge_irq+0x2a9/0xb30 kernel/irq/chip.c:855
+ generic_handle_irq_desc include/linux/irqdesc.h:186 [inline]
+ handle_irq arch/x86/kernel/irq.c:262 [inline]
+ call_irq_handler arch/x86/kernel/irq.c:-1 [inline]
+ __common_interrupt+0x9d/0x180 arch/x86/kernel/irq.c:333
+ common_interrupt+0x4c/0xb0 arch/x86/kernel/irq.c:326
+ asm_common_interrupt+0x2b/0x40 arch/x86/include/asm/idtentry.h:688
+
+CPU: 0 UID: 0 PID: 35 Comm: kworker/u8:2 Tainted: G        W    L      syzkaller #0 PREEMPT(full) 
+Tainted: [W]=WARN, [L]=SOFTLOCKUP
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 03/18/2026
+Workqueue: events_unbound flush_to_ldisc
+=====================================================
+
+
 ---
-Changes in v5: drop byte-swap change
- Link to v4: https://lore.kernel.org/netdev/20260410033627.93786-1-qingfang.deng@linux.dev/
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
- net/core/flow_dissector.c | 10 +---------
- 1 file changed, 1 insertion(+), 9 deletions(-)
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
-diff --git a/net/core/flow_dissector.c b/net/core/flow_dissector.c
-index 1b61bb25ba0e..f9aaba554128 100644
---- a/net/core/flow_dissector.c
-+++ b/net/core/flow_dissector.c
-@@ -1374,16 +1374,8 @@ bool __skb_flow_dissect(const struct net *net,
- 			break;
- 		}
- 
--		/* least significant bit of the most significant octet
--		 * indicates if protocol field was compressed
--		 */
- 		ppp_proto = ntohs(hdr->proto);
--		if (ppp_proto & 0x0100) {
--			ppp_proto = ppp_proto >> 8;
--			nhoff += PPPOE_SES_HLEN - 1;
--		} else {
--			nhoff += PPPOE_SES_HLEN;
--		}
-+		nhoff += PPPOE_SES_HLEN;
- 
- 		if (ppp_proto == PPP_IP) {
- 			proto = htons(ETH_P_IP);
--- 
-2.43.0
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
 
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
