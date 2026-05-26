@@ -1,107 +1,50 @@
-Received: from out-189.mta1.migadu.com (out-189.mta1.migadu.com [95.215.58.189])
+Received: from mail.ozlabs.org (gandalf.ozlabs.org [150.107.74.76])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC148280A58;
-	Tue, 26 May 2026 01:42:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.189
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2382D2C08C8
+	for <linux-ppp@vger.kernel.org>; Tue, 26 May 2026 07:05:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=150.107.74.76
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779759736; cv=none; b=DsvRnJeJJ2a+Ba6QPopI1Zvoe5qDt6aJqh7Iqn43/FF8XxJu4eNEtwYHsmRkOorH7N8G5TYjqOuPfnbi21Evas0uqUKb2stSH5uad2Ee9jg6et5cWPnfOYTOsikhLAlH/KabltJqpWrWAcwJUKB/2uCIG/7CjVXn3w82az7z378=
+	t=1779779127; cv=none; b=cJAVwd1RHDOwOosk514UmttemWSg5p12HnmDiAtNzNtYHUnG3huZWj4MhdJ6ZX4KNoRdRyVKRqqnoepqX/IU3UcJIsj1Xhj1WYbDBfh6i4XEZOfFqIgSb5pdz1KoGCDx51IECRWHsanmQCgNDLD9NgPDHGsfKMxj8nb97ilPHOE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779759736; c=relaxed/simple;
-	bh=3k+4/prxIu3sSF4ZXZ5KU7C6MaPJice3RG6ToJs2Y08=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=BlenHliWvondw/5JUoN8F+4IbqA2cfR0jSewCxyiwcKadUB7zuEdpDwdM5ygnHGHW6NdRAbl+YA/1QBVFWgNq/mG8T0AOjGmXs76cJXvVhFLmjl6xx6qKG3M8BgIw5sKRNZ5T+BRVu/GtMOIPhp6kYaNFUfNLIblDcSIiouUYoY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=w2eB7PzJ; arc=none smtp.client-ip=95.215.58.189
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1779779127; c=relaxed/simple;
+	bh=bMlBBMYKxGtq5Cp6eF6ZfJWXx0PmwZQKshZCvqB6uAc=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=nZs8UzGBhROSNnqHhUZHLzQ3p7yWU+hqo5JoPGzp1tdG05JjNgKuXKlDfiJi3MGwN6WG/z4mas+w7bEc/qWd7VwQ26HxaxzCjv6qdFUMAjXr3jl5MiBGEwOiukAHxgga7UhYJDt5psAtavo54/WW5ktH6CJ/i6kVC+Hm37yWzAs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ozlabs.org; spf=pass smtp.mailfrom=gandalf.ozlabs.org; dkim=pass (2048-bit key) header.d=ozlabs.org header.i=@ozlabs.org header.b=txzpfRE8; arc=none smtp.client-ip=150.107.74.76
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ozlabs.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gandalf.ozlabs.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="w2eB7PzJ"
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1779759731;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=xdRbc9N0KyI+C4TfluCvSP2H+w3ISxsXMdimQER6nhk=;
-	b=w2eB7PzJGG9hF8oYI4k8BAZeQagLmrggi2rM1C3ng19DbH3ROA+yjA7a3ZW6sKBsa6ji6R
-	5ZVLcydv+0EWfxtqsAVjIipurUqpSzAGxQ/RGuC379DHTkkNmQNmhGK8u95wg37dpf6Pqp
-	3Qcwr+VHglyDu495mlEBmVK4aPoM1+I=
-From: Qingfang Deng <qingfang.deng@linux.dev>
-To: "David S. Miller" <davem@davemloft.net>,
-	Eric Dumazet <edumazet@google.com>,
-	Jakub Kicinski <kuba@kernel.org>,
-	Paolo Abeni <pabeni@redhat.com>,
-	Simon Horman <horms@kernel.org>,
-	Shuah Khan <shuah@kernel.org>,
-	Qingfang Deng <qingfang.deng@linux.dev>,
-	linux-ppp@vger.kernel.org,
-	netdev@vger.kernel.org,
-	linux-kselftest@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Cc: Matthieu Baerts <matttbe@kernel.org>
-Subject: [PATCH net-next] selftests: net: add socat syslog for PPPoL2TP
-Date: Tue, 26 May 2026 09:41:47 +0800
-Message-ID: <20260526014152.532505-1-qingfang.deng@linux.dev>
+	dkim=pass (2048-bit key) header.d=ozlabs.org header.i=@ozlabs.org header.b="txzpfRE8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ozlabs.org;
+	s=201707; t=1779779117;
+	bh=m9vkaxhsMMRcdgv+HQ3mcLsCjDxo7VhhRY4SJ9evStA=;
+	h=Date:From:To:Subject:From;
+	b=txzpfRE8w2SKT49kty38OWxYYQKWauakqQ+9pfDGCRMKHmR8Hx52MgBK00PJ8+fXl
+	 oq+cDnhme0lIa37glz0MvHvjnltZCFAmecsKHlbIZwZHJXj/1PBDA5Q1sEvKEDl6S1
+	 yoJB0aB9lHTTF9fehmIk29T3S3s9gByuWjEhFOmfanQdIZ3lQRIB47ZRjfAR5zqY3x
+	 +6mYa5BaE4uexFKVf2pSanjjRq7hSCbDA8B9V94xJkOOgXjLj6hPRKva1YtMKH7Sih
+	 bqoPUCWzJ/Vu9lm0Pa/fE6cwCJsytRf59UeidXHHG9FuMD+qwrfouuV6VA7hm8QEMb
+	 gfbH5GeiY2+Tw==
+Received: by gandalf.ozlabs.org (Postfix, from userid 1003)
+	id 4gPkKT2Kldz4wKx; Tue, 26 May 2026 17:05:17 +1000 (AEST)
+Date: Tue, 26 May 2026 17:05:12 +1000
+From: Paul Mackerras <paulus@ozlabs.org>
+To: linux-ppp@vger.kernel.org
+Subject: PPP version 2.5.3 released
+Message-ID: <ahVGKLw35vabzTIj@bruin>
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-As done in pppoe.sh, start socat as the syslog listener. In case the
-test fails, dump its log to see what's going on.
+I just released PPP version 2.5.3.  The tarball is in the usual place,
+https://download.samba.org/pub/ppp/.  This release includes several
+security fixes, including fixes for a couple of bugs that can allow
+out-of-bounds writes, so I would encourage people to upgrade.
 
-Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
----
- tools/testing/selftests/net/ppp/pppol2tp.sh | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
-
-diff --git a/tools/testing/selftests/net/ppp/pppol2tp.sh b/tools/testing/selftests/net/ppp/pppol2tp.sh
-index 5b592785f1f9..96786267ccc7 100755
---- a/tools/testing/selftests/net/ppp/pppol2tp.sh
-+++ b/tools/testing/selftests/net/ppp/pppol2tp.sh
-@@ -9,10 +9,12 @@ OUTER_IP_SERVER="172.16.1.1"
- OUTER_IP_CLIENT="172.16.1.2"
- 
- PPPOL2TP_DIR=$(mktemp -d /tmp/pppol2tp.XXXXXX)
-+PPPOL2TP_LOG="$PPPOL2TP_DIR/l2tp.log"
- 
- # shellcheck disable=SC2329
- cleanup() {
- 	cleanup_all_ns
-+	[ -n "$SOCAT_PID" ] && kill_process "$SOCAT_PID"
- 	rm -rf "$PPPOL2TP_DIR"
- }
- 
-@@ -31,6 +33,10 @@ ip -netns "$NS_CLIENT" link set "$VETH_CLIENT" up
- ip -netns "$NS_SERVER" address add dev "$VETH_SERVER" "$OUTER_IP_SERVER" peer "$OUTER_IP_CLIENT"
- ip -netns "$NS_CLIENT" address add dev "$VETH_CLIENT" "$OUTER_IP_CLIENT" peer "$OUTER_IP_SERVER"
- 
-+# Start socat as syslog listener
-+socat -v -u UNIX-RECV:/dev/log OPEN:/dev/null > "$PPPOL2TP_LOG" 2>&1 &
-+SOCAT_PID=$!
-+
- # Generate configuration files
- cat > "$PPPOL2TP_DIR/l2tp-server.conf" <<EOF
- [global]
-@@ -80,6 +86,15 @@ ppp_test_connectivity
- 
- log_test "PPPoL2TP"
- 
-+# Dump syslog messages if the test failed
-+if [ "$RET" -ne 0 ]; then
-+	while read -r _sign _date _time len _from _to
-+	do      len=${len##*=}
-+		read -n "$len" -r LINE
-+		echo "$LINE"
-+	done < "$PPPOL2TP_LOG"
-+fi
-+
- # Recursion test
- RET=0
- # Delete route to LNS IP
--- 
-2.43.0
-
+Paul.
