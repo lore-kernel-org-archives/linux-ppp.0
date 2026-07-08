@@ -1,99 +1,80 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 140043EDE46;
-	Wed,  8 Jul 2026 09:11:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C75E2437864;
+	Wed,  8 Jul 2026 11:20:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783501912; cv=none; b=daZN94+1pQThtMOmeK2bnDMJrcnj8n3N3RleIAJ9T+TScXjzZbnOY1dFlYucBCYlB6EIg2iKh6xXhmkSfxOkEVgab+IlI8WgsPuersJ02TmihkdlgwETRGe3oVKB08vBEB12Pt+9cGj2/mMnpIa2ErHTSg3L/M/87j9f07nj5+E=
+	t=1783509627; cv=none; b=iNLok5+HIZ8wmv/zKuMl/YnOvb/p/VNdrWVpnyPqDmZsyaU1lnzN+0nDroKHPxHDADrcAZlQHeErAk3MLiPySMdwrD1Wlpu4xjgPGUMCur2IpbeDk9oeNL0KRatoyqkv+E6omA5BfiUHX3IaXXaUlCvGbGhVElIbZoPvpmpV5t8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783501912; c=relaxed/simple;
-	bh=l6JFG91mW4G/R7fCfssf6gK5hHZ7Nor2KNHzJAv9e7c=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=DOZnMQ66C11Y0ZV6GR/zDaKWP9iB+ZwLKr9g8wZVGmcPg9xL8x5e88Yf1sFHSHWRKgpm/Kw5whcwCICdPX4BHGmBa1axs7gy4R+cWtUUdror/aBHcrOgB7uZcudp3mmXjsIYqyDpoP6hZGcfUhHVC3gZpkmam+MK9dWwKxKRuaI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=BmEmoPDU; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=8LVnaRQu; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1783509627; c=relaxed/simple;
+	bh=naTLxVv/Y3+9ERX1j0xr+5nj/poeZC/gIQxlXs0FlG4=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=tV4Y3Vtb4OkGeFYihFNBBBRwwYpR4ZeHs9zsVFaVXJdhd3YeID3z6OeyJ2xc1jQYs3tvxJ4GT2GHh1iYWwIjY/iiO0V40ueegO596A9NbyYY3dqasJu9ZvJ6MvqA/kbvWd4JblzA8RcDK4FHiewAlR7koJONmksM2YshAKmcOEo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=g1x4puQ4; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="BmEmoPDU";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="8LVnaRQu"
-Date: Wed, 8 Jul 2026 11:11:47 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1783501909;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=h20LA5YHcmtZeGTDYEJk05BGftpy3fA0SNQGNgHnfeQ=;
-	b=BmEmoPDUE7RTx+O7SGa8Sfj20DHd8nsSSyeAnXbAkrIXfNnYd52ncDrPcrhUZsZLL3n4KJ
-	NV7mHh5snAJuqdcw1CV/pMqodej5EzEsCN5rjJ+smi9c4NG+LFQN8KsGRMEqj//80ybY2h
-	l7AT/M6Rp4TNGdMXh6aSUmCGQReGIms9I+Q8lbvK911eMGhpBjBHNSjTLvIekjc+alr+8A
-	1uE1nfoo3m06k9+3z8FnWkTGLeoBJT32QZBN+TsCZgMdQucW9Jz213gLfGUTdSjLyUzamE
-	XEE7AagAEnUQyJc8y6ZT75pQLlW4xqxbV/8rtdSJIPDnLszkLhyyTlvP4LMJzw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1783501909;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=h20LA5YHcmtZeGTDYEJk05BGftpy3fA0SNQGNgHnfeQ=;
-	b=8LVnaRQujGpEmXl1EKf5Dzy+QxRHLNbyF7X+jFHRdO/pk9s+Ca4LFbi8rLef0/CvI57MFy
-	NQfpOW0HMJW4qZDg==
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: "Paul E. McKenney" <paulmck@kernel.org>
-Cc: Petr Pavlu <petr.pavlu@suse.com>,
-	Qingfang Deng <qingfang.deng@linux.dev>,
-	Breno Leitao <leitao@debian.org>,
-	Norbert Szetei <norbert@doyensec.com>,
-	Andrew Lunn <andrew+netdev@lunn.ch>,
-	"David S. Miller" <davem@davemloft.net>,
-	Eric Dumazet <edumazet@google.com>,
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
-	Taegu Ha <hataegu0826@gmail.com>, Kees Cook <kees@kernel.org>,
-	linux-ppp@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Guillaume Nault <gnault@redhat.com>, netdev@vger.kernel.org,
-	Luis Chamberlain <mcgrof@kernel.org>,
-	Daniel Gomez <da.gomez@kernel.org>,
-	Sami Tolvanen <samitolvanen@google.com>,
-	Aaron Tomlin <atomlin@atomlin.com>, linux-modules@vger.kernel.org
-Subject: Re: [PATCH net v2] ppp: defer channel free to an RCU grace period to
- fix pppol2tp RX UAF
-Message-ID: <20260708091147.O1d41Vi0@linutronix.de>
-References: <D9C0245B-608B-4884-8A09-F55BA4A9F948@doyensec.com>
- <de2616b3-6edf-4255-ba77-0674e225ab27@linux.dev>
- <akfjpBVML_1RFF91@gmail.com>
- <87111f02-5b7a-4185-8364-2faba650578b@linux.dev>
- <20260706092926.PIlrhRKz@linutronix.de>
- <0dfe59c2-bf60-40fe-90e6-d6e1003709d0@suse.com>
- <7ff3af97-1c10-4f46-84ae-ffbf757f7e9e@paulmck-laptop>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="g1x4puQ4"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 532061F000E9;
+	Wed,  8 Jul 2026 11:20:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1783509626;
+	bh=AlmlQCmyiMaFrtx4Cjr1TuapotDHv/aiEeNOwcW3/n8=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc;
+	b=g1x4puQ4PP8btquU8CG5zu4KwIMmALu+i8Evwq2BgnwCfTye0eRBvTLaJsD8Oqi/+
+	 dGJaIT4xBfqF+LlpXMSGa4MVt1TyecGfyp3KQun2nAFmyg2ILL2MqDFzS+ke11h/rQ
+	 t6gA+OVsiJmfvo7hqqCH+i9HomM8l4gsPuG7MJa68FSqmshVpem6Rqdd9F0anB6qdD
+	 oVvra+0/KpOToqp+H9Lj7HEu76RcdVCa6PXloOSQE0RJ9GM/h6nYvwscHPODuBo01r
+	 pr7nvxgKwHOhELk67ruWhCd/N5b04wY8DMyzz83G9s6PBUzH2YRJj8xB3Op2S87N0O
+	 axmHah6Tq/fxA==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id D0C44392666F;
+	Wed,  8 Jul 2026 11:20:06 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <7ff3af97-1c10-4f46-84ae-ffbf757f7e9e@paulmck-laptop>
+Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH] ppp/ppp_{async,synctty}: drop unused
+ {a,}syncppp::bytes_{sent,rcvd}
+From: patchwork-bot+netdevbpf@kernel.org
+Message-Id: 
+ <178350960564.2449791.1582849842162293264.git-patchwork-notify@kernel.org>
+Date: Wed, 08 Jul 2026 11:20:05 +0000
+References: <20260702060420.95023-1-jirislaby@kernel.org>
+In-Reply-To: <20260702060420.95023-1-jirislaby@kernel.org>
+To: Jiri Slaby <jirislaby@kernel.org>
+Cc: kuba@kernel.org, linux-kernel@vger.kernel.org, andrew+netdev@lunn.ch,
+ davem@davemloft.net, edumazet@google.com, pabeni@redhat.com,
+ linux-ppp@vger.kernel.org, netdev@vger.kernel.org
 
-On 2026-07-07 09:39:01 [-0700], Paul E. McKenney wrote:
-> Alternatives include:
+Hello:
+
+This patch was applied to netdev/net-next.git (main)
+by Paolo Abeni <pabeni@redhat.com>:
+
+On Thu,  2 Jul 2026 08:04:20 +0200 you wrote:
+> The bytes_sent and bytes_rcvd members of structs asyncppp and syncppp
+> are not used. Drop them.
 > 
-> o	Provide a patch like that above, but only execute the
-> 	rcu_barrier() in some debug mode.  If your code works when
-> 	that debug is enabled but does not otherwise, you add the
-> 	rcu_barrier().
+> Signed-off-by: Jiri Slaby (SUSE) <jirislaby@kernel.org>
+> Cc: Andrew Lunn <andrew+netdev@lunn.ch>
+> Cc: "David S. Miller" <davem@davemloft.net>
+> Cc: Eric Dumazet <edumazet@google.com>
+> Cc: Jakub Kicinski <kuba@kernel.org>
+> Cc: Paolo Abeni <pabeni@redhat.com>
 > 
-> o	If debug is enabled, make rcu_do_batch() check the function
-> 	before invoking it.  If the function is not mapped, issue a
-> 	diagnostic, and don't try to invoke the function.  (But is
-> 	there a sufficiently cheap way to check for the function not
-> 	being mapped?)
+> [...]
 
-In both cases you would see a backtrace and the name of the last
-unloaded module. And since we don't see a lot of these reports, people
-either don't run into this because it does not exist or RCU is quick
-enough.
+Here is the summary with links:
+  - ppp/ppp_{async,synctty}: drop unused {a,}syncppp::bytes_{sent,rcvd}
+    https://git.kernel.org/netdev/net-next/c/155c68aef239
 
-> 
-> 							Thanx, Paul
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
 
-Sebastian
+
