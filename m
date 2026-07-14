@@ -1,35 +1,75 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f177.google.com (mail-pl1-f177.google.com [209.85.214.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C801341DEE4;
-	Fri, 10 Jul 2026 11:40:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 712D33F9F5E
+	for <linux-ppp@vger.kernel.org>; Tue, 14 Jul 2026 09:20:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783683658; cv=none; b=m4QhqsqSOX9OkHnpgFurNN1VW34ZJ+S5cz8mEF5KGBqEeCQHrW//TBlEqTs9oGYNKp5r49PDV51ja86f21+Tez27CwOarhM3M5rfDcu8bGEoT92ZdMtgXS0nF2wpu4tfApi7/8Xs0dUi7uWA2NhUEnllGvU0b/8/7Chd7M0kD6c=
+	t=1784020828; cv=none; b=kLE2caR1M6lkMP1qOE3x+38Yxnf8PtZgywmtsmhPoEXAO7bH8ko9MK8vb1JyPkJozCgxNXX2ii2jO8tH2yXkIeQDtlcfVk5WrTO1tS3q7GNTcsxJhBsCfbxfDemg0yPeuBOUc7RrsyMxZIKNmqhZIKudhs988R0LuVbtbscNIVs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783683658; c=relaxed/simple;
-	bh=Qiw8sO7D9OfWIkFKgSmfbQU5FuDCSZxhLrFe/qiy1ys=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=EVh/USz52jse7V4bXo5zBXSWMSS+XpS6vhyi6TD4i4ZYXHSaooMqzqbIxqk/9aSjwdXNMyelhK4Eavh1yv55g6GeO5WPklG6964aMB1EQtp+A7DkhdAy2DP+Sr1/WVFONaeL5pcU06kbJDqvtAg9xsjWVEGrV0A7Trbz4vaHkyI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fDJZdJQI; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1784020828; c=relaxed/simple;
+	bh=OCV1B9VbTSNjGsQNpthWNwwEWnGtFvT3CLnsOet80zc=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=b6AU5dqeVV6c4jPsydMr3IXlttJjawC9QVijmn5TP55hJ4CnitmIsVV/c7x26sVvqIJKsu4DxA1DnP8qaISx/1lZNWkjGrcPOaSf8yLth8omSSIEwUf6Z1sw4sJ2L4eKTKh5VMrsVcPgCVRdd4gluKjMJmU1vU73UYA/h054e4c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PsGKVE7t; arc=none smtp.client-ip=209.85.214.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fDJZdJQI"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 950D81F000E9;
-	Fri, 10 Jul 2026 11:40:32 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1783683632;
-	bh=wOafub/PHc72pays8fyMJ0bla9fiEDFv5P07yKezDtI=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc;
-	b=fDJZdJQI/AgRPokdECJbmsj+7q72wFddNGi00LXMs3B1jxEiS0D+nk3gb66BW7370
-	 vejQ38EUDhYctxb62Si+0CyEL3mh1y3EPIHGPPaSYkEOUqKs9aXQxIb5LKl7ObJdeN
-	 rfXbB4v7xiBrvM6sFRYj/0gDUsrF0M3JQe9LtAzs/xoY1UD+7oMUA2C5vCRSQRFxUa
-	 I7D0MXeDmePXlPA8BS3DjodXLZJ/OYOuh3BnZKYvhiVu44Fnp3MAd/HbOnXrORN8fp
-	 9EDkVnzkt1FDB+2WB7Rpgka9beNRxSVvOdPxEJYlKwYawdigygNz3QRnL658ytcC3L
-	 WatHt9YqGmJmA==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id B683A3924F8A;
-	Fri, 10 Jul 2026 11:40:11 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PsGKVE7t"
+Received: by mail-pl1-f177.google.com with SMTP id d9443c01a7336-2ce98cb8165so7482155ad.1
+        for <linux-ppp@vger.kernel.org>; Tue, 14 Jul 2026 02:20:27 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1784020827; x=1784625627; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=7hlifX6J54QjjC62YkcEDfxBxc7vnj6pmy8TqFHFnjI=;
+        b=PsGKVE7tufKw3YAZumWCasbTsMfYxHqbzFKVvESJmhns6Vxv1QBkhP8u/mCFyGvDK1
+         OaRbf2ONGLXi7JYtICXuTnIyp4TJe6n+zQ1OM3nnx2c28mXebBBNpMz6ryPhimY2PvSo
+         BHn37J4wdcNNX3gQ0ruRswgYHW6MmSmtUarlJ2JB1WeANc7KDlurounxIvVn+BYD1YF/
+         l+U3uOQ7+mQ9OSDdPheGSg6/FfIFKQqFeZIjtpeSIdaFCb3x7TUbstBki6A9v8NPxTg7
+         7Y13iSS81ldTd3LZOnJ57osXcZi1k908jsaCd7ZAECGzn2Cnhv08D8kTCZKInAkbhhnd
+         oAcA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1784020827; x=1784625627;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=7hlifX6J54QjjC62YkcEDfxBxc7vnj6pmy8TqFHFnjI=;
+        b=dUlDXsKRwh/x+epx3Al9y9If10vD8cKFmEhG7zFFMQsvMrAMd+aDCH1SuJwGNMk2Bf
+         C8V3ncM0aJXCkgKNppZKwX5WW+tqxEsKK3F9vRyDfCfuz9lrvhh55Hg36gYpfq1DR/cl
+         sYqeGs4nPYQsuy/4fn6avNDcYFbEfSjDUMP6TEFWRm3vLURVHr9jPeaBRC9FBo0be7s/
+         PSidTxCf2VTQqHuux2Gz0GWYdzrT2xlCRm2JrR9ynVLGgixV3oQfDHgF1ExfvcIWHTVP
+         3hGhfOuPynORiYZLikCrZbIm0iQfqFQBbHKDseR293UWEF8TY6mns3Jh0evyIeJgOroQ
+         OriQ==
+X-Forwarded-Encrypted: i=1; AHgh+Ron6Z6fFhV/LIZBtKG7iTX4cdPoGl3EPXgLw3r93YAVwt6oYduNB5PUITrqI/HQraq09M6+yZnekas=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxIY6tiJzhKRXTVPjY2src5U515CT5kj7Y2YoTAzU93Tt6i2Axy
+	soZrMdG+QtdCvJhNKiC/QlE/1TAZCmvfwManGJI4JLchWdoN2vU66ZPz
+X-Gm-Gg: AfdE7ckq19K3a8f3L/k+8cjb+qHhhQtZ1xPp7f++mLelUUmte6d1iSw+sYUEZJX1clL
+	ay7amODRB5tlva6sm03wVEUJ9aG2AeLQnK7p8/jMYSplTm2wjpBH5cUpeCvSjLfbQOiyvUCH0yS
+	fuSmBLQgcLNa21daZbfvKYTyaBPn8WG7v3CzaBGPtTpdWsA9iyNowccMJH3ZZohk+Ocpr4x7EE0
+	U7j2ckYfq4fJ66GUuhHwk+24LOczU4vaM8WqQRPW+rNHN69uOB2A+/3JFibdGd3M2wLvn7v/Oqa
+	gSn+nyRrAbwM4Z1KPaC/RbwukOrJ6Q/xhSv6Z4MD+FRKbj94iYRvkmStRKwu6o10RpgM10N+Q3e
+	gToRElpIL1BmuiUnTPE30Wmig9QG6+Yl0od9QNQu+2t8dq/nG8lEiMMneaNGyI5BzQm09B0042w
+	JLDp1mL7KDDxNizqJt8yxM
+X-Received: by 2002:a17:903:1b6b:b0:2ca:5023:f983 with SMTP id d9443c01a7336-2ce8298a455mr168113075ad.29.1784020826551;
+        Tue, 14 Jul 2026 02:20:26 -0700 (PDT)
+Received: from c79ofce.localdomain ([204.3.140.65])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2ccc9d1e5d0sm114940275ad.42.2026.07.14.02.20.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 14 Jul 2026 02:20:25 -0700 (PDT)
+From: Zhixing Chen <running910@gmail.com>
+To: Andrew Lunn <andrew+netdev@lunn.ch>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Paolo Abeni <pabeni@redhat.com>
+Cc: Qingfang Deng <qingfang.deng@linux.dev>,
+	linux-ppp@vger.kernel.org,
+	netdev@vger.kernel.org,
+	Zhixing Chen <running910@gmail.com>
+Subject: [PATCH net-next] ppp: reuse ppp_get_stats64() for ioctl stats
+Date: Tue, 14 Jul 2026 17:19:41 +0800
+Message-Id: <20260714091941.33783-1-running910@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
@@ -37,46 +77,66 @@ List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH net v3] ppp: defer channel free to an RCU grace period to
- fix
- pppol2tp RX UAF
-From: patchwork-bot+netdevbpf@kernel.org
-Message-Id: 
- <178368361038.197766.8115253096775560860.git-patchwork-notify@kernel.org>
-Date: Fri, 10 Jul 2026 11:40:10 +0000
-References: <E793FCF2-58DE-4387-A983-C7B4BC3158BD@doyensec.com>
-In-Reply-To: <E793FCF2-58DE-4387-A983-C7B4BC3158BD@doyensec.com>
-To: Norbert Szetei <norbert@doyensec.com>
-Cc: netdev@vger.kernel.org, andrew+netdev@lunn.ch, davem@davemloft.net,
- edumazet@google.com, kuba@kernel.org, pabeni@redhat.com,
- qingfang.deng@linux.dev, yuehaibing@huawei.com, gnault@redhat.com,
- kees@kernel.org, hataegu0826@gmail.com, linux-ppp@vger.kernel.org,
- linux-kernel@vger.kernel.org
 
-Hello:
+ppp_get_stats() open-codes the per-cpu tstats aggregation even though
+ppp_get_stats64() already collects the packet, byte and error counters
+needed by the legacy SIOCGPPPSTATS ioctl path.
 
-This patch was applied to netdev/net.git (main)
-by Paolo Abeni <pabeni@redhat.com>:
+Reuse ppp_get_stats64() when filling struct ppp_stats. This keeps the
+ioctl stats path consistent with the netdev stats64 path and removes the
+open-coded per-cpu stats aggregation from the ioctl path.
 
-On Mon, 6 Jul 2026 11:01:59 +0200 you wrote:
-> pppol2tp_recv() runs in the L2TP UDP-encap softirq RX path:
-> 
->  l2tp_udp_encap_recv() -> l2tp_recv_common() -> pppol2tp_recv()
->    -> ppp_input(&po->chan)
-> 
-> It runs under rcu_read_lock() holding only an l2tp_session reference and
-> takes NO reference on the internal PPP channel (struct channel,
-> chan->ppp) that ppp_input() dereferences.
-> 
-> [...]
+Signed-off-by: Zhixing Chen <running910@gmail.com>
+---
 
-Here is the summary with links:
-  - [net,v3] ppp: defer channel free to an RCU grace period to fix pppol2tp RX UAF
-    https://git.kernel.org/netdev/net/c/ec4215683e47
+This is meant as a small cleanup. The ioctl path and the netdev stats64
+path already use the same underlying counters, so this just makes the
+ioctl path reuse ppp_get_stats64() instead of open-coding the per-cpu
+aggregation locally.
 
-You are awesome, thank you!
+---
+ drivers/net/ppp/ppp_generic.c | 25 ++++++++-----------------
+ 1 file changed, 8 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 57c68efa5ff8..53e6d40193fd 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -3303,26 +3303,17 @@ find_compressor(int type)
+ static void
+ ppp_get_stats(struct ppp *ppp, struct ppp_stats *st)
+ {
++	struct rtnl_link_stats64 stats64 = {};
+ 	struct slcompress *vj = ppp->vj;
+-	int cpu;
+ 
+ 	memset(st, 0, sizeof(*st));
+-	for_each_possible_cpu(cpu) {
+-		struct pcpu_sw_netstats *p = per_cpu_ptr(ppp->dev->tstats, cpu);
+-		u64 rx_packets, rx_bytes, tx_packets, tx_bytes;
+-
+-		rx_packets = u64_stats_read(&p->rx_packets);
+-		rx_bytes = u64_stats_read(&p->rx_bytes);
+-		tx_packets = u64_stats_read(&p->tx_packets);
+-		tx_bytes = u64_stats_read(&p->tx_bytes);
+-
+-		st->p.ppp_ipackets += rx_packets;
+-		st->p.ppp_ibytes += rx_bytes;
+-		st->p.ppp_opackets += tx_packets;
+-		st->p.ppp_obytes += tx_bytes;
+-	}
+-	st->p.ppp_ierrors = ppp->dev->stats.rx_errors;
+-	st->p.ppp_oerrors = ppp->dev->stats.tx_errors;
++	ppp_get_stats64(ppp->dev, &stats64);
++	st->p.ppp_ipackets = stats64.rx_packets;
++	st->p.ppp_ibytes = stats64.rx_bytes;
++	st->p.ppp_opackets = stats64.tx_packets;
++	st->p.ppp_obytes = stats64.tx_bytes;
++	st->p.ppp_ierrors = stats64.rx_errors;
++	st->p.ppp_oerrors = stats64.tx_errors;
+ 	if (!vj)
+ 		return;
+ 	st->vj.vjs_packets = vj->sls_o_compressed + vj->sls_o_uncompressed;
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.34.1
 
