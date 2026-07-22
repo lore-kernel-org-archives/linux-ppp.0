@@ -1,112 +1,291 @@
-Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com [209.85.218.47])
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com [209.85.222.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEAC23DA5DE
-	for <linux-ppp@vger.kernel.org>; Wed, 15 Jul 2026 08:59:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.218.47
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784105949; cv=pass; b=U35uaNYa8I9gsM7SlxFP9EG7uVVBAOH+FpRWvfxh8hTlxpZp+t4VrbsFblUpu9T8DHILTrNIVl4XAFcRBjeNCIB7h9Hf0urwXZusou+2dlOQjzh/uo+nZJWLXGS8w3ZJE/MwnfFEQoskdTrZIEofTeufCCtGIu6qHmwiOS7pWGs=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784105949; c=relaxed/simple;
-	bh=Dre0rhAOMbA2vc6z96CSk0Yv6aG6tGAoHo0wVAUQlvI=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=fMNSZx8LT55JIBq5OPxhyXFzAOx5QCJLKNc6h0CoCdu/wbzXPORCZe+gSMNg1L5eiRJvLQXQlQt0JcGYS4dAqGaJ3L81x5OIVM8T4Xn7PhdpMW+JBtpHFQaIePjINd4NscFhNlcaxyOHhkAQl18d3GnkQTvU0vhKPqe7Y7aQOQg=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=e67TCDDc; arc=pass smtp.client-ip=209.85.218.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 270094C042F
+	for <linux-ppp@vger.kernel.org>; Wed, 22 Jul 2026 10:16:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.197
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1784715369; cv=none; b=Nt9Q46kxbv/kEmcDeLPXwtu8jqNwi8y8NOHoqZ+wipt42FZcXm0x+VbmmaYYpyxVHmdAmhgQjcW+r2EOVm2q0x5FXl4IEAi3XblMsHWKN68k4/tcsdV3geYADe2T+tUd/GsJw7le3AC/Ix9LOomza3w7nM0JJL0kqzBjNWpEuJ8=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1784715369; c=relaxed/simple;
+	bh=x4mo26zfUHCBiqJ4mR+22Ghid7JtNBj+6pGWK/pEq/s=;
+	h=Date:Mime-Version:Message-ID:Subject:From:To:Cc:Content-Type; b=mxiv4lxcJIZZ97LiSgvA3Lh1qg4DVeMEqMZiVb1gzciW8/DpX/F6ogs9ywqChCa3ENSFoc2knWPVP+dx2hPqNw1QEY9lMk+/4O9UeL+m1IWO/7Dqviysj7xTvGDEeF2JBa6/WkxYTUriaNKjmLJzbI+yGM/OLIoZkN9Wc/rfdrA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=flex--edumazet.bounces.google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=YBW/ClKK; arc=none smtp.client-ip=209.85.222.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--edumazet.bounces.google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="e67TCDDc"
-Received: by mail-ej1-f47.google.com with SMTP id a640c23a62f3a-c15c42a45adso66161266b.0
-        for <linux-ppp@vger.kernel.org>; Wed, 15 Jul 2026 01:59:07 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1784105946; cv=none;
-        d=google.com; s=arc-20260327;
-        b=alwsLRj5EIvRQlJKzLrq8fbETjI2uVyiWUHdbp0+fcp/08R6HIrDjCNV6yW3A9dXzD
-         +tfvuclPHXzQosd0MpbeDDNwBh2lKaneEcn9sRpBeyU3pQvmPYMBm+jkeJ1RBWQrVpTu
-         nDhZOygnqmQdttO8OWLp0clkjH0Pj0DsJIgBj7c29fmpIIKA8iibV15HJAl9+u+re5DJ
-         2XsDVO+IVpK6dN10BB83oAUqsV5prCPkJWy9+nfD5g+NxrSZkqi3Y5tFs7UrzQhUHQTN
-         JeoMgd8+ypvOf4w95mM08t67CQAV8HLQ2qjya+rSR/pGB/w7So6QHfrVqsCjUS38euC/
-         Zcog==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:dkim-signature;
-        bh=Dre0rhAOMbA2vc6z96CSk0Yv6aG6tGAoHo0wVAUQlvI=;
-        fh=zAbu8LYUuETY2znz5ZUOvZ12Bmqa/1dMk4bZEuicybQ=;
-        b=r8dZQkJmqUnztXHumFQg4bw0EGUxrdZ1EhIqdBDqdgjNALENV0etOu4K3k3teUKoro
-         Sr86DdP/Vz96nIzY45CWPS+STFmLfU0aszmC+mpZ+w+jpaWHxk9bQXDMxYMrgMVMA6jK
-         JWbi5pg1jVqvI2eufeY5bCoCuVL0dcaKvxYEUR/V4Puxsl+2jJ81NI5Vr0QsIVcGeeCr
-         /BN37AykUmpUZsIydn56/R//S/tj+OdpRwGwCqje6zXlXvT7x+OrozpazF5VDlZS7fHc
-         Agjs3Eeqo3khrh57jaa8/01IFq9zVE09VHwFgxVun25u8vQa3TgrmFilgzmiDzaHUDD5
-         /dQQ==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="YBW/ClKK"
+Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-92e5e38fbc5so307402085a.2
+        for <linux-ppp@vger.kernel.org>; Wed, 22 Jul 2026 03:16:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784105946; x=1784710746; darn=vger.kernel.org;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Dre0rhAOMbA2vc6z96CSk0Yv6aG6tGAoHo0wVAUQlvI=;
-        b=e67TCDDccA9L7FuOu57iyIsXtR2nSVBTFjv19s3OCw7pWt0ld/RGFiFwgRFhmpWHny
-         uGGCnNnTUVo+6z/Z+i677cMDnWNb+iAB0xZMhJqk7vegolSWIBdxV6CNJcsRvovxjOOv
-         V9/TKnE8BNkFZrYnizGSuJDqsXJYKR/1zFGoHmy+hkh4OfrFqBdp2j07EMVXhsmbaScp
-         eUs5InN0suxRZBpxm37M6E+vuU3DU/1yvmU7siCzWGAUo1prFZnC6M26BvzFiaGPeRCu
-         evehc++O9PeBasauBNDSWog16q0r++L6sawu9Ef/CZfEuDdoGrVA/OUz7EBDAXh2QzFK
-         vnDg==
+        d=google.com; s=20251104; t=1784715367; x=1785320167; darn=vger.kernel.org;
+        h=content-type:cc:to:from:subject:message-id:mime-version:date:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=pO27D2dm2dNec2dTa60SEoOy20QATAPxLHtoffkE+Ac=;
+        b=YBW/ClKKFpG11pBlvi9LE62ljbCJTXRyWjLKrjWFlT0a1maxQrr3nSAPCD/AEQxSu0
+         Aj8Je/o00O1jcNc3O4Bfphlq5VIyDgKBLqJhHjrn/l0YZdlIs0KCh5f2witaicIALtpv
+         Rp3k2+dVGc3PFArbLFJow8Njur0vdSMhL8a5oHe+28BTjZ11H53pUitm6uncX+ZSuL/q
+         w0RGMlDeQ/6dK3wpn+ZDBnhnpFooYBVRswnel2fEHKnCGOjeynRAg8NWp9rPkGdUOzxS
+         imHKa2BqtqcpIFjupkmd3TdXCzyiKDpl7vjhzDwayXAJOgfj4+SXI2/YCrEjxedUP6Gw
+         mDwQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784105946; x=1784710746;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=Dre0rhAOMbA2vc6z96CSk0Yv6aG6tGAoHo0wVAUQlvI=;
-        b=KpXaSVzahO7ObFP50NsYNNkkoOjVrpgSOFrrPBWscg4LLtIsI6/58jOfJ6fCNFtYV4
-         y78Z4VnW6baKYKEesDMtOmR/BI4+j8Ho2SsLRi1iYGBlKT5u9sxyqCWMSGfWUpOYoPKq
-         OtPTbA8vtaHZlrtsfR7MEWTmnMl+YSgnB6DL6Jo+eskLVhji0Uaql6lViVHzqJ0uz3SJ
-         3KC1D9S6xA+XTOdiRPm1iEIyZ7QSV9UHFdrJ2wLeTtPuDIpzM2cDOTq1PK3yiNvllJdv
-         eZK/cKe3pvfaNdbhLZ5KEXhFbouMNSEUbVhD6xCb5kuS5VhWBo0/EVTA6He5/V61OAq8
-         5uZw==
-X-Forwarded-Encrypted: i=1; AHgh+Rqtw+IxYxLYHOefYTwq+LwLgwg2WuvDt9CW1B3M/+1oIBbZBLVlHnWt6jcHxPTvLAX5Bc/1sJBIzUs=@vger.kernel.org
-X-Gm-Message-State: AOJu0YymcrZOBVnUuIAK7AP3wX0UUTalZmuyFSwQ2hF0yCs4tLoGjZa5
-	eR8XFANCIAlyQRBmWT80JZRl7+PF6ERe/Yom4PsN5fJKfUQHEWHLCKMy6fHak7RiOljjyCxYy6F
-	QoGUve/fQotO9vhp1Uun+UXbm6yXGsf8=
-X-Gm-Gg: AfdE7cm8NrQ8vuCtJixepvMHdvnL4uFRWjc99BERrS4wkfjNG5J0IYLiMAFMyqC/XVM
-	x6ywk0M796zcqfS5QpxfjBth+gqJs6+phyUVhId7RXcyKgpNhRSTlQIuvMLHlcRmNa/LvETFn5M
-	mB9nj7SB8Mz7GIhz//OzrxqmTnJ7b6BdgVGIWnuNCBnUDsuH3bsuLwbF/JaB/f7zFwDKEntHsxq
-	FA1nLgLAUdEN5ml+kLvTclnvmKP+JPcNuOCiUiP1lBCOTlXkKsLQFJV7wLREmBoR4PCaaA=
-X-Received: by 2002:a17:906:2443:b0:c12:707a:8372 with SMTP id
- a640c23a62f3a-c161e992d2cmr680722966b.21.1784105945500; Wed, 15 Jul 2026
- 01:59:05 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1784715367; x=1785320167;
+        h=content-type:cc:to:from:subject:message-id:mime-version:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=pO27D2dm2dNec2dTa60SEoOy20QATAPxLHtoffkE+Ac=;
+        b=r1kxB9Xlye45W4GqEZsAgUjKw8VPM1DJjwfie2M7vOu+8rIwFM62sC3GZmHCdIO5sE
+         cNxwo3G6O1F3mdtej2w8jjQNzZ4Uf39nwhSMpw9QL0uLIgJAjHnnBNJdrkZ60NKCVtjV
+         PqgPQt3joRzpEjYFXWTTtGD4y7KNHz/zzlCflNm8IjhtcTlLPFK8bODlbaqw/99ccXX2
+         DzxmMmp4JQSq8EEtzVoE1st6v+eYoXiwo63I3i85KQ4kSANyV7w4sdkBQ1V8wzLz2xph
+         eaFCjw8Z0JOurHz1N/1z7QrqrL6YQ35/1WMk416f3ow0PHE4bYN82f5ZwV+kbOoCs+25
+         o8iw==
+X-Forwarded-Encrypted: i=1; AHgh+RqNZObKddYqPrDR5hx3ds51kz0egpm45SxGU6o6+2ZdDi8q+4WQUNljS5xYBVz+3Z0wimAW7jUGzk4=@vger.kernel.org
+X-Gm-Message-State: AOJu0Yz8l+xMIecyMfd2f3IzoJ5k5TMxZ1pZ7QUOBVJVN8QLPCzkwiUH
+	y3I6slpdfuLNLcBhyk591/x/iOfOrkKmxdwhU1koJQRz39pHfg/i4nrU2H9LElTQUPdQv5o94qp
+	fF9X8gEm7Tf1orA==
+X-Received: from qkhp28.prod.google.com ([2002:a05:620a:22bc:b0:92e:5f51:748b])
+ (user=edumazet job=prod-delivery.src-stubby-dispatcher) by
+ 2002:a05:620a:8005:b0:915:abc4:b580 with SMTP id af79cd13be357-930b416d26cmr2128348985a.49.1784715366530;
+ Wed, 22 Jul 2026 03:16:06 -0700 (PDT)
+Date: Wed, 22 Jul 2026 10:16:05 +0000
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-References: <20260714091941.33783-1-running910@gmail.com> <e07c280b-d3a8-442d-bf19-f00d544ab26c@linux.dev>
-In-Reply-To: <e07c280b-d3a8-442d-bf19-f00d544ab26c@linux.dev>
-From: Zhixing Chen <running910@gmail.com>
-Date: Wed, 15 Jul 2026 16:58:53 +0800
-X-Gm-Features: AUfX_myTUoJp1A8VmbhBzNhWx8N3kj5HpN3fRLOHmuaZlWQoHn4_65qgWOT00kM
-Message-ID: <CAMyuFdXdYWyHwYRBQb66GWycWZ=ZYXaca664Cq_TCNuhuKk0ew@mail.gmail.com>
-Subject: Re: [PATCH net-next] ppp: reuse ppp_get_stats64() for ioctl stats
-To: Qingfang Deng <qingfang.deng@linux.dev>
-Cc: Andrew Lunn <andrew+netdev@lunn.ch>, "David S . Miller" <davem@davemloft.net>, 
-	Eric Dumazet <edumazet@google.com>, Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, 
-	linux-ppp@vger.kernel.org, netdev@vger.kernel.org
+Mime-Version: 1.0
+X-Mailer: git-send-email 2.55.0.229.g6434b31f56-goog
+Message-ID: <20260722101605.2868548-1-edumazet@google.com>
+Subject: [PATCH net] ppp: annotate data races in ppp_generic
+From: Eric Dumazet <edumazet@google.com>
+To: "David S . Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, 
+	Paolo Abeni <pabeni@redhat.com>
+Cc: Simon Horman <horms@kernel.org>, Andrew Lunn <andrew+netdev@lunn.ch>, netdev@vger.kernel.org, 
+	eric.dumazet@gmail.com, Eric Dumazet <edumazet@google.com>, 
+	Qingfang Deng <qingfang.deng@linux.dev>, linux-ppp@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 
-Hi Qingfang,
+Several fields in struct ppp can be read or updated concurrently
+from multiple CPUs without synchronization, causing data races:
 
-Thanks a lot for pointing this out.
+1. ppp->mru is read concurrently in ppp_receive_nonmp_frame() while
+   being updated via PPPIOCSMRU ioctl. Protect ppp->mru updates in
+   PPPIOCSMRU with ppp_recv_lock(ppp).
 
-> On a 32-bit architecture, this will introduce unnecessary seqlock
-> overhead to get the upper 32-bit of a counter, which would then be
-> immediately discarded.
+2. PPPIOCGFLAGS reads ppp->flags, ppp->xstate, and ppp->rstate
+   unlocked. Wrap the read in ppp_lock(ppp) to get a consistent
+   snapshot.
 
-That makes sense. I missed that reusing ppp_get_stats64() would add
-unnecessary 64-bit stats read overhead on 32-bit architectures, while the
-ioctl path only returns 32-bit counters. I agree this is not a good
-trade-off for a cleanup.
+3. ppp->debug is updated via PPPIOCSDEBUG and read concurrently on
+   fast paths. Annotate reads with READ_ONCE() and writes with
+   WRITE_ONCE().
 
-Please ignore this patch.
+4. ppp->last_xmit and ppp->last_recv are updated on TX/RX data paths
+   and read via PPPIOCGIDLE32 / PPPIOCGIDLE64 ioctls. Annotate with
+   WRITE_ONCE() / READ_ONCE() and use max() to handle jiffies
+   subtraction.
 
-Thanks again,
-Zhixing
+5. ppp->npmode[] is updated via PPPIOCSNPMODE and read on TX/RX
+   paths. Annotate with WRITE_ONCE() / READ_ONCE().
+
+Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+Signed-off-by: Eric Dumazet <edumazet@google.com>
+---
+Cc: Qingfang Deng <qingfang.deng@linux.dev>
+Cc: linux-ppp@vger.kernel.org
+---
+ drivers/net/ppp/ppp_generic.c | 50 ++++++++++++++++++++---------------
+ 1 file changed, 28 insertions(+), 22 deletions(-)
+
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index ef54e0a0462a175bb989db8dda895e9ae755965f..cacc4c3a37d2cda0aea2e176e5d0638f959e18a3 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -810,7 +810,9 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	case PPPIOCSMRU:
+ 		if (get_user(val, p))
+ 			break;
++		ppp_recv_lock(ppp);
+ 		ppp->mru = val;
++		ppp_recv_unlock(ppp);
+ 		err = 0;
+ 		break;
+ 
+@@ -831,7 +833,9 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		break;
+ 
+ 	case PPPIOCGFLAGS:
++		ppp_lock(ppp);
+ 		val = ppp->flags | ppp->xstate | ppp->rstate;
++		ppp_unlock(ppp);
+ 		if (put_user(val, p))
+ 			break;
+ 		err = 0;
+@@ -855,7 +859,7 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	case PPPIOCSDEBUG:
+ 		if (get_user(val, p))
+ 			break;
+-		ppp->debug = val;
++		WRITE_ONCE(ppp->debug, val);
+ 		err = 0;
+ 		break;
+ 
+@@ -866,16 +870,16 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		break;
+ 
+ 	case PPPIOCGIDLE32:
+-                idle32.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
+-                idle32.recv_idle = (jiffies - ppp->last_recv) / HZ;
+-                if (copy_to_user(argp, &idle32, sizeof(idle32)))
++		idle32.xmit_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_xmit))) / HZ;
++		idle32.recv_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_recv))) / HZ;
++		if (copy_to_user(argp, &idle32, sizeof(idle32)))
+ 			break;
+ 		err = 0;
+ 		break;
+ 
+ 	case PPPIOCGIDLE64:
+-		idle64.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
+-		idle64.recv_idle = (jiffies - ppp->last_recv) / HZ;
++		idle64.xmit_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_xmit))) / HZ;
++		idle64.recv_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_recv))) / HZ;
+ 		if (copy_to_user(argp, &idle64, sizeof(idle64)))
+ 			break;
+ 		err = 0;
+@@ -916,7 +920,7 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 			if (copy_to_user(argp, &npi, sizeof(npi)))
+ 				break;
+ 		} else {
+-			ppp->npmode[i] = npi.mode;
++			WRITE_ONCE(ppp->npmode[i], npi.mode);
+ 			/* we may be able to transmit more packets now (??) */
+ 			netif_wake_queue(ppp->dev);
+ 		}
+@@ -1454,7 +1458,7 @@ ppp_start_xmit(struct sk_buff *skb, struct net_device *dev)
+ 		goto outf;
+ 
+ 	/* Drop, accept or reject the packet */
+-	switch (ppp->npmode[npi]) {
++	switch (READ_ONCE(ppp->npmode[npi])) {
+ 	case NPMODE_PASS:
+ 		break;
+ 	case NPMODE_QUEUE:
+@@ -1790,7 +1794,7 @@ ppp_prepare_tx_skb(struct ppp *ppp, struct sk_buff **pskb)
+ 		*(__be16 *)skb_push(skb, 2) = htons(PPP_FILTER_OUTBOUND_TAG);
+ 		if (ppp->pass_filter &&
+ 		    bpf_prog_run(ppp->pass_filter, skb) == 0) {
+-			if (ppp->debug & 1)
++			if (READ_ONCE(ppp->debug) & 1)
+ 				netdev_printk(KERN_DEBUG, ppp->dev,
+ 					      "PPP: outbound frame "
+ 					      "not passed\n");
+@@ -1800,11 +1804,11 @@ ppp_prepare_tx_skb(struct ppp *ppp, struct sk_buff **pskb)
+ 		/* if this packet passes the active filter, record the time */
+ 		if (!(ppp->active_filter &&
+ 		      bpf_prog_run(ppp->active_filter, skb) == 0))
+-			ppp->last_xmit = jiffies;
++			WRITE_ONCE(ppp->last_xmit, jiffies);
+ 		skb_pull(skb, 2);
+ #else
+ 		/* for data packets, record the time */
+-		ppp->last_xmit = jiffies;
++		WRITE_ONCE(ppp->last_xmit, jiffies);
+ #endif /* CONFIG_PPP_FILTER */
+ 	}
+ 
+@@ -2154,7 +2158,7 @@ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb)
+  noskb:
+ 	spin_unlock(&pch->downl);
+  err_linearize:
+-	if (ppp->debug & 1)
++	if (READ_ONCE(ppp->debug) & 1)
+ 		netdev_err(ppp->dev, "PPP: no memory (fragment)\n");
+ 	DEV_STATS_INC(ppp->dev, tx_errors);
+ 	++ppp->nxseq;
+@@ -2502,7 +2506,7 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
+ 			*(__be16 *)skb_push(skb, 2) = htons(PPP_FILTER_INBOUND_TAG);
+ 			if (ppp->pass_filter &&
+ 			    bpf_prog_run(ppp->pass_filter, skb) == 0) {
+-				if (ppp->debug & 1)
++				if (READ_ONCE(ppp->debug) & 1)
+ 					netdev_printk(KERN_DEBUG, ppp->dev,
+ 						      "PPP: inbound frame "
+ 						      "not passed\n");
+@@ -2511,14 +2515,14 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
+ 			}
+ 			if (!(ppp->active_filter &&
+ 			      bpf_prog_run(ppp->active_filter, skb) == 0))
+-				ppp->last_recv = jiffies;
++				WRITE_ONCE(ppp->last_recv, jiffies);
+ 			__skb_pull(skb, 2);
+ 		} else
+ #endif /* CONFIG_PPP_FILTER */
+-			ppp->last_recv = jiffies;
++			WRITE_ONCE(ppp->last_recv, jiffies);
+ 
+ 		if ((ppp->dev->flags & IFF_UP) == 0 ||
+-		    ppp->npmode[npi] != NPMODE_PASS) {
++		    READ_ONCE(ppp->npmode[npi]) != NPMODE_PASS) {
+ 			kfree_skb(skb);
+ 		} else {
+ 			/* chop off protocol */
+@@ -2771,7 +2775,7 @@ ppp_mp_reconstruct(struct ppp *ppp)
+ 			seq = seq_before(minseq, PPP_MP_CB(p)->sequence)?
+ 				minseq + 1: PPP_MP_CB(p)->sequence;
+ 
+-			if (ppp->debug & 1)
++			if (READ_ONCE(ppp->debug) & 1)
+ 				netdev_printk(KERN_DEBUG, ppp->dev,
+ 					      "lost frag %u..%u\n",
+ 					      oldseq, seq-1);
+@@ -2820,7 +2824,7 @@ ppp_mp_reconstruct(struct ppp *ppp)
+ 			struct sk_buff *tmp2;
+ 
+ 			skb_queue_reverse_walk_from_safe(list, p, tmp2) {
+-				if (ppp->debug & 1)
++				if (READ_ONCE(ppp->debug) & 1)
+ 					netdev_printk(KERN_DEBUG, ppp->dev,
+ 						      "discarding frag %u\n",
+ 						      PPP_MP_CB(p)->sequence);
+@@ -2842,7 +2846,7 @@ ppp_mp_reconstruct(struct ppp *ppp)
+ 			skb_queue_walk_safe(list, p, tmp) {
+ 				if (p == head)
+ 					break;
+-				if (ppp->debug & 1)
++				if (READ_ONCE(ppp->debug) & 1)
+ 					netdev_printk(KERN_DEBUG, ppp->dev,
+ 						      "discarding frag %u\n",
+ 						      PPP_MP_CB(p)->sequence);
+@@ -2850,7 +2854,7 @@ ppp_mp_reconstruct(struct ppp *ppp)
+ 				kfree_skb(p);
+ 			}
+ 
+-			if (ppp->debug & 1)
++			if (READ_ONCE(ppp->debug) & 1)
+ 				netdev_printk(KERN_DEBUG, ppp->dev,
+ 					      "  missed pkts %u..%u\n",
+ 					      ppp->nextseq,
+@@ -3161,7 +3165,8 @@ ppp_ccp_peek(struct ppp *ppp, struct sk_buff *skb, int inbound)
+ 			if (!ppp->rc_state)
+ 				break;
+ 			if (ppp->rcomp->decomp_init(ppp->rc_state, dp, len,
+-					ppp->file.index, 0, ppp->mru, ppp->debug)) {
++						ppp->file.index, 0, ppp->mru,
++						READ_ONCE(ppp->debug))) {
+ 				ppp->rstate |= SC_DECOMP_RUN;
+ 				ppp->rstate &= ~(SC_DC_ERROR | SC_DC_FERROR);
+ 			}
+@@ -3170,7 +3175,8 @@ ppp_ccp_peek(struct ppp *ppp, struct sk_buff *skb, int inbound)
+ 			if (!ppp->xc_state)
+ 				break;
+ 			if (ppp->xcomp->comp_init(ppp->xc_state, dp, len,
+-					ppp->file.index, 0, ppp->debug))
++						  ppp->file.index, 0,
++						  READ_ONCE(ppp->debug)))
+ 				ppp->xstate |= SC_COMP_RUN;
+ 		}
+ 		break;
+-- 
+2.55.0.229.g6434b31f56-goog
+
