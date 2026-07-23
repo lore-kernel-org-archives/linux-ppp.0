@@ -1,95 +1,76 @@
-Received: from out-180.mta0.migadu.com (out-180.mta0.migadu.com [91.218.175.180])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FC523D25A2
-	for <linux-ppp@vger.kernel.org>; Thu, 23 Jul 2026 07:23:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E41343B4AA;
+	Thu, 23 Jul 2026 14:10:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784791383; cv=none; b=dk9dG32gWJcvcOGlxzHSWQAS6wED1Om2s9sRwpwgDmuFmnA6RKg4nGmdC0JqZwNFF0xwdGE8tsM2zUDOBgNZPCmaP7yUx6uZ4Ue21K7CTSv2yPOj1+bm19v3LKjMwC2aBCEzEZGQtxb/rGCg2SrtgDXvzOpjqDb4f/r5YArXDnk=
+	t=1784815869; cv=none; b=P5Bbp9W0mOKEq2nA87SBh1XnRptdR/CVQGNCPkR+1HEknxKZJaIiM7T9+4mN2URhTw+zj27nBrbN1Y/Ds4JMgwY9yypYms7ttEF1Fjiz0urh56eKsmpou1fzuSlud88Ic/8qYM7Jz05ICYD7tu/rqnqHJ8FpWtCv5SAPM/yfFWI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784791383; c=relaxed/simple;
-	bh=KNAhsO+4pkk1drGeieJrcyyWdWq0hSXLsXMiUQeK1IM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=T5DojY4vycTgAX1//w1azZZjJU1g8NF5Uwb9v/wL3d+h8hAWsMSEWyFWccAnCpMGnOHtn1hjOS/2d4QDJNhl/1wWhEVc66gbxR1Mi3r2J9d4aPtDu/k+uZd3jk4MOHuYSWrd6x2CGppjMVyB7egRnfPux+2Mf76N4kjFUgwvMEs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=hnWHg00a; arc=none smtp.client-ip=91.218.175.180
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1784815869; c=relaxed/simple;
+	bh=R3pEaAJtUwmYupU52QnnVy4Wvf5JpVunq2L85p2pxoA=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=JUyx/ZLEOtZi/rS9pAK47PTZBnJavaiVFdNEMNZt6DkpQn+ESz6BEKxGV5xfO0FOYcKWpgVEthqvzPaqEfBIbIhauI8MJ5sFVhjxwiayIED65r0jFxeugLrycCFJTYt0GtdPZVrmb2yy/0D9WJLdicGHn8XCQEUeJ0fx1EhdNkk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=aApV6u5W; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="hnWHg00a"
-Message-ID: <86e82246-c842-4d0c-927a-52e21a996008@linux.dev>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1784791367;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=tCQdKcEX/tTqeLaSJW23dR73y6rZ1TlR2KuEE8PLyKE=;
-	b=hnWHg00a7TBXMWVTaVgnRkH0v+5LDF/gxBChq13FKQuqZw6J/KZ+tl9TuKYqtWiLgntRSZ
-	x6Jb0JjofAgqBlzjHTzBdB1OM0j9poVa3x5PBmY4maWqcJTplP+Y+0u8sxvE1B6LyycuuT
-	BlvS+iHNFUUzjQzxeXXkVA5ebaKMo+Y=
-Date: Thu, 23 Jul 2026 15:21:56 +0800
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="aApV6u5W"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id EF9A31F00A3E;
+	Thu, 23 Jul 2026 14:10:53 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1784815854;
+	bh=3riE/ajomt3CGK+Se9WbeN2YhpFRhYDpQ3hzVmZIF2U=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc;
+	b=aApV6u5WYUO2Fd6WBXewVlY3rx6VGN4EYXtBi+JXLXGivhriQUqxOHAmlJtsoCLAI
+	 eRofBzxTANP9heAt+1OkM+byCU4G1RfOw/bZnrWoqFQmBzErHiu/jv8rWQvkSdgvu8
+	 tpNENSXlFbNWaxFBYnkaeUhQH2Z1CcVh61ea7QvigtOPYCGuuaymAbmqMkX6wR3uFF
+	 DKh8mP0ewplAohq5setNB3CjwAPXF0jKFYwdJ0pSIGakmUmVfvkfM7YyYV6IWDmatX
+	 wshDEKQiNTycUqQspkeTGmK4X9rI7Y8zT/JE7Bc//vAMXx9TutpYUkJgYWcixt5oVF
+	 NCeRHquJGzR6w==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 5693F380CFD4;
+	Thu, 23 Jul 2026 14:10:23 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Subject: Re: [PATCH net] ppp: annotate data races in ppp_generic
-To: Eric Dumazet <edumazet@google.com>
-Cc: "David S . Miller" <davem@davemloft.net>, Jakub Kicinski
- <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
- Simon Horman <horms@kernel.org>, Andrew Lunn <andrew+netdev@lunn.ch>,
- netdev@vger.kernel.org, eric.dumazet@gmail.com, linux-ppp@vger.kernel.org
-References: <20260722101605.2868548-1-edumazet@google.com>
- <b16aec0f-a90f-4132-820e-239ddadbe8f0@linux.dev>
- <CANn89i+E=JBRGj3cK+6mfVEX+PUjYrpkkWk1dB3VswnW4X_KGw@mail.gmail.com>
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Qingfang Deng <qingfang.deng@linux.dev>
-In-Reply-To: <CANn89i+E=JBRGj3cK+6mfVEX+PUjYrpkkWk1dB3VswnW4X_KGw@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+Subject: Re: [PATCH net] ppp: annotate data races in ppp_generic
+From: patchwork-bot+netdevbpf@kernel.org
+Message-Id: 
+ <178481582189.2248593.7721284529663157759.git-patchwork-notify@kernel.org>
+Date: Thu, 23 Jul 2026 14:10:21 +0000
+References: <20260722101605.2868548-1-edumazet@google.com>
+In-Reply-To: <20260722101605.2868548-1-edumazet@google.com>
+To: Eric Dumazet <edumazet@google.com>
+Cc: davem@davemloft.net, kuba@kernel.org, pabeni@redhat.com, horms@kernel.org,
+ andrew+netdev@lunn.ch, netdev@vger.kernel.org, eric.dumazet@gmail.com,
+ qingfang.deng@linux.dev, linux-ppp@vger.kernel.org
 
-Hi,
+Hello:
 
-On 2026/7/23 14:48, Eric Dumazet wrote:
-> On Thu, Jul 23, 2026 at 8:24 AM Qingfang Deng <qingfang.deng@linux.dev> wrote:
->> Hi,
->>
->> On 2026/7/22 18:16, Eric Dumazet wrote:
->>> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
->>> index ef54e0a0462a175bb989db8dda895e9ae755965f..cacc4c3a37d2cda0aea2e176e5d0638f959e18a3 100644
->>> --- a/drivers/net/ppp/ppp_generic.c
->>> +++ b/drivers/net/ppp/ppp_generic.c
->>> @@ -866,16 +870,16 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
->>>                break;
->>>
->>>        case PPPIOCGIDLE32:
->>> -                idle32.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
->>> -                idle32.recv_idle = (jiffies - ppp->last_recv) / HZ;
->>> -                if (copy_to_user(argp, &idle32, sizeof(idle32)))
->>> +             idle32.xmit_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_xmit))) / HZ;
->>> +             idle32.recv_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_recv))) / HZ;
->> In the original code, the difference will wrap around on a 32-bit kernel
->> with HZ=1000 if the session sits idle for 4,294,967.295 seconds
->> (approximately 49.7 days). With this change, as the difference is cast
->> to a long, it will be negative after 2,147,483.647 seconds
->> (approximately 24.9 days) and then clamped to zero by max(), making the
->> situation worse.
-> I do not think the code was ready to handle long idle sessions to begin with.
->
-> Can you elaborate on the 'worse' part, because I do not get it,
->
-> We perform a max(0L, delta) quite often in the kernel, in lockless contexts.
->
-> delta = jiffies - ppp->last_recv ; can be ~0UL if another cpu was able
-> to update last_recv to (jiffies+1).
->
-> We prefer in this case returning 0 instead of ~infinity.
+This patch was applied to netdev/net.git (main)
+by Jakub Kicinski <kuba@kernel.org>:
 
-Now I get it. A CPU may see an up-to-date `last_recv` from another CPU 
-but a stale `jiffies`, as the order of reading the two variables is 
-undefined (sequence points and memory ordering). So:
+On Wed, 22 Jul 2026 10:16:05 +0000 you wrote:
+> Several fields in struct ppp can be read or updated concurrently
+> from multiple CPUs without synchronization, causing data races:
+> 
+> 1. ppp->mru is read concurrently in ppp_receive_nonmp_frame() while
+>    being updated via PPPIOCSMRU ioctl. Protect ppp->mru updates in
+>    PPPIOCSMRU with ppp_recv_lock(ppp).
+> 
+> [...]
 
-Reviewed-by: Qingfang Deng <qingfang.deng@linux.dev>
+Here is the summary with links:
+  - [net] ppp: annotate data races in ppp_generic
+    https://git.kernel.org/netdev/net/c/543adf072165
+
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
