@@ -1,291 +1,86 @@
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com [209.85.222.197])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out-185.mta0.migadu.com (out-185.mta0.migadu.com [91.218.175.185])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 270094C042F
-	for <linux-ppp@vger.kernel.org>; Wed, 22 Jul 2026 10:16:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.197
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BB4A30FC03
+	for <linux-ppp@vger.kernel.org>; Thu, 23 Jul 2026 06:24:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.185
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784715369; cv=none; b=Nt9Q46kxbv/kEmcDeLPXwtu8jqNwi8y8NOHoqZ+wipt42FZcXm0x+VbmmaYYpyxVHmdAmhgQjcW+r2EOVm2q0x5FXl4IEAi3XblMsHWKN68k4/tcsdV3geYADe2T+tUd/GsJw7le3AC/Ix9LOomza3w7nM0JJL0kqzBjNWpEuJ8=
+	t=1784787883; cv=none; b=l/+JJASoStoIzZUjPfQTcE02CJ3rLTsYhW3smXmcUpi4l6+Js3P6fl9ybc0dbSzDtQhwWhtt/pUy+KlE7um+IYwkO2FljqvwudDlKdlKHx+SvARQ3BQhXcYHv2Wo97Jl5crz7ysi8Wd5wJCJ1553JpP+HA4q1SWM22y4zS6+OYQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784715369; c=relaxed/simple;
-	bh=x4mo26zfUHCBiqJ4mR+22Ghid7JtNBj+6pGWK/pEq/s=;
-	h=Date:Mime-Version:Message-ID:Subject:From:To:Cc:Content-Type; b=mxiv4lxcJIZZ97LiSgvA3Lh1qg4DVeMEqMZiVb1gzciW8/DpX/F6ogs9ywqChCa3ENSFoc2knWPVP+dx2hPqNw1QEY9lMk+/4O9UeL+m1IWO/7Dqviysj7xTvGDEeF2JBa6/WkxYTUriaNKjmLJzbI+yGM/OLIoZkN9Wc/rfdrA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=flex--edumazet.bounces.google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=YBW/ClKK; arc=none smtp.client-ip=209.85.222.197
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--edumazet.bounces.google.com
+	s=arc-20240116; t=1784787883; c=relaxed/simple;
+	bh=2R13blRGfFPZ/SwD80wzlfRHmnbeHOHPKADhP+vcY1I=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=D340Be8mTHhupSPCdtGsEeZ1OyWL4ZYqxZiwoqLHVTYg8DfyvSv6MlZy39rISkRtDao4BgZuDs39eraFcuqtmQrlfJDxn1hvFw6Xa1LgtDyiyo9QZXEKqFC2YV/scM9Gu+aaJAMOeJ8dODii+uTlsBDB7IQEq21BavLu++30MJI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=dDcX/tyZ; arc=none smtp.client-ip=91.218.175.185
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="YBW/ClKK"
-Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-92e5e38fbc5so307402085a.2
-        for <linux-ppp@vger.kernel.org>; Wed, 22 Jul 2026 03:16:07 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20251104; t=1784715367; x=1785320167; darn=vger.kernel.org;
-        h=content-type:cc:to:from:subject:message-id:mime-version:date:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=pO27D2dm2dNec2dTa60SEoOy20QATAPxLHtoffkE+Ac=;
-        b=YBW/ClKKFpG11pBlvi9LE62ljbCJTXRyWjLKrjWFlT0a1maxQrr3nSAPCD/AEQxSu0
-         Aj8Je/o00O1jcNc3O4Bfphlq5VIyDgKBLqJhHjrn/l0YZdlIs0KCh5f2witaicIALtpv
-         Rp3k2+dVGc3PFArbLFJow8Njur0vdSMhL8a5oHe+28BTjZ11H53pUitm6uncX+ZSuL/q
-         w0RGMlDeQ/6dK3wpn+ZDBnhnpFooYBVRswnel2fEHKnCGOjeynRAg8NWp9rPkGdUOzxS
-         imHKa2BqtqcpIFjupkmd3TdXCzyiKDpl7vjhzDwayXAJOgfj4+SXI2/YCrEjxedUP6Gw
-         mDwQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784715367; x=1785320167;
-        h=content-type:cc:to:from:subject:message-id:mime-version:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=pO27D2dm2dNec2dTa60SEoOy20QATAPxLHtoffkE+Ac=;
-        b=r1kxB9Xlye45W4GqEZsAgUjKw8VPM1DJjwfie2M7vOu+8rIwFM62sC3GZmHCdIO5sE
-         cNxwo3G6O1F3mdtej2w8jjQNzZ4Uf39nwhSMpw9QL0uLIgJAjHnnBNJdrkZ60NKCVtjV
-         PqgPQt3joRzpEjYFXWTTtGD4y7KNHz/zzlCflNm8IjhtcTlLPFK8bODlbaqw/99ccXX2
-         DzxmMmp4JQSq8EEtzVoE1st6v+eYoXiwo63I3i85KQ4kSANyV7w4sdkBQ1V8wzLz2xph
-         eaFCjw8Z0JOurHz1N/1z7QrqrL6YQ35/1WMk416f3ow0PHE4bYN82f5ZwV+kbOoCs+25
-         o8iw==
-X-Forwarded-Encrypted: i=1; AHgh+RqNZObKddYqPrDR5hx3ds51kz0egpm45SxGU6o6+2ZdDi8q+4WQUNljS5xYBVz+3Z0wimAW7jUGzk4=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yz8l+xMIecyMfd2f3IzoJ5k5TMxZ1pZ7QUOBVJVN8QLPCzkwiUH
-	y3I6slpdfuLNLcBhyk591/x/iOfOrkKmxdwhU1koJQRz39pHfg/i4nrU2H9LElTQUPdQv5o94qp
-	fF9X8gEm7Tf1orA==
-X-Received: from qkhp28.prod.google.com ([2002:a05:620a:22bc:b0:92e:5f51:748b])
- (user=edumazet job=prod-delivery.src-stubby-dispatcher) by
- 2002:a05:620a:8005:b0:915:abc4:b580 with SMTP id af79cd13be357-930b416d26cmr2128348985a.49.1784715366530;
- Wed, 22 Jul 2026 03:16:06 -0700 (PDT)
-Date: Wed, 22 Jul 2026 10:16:05 +0000
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="dDcX/tyZ"
+Message-ID: <b16aec0f-a90f-4132-820e-239ddadbe8f0@linux.dev>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1784787869;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=sh96Z4nEx0PzkdFSAUU36azYXNYjocK8bPREh6lGfcg=;
+	b=dDcX/tyZZdZWlaK9f65/RwTTM8k2TTP/7d9fK/1PmB4CaNjr/xc9ue6v/aWnUOVA99nxLX
+	7ccL1hmVCaXneVB6Jckgv3e97mDyLn+HqNpXRRkx5c/BS3a9b267UWqwO5GBeqFVPC9tkf
+	Xq7QdP+xLsi79Mm2oB5ORFS807njsHM=
+Date: Thu, 23 Jul 2026 14:24:00 +0800
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
-Mime-Version: 1.0
-X-Mailer: git-send-email 2.55.0.229.g6434b31f56-goog
-Message-ID: <20260722101605.2868548-1-edumazet@google.com>
-Subject: [PATCH net] ppp: annotate data races in ppp_generic
-From: Eric Dumazet <edumazet@google.com>
-To: "David S . Miller" <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>, 
-	Paolo Abeni <pabeni@redhat.com>
-Cc: Simon Horman <horms@kernel.org>, Andrew Lunn <andrew+netdev@lunn.ch>, netdev@vger.kernel.org, 
-	eric.dumazet@gmail.com, Eric Dumazet <edumazet@google.com>, 
-	Qingfang Deng <qingfang.deng@linux.dev>, linux-ppp@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+MIME-Version: 1.0
+Subject: Re: [PATCH net] ppp: annotate data races in ppp_generic
+To: Eric Dumazet <edumazet@google.com>, "David S . Miller"
+ <davem@davemloft.net>, Jakub Kicinski <kuba@kernel.org>,
+ Paolo Abeni <pabeni@redhat.com>
+Cc: Simon Horman <horms@kernel.org>, Andrew Lunn <andrew+netdev@lunn.ch>,
+ netdev@vger.kernel.org, eric.dumazet@gmail.com, linux-ppp@vger.kernel.org
+References: <20260722101605.2868548-1-edumazet@google.com>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Qingfang Deng <qingfang.deng@linux.dev>
+In-Reply-To: <20260722101605.2868548-1-edumazet@google.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Migadu-Flow: FLOW_OUT
 
-Several fields in struct ppp can be read or updated concurrently
-from multiple CPUs without synchronization, causing data races:
+Hi,
 
-1. ppp->mru is read concurrently in ppp_receive_nonmp_frame() while
-   being updated via PPPIOCSMRU ioctl. Protect ppp->mru updates in
-   PPPIOCSMRU with ppp_recv_lock(ppp).
-
-2. PPPIOCGFLAGS reads ppp->flags, ppp->xstate, and ppp->rstate
-   unlocked. Wrap the read in ppp_lock(ppp) to get a consistent
-   snapshot.
-
-3. ppp->debug is updated via PPPIOCSDEBUG and read concurrently on
-   fast paths. Annotate reads with READ_ONCE() and writes with
-   WRITE_ONCE().
-
-4. ppp->last_xmit and ppp->last_recv are updated on TX/RX data paths
-   and read via PPPIOCGIDLE32 / PPPIOCGIDLE64 ioctls. Annotate with
-   WRITE_ONCE() / READ_ONCE() and use max() to handle jiffies
-   subtraction.
-
-5. ppp->npmode[] is updated via PPPIOCSNPMODE and read on TX/RX
-   paths. Annotate with WRITE_ONCE() / READ_ONCE().
-
-Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
-Signed-off-by: Eric Dumazet <edumazet@google.com>
----
-Cc: Qingfang Deng <qingfang.deng@linux.dev>
-Cc: linux-ppp@vger.kernel.org
----
- drivers/net/ppp/ppp_generic.c | 50 ++++++++++++++++++++---------------
- 1 file changed, 28 insertions(+), 22 deletions(-)
-
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index ef54e0a0462a175bb989db8dda895e9ae755965f..cacc4c3a37d2cda0aea2e176e5d0638f959e18a3 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -810,7 +810,9 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 	case PPPIOCSMRU:
- 		if (get_user(val, p))
- 			break;
-+		ppp_recv_lock(ppp);
- 		ppp->mru = val;
-+		ppp_recv_unlock(ppp);
- 		err = 0;
- 		break;
- 
-@@ -831,7 +833,9 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 		break;
- 
- 	case PPPIOCGFLAGS:
-+		ppp_lock(ppp);
- 		val = ppp->flags | ppp->xstate | ppp->rstate;
-+		ppp_unlock(ppp);
- 		if (put_user(val, p))
- 			break;
- 		err = 0;
-@@ -855,7 +859,7 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 	case PPPIOCSDEBUG:
- 		if (get_user(val, p))
- 			break;
--		ppp->debug = val;
-+		WRITE_ONCE(ppp->debug, val);
- 		err = 0;
- 		break;
- 
-@@ -866,16 +870,16 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 		break;
- 
- 	case PPPIOCGIDLE32:
--                idle32.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
--                idle32.recv_idle = (jiffies - ppp->last_recv) / HZ;
--                if (copy_to_user(argp, &idle32, sizeof(idle32)))
-+		idle32.xmit_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_xmit))) / HZ;
-+		idle32.recv_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_recv))) / HZ;
-+		if (copy_to_user(argp, &idle32, sizeof(idle32)))
- 			break;
- 		err = 0;
- 		break;
- 
- 	case PPPIOCGIDLE64:
--		idle64.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
--		idle64.recv_idle = (jiffies - ppp->last_recv) / HZ;
-+		idle64.xmit_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_xmit))) / HZ;
-+		idle64.recv_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_recv))) / HZ;
- 		if (copy_to_user(argp, &idle64, sizeof(idle64)))
- 			break;
- 		err = 0;
-@@ -916,7 +920,7 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 			if (copy_to_user(argp, &npi, sizeof(npi)))
- 				break;
- 		} else {
--			ppp->npmode[i] = npi.mode;
-+			WRITE_ONCE(ppp->npmode[i], npi.mode);
- 			/* we may be able to transmit more packets now (??) */
- 			netif_wake_queue(ppp->dev);
- 		}
-@@ -1454,7 +1458,7 @@ ppp_start_xmit(struct sk_buff *skb, struct net_device *dev)
- 		goto outf;
- 
- 	/* Drop, accept or reject the packet */
--	switch (ppp->npmode[npi]) {
-+	switch (READ_ONCE(ppp->npmode[npi])) {
- 	case NPMODE_PASS:
- 		break;
- 	case NPMODE_QUEUE:
-@@ -1790,7 +1794,7 @@ ppp_prepare_tx_skb(struct ppp *ppp, struct sk_buff **pskb)
- 		*(__be16 *)skb_push(skb, 2) = htons(PPP_FILTER_OUTBOUND_TAG);
- 		if (ppp->pass_filter &&
- 		    bpf_prog_run(ppp->pass_filter, skb) == 0) {
--			if (ppp->debug & 1)
-+			if (READ_ONCE(ppp->debug) & 1)
- 				netdev_printk(KERN_DEBUG, ppp->dev,
- 					      "PPP: outbound frame "
- 					      "not passed\n");
-@@ -1800,11 +1804,11 @@ ppp_prepare_tx_skb(struct ppp *ppp, struct sk_buff **pskb)
- 		/* if this packet passes the active filter, record the time */
- 		if (!(ppp->active_filter &&
- 		      bpf_prog_run(ppp->active_filter, skb) == 0))
--			ppp->last_xmit = jiffies;
-+			WRITE_ONCE(ppp->last_xmit, jiffies);
- 		skb_pull(skb, 2);
- #else
- 		/* for data packets, record the time */
--		ppp->last_xmit = jiffies;
-+		WRITE_ONCE(ppp->last_xmit, jiffies);
- #endif /* CONFIG_PPP_FILTER */
- 	}
- 
-@@ -2154,7 +2158,7 @@ static int ppp_mp_explode(struct ppp *ppp, struct sk_buff *skb)
-  noskb:
- 	spin_unlock(&pch->downl);
-  err_linearize:
--	if (ppp->debug & 1)
-+	if (READ_ONCE(ppp->debug) & 1)
- 		netdev_err(ppp->dev, "PPP: no memory (fragment)\n");
- 	DEV_STATS_INC(ppp->dev, tx_errors);
- 	++ppp->nxseq;
-@@ -2502,7 +2506,7 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
- 			*(__be16 *)skb_push(skb, 2) = htons(PPP_FILTER_INBOUND_TAG);
- 			if (ppp->pass_filter &&
- 			    bpf_prog_run(ppp->pass_filter, skb) == 0) {
--				if (ppp->debug & 1)
-+				if (READ_ONCE(ppp->debug) & 1)
- 					netdev_printk(KERN_DEBUG, ppp->dev,
- 						      "PPP: inbound frame "
- 						      "not passed\n");
-@@ -2511,14 +2515,14 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
- 			}
- 			if (!(ppp->active_filter &&
- 			      bpf_prog_run(ppp->active_filter, skb) == 0))
--				ppp->last_recv = jiffies;
-+				WRITE_ONCE(ppp->last_recv, jiffies);
- 			__skb_pull(skb, 2);
- 		} else
- #endif /* CONFIG_PPP_FILTER */
--			ppp->last_recv = jiffies;
-+			WRITE_ONCE(ppp->last_recv, jiffies);
- 
- 		if ((ppp->dev->flags & IFF_UP) == 0 ||
--		    ppp->npmode[npi] != NPMODE_PASS) {
-+		    READ_ONCE(ppp->npmode[npi]) != NPMODE_PASS) {
- 			kfree_skb(skb);
- 		} else {
- 			/* chop off protocol */
-@@ -2771,7 +2775,7 @@ ppp_mp_reconstruct(struct ppp *ppp)
- 			seq = seq_before(minseq, PPP_MP_CB(p)->sequence)?
- 				minseq + 1: PPP_MP_CB(p)->sequence;
- 
--			if (ppp->debug & 1)
-+			if (READ_ONCE(ppp->debug) & 1)
- 				netdev_printk(KERN_DEBUG, ppp->dev,
- 					      "lost frag %u..%u\n",
- 					      oldseq, seq-1);
-@@ -2820,7 +2824,7 @@ ppp_mp_reconstruct(struct ppp *ppp)
- 			struct sk_buff *tmp2;
- 
- 			skb_queue_reverse_walk_from_safe(list, p, tmp2) {
--				if (ppp->debug & 1)
-+				if (READ_ONCE(ppp->debug) & 1)
- 					netdev_printk(KERN_DEBUG, ppp->dev,
- 						      "discarding frag %u\n",
- 						      PPP_MP_CB(p)->sequence);
-@@ -2842,7 +2846,7 @@ ppp_mp_reconstruct(struct ppp *ppp)
- 			skb_queue_walk_safe(list, p, tmp) {
- 				if (p == head)
- 					break;
--				if (ppp->debug & 1)
-+				if (READ_ONCE(ppp->debug) & 1)
- 					netdev_printk(KERN_DEBUG, ppp->dev,
- 						      "discarding frag %u\n",
- 						      PPP_MP_CB(p)->sequence);
-@@ -2850,7 +2854,7 @@ ppp_mp_reconstruct(struct ppp *ppp)
- 				kfree_skb(p);
- 			}
- 
--			if (ppp->debug & 1)
-+			if (READ_ONCE(ppp->debug) & 1)
- 				netdev_printk(KERN_DEBUG, ppp->dev,
- 					      "  missed pkts %u..%u\n",
- 					      ppp->nextseq,
-@@ -3161,7 +3165,8 @@ ppp_ccp_peek(struct ppp *ppp, struct sk_buff *skb, int inbound)
- 			if (!ppp->rc_state)
- 				break;
- 			if (ppp->rcomp->decomp_init(ppp->rc_state, dp, len,
--					ppp->file.index, 0, ppp->mru, ppp->debug)) {
-+						ppp->file.index, 0, ppp->mru,
-+						READ_ONCE(ppp->debug))) {
- 				ppp->rstate |= SC_DECOMP_RUN;
- 				ppp->rstate &= ~(SC_DC_ERROR | SC_DC_FERROR);
- 			}
-@@ -3170,7 +3175,8 @@ ppp_ccp_peek(struct ppp *ppp, struct sk_buff *skb, int inbound)
- 			if (!ppp->xc_state)
- 				break;
- 			if (ppp->xcomp->comp_init(ppp->xc_state, dp, len,
--					ppp->file.index, 0, ppp->debug))
-+						  ppp->file.index, 0,
-+						  READ_ONCE(ppp->debug)))
- 				ppp->xstate |= SC_COMP_RUN;
- 		}
- 		break;
--- 
-2.55.0.229.g6434b31f56-goog
+On 2026/7/22 18:16, Eric Dumazet wrote:
+> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+> index ef54e0a0462a175bb989db8dda895e9ae755965f..cacc4c3a37d2cda0aea2e176e5d0638f959e18a3 100644
+> --- a/drivers/net/ppp/ppp_generic.c
+> +++ b/drivers/net/ppp/ppp_generic.c
+> @@ -866,16 +870,16 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+>   		break;
+>   
+>   	case PPPIOCGIDLE32:
+> -                idle32.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
+> -                idle32.recv_idle = (jiffies - ppp->last_recv) / HZ;
+> -                if (copy_to_user(argp, &idle32, sizeof(idle32)))
+> +		idle32.xmit_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_xmit))) / HZ;
+> +		idle32.recv_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_recv))) / HZ;
+In the original code, the difference will wrap around on a 32-bit kernel 
+with HZ=1000 if the session sits idle for 4,294,967.295 seconds 
+(approximately 49.7 days). With this change, as the difference is cast 
+to a long, it will be negative after 2,147,483.647 seconds 
+(approximately 24.9 days) and then clamped to zero by max(), making the 
+situation worse.
+> +		if (copy_to_user(argp, &idle32, sizeof(idle32)))
+>   			break;
+>   		err = 0;
+>   		break;
+>   
+>   	case PPPIOCGIDLE64:
+> -		idle64.xmit_idle = (jiffies - ppp->last_xmit) / HZ;
+> -		idle64.recv_idle = (jiffies - ppp->last_recv) / HZ;
+> +		idle64.xmit_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_xmit))) / HZ;
+> +		idle64.recv_idle = max(0L, (long)(jiffies - READ_ONCE(ppp->last_recv))) / HZ;
+>   		if (copy_to_user(argp, &idle64, sizeof(idle64)))
+>   			break;
+>   		err = 0;
 
