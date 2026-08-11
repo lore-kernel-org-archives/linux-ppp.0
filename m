@@ -1,46 +1,46 @@
-Received: from out-184.mta1.migadu.com (out-184.mta1.migadu.com [95.215.58.184])
+Received: from out-186.mta0.migadu.com (out-186.mta0.migadu.com [91.218.175.186])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC6FA237180
-	for <linux-ppp@vger.kernel.org>; Tue, 11 Aug 2026 03:53:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.184
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D42EF25DB0D
+	for <linux-ppp@vger.kernel.org>; Tue, 11 Aug 2026 06:02:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.186
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786420430; cv=none; b=m39894wYvvjBBfGp3Ir8XZqoQ4MsLnotzvv0Su8XnY45CNDc5Jon/K+86yDj8PeiGSMEvpv/MiBgmBiqlWGFkbAR+XGIf3l313E0Owv2vwiJrMc0tN2qLWk0P4NNm1AqIk98VsnLBGC5Vnx7rMEC10tHCLljrq+RTnNUE1WMc2g=
+	t=1786428173; cv=none; b=F7KGAKZTlstIehFgf4O+b7GECk6gI5Bp9an/lXFcOw4HvOMf50xQyiILHLu/MKOSlZiBDtclqMVFojW3oKSiZCrzcous4eqwI5cIo68sHxNiLk5xN0AsGI5OyngYqgIJvPca4SxBzq2zL7RpRbH2M8DTlpxr//iP2cD8JRBGXSM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786420430; c=relaxed/simple;
-	bh=0rJzxZ1phuv+LKBNx9Cz/LPph5ZeOmzoZq8Zc6xJR/Y=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version; b=ICDqMQqsyI/2mpau7TaJ9Q4L5uPwWLsR8WkWAVfS9XH9+864UWs1TIZCFjQSGL74ujfTI64sdPTEOj6XoeAIKwo/TEpCNHhIi+7mSklV/aFjuyYBBNiCAxGw6NjQzOcb+8ZHYdm3l2LitY2aJGRl1yUnk6kRm35hbmZhANEq81E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=qMSsTmg/; arc=none smtp.client-ip=95.215.58.184
+	s=arc-20240116; t=1786428173; c=relaxed/simple;
+	bh=z5M1iQBHWGNYPKU2rWv5GB+ulrPmwzpYzCQQIEGjsLg=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=quOk+2fEogHrCPNTwHAn5G8Py1/yf13PfCNxYyN+5AvtCxSaSZz/p+bwPNc+AjqhEzlktY1Q6ZNQ5tQk8ZWhVtv8h+gdPHdYtdR82SHo5YVwhNikVg9hayKnYCaQMG9VqFJPDNIFrW7O3yuUJJa44dpuGbi/r8EmYng2xccbt5E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=LjHWgp7H; arc=none smtp.client-ip=91.218.175.186
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="qMSsTmg/"
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="LjHWgp7H"
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1786420426;
+	t=1786428169;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding;
-	bh=14z7dQLT2Hd319M0cDN957Ju2rIf1e7yxvZN9/rPaww=;
-	b=qMSsTmg/sDCvNF9y94NGzGpaf8J7L7F0rv0KJ8+aai2HOdtK+ucQBoayQKo2kvCcuKDf2R
-	qEKb/Y+Xmt3UnoPkHRx9rdGn+70vC9Q2t60EnFLxIR0U9V5y7nfDdHqo4w/U/a3TotQ6QF
-	ry4lMaJmvPKGectkUbzVzBmqCm8Smdw=
+	bh=OLDa6A0YWiRXYrThzPVgL6POAMWtNwIFEcHWM4ceiiI=;
+	b=LjHWgp7Hm/hxqNArnnmJRrQpcKJCbDdw7c0TmebmXe5ka83LFFA3ThG0WglGRIJFo8+wPs
+	EmdtnA1xelKwUK27qswu7BJJ1nzqUdMnWLg4fYemuR7l42N/9I7EMypV0GeZGnD540PA3h
+	Ck0J2AUo49kHtOEh9Mp9nFepcO43ie8=
 From: Qingfang Deng <qingfang.deng@linux.dev>
-To: =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali@kernel.org>,
-	linux-ppp@vger.kernel.org,
-	Andrew Lunn <andrew+netdev@lunn.ch>,
+To: Andrew Lunn <andrew+netdev@lunn.ch>,
 	"David S. Miller" <davem@davemloft.net>,
 	Eric Dumazet <edumazet@google.com>,
 	Jakub Kicinski <kuba@kernel.org>,
 	Paolo Abeni <pabeni@redhat.com>,
 	Qingfang Deng <qingfang.deng@linux.dev>,
-	Arnd Bergmann <arnd@arndb.de>,
-	Guillaume Nault <gnault@redhat.com>,
+	Breno Leitao <leitao@debian.org>,
+	Norbert Szetei <norbert@doyensec.com>,
+	Taegu Ha <hataegu0826@gmail.com>,
+	linux-ppp@vger.kernel.org,
 	netdev@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH net] pppox: drain queued packets on channel handoff
-Date: Tue, 11 Aug 2026 11:53:10 +0800
-Message-ID: <20260811035314.302878-1-qingfang.deng@linux.dev>
+Subject: [PATCH net] ppp: annotate lockless queue empty check
+Date: Tue, 11 Aug 2026 14:02:29 +0800
+Message-ID: <20260811060236.322284-1-qingfang.deng@linux.dev>
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
@@ -50,60 +50,32 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
-PPPIOCGCHAN both returns the channel index and marks a PPPOX socket as
-bound to generic PPP, despite its getter semantic. Packets received
-before that transition are queued on sk_receive_queue, but a bound
-socket is no longer readable. Such packets therefore remain queued until
-the socket is destroyed.
+ppp_poll() checks whether pf->rq contains a packet without holding the
+queue lock. skb_peek() requires appropriate locking or a private queue,
+neither of which applies because ppp_input() can enqueue concurrently.
 
-After marking a socket bound, wait for receive paths that observed the
-old state to finish queueing packets, and then drain the queue into
-generic PPP.
+Only queue emptiness is needed, so use skb_queue_empty_lockless()
+instead.
 
-Assisted-by: Codex:GPT-5.6
 Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
 Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
 ---
- drivers/net/ppp/pppox.c | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
+ drivers/net/ppp/ppp_generic.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/net/ppp/pppox.c b/drivers/net/ppp/pppox.c
-index 5861a2f6ce3e..a6f72c813bef 100644
---- a/drivers/net/ppp/pppox.c
-+++ b/drivers/net/ppp/pppox.c
-@@ -74,7 +74,9 @@ int pppox_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
- 
- 	switch (cmd) {
- 	case PPPIOCGCHAN: {
-+		struct sk_buff *skb;
- 		int index;
-+
- 		rc = -ENOTCONN;
- 		if (!(sk->sk_state & PPPOX_CONNECTED))
- 			break;
-@@ -85,7 +87,22 @@ int pppox_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
- 			break;
- 
- 		rc = 0;
-+		/* PPPIOCGCHAN historically marks the userspace handoff to
-+		 * generic PPP; pppd then attaches the returned channel to
-+		 * /dev/ppp.
-+		 */
- 		sk->sk_state |= PPPOX_BOUND;
-+		/* Let lockless receive paths finish queueing against the old
-+		 * state.
-+		 */
-+		synchronize_net();
-+		/* Drain packets queued before the handoff because a bound
-+		 * socket is no longer readable.
-+		 */
-+		while ((skb = skb_dequeue(&sk->sk_receive_queue))) {
-+			skb_orphan(skb);
-+			ppp_input(&po->chan, skb);
-+		}
- 		break;
- 	}
- 	default:
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index e1013621eb1d..1a610a18893b 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -556,7 +556,7 @@ static __poll_t ppp_poll(struct file *file, poll_table *wait)
+ 		return 0;
+ 	poll_wait(file, &pf->rwait, wait);
+ 	mask = EPOLLOUT | EPOLLWRNORM;
+-	if (skb_peek(&pf->rq))
++	if (!skb_queue_empty_lockless(&pf->rq))
+ 		mask |= EPOLLIN | EPOLLRDNORM;
+ 	if (pf->dead)
+ 		mask |= EPOLLHUP;
 -- 
 2.43.0
 
