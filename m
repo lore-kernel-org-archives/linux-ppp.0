@@ -1,260 +1,134 @@
-Received: from mta1.migadu.com (out-206.mta1.migadu.com [95.215.58.206])
+Received: from mail-qt1-f181.google.com (mail-qt1-f181.google.com [209.85.160.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3EC2F3CAA51
-	for <linux-ppp@vger.kernel.org>; Fri, 28 Aug 2026 07:33:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.206
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787902389; cv=none; b=l+dbQ+0OmGxRoTVNggAzaurj6q9K4/5EpdpO6YLMDTAEAPlHs071W0VgYZB3OtFaPPvpIPqesdizZIRklXlJggJhOSRO1qmvTEUUTDb02VbHeiyz9Lf56d6MFen6OSingDsqfdOKG1VoZ4pZRGzJWcJrv9T5sKMA/PzTLmUhKJE=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787902389; c=relaxed/simple;
-	bh=vBI8qiNqWfdig8f1no8oTqj+y0xtSZOX4W0VabQ4hQQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=KC/bILtFdpkBIKuTpf7Uj20Dv3NH0bF2nh3uKioRYtHsCYVKHbFlNC5VxwJxCo26S/TGgFo3ecXtC9V6KcvhOtoKjClkJko4ZHFOPP706h+aI1U/evqiOmCLhXux8z4TLS4zY6cVJYOR6/FDlJZYVtrXMGCf/B3qlaaxmTr6dZM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=h1JSJnCB; arc=none smtp.client-ip=95.215.58.206
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6AAD9466AF1
+	for <linux-ppp@vger.kernel.org>; Fri, 28 Aug 2026 14:34:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.160.181
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1787927650; cv=pass; b=ZGCKvOzPvgX8SSR5LG8o0ExPxdqu/hHIZ7Ub8CfdQAGXsjwExUzSEs7K52UGOc7e2tJjx86emTIquxEDVc0tIB2EetoJdx9xbfC10Vhej8xpbcTh/Fs3RAH9kr2pD/oBmFGnYVJ1O1PA7wRIo34xLH4C5kFqgkLMWMQU2Lvknt8=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1787927650; c=relaxed/simple;
+	bh=h6urPZgF8bTfvFzVWce3FkqNPdyyhEqvIBFSzMK7R9s=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=Jny/thJ5KapsX00/AMLyZHejcPn07jzCVuB6UxKSgs1K8nAPgj32ZgOeLNoO//Aza2bj2L3lwTALXiSbKJxF8b6rC+K9Tf0XvE/8RVRujm0W/1qwCsmEBFae7Hy9nT6BDVAlW2Ly8q4Py57i7nsZeJO9vBcfEVkU69PW+FcT5II=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=PV+24Fli; arc=pass smtp.client-ip=209.85.160.181
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="h1JSJnCB"
-X-Envelope-To: linux-ppp@vger.kernel.org
-DKIM-Signature: a=rsa-sha256; bh=vBI8qiNqWfdig8f1no8oTqj+y0xtSZOX4W0VabQ4hQQ=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1787902384; v=1; x=1788507184;
- b=h1JSJnCBlMknLaew8Ga8mBoEkz3z9Br+rABbaYqz/S4ai14yL1LFJmw6FAesqY7uW8h8DIUt
- IlXoMVMJKNV6CpRqDbgFHtkzI4G/fEakGkSCh/5tBkPelLse8iG/pnhHFeFzeYSUFuwZZS8TC+y
- OYUpZQ+FSUqYxnTLhDdyyJd4=
-X-Envelope-To: linux-ppp@vger.kernel.org
-Received: by smtp.migadu.com with ESMTPS id 7da2a8fcb4e03abb;
-	Fri, 28 Aug 2026 07:32:54 +0000
-X-Mizu-Trace-ID: 7da2a8fcb4e03abb
-X-Migadu-Flow: FLOW_OUT
-From: Qingfang Deng <qingfang.deng@linux.dev>
-To: Andrew Lunn <andrew+netdev@lunn.ch>,
-	"David S. Miller" <davem@davemloft.net>,
-	Eric Dumazet <edumazet@google.com>,
-	Jakub Kicinski <kuba@kernel.org>,
-	Paolo Abeni <pabeni@redhat.com>,
-	Qingfang Deng <qingfang.deng@linux.dev>,
-	Kees Cook <kees@kernel.org>,
-	"Jiri Slaby (SUSE)" <jirislaby@kernel.org>,
-	linux-ppp@vger.kernel.org,
-	netdev@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Cc: syzbot+8e808eb853386f575d86@syzkaller.appspotmail.com
-Subject: [PATCH net 1/2] ppp: ppp_async: simplify tty disc_data access
-Date: Fri, 28 Aug 2026 15:32:36 +0800
-Message-ID: <20260828073245.126804-1-qingfang.deng@linux.dev>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="PV+24Fli"
+Received: by mail-qt1-f181.google.com with SMTP id d75a77b69052e-52f83889a93so8925571cf.2
+        for <linux-ppp@vger.kernel.org>; Fri, 28 Aug 2026 07:34:07 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1787927647; cv=none;
+        d=google.com; s=arc-20260327;
+        b=gCmziSmckSQsqxwynjcBy2QDGYC9Dk9BZ7DdzGg6irlFXVKeOBJldDBq42HrPahZrw
+         RKwSCDp/E1ewpvx3pLkNjIbfnWTF4MzzqxPFW3LJX1cV1n/ll1z2Vp4nEFa0z+7xG9A0
+         g2V7mBJ62gdC3wSRzao15bGy7XoMTvFyyuFTB2x1aThJBUANml6l1f9/8U0aY/iA0Bsf
+         XZD4cDSjbBCEAFX1ryaJ0T8qFtFb0n56/SsCjF3OJ6yBKCtABrK7Yn0Jsgeia3wmLKXf
+         ghoJkLNRrtNPi8UGdq0TlypSzRgZ8/nDE1Y3LzhmzIkEYC44fpuRS6ELuhbqE1VFoqxb
+         D6iw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=YumHW+3Khcd3HlEzxF3Gk3LiB4e45hriCCvI83W4xOA=;
+        fh=2cQacn4RmEMYu+mtid0o5ZywVs4e3MrxgPt5RPZvzZ0=;
+        b=lNjIKCqHW3LIeAlL4DSGZBJ/bA/nR9+wptWJhoocX2zNCEljhZTu1Cuw3/7b5KmJRn
+         s+VZncWPdr0rLjsjAUAAWFcUsF7YQ3dIR0DVLd8izmuSd+mYgS6ce6swm3MvLHOqYMjU
+         l/4dZPenRqjAFA47izRy+rpAhY/RS4mGBgz34iF9/7rdDcHq9ekzWR2rFIggvy1j0Y7T
+         HykCAQaks55iXmcvy6smTqbHr/RZlWcC2gPqxDJyIHkt8otB02UrX+Fq4zvmGaaAqMel
+         J5BK8lhasMPhf/nEVODVkYQ0pvKkA7WgNWsBPghK83ek1OXBHiy6m//0fMmZDNapCl8o
+         tIOQ==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20251104; t=1787927647; x=1788532447; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=YumHW+3Khcd3HlEzxF3Gk3LiB4e45hriCCvI83W4xOA=;
+        b=PV+24FlinxZYo4O+wz86GSfYocJt9h8gu4/B3ENqClxT1pRNumsocQy1E/bskA9C5d
+         8PTqDpruTr3W95CVLFMU631dbacg/Rf9nSMu2f4MUD57uy0aeFIEfrL3+86QGo5gj1x+
+         4wJbiBaf+YO+uffa9xW8ANloLqp3w/OlIUutdHeS3tQA3EDNS3zE3+SOwMat8NyHwKfz
+         HINtHPMdA1jEQEqVxeHwzXjMp5/KVs2VqFMZxlN+yLmJBvtZwAcuNJEQ/iPTsHMRsXA6
+         Lc9iqRo4E9i8QbmMNfJsd/jW1JXx60wWOMynuCylkNxd96pVF3a5ccXQy1SIVZrkSTXk
+         YmrQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1787927647; x=1788532447;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=YumHW+3Khcd3HlEzxF3Gk3LiB4e45hriCCvI83W4xOA=;
+        b=RFX+lpt/CPKE9HmDxPwb/URUm393oi28vOETLF00xlEslv1Fre81UP8annB+CqYJxS
+         wbpE0o9tE7KPT+TrQwLeNumCjUN43EdA8sNLNguEFd4ummj4rtL2SPg16fAi8DFCpsfI
+         iMCtkMbw+LgWjVYzKKbleFR0mdAWRZ54WLMUN+jqnrICt2OLuzZ1HOjbfE1RGlSjUff4
+         JZwZym6nVja5Uuwd5Uhd/Zhak0zKlYww8V1+pbuo16o/uQBmnibZYpIkHYAQX8vMNthp
+         hMZ7rd60vrEBOWUs4GNzBskq1QDAG7pjZKcNNlrv3UucdVld+4HLK5WCy0qYJ70yMcgY
+         IoSw==
+X-Forwarded-Encrypted: i=1; AHgh+RrYPlO3srYLvcqzY4gy09Q09YYa7oMQIIbBwkBhRAdSv4sfdVjHDZuK1ydBTR/CpOzqqivw3ku/2w4=@vger.kernel.org
+X-Gm-Message-State: AFuF++knctOJICJ+ipBvKI6NeBeKW82OjqPEh34zBi3Czgv+u3Gyma36
+	rp+QDQYFB6JE4G9vM/exARerqX0uySPqyq40vrvqEj5G9p/TvUk79h5XiPK3sco2f4LZnpY4B70
+	at4/guifd6mwYkquS0JDZcXmMRXo1nTTFVPE0ST+D
+X-Gm-Gg: AR+sD13fPci+aKG+IIoekL0MUBgHAXAVQlQYrOcrwMgJqIV9JY3iVk9rZBSkPjubDEA
+	7yTGLxQULK5LWGb0tAHZW6ziZclrndfPAWHX8b8DZW5i1iZLnyx583qFL0kcW6ZfXDIDFtXV/4M
+	490NGIAOHJA8UYYKl1RGw9AOGqk55IwqWl8eDkqva9nx88UeK2x0VU9QSJno4GnLnWp9pSAWEa5
+	yXtKOd537kdLnm4ZJ9Fip52tYmhEp2W2hu5W6/07RmYryDL4NhSMGckFfdKt2DJ3RZE27mcESDV
+	awwlQfpG2jgh490USj/rky5N4aDogBR5dQVk4P5vw5P5bP0ZuynKp6GNkViuW1Rs06L3pMw4T1m
+	YRzU6hfSXmPVY9AO7hdbmBnFs699f1XxML0JKKGu13RCO4NhJTzIgRfJP55M=
+X-Received: by 2002:ac8:590d:0:b0:52f:ae2b:da0b with SMTP id
+ d75a77b69052e-52fb942d67bmr84786531cf.16.1787927646262; Fri, 28 Aug 2026
+ 07:34:06 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20260828073245.126804-1-qingfang.deng@linux.dev>
+In-Reply-To: <20260828073245.126804-1-qingfang.deng@linux.dev>
+From: Eric Dumazet <edumazet@google.com>
+Date: Fri, 28 Aug 2026 16:33:55 +0200
+X-Gm-Features: AcwNN1UhdM8hO1u0XPNdtSnx727Mw5Sdf1F5y6RfcZsOSfmGeXvlUkBvd0DUx0c
+Message-ID: <CANn89iJ1DTd-C65Ps-6C3djV=yihFinGpEqQjEwn7=7X6P3iHg@mail.gmail.com>
+Subject: Re: [PATCH net 1/2] ppp: ppp_async: simplify tty disc_data access
+To: Qingfang Deng <qingfang.deng@linux.dev>
+Cc: Andrew Lunn <andrew+netdev@lunn.ch>, "David S. Miller" <davem@davemloft.net>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Kees Cook <kees@kernel.org>, 
+	"Jiri Slaby (SUSE)" <jirislaby@kernel.org>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, 
+	syzbot+8e808eb853386f575d86@syzkaller.appspotmail.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-tty_ldisc_hangup() invokes the hangup callback while holding only a read
-lock on tty->ldisc_sem, so it can run concurrently with other line
-discipline callbacks. This currently forces async PPP to maintain
-separate lifetime protection around tty->disc_data.
+On Fri, Aug 28, 2026 at 9:33=E2=80=AFAM Qingfang Deng <qingfang.deng@linux.=
+dev> wrote:
+>
+> tty_ldisc_hangup() invokes the hangup callback while holding only a read
+> lock on tty->ldisc_sem, so it can run concurrently with other line
+> discipline callbacks. This currently forces async PPP to maintain
+> separate lifetime protection around tty->disc_data.
+>
+> Line discipline close is called under the write lock during hangup
+> processing. Remove the hangup callback and rely on close for teardown,
+> as done for SLIP by commit 23c53269f2ba ("slip: remove slip_hangup() to
+> fix use-after-free in slip_receive_buf()"). This serializes teardown
+> with all other line discipline operations.
+>
+> disc_data_lock, refcount and completion are redundant with that
+> serialization. Remove them and access tty->disc_data directly.
+>
+> This also eliminates a lockdep warning reported by syzbot. The warning
+> does not indicate a real deadlock because the write side runs only in
+> process context with hardirqs disabled.
+>
+> Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+> Reported-by: syzbot+8e808eb853386f575d86@syzkaller.appspotmail.com
+> Closes: https://lore.kernel.org/all/0000000000002fbad30611e25849@google.c=
+om/
+> Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
+> ---
+>  drivers/net/ppp/ppp_async.c | 82 ++++---------------------------------
+>  1 file changed, 7 insertions(+), 75 deletions(-)
 
-Line discipline close is called under the write lock during hangup
-processing. Remove the hangup callback and rely on close for teardown,
-as done for SLIP by commit 23c53269f2ba ("slip: remove slip_hangup() to
-fix use-after-free in slip_receive_buf()"). This serializes teardown
-with all other line discipline operations.
+Sweet.
 
-disc_data_lock, refcount and completion are redundant with that
-serialization. Remove them and access tty->disc_data directly.
-
-This also eliminates a lockdep warning reported by syzbot. The warning
-does not indicate a real deadlock because the write side runs only in
-process context with hardirqs disabled.
-
-Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
-Reported-by: syzbot+8e808eb853386f575d86@syzkaller.appspotmail.com
-Closes: https://lore.kernel.org/all/0000000000002fbad30611e25849@google.com/
-Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
----
- drivers/net/ppp/ppp_async.c | 82 ++++---------------------------------
- 1 file changed, 7 insertions(+), 75 deletions(-)
-
-diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
-index 583426d06381..ea7fe9608ffd 100644
---- a/drivers/net/ppp/ppp_async.c
-+++ b/drivers/net/ppp/ppp_async.c
-@@ -63,8 +63,6 @@ struct asyncppp {
- 
- 	struct tasklet_struct tsk;
- 
--	refcount_t	refcnt;
--	struct completion dead;
- 	struct ppp_channel chan;	/* interface to generic ppp layer */
- 	unsigned char	obuf[OBUFSIZE];
- };
-@@ -114,38 +112,6 @@ static const struct ppp_channel_ops async_ops = {
-  * Routines implementing the PPP line discipline.
-  */
- 
--/*
-- * We have a potential race on dereferencing tty->disc_data,
-- * because the tty layer provides no locking at all - thus one
-- * cpu could be running ppp_asynctty_receive while another
-- * calls ppp_asynctty_close, which zeroes tty->disc_data and
-- * frees the memory that ppp_asynctty_receive is using.  The best
-- * way to fix this is to use a rwlock in the tty struct, but for now
-- * we use a single global rwlock for all ttys in ppp line discipline.
-- *
-- * FIXME: this is no longer true. The _close path for the ldisc is
-- * now guaranteed to be sane.
-- */
--static DEFINE_RWLOCK(disc_data_lock);
--
--static struct asyncppp *ap_get(struct tty_struct *tty)
--{
--	struct asyncppp *ap;
--
--	read_lock(&disc_data_lock);
--	ap = tty->disc_data;
--	if (ap != NULL)
--		refcount_inc(&ap->refcnt);
--	read_unlock(&disc_data_lock);
--	return ap;
--}
--
--static void ap_put(struct asyncppp *ap)
--{
--	if (refcount_dec_and_test(&ap->refcnt))
--		complete(&ap->dead);
--}
--
- /*
-  * Called when a tty is put into PPP line discipline. Called in process
-  * context.
-@@ -180,9 +146,6 @@ ppp_asynctty_open(struct tty_struct *tty)
- 	skb_queue_head_init(&ap->rqueue);
- 	tasklet_setup(&ap->tsk, ppp_async_process);
- 
--	refcount_set(&ap->refcnt, 1);
--	init_completion(&ap->dead);
--
- 	ap->chan.private = ap;
- 	ap->chan.ops = &async_ops;
- 	ap->chan.mtu = PPP_MRU;
-@@ -203,34 +166,18 @@ ppp_asynctty_open(struct tty_struct *tty)
- }
- 
- /*
-- * Called when the tty is put into another line discipline
-- * or it hangs up.  We have to wait for any cpu currently
-- * executing in any of the other ppp_asynctty_* routines to
-- * finish before we can call ppp_unregister_channel and free
-- * the asyncppp struct.  This routine must be called from
-- * process context, not interrupt or softirq context.
-+ * Called when the tty is put into another line discipline or it hangs up.
-+ * This call is serialized against other ldisc functions.
-  */
- static void
- ppp_asynctty_close(struct tty_struct *tty)
- {
--	struct asyncppp *ap;
-+	struct asyncppp *ap = tty->disc_data;
- 
--	write_lock_irq(&disc_data_lock);
--	ap = tty->disc_data;
--	tty->disc_data = NULL;
--	write_unlock_irq(&disc_data_lock);
- 	if (!ap)
- 		return;
- 
--	/*
--	 * We have now ensured that nobody can start using ap from now
--	 * on, but we have to wait for all existing users to finish.
--	 * Note that ppp_unregister_channel ensures that no calls to
--	 * our channel ops (i.e. ppp_async_send/ioctl) are in progress
--	 * by the time it returns.
--	 */
--	if (!refcount_dec_and_test(&ap->refcnt))
--		wait_for_completion(&ap->dead);
-+	tty->disc_data = NULL;
- 	tasklet_kill(&ap->tsk);
- 
- 	ppp_unregister_channel(&ap->chan);
-@@ -240,17 +187,6 @@ ppp_asynctty_close(struct tty_struct *tty)
- 	kfree(ap);
- }
- 
--/*
-- * Called on tty hangup in process context.
-- *
-- * Wait for I/O to driver to complete and unregister PPP channel.
-- * This is already done by the close routine, so just call that.
-- */
--static void ppp_asynctty_hangup(struct tty_struct *tty)
--{
--	ppp_asynctty_close(tty);
--}
--
- /*
-  * Read does nothing - no data is ever available this way.
-  * Pppd reads and writes packets via /dev/ppp instead.
-@@ -281,7 +217,7 @@ ppp_asynctty_write(struct tty_struct *tty, struct file *file, const u8 *buf,
- static int
- ppp_asynctty_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
- {
--	struct asyncppp *ap = ap_get(tty);
-+	struct asyncppp *ap = tty->disc_data;
- 	int err, val;
- 	int __user *p = (int __user *)arg;
- 
-@@ -322,7 +258,6 @@ ppp_asynctty_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
- 		err = tty_mode_ioctl(tty, cmd, arg);
- 	}
- 
--	ap_put(ap);
- 	return err;
- }
- 
-@@ -331,7 +266,7 @@ static void
- ppp_asynctty_receive(struct tty_struct *tty, const u8 *buf, const u8 *cflags,
- 		     size_t count)
- {
--	struct asyncppp *ap = ap_get(tty);
-+	struct asyncppp *ap = tty->disc_data;
- 	unsigned long flags;
- 
- 	if (!ap)
-@@ -341,21 +276,19 @@ ppp_asynctty_receive(struct tty_struct *tty, const u8 *buf, const u8 *cflags,
- 	spin_unlock_irqrestore(&ap->recv_lock, flags);
- 	if (!skb_queue_empty(&ap->rqueue))
- 		tasklet_schedule(&ap->tsk);
--	ap_put(ap);
- 	tty_unthrottle(tty);
- }
- 
- static void
- ppp_asynctty_wakeup(struct tty_struct *tty)
- {
--	struct asyncppp *ap = ap_get(tty);
-+	struct asyncppp *ap = tty->disc_data;
- 
- 	clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
- 	if (!ap)
- 		return;
- 	set_bit(XMIT_WAKEUP, &ap->xmit_flags);
- 	tasklet_schedule(&ap->tsk);
--	ap_put(ap);
- }
- 
- 
-@@ -365,7 +298,6 @@ static struct tty_ldisc_ops ppp_ldisc = {
- 	.name	= "ppp",
- 	.open	= ppp_asynctty_open,
- 	.close	= ppp_asynctty_close,
--	.hangup	= ppp_asynctty_hangup,
- 	.read	= ppp_asynctty_read,
- 	.write	= ppp_asynctty_write,
- 	.ioctl	= ppp_asynctty_ioctl,
--- 
-2.43.0
-
+Reviewed-by: Eric Dumazet <edumazet@google.com>
