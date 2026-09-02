@@ -1,340 +1,171 @@
-Received: from mail-ot1-f49.google.com (mail-ot1-f49.google.com [209.85.210.49])
+Received: from mail-qt1-f176.google.com (mail-qt1-f176.google.com [209.85.160.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64A4F340DA6
-	for <linux-ppp@vger.kernel.org>; Wed,  2 Sep 2026 06:22:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.210.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6641774C14
+	for <linux-ppp@vger.kernel.org>; Wed,  2 Sep 2026 06:59:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.160.176
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788330147; cv=pass; b=tcOaiSebj8kxzlQqpIUDfPOImV0NL9GNNQOPpxLDasVDm4ETB5XmbFej+n40ui4taRIajmSUzcrzN8XLzmswJa9tF9pLGP2Wih/5ArBSxWXFRRVXoFzCJFCP5p3KOdVSAa3qp9Iwp6nVnCw2Yybi1bvHt66XEoCzFckJ8bdwGSM=
+	t=1788332373; cv=pass; b=qP6leKALOhmVxFJGif1S1mSOWoh5kNgsXJrEAKQVk5P753EQno91hXaE73WiU+hw5THDPRwYk3gcbGbVnWw7r7DBnLkVw+J28AUZxbSyrK7qSqGr2H1Xot/iHDzBCrwQH9Zl6y9BtjU3R5PpmqaqyQyxonG1dmKYDcJCBSFbO+0=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788330147; c=relaxed/simple;
-	bh=QKMQ5dHezzhS6pTrT5Fc0VtyBmq25vWVQLGbFsQzLfE=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Cc:Content-Type; b=gNKF0CgLS/G5mtFUDGS8Ue7mpMW/dhdS4kS8kS0FmcLKOdJCaTANDRhoWtsjzmfw3wwGpjGJT3OOPV0lWAX4kukAJDgJEqikw2SPuaInF8QVSdrCgPYsM2sWdWshg2kSa1BAK0/hRz+a648xoXM8z0xWgpRxIfXGyQCTNkUwx5E=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JvdXBGwK; arc=pass smtp.client-ip=209.85.210.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1788332373; c=relaxed/simple;
+	bh=N85RJ+R7r9Ai0hOOjY7YpH5Ytqqm74t2AFNML4GFVK4=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=aSYqFtgVqsbypEMGUn6Ctl6DwgXTZKwAy4PTbSqW+6GO38cEgXweeE+CU6US0vhmZNhYr+NmiVs9v3U9E6t7wLVo/VrpIrVhAzE6l3H/ELpWCfhKZ+KZW+ov72wATjpV532G59e+WTyegmmFayJZ6c/8YjU3qqDootl6xpfY2vw=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=Rz0ubruT; arc=pass smtp.client-ip=209.85.160.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JvdXBGwK"
-Received: by mail-ot1-f49.google.com with SMTP id 46e09a7af769-7ee37dc91f5so366034a34.3
-        for <linux-ppp@vger.kernel.org>; Tue, 01 Sep 2026 23:22:25 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1788330144; cv=none;
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="Rz0ubruT"
+Received: by mail-qt1-f176.google.com with SMTP id d75a77b69052e-51c0c45c580so7273701cf.0
+        for <linux-ppp@vger.kernel.org>; Tue, 01 Sep 2026 23:59:30 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1788332369; cv=none;
         d=google.com; s=arc-20260327;
-        b=Pk8VeYkfY4n4t5yrfDhcTECoDhNbLJXko22ifLMy7RpLEGBJ5ud17xz7vC26gpdbco
-         4tsrpHrVO888YQ+aV2PECcmwxEWBJxOZKZHTME71tJ2m2q8ZfzqBgxaYvltgRwpWxN8u
-         4OFb4iYEhdfPEFPjSN0xX6QtSlcrZAHNg58YMgZ8IJOeTUhbsFn+9dQmhR1uYTowVJJ2
-         jnAyHMaE/EPZ0p8msLNy1pFWHN7VzrIT5VMwx8sAB2vuVslLDi5qwbUFHhq0Lo8JGr1n
-         5/Gd4Kz6xLb2ganDHtbiWq0oNQh8i+7eUr9iAfGbV0sVPUZgw3ODwaWT1xkvf5J2wkQt
-         qIZw==
+        b=hsDlMIz9ofxvDub0gJNCmJIw7hHoPadQMvhcqSrlO6WvIvzRLWw4kqyihtJ4fNiDNT
+         UqO5WwI6+EqR8rpPKOKDhSu0DCTRHjJe1fPGA8obudaqM0a/aiPnceh93UAsT64hm9d+
+         tubVDfrhIckf2TaB3KcVYLZR6kCCWT8gcooJgGy93oLlJsMQjbA6OQDOdDQ1vG+uBvHE
+         cRs9Usceo+sdI/hSNifaAc5z+MoNID92mYC7KW0rrN83cUqRAbpvv0kGW/RIU87HhTCT
+         OlX152dLEbWALBCJx37kOjAQpVk5OPUKFsVqlKsG+Y+oEFRbR+drrDK81Owk4R5k5X+7
+         kgdw==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=cc:to:subject:message-id:date:from:mime-version:dkim-signature;
-        bh=795V3NV/mTfuqSi46PUPwGaDSWJU6xx+88+WjSOianI=;
-        fh=+O8pW2+6DrtVwS4BO9v6BuKHsnhhOuzCRcxsKnsmNeA=;
-        b=Kl1M1XBGIQET5UQfKmgOdL/530AcExLi+Ki1qczaMKazA0a7nu0xgR9Qmeo/JdJEUJ
-         IyGUO8wrN/Ah7U5zHpFXRnowyN0NV6pJJO0zL+VX5mH7IXDcH1KX3nYc9tCKeIPQrnqr
-         Ore6V7XkV0X7wPCtYFMv9jAtdh9ugjq9jp3DbkFv92gWmIkdSXOD/7SdpsOF1d4wjGn6
-         2XiaUhRZbwFR6utDhwpnZMmB3uUkaWRjk7oHP2I2CbVNNwyndCQ43x+DkPtU8QWOEIWC
-         HzOlfOH/PaS5QyrOhvSwcIBLFLjk164gRZXeOX7deQ8C7FZlJreV1GVvjV1SrItZsEH0
-         mtbg==;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=oOP9Z7HNYiswXIyPHT63AslF3SPZRjDN0nxwMCDDVtk=;
+        fh=hnWCftoBQRip3ktPde72+FLObzwjMsFykDzsLJ2YR5o=;
+        b=N4rTCVTsOy2F+LAfqx2xKMbgzLk1fKh7FhQubh2YwgTJa2GSYZRe7johQZC4B+U8oQ
+         oRHz9zGt6Ur9pwl2iYz8VPVj1sHM080qr2HlCGyd1mETm4DIv4VUCp8rGljOpWs+7XuR
+         q6beDzF1B3akM3NLEwWUsSAM6pL3pirV2Ln5NkhljBzlNktmhMi9j+0a2r9xESVpXsDD
+         jOqIeV+R+V+G5twjHhtnRs61Q78DjQ1tAueS8t1Q+3woLlrjb3srI1Msj4vYVKvdLOT/
+         W1zOTap5wnE3b9f1kWqyfMhphmWn8ADV3X/7s3cfD/fZwDQ02l2OxQmorf+IJ6bJ4CC7
+         Vc1Q==;
         darn=vger.kernel.org
 ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1788330144; x=1788934944; darn=vger.kernel.org;
-        h=content-type:cc:to:subject:message-id:date:from:mime-version:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=795V3NV/mTfuqSi46PUPwGaDSWJU6xx+88+WjSOianI=;
-        b=JvdXBGwKFYWYjt03PrXWe5A8h12WUD0UuoOefGmnwZKFGSqAf2ZDjEU8hdW5X1J9HA
-         PbgdAaNVbeZr4pXmkqHAdjXlAa0R3TgNuueh+eyhV0AaQK5p+NXry7xGR0le+NMPsZM8
-         sqGPSkaYPQuDiii55KgyYnwISNPLMmQLbJ5zbnXSC68LBO3weKAQ6+C6znx1RjSC8n01
-         FhjdZ4+0iIkD/ExteKYt7p0o+UBou8pZtwUs+fQ+jngMghvt0eB8o2qfHOhm2tZP0aiD
-         fZMFYBivz3ELuokgLRbvDZas6HCfhdaOaM92RptffYHg9LtesBJojX0viW9PfTBqOPYO
-         ErEg==
+        d=google.com; s=20251104; t=1788332369; x=1788937169; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=oOP9Z7HNYiswXIyPHT63AslF3SPZRjDN0nxwMCDDVtk=;
+        b=Rz0ubruTCj46vPENnFbN8lNeC1130gr0rjTez8fpJn3zcAMEIafczV5/ZNacYaKS9S
+         U+kC6hy1i1d7bPee5vNLYdmIUcnrgXdqdHeyAhcCJApPeGAPFqnMad1XuSGCjbgU4DmV
+         597DuWf27eWXJVz/Re66pvpjste/d23C5DI7M1pM0uW2oiWjY4s/CveUj4Uq6WnWtB/Q
+         FNda7zcUBvtncwOS1WJsY/vNgsxtaqvF+k3+G7C9JchAEhOTc4Zm49sd4i9a/PKEDnh3
+         3jylk/d4s47yOI47dnOWgdkBCHp6Gb7i6hXp3AKp6DYHdnjODIOEEW4QRRybTphSqOhQ
+         1WYA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1788330144; x=1788934944;
-        h=content-type:cc:to:subject:message-id:date:from:mime-version
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=795V3NV/mTfuqSi46PUPwGaDSWJU6xx+88+WjSOianI=;
-        b=slarPf+roMZSEyyKx738AxjIEaxlxSmvUQttLBSoJCWk8xHiJ6aztlk6WbheEWJut3
-         HdGyH6CNtnt6/YZ6c3gZ+pN/gfgbeULtYVRlsYovA9W3Y5R7WbngpLhetbjRFwmvqhZ/
-         th1ZUGfTgJHM2cliExO5YMZnsW35tT9cHjHni1W7yI6lk3kTegsVEPsNEiun7Wso715e
-         F2QB8xc38Pg26gFr7FmQ9bDoiRc4181jOyj1q1GsvjwrmG/FnlnAgp4e/4mJ5x7XjIch
-         +f6A1Bk8Hr3lITp35LfYF9YcD9rvcb2BbTP0/hfdcB1BVlLl5Y7W6aPRpNyD2/fGALbr
-         /U1w==
-X-Gm-Message-State: AFuF++mOjTmB/Va3wYiiKWgLCkjLdAaOJc+EDPUoujrWojoVkoz/Mp3f
-	RE9DYZ/Q+tdvyf9OCdlSTAtM7Q8BTbiDJ/4U5JEbO9PqDXfzbvytfbbsNvUAvNtwEGDtDunsftn
-	VFX1XONjFnrdCbSMRRUlVtPunPBWDkBxwsWrH
-X-Gm-Gg: AR+sD10ItyCpHTr36Kigvyc6EZ8VVAGmT676WAepifgVZtP6KOEFnawqmqrkRJHRpgN
-	A5B2PO9iduYeSdxX+ambv2UmoSKx9GMHegvKhdf8pnxS9hTKWnenvV9j+eKURU1PmlaJ4KB/271
-	jgHNJKy/2X6MnWDGKSkBvfM6pFWwa6sb/0qJ6/jY6QEy6AMxpc0Ic1goEapNjv4IYms6ZdAB+c2
-	Pfvd5bhS8d6wIZYzgbtG554CaXE5rzDR5KOSFE7NSSB9Q32Zvb/qAaIatR2u10+GqJ8ZR1c0VG2
-	5L9fxrvUl/kNW5FDIotFu5D1bLUfQU7mlP722NfmYI8IGb6NwxJDLHUPq38FZi61IDYjNIktGWn
-	Jibc=
-X-Received: by 2002:a05:6820:f013:b0:6b1:fe93:3a69 with SMTP id
- 006d021491bc7-6b47fb291fbmr1734024eaf.24.1788330144185; Tue, 01 Sep 2026
- 23:22:24 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1788332369; x=1788937169;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=oOP9Z7HNYiswXIyPHT63AslF3SPZRjDN0nxwMCDDVtk=;
+        b=dBWH2+UdwjdKyA6lL+4n+qwLlyO9193GgjDK5HuwIz7ZfwRiPiA3y1N/0wApbn/1rw
+         2WuanCjmIyJuNw1noLAVIvb8AHVgj7S+GvRZnhsGhQLvWOA/ZBhqjNakJfcK+nDqmGgY
+         zBkS9LNvuuQoRromHDU3qafB6+CK8bHR+nx0V6j4TWJ+3ARuDS7pTswf332oUxTpZrXg
+         6c0jFArac1yDx/EDRG7uTIiSEH8xwUVbGBpmkCbLmhNR1JpssN4sxUSWVcvZRQ+Ng4ci
+         XqnTKYiy0JRMiRU+om2Uy7ENbB6fLtPPQ8HuDsgpdDjeFsvFrZNBIJM9CI23HE+dT4zz
+         27gg==
+X-Gm-Message-State: AFuF++kpl+3+0uMND9DX0M4y5OETPlAHr/dSLGRoRxsRsBsFn2GlbBlv
+	xjhB565pfLOKB+iOVUdzC3zu+aZd9WNNIjqn3WJOdamI90xyUg+qM0Ixwo4qvN5jI5Y6qnmEilX
+	JcjxwsHfVHCzp6vQyXBCAY61CYp31ECUWIB9TKTthZOLBNcSjnLY/oQKR/cA=
+X-Gm-Gg: AR+sD129+eKjFCJdYV2BMiulORoG33ewNkx1cFlMOTyiT9Yw5KE/rG1s+jrwM5iJnra
+	koHwpOtrSfPWr+6WDbEJJUP33PcIDveIxMYigjHKQUuTCLJA3Ti0zll9xjCD9vWUqIkJ1E+MLqb
+	YCuxpG0iPHRNaxNb8Es7e4qn/GlAXR86chR1jcF3D/SZAVd0q535Qz3MF1b4idADfWrPaoiqO8N
+	PxaRWsidAU6mrxonJwpH52f0y0fKLCSihQJuUK6KvmdiyWb5R+Eu8UPkWUDcktSaH3/UIvubsXO
+	TQvMTvVxo+rncr0X+s0A/+6iLK+g3xK99j4B2+C1fmsVAE3SYKqTjCO26nVr9JMHzbxnINftllB
+	kvml8XOWRovKpjgqUkDGgT26dKdfX4a8o65/XGMNBzcnpu68C2Ov8MBS+WA==
+X-Received: by 2002:a05:622a:5507:b0:52d:41d0:89e0 with SMTP id
+ d75a77b69052e-53036d2c227mr28091701cf.40.1788332368021; Tue, 01 Sep 2026
+ 23:59:28 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-From: Vlatko Kosturjak <vlatko.kosturjak@gmail.com>
-Date: Wed, 2 Sep 2026 08:22:11 +0200
-X-Gm-Features: AcwNN1U6cvQzdu6HmjaYgagybI0ypFR99JGBNm4JU6mEqyIYfN3BpM3oFl7I864
-Message-ID: <CAPAw8HE6QgnePG=UUfU2d9mYXNpY2O_kp5v0J82VuVoR6gwWOg@mail.gmail.com>
-Subject: [PATCH] ppp: make room for the filter tag instead of assuming it
-To: linux-ppp@vger.kernel.org, netdev@vger.kernel.org
-Cc: Andrew Lunn <andrew+netdev@lunn.ch>, "David S. Miller" <davem@davemloft.net>, 
-	Eric Dumazet <edumazet@google.com>, Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>
-Content-Type: multipart/mixed; boundary="000000000000fc8771065a7a0e5e"
-
---000000000000fc8771065a7a0e5e
+References: <CAPAw8HE6QgnePG=UUfU2d9mYXNpY2O_kp5v0J82VuVoR6gwWOg@mail.gmail.com>
+In-Reply-To: <CAPAw8HE6QgnePG=UUfU2d9mYXNpY2O_kp5v0J82VuVoR6gwWOg@mail.gmail.com>
+From: Eric Dumazet <edumazet@google.com>
+Date: Wed, 2 Sep 2026 08:59:17 +0200
+X-Gm-Features: AcwNN1U02nwDwCEqUG4sFb4t_cF5nFyslgDL7EwSIZZtJOIgdGasms2FHyekyOE
+Message-ID: <CANn89iKHVP_opOhoeNuVQEORu3_haw0+4Aao6RfB-kN=_fd5Pg@mail.gmail.com>
+Subject: Re: [PATCH] ppp: make room for the filter tag instead of assuming it
+To: Vlatko Kosturjak <vlatko.kosturjak@gmail.com>
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, 
+	Andrew Lunn <andrew+netdev@lunn.ch>, "David S. Miller" <davem@davemloft.net>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-ppp_receive_nonmp_frame() prepends a two-byte direction tag before running
-the pass/active BPF filters:
+On Wed, Sep 2, 2026 at 8:22=E2=80=AFAM Vlatko Kosturjak
+<vlatko.kosturjak@gmail.com> wrote:
+>
+> ppp_receive_nonmp_frame() prepends a two-byte direction tag before runnin=
+g
+> the pass/active BPF filters:
+>
+>         *(__be16 *)skb_push(skb, 2) =3D htons(PPP_FILTER_INBOUND_TAG);
+>
+> Nothing on the receive path guarantees those two bytes of headroom, and a
+> peer can arrange for only one to be available. ppp_async.c contributes tw=
+o
+> halves of the problem.
+>
+> First, the frame-error path resets a reused skb's headroom to zero while
+> claiming to restore it to a freshly allocated state - but a fresh skb fro=
+m
+> dev_alloc_skb() carries NET_SKB_PAD:
+>
+>         err:
+>                 if (skb) {
+>                         /* make skb appear as freshly allocated */
+>                         skb_trim(skb, 0);
+>                         skb_reserve(skb, - skb_headroom(skb));
+>                 }
+>
 
-        *(__be16 *)skb_push(skb, 2) = htons(PPP_FILTER_INBOUND_TAG);
+Thanks for the patch and the reproducer.
 
-Nothing on the receive path guarantees those two bytes of headroom, and a
-peer can arrange for only one to be available. ppp_async.c contributes two
-halves of the problem.
+The analysis of the panic is correct, but instead of working around
+this root cause,
+I think we should drop the packet (like ppp_synctty does).
 
-First, the frame-error path resets a reused skb's headroom to zero while
-claiming to restore it to a freshly allocated state - but a fresh skb from
-dev_alloc_skb() carries NET_SKB_PAD:
+Resetting headroom to 0 completely violates the NET_SKB_PAD guarantee
+provided by dev_alloc_skb().
 
-        err:
-                if (skb) {
-                        /* make skb appear as freshly allocated */
-                        skb_trim(skb, 0);
-                        skb_reserve(skb, - skb_headroom(skb));
-                }
+Not only does this lead to the filter panic you observed, but if CCP
+compression is enabled, ppp_decompress_frame() passes `skb->data - 2`
+to decompress()/incomp(), which reads out of bounds before skb->head.
 
-ap->rpkt still points at that skb, so the next frame reuses it with no
-headroom at all.
+Use in V2 : Fixes:1da177e4c3f4 ("Linux-2.6.12-rc2")
 
-Second, the headroom for a new frame is chosen from a single byte, and the
-comment already notes the test is incomplete:
+Also please target [PATCH net] in the subject prefix.
 
-        if (skb->len == 0) {
-                /* Try to get the payload 4-byte aligned. This should match
-                 * the PPP_ALLSTATIONS/PPP_UI/compressed tests in
-                 * process_input_packet, but we do not have enough chars here
-                 * to test buf[1] and buf[2].
-                 */
-                if (buf[0] != PPP_ALLSTATIONS)
-                        skb_reserve(skb, 2 + (buf[0] & 1));
-        }
+Please wait ~24 hours before sending a V2.
 
-A frame beginning 0xff reserves nothing.
+Thanks!
 
-So a frame with a bad FCS zeroes the reused skb's headroom; the next frame
-begins ff 03, so nothing is reserved; process_input_packet() pulls the
-two-byte address/control field, giving two bytes of headroom; and
-__ppp_decompress_proto() pushes one back for a PFC-compressed protocol byte,
-leaving one. The filter tag then pushes two and lands a byte below skb->head:
+I am guessing the skb_reseve() could be replaced with skb_reserve(skb,
+NET_SKB_PAD - skb_headroom(skb));
 
-  skbuff: skb_under_panic: len:49 put:2 head:ffff888003c10000
-          data:ffff888003c0ffff tail:0x30 end:0x640 dev:<NULL>
-  kernel BUG at net/core/skbuff.c:214!
-  RIP: 0010:skb_panic+0x13e/0x230
-  Call Trace:
-   skb_push+0xbd/0x100
-   ppp_receive_nonmp_frame+0x48a/0x1d10
-   ppp_input+0x4e9/0x2f80
-   ppp_async_process+0x2a/0xe0
-   tasklet_action_common+0x20f/0x8a0
-   handle_softirqs+0x18e/0x590
-  Kernel panic - not syncing: Fatal exception in interrupt
+But IMO a drop would be better.
 
-Two frames from the peer are enough. It needs CONFIG_PPP_FILTER and a link
-with PPPIOCSPASS or PPPIOCSACTIVE applied, which is what pppd does for
-demand-dialling and for active-filter. The panic happens in softirq context,
-so it takes the machine down rather than the link.
+diff --git a/drivers/net/ppp/ppp_async.c b/drivers/net/ppp/ppp_async.c
+index ea7fe9608ffd6580f584afd3c61cdd29e67474d3..6e6e2b9441285d6e16ee7610bd5=
+9344b9e3d3e52
+100644
+--- a/drivers/net/ppp/ppp_async.c
++++ b/drivers/net/ppp/ppp_async.c
+@@ -742,11 +742,8 @@ process_input_packet(struct asyncppp *ap)
+  err:
+        /* frame had an error, remember that, reset SC_TOSS & SC_ESCAPE */
+        ap->state =3D SC_PREV_ERROR;
+-       if (skb) {
+-               /* make skb appear as freshly allocated */
+-               skb_trim(skb, 0);
+-               skb_reserve(skb, - skb_headroom(skb));
+-       }
++       kfree_skb(skb);
++       ap->rpkt =3D NULL;
+ }
 
-Rather than tighten the headroom bookkeeping in one transport - ppp_synctty
-and any other channel driver make no such guarantee either - make room at
-the site that needs it. skb_cow_head() also subsumes the skb_unclone() it
-replaces.
-
-Found by fuzzing the PPP receive path with a mutating peer on a pty;
-It is interesting (remote) DoS: Root configures PPP; peer supplies two crashing
-frames.
-
-I have a working reproducer in attachment - generated with help of GenAI.
-It needs root only because /dev/ppp is 0600 by default - the frames
-that trigger
-the panic arrive from the tty side, i.e. from the peer, so on a
-configured link this
-is remotely reachable.
-
-Tested on pristine v7.2.2.
-
-Fixes: the PPP_FILTER_INBOUND_TAG push in ppp_receive_nonmp_frame()
-Signed-off-by: Vlatko Kosturjak <vlatko.kosturjak@gmail.com>
-
----
-
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 1111111..2222222 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -2498,7 +2498,10 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct
-sk_buff *skb)
-
- #ifdef CONFIG_PPP_FILTER
-                if (ppp->pass_filter || ppp->active_filter) {
--                       if (skb_unclone(skb, GFP_ATOMIC))
-+                       /* The receive path does not guarantee 2 bytes of
-+                        * headroom here, so make room rather than assume it.
-+                        */
-+                       if (skb_cow_head(skb, 2))
-                                goto err;
-                        /* Check if the packet passes the pass and
-active filters.
-                         * See comment for PPP_FILTER_INBOUND_TAG above.
-
---000000000000fc8771065a7a0e5e
-Content-Type: application/octet-stream; name="repro-ppp-skb.c"
-Content-Disposition: attachment; filename="repro-ppp-skb.c"
-Content-Transfer-Encoding: base64
-Content-ID: <f_mtjp87980>
-X-Attachment-Id: f_mtjp87980
-
-LyoKICogTWluaW1hbCByZXByb2R1Y2VyOiBza2JfdW5kZXJfcGFuaWMgaW4gcHBwX3JlY2VpdmVf
-bm9ubXBfZnJhbWUoKS4KICoKICogICBza2J1ZmY6IHNrYl91bmRlcl9wYW5pYzogbGVuOk4gcHV0
-OjIgaGVhZDpYIGRhdGE6WC0xIC4uLgogKiAgIGtlcm5lbCBCVUcgYXQgbmV0L2NvcmUvc2tidWZm
-LmM6MjE0IQogKiAgICAgc2tiX3B1c2grMHhiZAogKiAgICAgcHBwX3JlY2VpdmVfbm9ubXBfZnJh
-bWUrMHg0OGEgICAoZHJpdmVycy9uZXQvcHBwL3BwcF9nZW5lcmljLmM6MjUwNikKICogICAgIHBw
-cF9pbnB1dAogKiAgICAgcHBwX2FzeW5jX3Byb2Nlc3MgICAgICAgICAgICAgICAoc29mdGlycSkK
-ICoKICogVEhFIEJVRwogKiAtLS0tLS0tCiAqIFR3byB0aGluZ3MgaW4gZHJpdmVycy9uZXQvcHBw
-L3BwcF9hc3luYy5jIGNvbWJpbmUuCiAqCiAqIDEuIFRoZSBmcmFtZS1lcnJvciBwYXRoIHJlc2V0
-cyBhIHJldXNlZCBza2IncyBoZWFkcm9vbSB0byB6ZXJvLCB3aXRoIGEKICogICAgY29tbWVudCBj
-bGFpbWluZyBpdCBpcyBlcXVpdmFsZW50IHRvIGEgZnJlc2ggYWxsb2NhdGlvbiAtLSBpdCBpcyBu
-b3QsIGFzCiAqICAgIGRldl9hbGxvY19za2IoKSBsZWF2ZXMgTkVUX1NLQl9QQUQ6CiAqCiAqICAg
-ICAgICBlcnI6ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC8v
-IHBwcF9hc3luYy5jOjgxMgogKiAgICAgICAgICAgICAgaWYgKHNrYikgewogKiAgICAgICAgICAg
-ICAgICAgICAgICAvLyBtYWtlIHNrYiBhcHBlYXIgYXMgZnJlc2hseSBhbGxvY2F0ZWQKICogICAg
-ICAgICAgICAgICAgICAgICAgc2tiX3RyaW0oc2tiLCAwKTsKICogICAgICAgICAgICAgICAgICAg
-ICAgc2tiX3Jlc2VydmUoc2tiLCAtIHNrYl9oZWFkcm9vbShza2IpKTsKICogICAgICAgICAgICAg
-IH0KICoKICogICAgYXAtPnJwa3Qga2VlcHMgcG9pbnRpbmcgYXQgdGhhdCBza2IsIHNvIHRoZSAq
-bmV4dCogZnJhbWUgcmV1c2VzIGl0IHdpdGgKICogICAgemVybyBoZWFkcm9vbS4KICoKICogMi4g
-VGhlIGhlYWRyb29tIGZvciBhIG5ldyBmcmFtZSBpcyBndWVzc2VkIGZyb20gYSBzaW5nbGUgYnl0
-ZSwgYW5kIHRoZQogKiAgICBjb21tZW50IGFkbWl0cyB0aGUgZ3Vlc3MgaXMgaW5jb21wbGV0ZToK
-ICoKICogICAgICAgIGlmIChza2ItPmxlbiA9PSAwKSB7ICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgLy8gcHBwX2FzeW5jLmM6ODc2CiAqICAgICAgICAgICAgICAgIC8vIFRyeSB0byBnZXQg
-dGhlIHBheWxvYWQgNC1ieXRlIGFsaWduZWQuIFRoaXMgc2hvdWxkIG1hdGNoCiAqICAgICAgICAg
-ICAgICAgIC8vIHRoZSBQUFBfQUxMU1RBVElPTlMvUFBQX1VJL2NvbXByZXNzZWQgdGVzdHMgaW4K
-ICogICAgICAgICAgICAgICAgLy8gcHJvY2Vzc19pbnB1dF9wYWNrZXQsIGJ1dCB3ZSBkbyBub3Qg
-aGF2ZSBlbm91Z2ggY2hhcnMKICogICAgICAgICAgICAgICAgLy8gaGVyZSB0byB0ZXN0IGJ1Zlsx
-XSBhbmQgYnVmWzJdLgogKiAgICAgICAgICAgICAgICBpZiAoYnVmWzBdICE9IFBQUF9BTExTVEFU
-SU9OUykKICogICAgICAgICAgICAgICAgICAgICAgICBza2JfcmVzZXJ2ZShza2IsIDIgKyAoYnVm
-WzBdICYgMSkpOwogKiAgICAgICAgfQogKgogKiAgICBXaGVuIHRoZSBmcmFtZSBzdGFydHMgd2l0
-aCAweGZmLCBub3RoaW5nIGlzIHJlc2VydmVkIGF0IGFsbC4KICoKICogU286IGEgZnJhbWUgd2l0
-aCBhIGJhZCBGQ1MgemVyb2VzIHRoZSByZXVzZWQgc2tiJ3MgaGVhZHJvb20sIHRoZSBuZXh0IGZy
-YW1lCiAqIHN0YXJ0cyAweGZmIDB4MDMgc28gbm8gaGVhZHJvb20gaXMgcmVzZXJ2ZWQsIHByb2Nl
-c3NfaW5wdXRfcGFja2V0KCkgcHVsbHMKICogdGhlIDItYnl0ZSBhZGRyZXNzL2NvbnRyb2wgKGhl
-YWRyb29tIDIpLCBfX3BwcF9kZWNvbXByZXNzX3Byb3RvKCkgcHVzaGVzIDEKICogYmFjayBmb3Ig
-dGhlIFBGQy1jb21wcmVzc2VkIHByb3RvY29sIGJ5dGUgKGhlYWRyb29tIDEpLCBhbmQgdGhlbgog
-KiBwcHBfcmVjZWl2ZV9ub25tcF9mcmFtZSgpIHB1c2hlcyAyIG1vcmUgZm9yIFBQUF9GSUxURVJf
-SU5CT1VORF9UQUc6CiAqCiAqICAgICAgICAqKF9fYmUxNiAqKXNrYl9wdXNoKHNrYiwgMikgPSBo
-dG9ucyhQUFBfRklMVEVSX0lOQk9VTkRfVEFHKTsKICoKICogICAgLS0gb25lIGJ5dGUgYmVsb3cg
-c2tiLT5oZWFkLiBCVUcoKS4KICoKICogVGhhdCBsYXN0IHB1c2ggb25seSBoYXBwZW5zIHdoZW4g
-YSBwYXNzIG9yIGFjdGl2ZSBmaWx0ZXIgaXMgaW5zdGFsbGVkLCBzbwogKiBDT05GSUdfUFBQX0ZJ
-TFRFUiBtdXN0IGJlIG9uIGFuZCB0aGUgbGluayBtdXN0IGhhdmUgaGFkIFBQUElPQ1NQQVNTIG9y
-CiAqIFBQUElPQ1NBQ1RJVkUgYXBwbGllZCAtLSB3aGljaCBpcyB3aGF0IHBwcGQgZG9lcyBmb3Ig
-ZGVtYW5kLWRpYWxsaW5nIGFuZAogKiBmb3IgYGFjdGl2ZS1maWx0ZXJgLgogKgogKiBCT1VOREFS
-WTogc2V0dGluZyB0aGUgZmlsdGVyIGFuZCBjcmVhdGluZyB0aGUgdW5pdCBuZWVkcyByb290ICgv
-ZGV2L3BwcCBpcwogKiAwNjAwKS4gVGhlIGZyYW1lcyB0aGF0IHRyaWdnZXIgaXQgY29tZSBmcm9t
-IHRoZSAqdHR5KiBzaWRlLCBpLmUuIGZyb20gdGhlCiAqIHBlZXIgb24gYSByZWFsIGxpbmsuIFNv
-IHRoaXMgaXMgbm90IGxvY2FsIHByaXZpbGVnZSBlc2NhbGF0aW9uOyBpdCBpcyBhCiAqIHJlbW90
-ZSBwYW5pYyBvbiBhIFBQUCBsaW5rIHRoYXQgaGFzIGZpbHRlcnMgY29uZmlndXJlZC4KICoKICog
-QnVpbGQ6IGdjYyAtTzEgLXN0YXRpYyAtbyByZXByby1wcHAtc2tiIHJlcHJvLXBwcC1za2IuYwog
-KiBSdW4gYXMgcm9vdCBpbiBhIGRpc3Bvc2FibGUgVk0uIFBhbmljcyB3aXRoaW4gbWlsbGlzZWNv
-bmRzLgogKi8KI2RlZmluZSBfR05VX1NPVVJDRQojaW5jbHVkZSA8c3RkaW8uaD4KI2luY2x1ZGUg
-PHN0ZGxpYi5oPgojaW5jbHVkZSA8c3RyaW5nLmg+CiNpbmNsdWRlIDxzdGRpbnQuaD4KI2luY2x1
-ZGUgPHVuaXN0ZC5oPgojaW5jbHVkZSA8ZmNudGwuaD4KI2luY2x1ZGUgPGVycm5vLmg+CiNpbmNs
-dWRlIDxzeXMvaW9jdGwuaD4KI2luY2x1ZGUgPHRlcm1pb3MuaD4KCiNkZWZpbmUgTl9QUFAgMwoK
-c3RydWN0IHNvY2tfZmlsdGVyXyB7IHVpbnQxNl90IGNvZGU7IHVpbnQ4X3QganQsIGpmOyB1aW50
-MzJfdCBrOyB9OwpzdHJ1Y3Qgc29ja19mcHJvZ18gIHsgdW5zaWduZWQgc2hvcnQgbGVuOyBzdHJ1
-Y3Qgc29ja19maWx0ZXJfICpmaWx0ZXI7IH07CgojZGVmaW5lIFBQUElPQ1NGTEFHUwlfSU9XKCd0
-JywgODksIGludCkKI2RlZmluZSBQUFBJT0NTUEFTUwlfSU9XKCd0JywgNzEsIHN0cnVjdCBzb2Nr
-X2Zwcm9nXykKI2RlZmluZSBQUFBJT0NORVdVTklUCV9JT1dSKCd0JywgNjIsIGludCkKI2RlZmlu
-ZSBQUFBJT0NDT05ORUNUCV9JT1coJ3QnLCA1OCwgaW50KQojZGVmaW5lIFBQUElPQ0FUVENIQU4J
-X0lPVygndCcsIDU2LCBpbnQpCiNkZWZpbmUgUFBQSU9DR0NIQU4JX0lPUigndCcsIDU1LCBpbnQp
-CgojZGVmaW5lIFNDX0NDUF9PUEVOCTB4MDAwMDAwNDAKI2RlZmluZSBTQ19FTkFCTEVfSVAJMHgw
-MDAwMDEwMAoKc3RhdGljIHVpbnQxNl90IGZjczE2KHVpbnQxNl90IGZjcywgY29uc3QgdWludDhf
-dCAqcCwgaW50IG4pCnsKCWludCBpOwoKCXdoaWxlIChuLS0gPiAwKSB7CgkJZmNzIF49ICpwKys7
-CgkJZm9yIChpID0gMDsgaSA8IDg7IGkrKykKCQkJZmNzID0gKHVpbnQxNl90KSgoZmNzID4+IDEp
-IF4gKChmY3MgJiAxKSA/IDB4ODQwOCA6IDApKTsKCX0KCXJldHVybiBmY3M7Cn0KCi8qIFdyYXAg
-YGJvZHlgIChhbHJlYWR5IGluY2x1ZGluZyBhZGRyZXNzL2NvbnRyb2wvcHJvdG9jb2wpIGFzIGFu
-IEFIRExDIGZyYW1lLiAqLwpzdGF0aWMgaW50IGZyYW1lKHVpbnQ4X3QgKm91dCwgaW50IG91dHN6
-LCBjb25zdCB1aW50OF90ICpib2R5LCBpbnQgYmwsCgkJIGludCBnb29kX2ZjcykKewoJdWludDhf
-dCBidWZbNDA5Nl07Cgl1aW50MTZfdCBmY3M7CglpbnQgbiA9IDAsIGk7CgoJaWYgKGJsICsgMiA+
-IChpbnQpc2l6ZW9mKGJ1ZikpCgkJcmV0dXJuIC0xOwoJbWVtY3B5KGJ1ZiwgYm9keSwgYmwpOwoJ
-ZmNzID0gKHVpbnQxNl90KX5mY3MxNigweGZmZmYsIGJ1ZiwgYmwpOwoJaWYgKCFnb29kX2ZjcykK
-CQlmY3MgXj0gMHhiZWVmOwkJCS8qIGRlbGliZXJhdGVseSB3cm9uZyAqLwoJYnVmW2JsKytdID0g
-KHVpbnQ4X3QpZmNzOwoJYnVmW2JsKytdID0gKHVpbnQ4X3QpKGZjcyA+PiA4KTsKCglvdXRbbisr
-XSA9IDB4N2U7Cglmb3IgKGkgPSAwOyBpIDwgYmwgJiYgbiA8IG91dHN6IC0gMjsgaSsrKSB7CgkJ
-dWludDhfdCBjID0gYnVmW2ldOwoKCQlpZiAoYyA9PSAweDdlIHx8IGMgPT0gMHg3ZCB8fCBjIDwg
-MHgyMCkgewoJCQlvdXRbbisrXSA9IDB4N2Q7CgkJCW91dFtuKytdID0gYyBeIDB4MjA7CgkJfSBl
-bHNlIHsKCQkJb3V0W24rK10gPSBjOwoJCX0KCX0KCW91dFtuKytdID0gMHg3ZTsKCXJldHVybiBu
-Owp9CgppbnQgbWFpbih2b2lkKQp7CglzdHJ1Y3Qgc29ja19maWx0ZXJfIHByb2dbMV0gPSB7IHsg
-MHgwNiwgMCwgMCwgMHhmZmZmIH0gfTsgICAvKiBCUEY6IHJldCAweGZmZmYgKi8KCXN0cnVjdCBz
-b2NrX2Zwcm9nXyBmcCA9IHsgMSwgcHJvZyB9OwoJdWludDhfdCBib2R5WzUxMl0sIG91dFsxMjAw
-XTsKCWNoYXIgcGF0aFs2NF07Cgl1bnNpZ25lZCBpbnQgbG9jayA9IDA7CglpbnQgbWFzdGVyLCBz
-bGF2ZSwgcHRuLCB1bml0X2ZkLCBjaGFuX2ZkOwoJaW50IGxkaXNjID0gTl9QUFAsIGNoYW4sIHVu
-aXQgPSAtMSwgZmxhZ3MsIG4sIGk7CgoJbWFzdGVyID0gb3BlbigiL2Rldi9wdG14IiwgT19SRFdS
-IHwgT19OT0NUVFkgfCBPX05PTkJMT0NLKTsKCWlmIChtYXN0ZXIgPCAwKSB7IHBlcnJvcigicHRt
-eCIpOyByZXR1cm4gMTsgfQoJaWYgKGlvY3RsKG1hc3RlciwgVElPQ1NQVExDSywgJmxvY2spIDwg
-MCkgeyBwZXJyb3IoInVubG9ja3B0Iik7IHJldHVybiAxOyB9CglpZiAoaW9jdGwobWFzdGVyLCBU
-SU9DR1BUTiwgJnB0bikgPCAwKSB7IHBlcnJvcigicHRuIik7IHJldHVybiAxOyB9CglzbnByaW50
-ZihwYXRoLCBzaXplb2YocGF0aCksICIvZGV2L3B0cy8lZCIsIHB0bik7CglzbGF2ZSA9IG9wZW4o
-cGF0aCwgT19SRFdSIHwgT19OT0NUVFkgfCBPX05PTkJMT0NLKTsKCWlmIChzbGF2ZSA8IDApIHsg
-cGVycm9yKCJwdHMiKTsgcmV0dXJuIDE7IH0KCgkvKiBOX1BQUCBvbiB0aGUgc2xhdmUgY3JlYXRl
-cyBhIFBQUCBjaGFubmVsLiAqLwoJaWYgKGlvY3RsKHNsYXZlLCBUSU9DU0VURCwgJmxkaXNjKSA8
-IDApIHsgcGVycm9yKCJUSU9DU0VURCIpOyByZXR1cm4gMTsgfQoJaWYgKGlvY3RsKHNsYXZlLCBQ
-UFBJT0NHQ0hBTiwgJmNoYW4pIDwgMCkgeyBwZXJyb3IoIkdDSEFOIik7IHJldHVybiAxOyB9CgoJ
-dW5pdF9mZCA9IG9wZW4oIi9kZXYvcHBwIiwgT19SRFdSKTsKCWlmICh1bml0X2ZkIDwgMCkgeyBw
-ZXJyb3IoIi9kZXYvcHBwIChuZWVkcyByb290KSIpOyByZXR1cm4gMTsgfQoJaWYgKGlvY3RsKHVu
-aXRfZmQsIFBQUElPQ05FV1VOSVQsICZ1bml0KSA8IDApIHsgcGVycm9yKCJORVdVTklUIik7IHJl
-dHVybiAxOyB9CgoJY2hhbl9mZCA9IG9wZW4oIi9kZXYvcHBwIiwgT19SRFdSKTsKCWlmIChjaGFu
-X2ZkIDwgMCkgeyBwZXJyb3IoIi9kZXYvcHBwIDIiKTsgcmV0dXJuIDE7IH0KCWlmIChpb2N0bChj
-aGFuX2ZkLCBQUFBJT0NBVFRDSEFOLCAmY2hhbikgPCAwKSB7IHBlcnJvcigiQVRUQ0hBTiIpOyBy
-ZXR1cm4gMTsgfQoJaWYgKGlvY3RsKGNoYW5fZmQsIFBQUElPQ0NPTk5FQ1QsICZ1bml0KSA8IDAp
-IHsgcGVycm9yKCJDT05ORUNUIik7IHJldHVybiAxOyB9CgoJZmxhZ3MgPSBTQ19DQ1BfT1BFTiB8
-IFNDX0VOQUJMRV9JUDsKCWlvY3RsKHVuaXRfZmQsIFBQUElPQ1NGTEFHUywgJmZsYWdzKTsKCgkv
-KiBUaGUgZmlsdGVyIGlzIHdoYXQgbWFrZXMgcHBwX3JlY2VpdmVfbm9ubXBfZnJhbWUoKSBwdXNo
-IDIgYnl0ZXMuICovCglpZiAoaW9jdGwodW5pdF9mZCwgUFBQSU9DU1BBU1MsICZmcCkgPCAwKSB7
-IHBlcnJvcigiUFBQSU9DU1BBU1MiKTsgcmV0dXJuIDE7IH0KCglwcmludGYoIlJFUFJPOiB1bml0
-PSVkIGNoYW49JWQsIHBhc3MgZmlsdGVyIGluc3RhbGxlZFxuIiwgdW5pdCwgY2hhbik7CglmZmx1
-c2goc3Rkb3V0KTsKCgkvKgoJICogRnJhbWUgMTogYmFkIEZDUy4gcHJvY2Vzc19pbnB1dF9wYWNr
-ZXQoKSB0YWtlcyBpdHMgZXJyOiBwYXRoLCB3aGljaAoJICogdHJpbXMgdGhlIHNrYiBhbmQgc2V0
-cyBpdHMgaGVhZHJvb20gdG8gemVybyAtLSBhbmQgbGVhdmVzIGl0IGluCgkgKiBhcC0+cnBrdCB0
-byBiZSByZXVzZWQuCgkgKi8KCWJvZHlbMF0gPSAweGZmOwoJYm9keVsxXSA9IDB4MDM7Cglib2R5
-WzJdID0gMHgwMDsKCWJvZHlbM10gPSAweDIxOwkJCS8qIFBQUF9JUCwgdW5jb21wcmVzc2VkICov
-Cglmb3IgKGkgPSA0OyBpIDwgMzI7IGkrKykKCQlib2R5W2ldID0gKHVpbnQ4X3QpaTsKCW4gPSBm
-cmFtZShvdXQsIHNpemVvZihvdXQpLCBib2R5LCAzMiwgMCAvKiBiYWQgRkNTICovKTsKCWlmICh3
-cml0ZShtYXN0ZXIsIG91dCwgbikgIT0gbikgeyBwZXJyb3IoIndyaXRlIDEiKTsgcmV0dXJuIDE7
-IH0KCXByaW50ZigiUkVQUk86IHNlbnQgZnJhbWUgMSAoYmFkIEZDUykgLS0gaGVhZHJvb20gb2Yg
-dGhlIHJldXNlZCBza2IgaXMgbm93IDBcbiIpOwoJZmZsdXNoKHN0ZG91dCk7Cgl1c2xlZXAoNTAw
-MDApOwoKCS8qCgkgKiBGcmFtZSAyLCBvbiB0aGUgc2tiIGZyYW1lIDEgbGVmdCBiZWhpbmQ6Cgkg
-KiAgIHN0YXJ0cyAweGZmICAtPiBwcHBfYXN5bmNfaW5wdXQoKSByZXNlcnZlcyBub3RoaW5nCgkg
-KiAgIDB4ZmYgMHgwMyAgICAtPiBwcm9jZXNzX2lucHV0X3BhY2tldCgpIHB1bGxzIDIgICAoaGVh
-ZHJvb20gMikKCSAqICAgMHgyMSAgICAgICAgIC0+IFBGQy1jb21wcmVzc2VkIFBQUF9JUCwgb2Rk
-LCBzbwoJICogICAgICAgICAgICAgICAgICAgX19wcHBfZGVjb21wcmVzc19wcm90bygpIHB1c2hl
-cyAxIChoZWFkcm9vbSAxKQoJICogICBQUFBfSVAgbWFwcyB0byBhIHJlYWwgTlAgaW5kZXgsIHNv
-IHRoZSBmaWx0ZXIgYnJhbmNoIHJ1bnMgYW5kCgkgKiAgIHB1c2hlcyAyIC0+IG9uZSBieXRlIGJl
-bG93IHNrYi0+aGVhZCAtPiBCVUcoKS4KCSAqLwoJYm9keVswXSA9IDB4ZmY7Cglib2R5WzFdID0g
-MHgwMzsKCWJvZHlbMl0gPSAweDIxOwkJCS8qIGNvbXByZXNzZWQgcHJvdG9jb2wgZmllbGQsIG9k
-ZCAqLwoJYm9keVszXSA9IDB4NDU7CQkJLyogbG9va3MgbGlrZSBhbiBJUHY0IGhlYWRlciAqLwoJ
-Ym9keVs0XSA9IDB4MDA7Cglib2R5WzVdID0gMHgwMDsKCWJvZHlbNl0gPSAweDI4OwoJZm9yIChp
-ID0gNzsgaSA8IDQ4OyBpKyspCgkJYm9keVtpXSA9ICh1aW50OF90KShpICogNyk7CgluID0gZnJh
-bWUob3V0LCBzaXplb2Yob3V0KSwgYm9keSwgNDgsIDEgLyogZ29vZCBGQ1MgKi8pOwoJcHJpbnRm
-KCJSRVBSTzogc2VuZGluZyBmcmFtZSAyIChmZiAwMyArIFBGQyBQUFBfSVApIC0tIGV4cGVjdCBz
-a2JfdW5kZXJfcGFuaWNcbiIpOwoJZmZsdXNoKHN0ZG91dCk7CglpZiAod3JpdGUobWFzdGVyLCBv
-dXQsIG4pICE9IG4pIHsgcGVycm9yKCJ3cml0ZSAyIik7IHJldHVybiAxOyB9CgoJdXNsZWVwKDIw
-MDAwMCk7CglwcmludGYoIlJFUFJPOiBzdGlsbCBhbGl2ZSAtLSBkaWQgTk9UIHJlcHJvZHVjZVxu
-Iik7CglmZmx1c2goc3Rkb3V0KTsKCXJldHVybiAwOwp9Cg==
---000000000000fc8771065a7a0e5e--
+ /* Called when the tty driver has data for us. Runs parallel with the
