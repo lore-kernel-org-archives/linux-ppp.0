@@ -1,124 +1,183 @@
-Received: from mail-qv1-f52.google.com (mail-qv1-f52.google.com [209.85.219.52])
+Received: from va-2-26.ptr.blmpb.com (va-2-26.ptr.blmpb.com [209.127.231.26])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8DA343E763B
-	for <linux-ppp@vger.kernel.org>; Tue,  8 Sep 2026 08:20:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.219.52
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788855619; cv=pass; b=NKgMn5P6QE5DleocCXMaVuRv65B+abqzstNOs48HEqPhqQmQw2vcVuOaysPGq87T79K4n98107OOGl7MyhglTTiBQ46oKwag4Yb5IeIdvDR7R6yCchnuod6nx16+5hI5D3j4T5aNQA/S9r5KbVI7zxUGrLgBV6jhiZoIs+Z9/GE=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788855619; c=relaxed/simple;
-	bh=hsjTDp8GxgJOwpED1Wg/Qo5pHHkBB4Ysmhw6O6ZbUK4=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=OFNKOMseP20ElOmZ94nBNPTCqpTcO97vWQdsD7mFw9Wn9lSNjow7RSrwAldX4QzQVIbO6AHxbmg+9XoBqdfednDt4Voq49KErPlnaSAoQWpxjTRc4a+XT782kuNy8HM+EtaBBGFn9iebgDITlhc6DIVhOt13QbwTRkzga9FvUno=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=sO8ebbnR; arc=pass smtp.client-ip=209.85.219.52
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27EA34A1387
+	for <linux-ppp@vger.kernel.org>; Tue,  8 Sep 2026 08:41:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.231.26
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1788856900; cv=none; b=quf6edxD7VED6VrHggOJBZq4i3vwvxbdIZE2HkRJvLVb5a/AjLGvSA/F6Z50cFk9yBV9uE5v5ElSbx8GapzLbXTG51VUzNnF2gc+YL32p3LIXRTN1dHZ6rFKBclpzZ50PhUuh1DWS2fFPvEo0sD4hOT+pfQCekAt5opT4RGuVu0=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1788856900; c=relaxed/simple;
+	bh=wY3VV5WDN1nI99aH2yAc9UFlxwaH9JlgtrHoShr7BTI=;
+	h=To:Date:From:Message-Id:Subject:Content-Type:Cc:Mime-Version; b=hle9eOZSS5GS/Vh5wTefa2YZyifJHPCtJbbyxpGeepw59wXjJvFQhYEg8YjwEH9Q+4dtsl7kUSpFV0f27zNnpI+n2TmWOcW2eg4wVklEZQ1aHGLLRIuGmya617OdbkgWX30M9G/kUSsMvxwUnlKOr4ZxNE5gy5kgdqAO+LhSnT4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=moonshot.ai; spf=pass smtp.mailfrom=moonshot.ai; dkim=pass (2048-bit key) header.d=moonshot.ai header.i=@moonshot.ai header.b=igU+VauJ; arc=none smtp.client-ip=209.127.231.26
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=moonshot.ai
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=moonshot.ai
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="sO8ebbnR"
-Received: by mail-qv1-f52.google.com with SMTP id 6a1803df08f44-91041ee9230so45517226d6.2
-        for <linux-ppp@vger.kernel.org>; Tue, 08 Sep 2026 01:20:17 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1788855616; cv=none;
-        d=google.com; s=arc-20260327;
-        b=m1so/davTcvcfh6C1gpdTYTDna6etOFVwb0T8WG8L3cSDHa8KiKQp6ulnVHEwJW+MJ
-         z0cpt1HnGDZVnZN8tLXcPQ2gpLLROKZSl8dFpl1e2d5MQj5Gi5FT9Avc64K8byqlfSJK
-         jrkANR+w6Tr343BLkdmKOvkMSH0VXFSFuHewvFG9vsKRhfU7wG4CYV7ixbhCZvzqYnhw
-         z6kx8aapzFqjGA06obqFaq8iiq7BRABynpSfXhjjzl5KgSXfHo8IABQ9deVP/53DoOeL
-         Fn4sH8QTB2ECmrd9deElQH1L12Bbb+F1sfCVFWZOGzSdX8p1CHckYgCuvZf4hlypO5Zc
-         zWxw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=hsjTDp8GxgJOwpED1Wg/Qo5pHHkBB4Ysmhw6O6ZbUK4=;
-        fh=ahfsAAAVtuh7ykEQevmpqfPtWNEhThscrXKKwN50wuo=;
-        b=DWIPj6f1lqiuG9fAU8oM2eTOrNc0hCGwyi20dNO0vF9aJJuMvaN/wzo4Z2TX4ecIwu
-         An0bGhMyYxkJ5yFGHQi5TBF8Y7iLp+udHenHdtiUNdNG+d7cKgYHxVdy6+1JRiJm9Qlo
-         HXGwSf3KdHz3Z3poPJ5kspjzt89+VRkX+u3SFFVWR2BF4/GCao5kWzLWSPaoECI1NSUb
-         4D5qhfIyEO6Mx2M9pK7PPN8L55UaywEC5h/NExEBCm5D16POVZ3z+2Qg8ONBzK1fyxJY
-         mZYl9H4i0Hsef2cofu2DyYpKYH123zSj/Bjs732SxKjsQVj3ZixGOJAdseMXZIq8a3SK
-         D3vQ==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20251104; t=1788855616; x=1789460416; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=hsjTDp8GxgJOwpED1Wg/Qo5pHHkBB4Ysmhw6O6ZbUK4=;
-        b=sO8ebbnRRyogAoRUoEKrDUIrV9/y3WCeanjkAFp/SRpg/dbdT0cqX+wN2pNTpuFDX/
-         +d9L75Qm2B5nKiNt8BOFJ7xKu/VPzEwH1XXltWfXF8MfArLid1o/wwxXOMSudlwqkf5b
-         iv+2MJpKykr9OOcDdb0iGuOtCwXDS97rFgfbVWVftInFIhwAN9mfYyr4Etkr2Xcf85+O
-         dmPWy+RMlAO6KgtbEr/+LskeSzf6StieEdPwll9jU/hP2DA4DYZgHWhxmymgCqWysBBS
-         sIjpHQv5bpjIFh8kBlqHDCsL/zGpVHKEz0AyDi8msAhBSUvwlfMKCMnH9bC3ntPrEys4
-         IJcw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1788855616; x=1789460416;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=hsjTDp8GxgJOwpED1Wg/Qo5pHHkBB4Ysmhw6O6ZbUK4=;
-        b=FTFlz3YEaxFa8Ve6Ix5AFCnSzSmFxIFjppuRhG4d9nJyUjiesFthqwJETS3fquoG8W
-         4Ndpn7T9VIEV0MaDOHGspUp9CQA0hYm8dZL4MTQVwFF+MrbH5sgz/YvWl0H18QyLuTKM
-         VPpU20mNWow/PqBvlzWTKabyyDJlczVOXYRVr8XXh+noguqrWIcy34HUas/gJszmsv7r
-         uuR7C7YLRmws01nKNaAWJrn0dsMRC1nSReHHqUtiyp1O06/pxTFbCjZ3ESNhjEuC9IT1
-         HSOE8/XCYNbbKCzDP3VMeEB/jlAc8V0z95ZOL9YhJqdyuIgD8tEep4XJjbQy4Dq39DWG
-         Tn+Q==
-X-Forwarded-Encrypted: i=1; AKwUvBw8BUzWQ/sTCd8/t0mx7nmeugsXR9ptVHnx2vIbPE7x3AuoLT7E0pd5R1GWBvgQ0to1iMdh45NjHjE=@vger.kernel.org
-X-Gm-Message-State: AFuF++kXl2azTOmiJfsopIhHXM5PEDiG8lNQbEg9KgDNU4QeM6fjr2fE
-	4Vl5RH4wzfD9w+6MDbNsbot/5p3pUfWdIn0PDODlHGhTtDgS+WLyczM7We4d+RQVyjfXZatywzD
-	k3DHz8vCUEH7ovnWz4HWcQdXBaVeJCLkFP2moauGd
-X-Gm-Gg: AYBFou3pML9ipa6k1OWrrTytnSUKeAfL9SwVdJ3EwlU2HeNCISj671F1utbsjemis8B
-	CPnDWJU6IGFeyPQDC6VaSd6tp4wZS0qrSoyrCpOdO4ui9tTOgpDQgVVl2Uvstr6B3A5kEYkmtJR
-	7/d5Oz3wmebPSV+aobZ2xstPJwvCugOyPDcgVaolm7IXDIqjf96XOk37ziTV+jGWCeEssk/79vI
-	MBJbD3ufczTOne/rdIRIFHPESaCSVsUBRnyjBfKcwIE2ZRQ5tiL+xRUjPvcEvR64FmcGvCNgF4b
-	2WnjF8mpyFrcW2a+7h4lZ/WLslbTPIYL1MBNnJrOYpqBPrVD/zVUCUd7hONYYsrEHhOfw5R/d8R
-	xADgRyVvwb74eCW48pvwQXApJ3ZbUzfi5Nejq8BkiIhSwj04XJ/2h3FVBDA==
-X-Received: by 2002:a05:620a:2855:b0:936:eb7f:d2c7 with SMTP id
- af79cd13be357-93980400609mr3654539685a.27.1788855615776; Tue, 08 Sep 2026
- 01:20:15 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=moonshot.ai header.i=@moonshot.ai header.b="igU+VauJ"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ s=feishu2510091218; d=moonshot.ai; t=1788856886; h=from:subject:
+ mime-version:from:date:message-id:subject:to:cc:reply-to:content-type:
+ mime-version:in-reply-to:message-id;
+ bh=5o7fWMlFekwwncUURIGYfK7rbrZX2OhHQRVSVrU9p+w=;
+ b=igU+VauJ8HLhNVdaQf16qG27f3O9AROpbiVYrV+3fvNwBlwVMYcp5svve6kEboFl/LN4M2
+ mW9kFqvmDVO9esq6fJk5TtdD/P8gYWb/RNOL7mhaDPIAXEPvE5zt2bOiQYIyVsSakfbt/g
+ GkKS8oHbkVMY/GTkpHJxWwX8K6tZ3Xt9Yj7exbHWrn39Zp8+aBuYJ/BQQeXZJNqF2uDwC3
+ gmy+evkeJVDvnwQQkwXrw7GfiMrM4cjPIyQ4PBxVF15s5o+Fu1fdjDlgmOGeqhIX+TOkHj
+ smw/BEzrpxnhzOk3N/I9XwFMvMsbVkau72Zt/2EnGHOhcwvnM9eaUGMZ27fL3Q==
+To: "Paul Mackerras" <paulus@ozlabs.org>
+Date: Tue,  8 Sep 2026 16:41:16 +0800
+X-Lms-Return-Path: <lba+26a9fca35+6aa51c+vger.kernel.org+yilinzhang@moonshot.ai>
+From: "Yilin Zhang" <yilinzhang@moonshot.ai>
+Message-Id: <20260908084116.634633-1-yilinzhang@moonshot.ai>
+Received: from dev.msh-dev.svc.cluster.local ([117.157.206.135]) by smtp.feishu.cn with ESMTPS; Tue, 08 Sep 2026 16:41:23 +0800
+Subject: [PATCH net v2] ppp: enforce minimum MTU/MRU to fix Deflate buffer underflows
+Content-Type: text/plain; charset=UTF-8
+Cc: "Yilin Zhang" <yilinzhang@moonshot.ai>, <linux-ppp@vger.kernel.org>, 
+	<netdev@vger.kernel.org>, <linux-kernel@vger.kernel.org>, 
+	"Kimi Security Team" <bug-report@moonshot.ai>, 
+	"Weiming Shi" <shiweiming@moonshot.ai>
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-References: <20260908072135.877364-1-qingfang.deng@linux.dev>
-In-Reply-To: <20260908072135.877364-1-qingfang.deng@linux.dev>
-From: Eric Dumazet <edumazet@google.com>
-Date: Tue, 8 Sep 2026 10:20:03 +0200
-X-Gm-Features: AcwNN1Xe-V-EjnVcuPI54J8HF_f0_7IiJQXu4AsaIKhTCzrczAlMe4wF4WaYDBY
-Message-ID: <CANn89i+w-txLUf9KbUORYy03x2GS8Z=Uroh+rqiBKztdc9hqFQ@mail.gmail.com>
-Subject: Re: [PATCH net] ppp_synctty: ensure a writeable skb header
-To: Qingfang Deng <qingfang.deng@linux.dev>
-Cc: Andrew Lunn <andrew+netdev@lunn.ch>, "David S. Miller" <davem@davemloft.net>, 
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, 
-	"Jiri Slaby (SUSE)" <jirislaby@kernel.org>, Kees Cook <kees@kernel.org>, Tom Parkin <tparkin@katalix.com>, 
-	linux-ppp@vger.kernel.org, netdev@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, Markus Elfring <Markus.Elfring@web.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0
+X-Original-From: Yilin Zhang <yilinzhang@moonshot.ai>
+Content-Transfer-Encoding: 7bit
+X-Mailer: git-send-email 2.34.1
 
-On Tue, Sep 8, 2026 at 9:21=E2=80=AFAM Qingfang Deng <qingfang.deng@linux.d=
-ev> wrote:
->
-> ppp_sync_txmunge() checks headroom before prepending the address and
-> control bytes, but does not ensure that the skb header is writable.
-> A received skb can reach this function through PPP channel bridging
-> without passing through ppp_start_xmit(), which calls skb_cow_head().
->
-> For example, a PPPoE frame may share its buffer with a clone queued to
-> an AF_PACKET socket. If it is bridged to a synchronous tty channel, the
-> address/control bytes can overwrite data still visible to that socket.
->
-> Use skb_cow_head() to ensure both sufficient headroom and a writable
-> header.
->
-> Fixes: 4cf476ced45d ("ppp: add PPPIOCBRIDGECHAN and PPPIOCUNBRIDGECHAN io=
-ctls")
-> Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
+z_compress() assumes that its output buffer can hold the six-byte
+PPP/Deflate header.  A user with CAP_NET_ADMIN can set the MTU to 1,
+making pad_compress_skb() allocate a five-byte skb.  z_compress() then
+writes the header past the end and makes avail_out wrap when subtracting
+the header length, allowing zlib to continue writing past the allocation.
 
-SGTM. I will fix pppoatm_send() in net/atm/pppoatm.c which has a similar bu=
-g.
+On receive, PPPIOCSMRU accepts any signed int.  An MRU of -1 makes
+ppp_decompress_frame() allocate a three-byte skb, after which
+z_decompress() writes the PPP header and makes avail_out wrap when
+subtracting PPP_HDRLEN, letting inflate overwrite the skb.
 
-Reviewed-by: Eric Dumazet <edumazet@google.com>
+Set the PPP netdevice minimum MTU to 128 and reject MRU values below 128
+(or large enough to overflow the allocation-size calculation) in
+PPPIOCSMRU, matching the minimum that pppd uses when negotiating MRU
+values.  This ensures that the output buffer seen by z_compress() and
+z_decompress() always covers the PPP/Deflate header, so avail_out
+cannot wrap.
+
+Take one MTU snapshot when calculating both the skb allocation and
+compressor sizes, so a concurrent MTU change cannot make them
+inconsistent.
+
+The two memory-corruption paths produce (Linux 6.1.0, KASAN, decoded):
+
+  BUG: KASAN: slab-out-of-bounds in deflate_slow (lib/zlib_deflate/defutil.h:431 lib/zlib_deflate/deflate.c:1123)
+  Write of size 8198 at addr ff110000045edc06 by task exp/78
+  CPU: 1 PID: 78 Comm: exp Not tainted 6.1.0 #1
+  Call Trace:
+    kasan_check_range (mm/kasan/generic.c:190)
+    memcpy (mm/kasan/shadow.c:65)
+    deflate_slow (lib/zlib_deflate/defutil.h:431 lib/zlib_deflate/deflate.c:1123)
+    zlib_deflate (lib/zlib_deflate/deflate.c:412)
+    z_compress (drivers/net/ppp/ppp_deflate.c:227)
+    __ppp_xmit_process (drivers/net/ppp/ppp_generic.c:1703 drivers/net/ppp/ppp_generic.c:1826 drivers/net/ppp/ppp_generic.c:1646)
+    ppp_xmit_process (drivers/net/ppp/ppp_generic.c:1668)
+    ppp_write (drivers/net/ppp/ppp_generic.c:520)
+
+  Allocated by task 78:
+    __alloc_skb (net/core/skbuff.c:437 net/core/skbuff.c:509)
+    __ppp_xmit_process (include/linux/skbuff.h:1267 drivers/net/ppp/ppp_generic.c:1692 drivers/net/ppp/ppp_generic.c:1826 drivers/net/ppp/ppp_generic.c:1646)
+    ppp_xmit_process (drivers/net/ppp/ppp_generic.c:1668)
+    ppp_write (drivers/net/ppp/ppp_generic.c:520)
+
+  The buggy address belongs to the object at ff110000045edc00
+   which belongs to the cache kmalloc-512 of size 512
+  The buggy address is located 6 bytes inside of
+   512-byte region [ff110000045edc00, ff110000045ede00)
+
+  BUG: KASAN: slab-out-of-bounds in zlib_inflate (lib/zlib_inflate/inflate.c:458)
+  Write of size 8191 at addr ff110000021d1044 by task ksoftirqd/0/12
+  CPU: 0 PID: 12 Comm: ksoftirqd/0 Not tainted 6.1.0 #1
+  Call Trace:
+    kasan_check_range (mm/kasan/generic.c:190)
+    memcpy (mm/kasan/shadow.c:65)
+    zlib_inflate (lib/zlib_inflate/inflate.c:458)
+    z_decompress (drivers/net/ppp/ppp_deflate.c:460)
+    ppp_receive_nonmp_frame (drivers/net/ppp/ppp_generic.c:2546 drivers/net/ppp/ppp_generic.c:2383)
+    ppp_input (drivers/net/ppp/ppp_generic.c:2355 drivers/net/ppp/ppp_generic.c:2195 drivers/net/ppp/ppp_generic.c:2310)
+    ppp_async_process (drivers/net/ppp/ppp_async.c:496)
+
+  Allocated by task 12:
+    __alloc_skb (net/core/skbuff.c:437 net/core/skbuff.c:509)
+    __netdev_alloc_skb (net/core/skbuff.c:575)
+    ppp_receive_nonmp_frame (include/linux/skbuff.h:3155 include/linux/skbuff.h:3168 drivers/net/ppp/ppp_generic.c:2539 drivers/net/ppp/ppp_generic.c:2383)
+    ppp_input (drivers/net/ppp/ppp_generic.c:2355 drivers/net/ppp/ppp_generic.c:2195 drivers/net/ppp/ppp_generic.c:2310)
+    ppp_async_process (drivers/net/ppp/ppp_async.c:496)
+
+  The buggy address belongs to the object at ff110000021d1000
+   which belongs to the cache kmalloc-512 of size 512
+  The buggy address is located 68 bytes inside of
+   512-byte region [ff110000021d1000, ff110000021d1200)
+
+Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+Suggested-by: Paul Mackerras <paulus@ozlabs.org>
+Reported-by: Kimi Security Team <bug-report@moonshot.ai>
+Co-developed-by: Weiming Shi <shiweiming@moonshot.ai>
+Signed-off-by: Weiming Shi <shiweiming@moonshot.ai>
+Signed-off-by: Yilin Zhang <yilinzhang@moonshot.ai>
+---
+ drivers/net/ppp/ppp_generic.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+Changes in v2:
+- Set dev->min_mtu = 128 and reject MRU < 128 in PPPIOCSMRU per Paul's
+  suggestion; drop the z_compress()/z_decompress() changes from v1.
+
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 1a610a1..4022117 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -72,6 +72,8 @@
+ 
+ #define PPP_PROTO_LEN	2
+ #define PPP_LCP_HDRLEN	4
++#define PPP_MIN_MTU	128
++#define PPP_MIN_MRU	128
+ 
+ /* The filter instructions generated by libpcap are constructed
+  * assuming a four-byte PPP header on each packet, where the last
+@@ -808,6 +810,10 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	case PPPIOCSMRU:
+ 		if (get_user(val, p))
+ 			break;
++		if (val < PPP_MIN_MRU || val > INT_MAX - PPP_HDRLEN - 1) {
++			err = -EINVAL;
++			break;
++		}
+ 		ppp_recv_lock(ppp);
+ 		ppp->mru = val;
+ 		ppp_recv_unlock(ppp);
+@@ -1628,6 +1634,7 @@ static void ppp_setup(struct net_device *dev)
+ 
+ 	dev->hard_header_len = PPP_HDRLEN;
+ 	dev->mtu = PPP_MRU;
++	dev->min_mtu = PPP_MIN_MTU;
+ 	dev->addr_len = 0;
+ 	dev->tx_queue_len = 3;
+ 	dev->type = ARPHRD_PPP;
+@@ -1719,10 +1726,11 @@ pad_compress_skb(struct ppp *ppp, struct sk_buff *skb)
+ {
+ 	struct net_device *dev = netdev_from_priv(ppp);
+ 	struct sk_buff *new_skb;
++	int mtu = READ_ONCE(dev->mtu);
+ 	int len;
+-	int new_skb_size = dev->mtu +
++	int new_skb_size = mtu +
+ 		ppp->xcomp->comp_extra + dev->hard_header_len;
+-	int compressor_skb_size = dev->mtu +
++	int compressor_skb_size = mtu +
+ 		ppp->xcomp->comp_extra + PPP_HDRLEN;
+ 
+ 	if (skb_linearize(skb))
+-- 
+2.55.0
