@@ -1,183 +1,80 @@
-Received: from va-2-26.ptr.blmpb.com (va-2-26.ptr.blmpb.com [209.127.231.26])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27EA34A1387
-	for <linux-ppp@vger.kernel.org>; Tue,  8 Sep 2026 08:41:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.231.26
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D7820509EE0;
+	Tue,  8 Sep 2026 23:51:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788856900; cv=none; b=quf6edxD7VED6VrHggOJBZq4i3vwvxbdIZE2HkRJvLVb5a/AjLGvSA/F6Z50cFk9yBV9uE5v5ElSbx8GapzLbXTG51VUzNnF2gc+YL32p3LIXRTN1dHZ6rFKBclpzZ50PhUuh1DWS2fFPvEo0sD4hOT+pfQCekAt5opT4RGuVu0=
+	t=1788911468; cv=none; b=CDmMcl6pDuB4pxuQYrwcjeLYTL2j2ale+eYFhL5BAotcalBw4NWSQx41/3xZbP8RhKYuMApvfMggE+WTaq7bedPFsWkdw1TkvXf2NCMOEC83lamNJTNr6HmqXtzkdFcxTjo11OdX7fw4e2Ol0BJd8ElvsURwlRBYwY5kJ/pdK7c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788856900; c=relaxed/simple;
-	bh=wY3VV5WDN1nI99aH2yAc9UFlxwaH9JlgtrHoShr7BTI=;
-	h=To:Date:From:Message-Id:Subject:Content-Type:Cc:Mime-Version; b=hle9eOZSS5GS/Vh5wTefa2YZyifJHPCtJbbyxpGeepw59wXjJvFQhYEg8YjwEH9Q+4dtsl7kUSpFV0f27zNnpI+n2TmWOcW2eg4wVklEZQ1aHGLLRIuGmya617OdbkgWX30M9G/kUSsMvxwUnlKOr4ZxNE5gy5kgdqAO+LhSnT4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=moonshot.ai; spf=pass smtp.mailfrom=moonshot.ai; dkim=pass (2048-bit key) header.d=moonshot.ai header.i=@moonshot.ai header.b=igU+VauJ; arc=none smtp.client-ip=209.127.231.26
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=moonshot.ai
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=moonshot.ai
+	s=arc-20240116; t=1788911468; c=relaxed/simple;
+	bh=KLY4LF5YZd6+yQU21/U3WUKhrQGJysjDLn38TLLba3k=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=mll/XUB6/Ee5fbQgayXfXtdo6iPXLA0OmN1YPZWC9UT9MzpU64eIGqAbewsSwjaHDr2glS+FIAFfUv+S7cNxVHfVlyvtP7AwPTYSO7HyX3+5VCgbALmKtAxs4cZ67NBRcSleWr4Dcfu3JoSAArH9Jm1IK7+QvM9DrpYxI7/tIjQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=IuQ8XXmy; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=moonshot.ai header.i=@moonshot.ai header.b="igU+VauJ"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- s=feishu2510091218; d=moonshot.ai; t=1788856886; h=from:subject:
- mime-version:from:date:message-id:subject:to:cc:reply-to:content-type:
- mime-version:in-reply-to:message-id;
- bh=5o7fWMlFekwwncUURIGYfK7rbrZX2OhHQRVSVrU9p+w=;
- b=igU+VauJ8HLhNVdaQf16qG27f3O9AROpbiVYrV+3fvNwBlwVMYcp5svve6kEboFl/LN4M2
- mW9kFqvmDVO9esq6fJk5TtdD/P8gYWb/RNOL7mhaDPIAXEPvE5zt2bOiQYIyVsSakfbt/g
- GkKS8oHbkVMY/GTkpHJxWwX8K6tZ3Xt9Yj7exbHWrn39Zp8+aBuYJ/BQQeXZJNqF2uDwC3
- gmy+evkeJVDvnwQQkwXrw7GfiMrM4cjPIyQ4PBxVF15s5o+Fu1fdjDlgmOGeqhIX+TOkHj
- smw/BEzrpxnhzOk3N/I9XwFMvMsbVkau72Zt/2EnGHOhcwvnM9eaUGMZ27fL3Q==
-To: "Paul Mackerras" <paulus@ozlabs.org>
-Date: Tue,  8 Sep 2026 16:41:16 +0800
-X-Lms-Return-Path: <lba+26a9fca35+6aa51c+vger.kernel.org+yilinzhang@moonshot.ai>
-From: "Yilin Zhang" <yilinzhang@moonshot.ai>
-Message-Id: <20260908084116.634633-1-yilinzhang@moonshot.ai>
-Received: from dev.msh-dev.svc.cluster.local ([117.157.206.135]) by smtp.feishu.cn with ESMTPS; Tue, 08 Sep 2026 16:41:23 +0800
-Subject: [PATCH net v2] ppp: enforce minimum MTU/MRU to fix Deflate buffer underflows
-Content-Type: text/plain; charset=UTF-8
-Cc: "Yilin Zhang" <yilinzhang@moonshot.ai>, <linux-ppp@vger.kernel.org>, 
-	<netdev@vger.kernel.org>, <linux-kernel@vger.kernel.org>, 
-	"Kimi Security Team" <bug-report@moonshot.ai>, 
-	"Weiming Shi" <shiweiming@moonshot.ai>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="IuQ8XXmy"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id ADFCC1F00A3D;
+	Tue,  8 Sep 2026 23:51:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1788911467;
+	bh=yMZdjIz/dPDVcdH6DM9Zb7vcMNNoEgWTc1vXlEKmwVw=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc;
+	b=IuQ8XXmy2J5qgGPdk/SAQvmZXcacR0ZNWB9qTQUReg0mxf463bk1ts4dZSMnfX34I
+	 jB8+0meR3aOlpNNrEhwPYZX/B5b2gKjJ2q7VyuOb3SI1RxStS6iZ2oFF8sECSX+Ws+
+	 ld2v8GHUX7Ffj6jvs48ci1+1tPjAR5uN+V8VX/lSOsWbPl23eYMT0OvGFM8A7RIphq
+	 R27Cb2yw6+mGETZsHGUZh5s9Cz3KTK4j+OBR3kQHk6m7NUTSBTvzKwvGqB4gzusR88
+	 HrFmnzFsEhIvfV2VpfBO89j8UP2lGCthbi8qEl9/7eNYQdlBcj7GzhKiYBd8o1WtbA
+	 wjA0LbTgVYsgg==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 5677F380820D;
+	Tue,  8 Sep 2026 23:50:07 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
-Mime-Version: 1.0
-X-Original-From: Yilin Zhang <yilinzhang@moonshot.ai>
-Content-Transfer-Encoding: 7bit
-X-Mailer: git-send-email 2.34.1
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH net v2] ppp_async: drop the errored frame instead of
+ resetting its headroom
+From: patchwork-bot+netdevbpf@kernel.org
+Message-Id: 
+ <178891140613.68202.2930909992157007487.git-patchwork-notify@kernel.org>
+Date: Tue, 08 Sep 2026 23:50:06 +0000
+References: <apkR6ZU+tqP2C3Fl@griffin.linux.hr>
+In-Reply-To: <apkR6ZU+tqP2C3Fl@griffin.linux.hr>
+To: Vlatko Kosturjak <kost@linux.hr>
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, edumazet@google.com,
+ andrew+netdev@lunn.ch, davem@davemloft.net, kuba@kernel.org,
+ pabeni@redhat.com, linux-kernel@vger.kernel.org
 
-z_compress() assumes that its output buffer can hold the six-byte
-PPP/Deflate header.  A user with CAP_NET_ADMIN can set the MTU to 1,
-making pad_compress_skb() allocate a five-byte skb.  z_compress() then
-writes the header past the end and makes avail_out wrap when subtracting
-the header length, allowing zlib to continue writing past the allocation.
+Hello:
 
-On receive, PPPIOCSMRU accepts any signed int.  An MRU of -1 makes
-ppp_decompress_frame() allocate a three-byte skb, after which
-z_decompress() writes the PPP header and makes avail_out wrap when
-subtracting PPP_HDRLEN, letting inflate overwrite the skb.
+This patch was applied to netdev/net.git (main)
+by Jakub Kicinski <kuba@kernel.org>:
 
-Set the PPP netdevice minimum MTU to 128 and reject MRU values below 128
-(or large enough to overflow the allocation-size calculation) in
-PPPIOCSMRU, matching the minimum that pppd uses when negotiating MRU
-values.  This ensures that the output buffer seen by z_compress() and
-z_decompress() always covers the PPP/Deflate header, so avail_out
-cannot wrap.
+On Thu, 3 Sep 2026 08:21:29 +0200 you wrote:
+> ppp_receive_nonmp_frame() prepends a two-byte direction tag before running
+> the pass/active BPF filters:
+> 
+> 	*(__be16 *)skb_push(skb, 2) = htons(PPP_FILTER_INBOUND_TAG);
+> 
+> Nothing on the receive path guarantees those two bytes of headroom. The
+> frame-error path in ppp_async's process_input_packet() resets a reused skb's
+> headroom to zero while claiming to restore it to a freshly allocated state -
+> but a fresh skb from dev_alloc_skb() carries NET_SKB_PAD:
+> 
+> [...]
 
-Take one MTU snapshot when calculating both the skb allocation and
-compressor sizes, so a concurrent MTU change cannot make them
-inconsistent.
+Here is the summary with links:
+  - [net,v2] ppp_async: drop the errored frame instead of resetting its headroom
+    https://git.kernel.org/netdev/net/c/8dc5d98a16fa
 
-The two memory-corruption paths produce (Linux 6.1.0, KASAN, decoded):
-
-  BUG: KASAN: slab-out-of-bounds in deflate_slow (lib/zlib_deflate/defutil.h:431 lib/zlib_deflate/deflate.c:1123)
-  Write of size 8198 at addr ff110000045edc06 by task exp/78
-  CPU: 1 PID: 78 Comm: exp Not tainted 6.1.0 #1
-  Call Trace:
-    kasan_check_range (mm/kasan/generic.c:190)
-    memcpy (mm/kasan/shadow.c:65)
-    deflate_slow (lib/zlib_deflate/defutil.h:431 lib/zlib_deflate/deflate.c:1123)
-    zlib_deflate (lib/zlib_deflate/deflate.c:412)
-    z_compress (drivers/net/ppp/ppp_deflate.c:227)
-    __ppp_xmit_process (drivers/net/ppp/ppp_generic.c:1703 drivers/net/ppp/ppp_generic.c:1826 drivers/net/ppp/ppp_generic.c:1646)
-    ppp_xmit_process (drivers/net/ppp/ppp_generic.c:1668)
-    ppp_write (drivers/net/ppp/ppp_generic.c:520)
-
-  Allocated by task 78:
-    __alloc_skb (net/core/skbuff.c:437 net/core/skbuff.c:509)
-    __ppp_xmit_process (include/linux/skbuff.h:1267 drivers/net/ppp/ppp_generic.c:1692 drivers/net/ppp/ppp_generic.c:1826 drivers/net/ppp/ppp_generic.c:1646)
-    ppp_xmit_process (drivers/net/ppp/ppp_generic.c:1668)
-    ppp_write (drivers/net/ppp/ppp_generic.c:520)
-
-  The buggy address belongs to the object at ff110000045edc00
-   which belongs to the cache kmalloc-512 of size 512
-  The buggy address is located 6 bytes inside of
-   512-byte region [ff110000045edc00, ff110000045ede00)
-
-  BUG: KASAN: slab-out-of-bounds in zlib_inflate (lib/zlib_inflate/inflate.c:458)
-  Write of size 8191 at addr ff110000021d1044 by task ksoftirqd/0/12
-  CPU: 0 PID: 12 Comm: ksoftirqd/0 Not tainted 6.1.0 #1
-  Call Trace:
-    kasan_check_range (mm/kasan/generic.c:190)
-    memcpy (mm/kasan/shadow.c:65)
-    zlib_inflate (lib/zlib_inflate/inflate.c:458)
-    z_decompress (drivers/net/ppp/ppp_deflate.c:460)
-    ppp_receive_nonmp_frame (drivers/net/ppp/ppp_generic.c:2546 drivers/net/ppp/ppp_generic.c:2383)
-    ppp_input (drivers/net/ppp/ppp_generic.c:2355 drivers/net/ppp/ppp_generic.c:2195 drivers/net/ppp/ppp_generic.c:2310)
-    ppp_async_process (drivers/net/ppp/ppp_async.c:496)
-
-  Allocated by task 12:
-    __alloc_skb (net/core/skbuff.c:437 net/core/skbuff.c:509)
-    __netdev_alloc_skb (net/core/skbuff.c:575)
-    ppp_receive_nonmp_frame (include/linux/skbuff.h:3155 include/linux/skbuff.h:3168 drivers/net/ppp/ppp_generic.c:2539 drivers/net/ppp/ppp_generic.c:2383)
-    ppp_input (drivers/net/ppp/ppp_generic.c:2355 drivers/net/ppp/ppp_generic.c:2195 drivers/net/ppp/ppp_generic.c:2310)
-    ppp_async_process (drivers/net/ppp/ppp_async.c:496)
-
-  The buggy address belongs to the object at ff110000021d1000
-   which belongs to the cache kmalloc-512 of size 512
-  The buggy address is located 68 bytes inside of
-   512-byte region [ff110000021d1000, ff110000021d1200)
-
-Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
-Suggested-by: Paul Mackerras <paulus@ozlabs.org>
-Reported-by: Kimi Security Team <bug-report@moonshot.ai>
-Co-developed-by: Weiming Shi <shiweiming@moonshot.ai>
-Signed-off-by: Weiming Shi <shiweiming@moonshot.ai>
-Signed-off-by: Yilin Zhang <yilinzhang@moonshot.ai>
----
- drivers/net/ppp/ppp_generic.c | 12 ++++++++++--
- 1 file changed, 10 insertions(+), 2 deletions(-)
-
-Changes in v2:
-- Set dev->min_mtu = 128 and reject MRU < 128 in PPPIOCSMRU per Paul's
-  suggestion; drop the z_compress()/z_decompress() changes from v1.
-
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 1a610a1..4022117 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -72,6 +72,8 @@
- 
- #define PPP_PROTO_LEN	2
- #define PPP_LCP_HDRLEN	4
-+#define PPP_MIN_MTU	128
-+#define PPP_MIN_MRU	128
- 
- /* The filter instructions generated by libpcap are constructed
-  * assuming a four-byte PPP header on each packet, where the last
-@@ -808,6 +810,10 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 	case PPPIOCSMRU:
- 		if (get_user(val, p))
- 			break;
-+		if (val < PPP_MIN_MRU || val > INT_MAX - PPP_HDRLEN - 1) {
-+			err = -EINVAL;
-+			break;
-+		}
- 		ppp_recv_lock(ppp);
- 		ppp->mru = val;
- 		ppp_recv_unlock(ppp);
-@@ -1628,6 +1634,7 @@ static void ppp_setup(struct net_device *dev)
- 
- 	dev->hard_header_len = PPP_HDRLEN;
- 	dev->mtu = PPP_MRU;
-+	dev->min_mtu = PPP_MIN_MTU;
- 	dev->addr_len = 0;
- 	dev->tx_queue_len = 3;
- 	dev->type = ARPHRD_PPP;
-@@ -1719,10 +1726,11 @@ pad_compress_skb(struct ppp *ppp, struct sk_buff *skb)
- {
- 	struct net_device *dev = netdev_from_priv(ppp);
- 	struct sk_buff *new_skb;
-+	int mtu = READ_ONCE(dev->mtu);
- 	int len;
--	int new_skb_size = dev->mtu +
-+	int new_skb_size = mtu +
- 		ppp->xcomp->comp_extra + dev->hard_header_len;
--	int compressor_skb_size = dev->mtu +
-+	int compressor_skb_size = mtu +
- 		ppp->xcomp->comp_extra + PPP_HDRLEN;
- 
- 	if (skb_linearize(skb))
+You are awesome, thank you!
 -- 
-2.55.0
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
+
