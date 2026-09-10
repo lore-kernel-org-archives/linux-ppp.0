@@ -1,69 +1,79 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0AE812561A7;
-	Wed,  9 Sep 2026 00:03:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79694257845;
+	Thu, 10 Sep 2026 01:51:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788912223; cv=none; b=BGR56ikw7QhEU6q3zkgRBMeYtsxEYr69705eb3MFLbBCYi1dFxhGR+uh1PWA73C3gkmHHtem7HG3gPH9JNq7JGOrSlAwwXa2evknmfLRyFU9pwa3qGzAvDCAR6u8LPl9UnQHAiTEROksjuFdubcjhiLr13Go2kMvWiNZ3CfkNjo=
+	t=1789005067; cv=none; b=pQmOEi7VcIYPGd7KlLwj9nsO7bgyQcRd+sSVTJsKz6SP4HWS5Afpv4t+mNFxjqMeaHJFIOodQ54dnHF6THIey+4nrn7WdLsS2UcXyQUd9gLkkvlaF9NlCzXkmN/uEQ5Tfo/GedfTlhFnaEsOux+yuwY94X4d5g5qst5o5VMp5lY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788912223; c=relaxed/simple;
-	bh=fRxxyaxF4sEIOICY66X/8reWA/2dX8AYB6hJI+WF83c=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=OSNkSKsdxbuIsaoYVVCdvxTyulrSKHP5IiFWMPwrNLVqgEqW475kBXMquMp0EEoTFx4Dp7rH3vKeem2Dvvk/h7ZjR6AlQ4wqId+0MKysbv6hNwgCe088ZpoFhju7JQKgHiejCDvNXivz2LXDg8S/8TgWEijqzadK+qQ/Sf3nWE4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Qjv69hpZ; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1789005067; c=relaxed/simple;
+	bh=LcijiIQqU6icGbgqpgAKcDWhpoyzfGooKPh6/Be2dpQ=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=ZvwYNAouVlGpnUiDZtPgRFK8Ak7XyTl/yzKCiO5lH9Z2QRmZBNAERJ8cQmgTdfNRI8ofe0CDHBlSNQgHpnRoA9gR4udzWJsRt8HipZl7+Rmeg2Vwgl1UuyMzwJh2Xu/WkHwoI+E08IT83zmOYQmo8Cwyr9f6NQ8qj3SsGmt7aEY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=FSqY6tMO; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Qjv69hpZ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id BCF781F00A3A;
-	Wed,  9 Sep 2026 00:03:35 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="FSqY6tMO"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 56D161F000FF;
+	Thu, 10 Sep 2026 01:51:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1788912216;
-	bh=6IxhlJ9b8uAGlHKepWvd0viaQd29xcE83/MQglixBLU=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References;
-	b=Qjv69hpZltPtq1Jt++GXvMsJ/5TJDRZ1v3V1kkkhdBbRThP+4bGsMYao0gjhBtLAh
-	 ot2lHeQXQSNi5BktOPaw7t0wSVuA8SzBo7HEQhzbDFTX6urtkSGV1rmYDo1PfLC5M0
-	 h5zlFV3eZpzpDNXeOacd28NWmqrN1nSPEAzDaaJFfJbaIz5teGYRcJTr4vrERrw9e2
-	 OsvyU/kWTGIET6SrAdxLq7ASXez1mJXENgpZc7TmB9548mCDN9LNqSDpOJ2XbqFbGI
-	 HL9yXJosKU3T6d+KNDi3u67serPzDTuExJWTDNbqW4avXBj+jBYz+otefoBXKQpEmb
-	 I+QlHAkYFyCgg==
-Date: Tue, 8 Sep 2026 17:03:35 -0700
-From: Jakub Kicinski <kuba@kernel.org>
-To: Qingfang Deng <qingfang.deng@linux.dev>
-Cc: Andrew Lunn <andrew+netdev@lunn.ch>, "David S. Miller"
- <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, Paolo Abeni
- <pabeni@redhat.com>, Mitchell Blank Jr <mitch@sfgoth.com>, Chas Williams
- <3chas3@gmail.com>, Simon Horman <horms@kernel.org>, James Chapman
- <jchapman@katalix.com>, "Jiri Slaby (SUSE)" <jirislaby@kernel.org>, Kees
- Cook <kees@kernel.org>, Breno Leitao <leitao@debian.org>, Asim Viladi Oglu
- Manizada <manizada@pm.me>, Eric Woudstra <ericwouds@gmail.com>, Felix
- Fietkau <nbd@nbd.name>, linux-ppp@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-atm-general@lists.sourceforge.net
-Subject: Re: [PATCH net-next v2] ppp: pass private data to channel callbacks
-Message-ID: <20260908170335.5e98fe60@kernel.org>
-In-Reply-To: <20260906134830.992-1-qingfang.deng@linux.dev>
-References: <20260906134830.992-1-qingfang.deng@linux.dev>
+	s=k20260515; t=1789005066;
+	bh=O5m7s+46WgS+mOztayFJPrsq1SYgBi//Br3QEwnWZr0=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc;
+	b=FSqY6tMOTwykMsWTp30OCY03lvJBouMd/G/ig/r2BPxLey4g9OnemWEyxUqEv9Zgm
+	 ZZbOCbmDqsUuRH6+z8WPhZJkYbrR+fJMx11hhO36vbSUuwPLeNHRd3kCPBTuqAOGQw
+	 MrfVj2bMBMwW1+zppaUn10tx4kM5R2C1UVXV7oRliAxd5paQKyvYBDkqPyG6CWvmuH
+	 4yslKinZvwjPDwRU263upnU+d3Sv6m3mxv0tdxuAODVpTSG0w3SGSm0g6ipMK59A+j
+	 WSf9D4awEULFnYW5VReIrYKUmB8DgUXUtjeAl7J9JN0yT2332oyAI0U2JrL75YFt1F
+	 /7G7Ur0YxboQQ==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 56B3C380CEC7;
+	Thu, 10 Sep 2026 01:50:05 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH net] ppp_synctty: ensure a writeable skb header
+From: patchwork-bot+netdevbpf@kernel.org
+Message-Id: 
+ <178900500414.1147948.3889369400868898311.git-patchwork-notify@kernel.org>
+Date: Thu, 10 Sep 2026 01:50:04 +0000
+References: <20260908072135.877364-1-qingfang.deng@linux.dev>
+In-Reply-To: <20260908072135.877364-1-qingfang.deng@linux.dev>
+To: Qingfang Deng <qingfang.deng@linux.dev>
+Cc: andrew+netdev@lunn.ch, davem@davemloft.net, edumazet@google.com,
+ kuba@kernel.org, pabeni@redhat.com, jirislaby@kernel.org, kees@kernel.org,
+ tparkin@katalix.com, linux-ppp@vger.kernel.org, netdev@vger.kernel.org,
+ linux-kernel@vger.kernel.org, Markus.Elfring@web.de
 
-On Sun,  6 Sep 2026 21:47:36 +0800 Qingfang Deng wrote:
-> PPP channel callbacks receive struct ppp_channel only to retrieve the
-> driver's private pointer. Pass that pointer directly instead.
+Hello:
+
+This patch was applied to netdev/net.git (main)
+by Jakub Kicinski <kuba@kernel.org>:
+
+On Tue,  8 Sep 2026 15:21:31 +0800 you wrote:
+> ppp_sync_txmunge() checks headroom before prepending the address and
+> control bytes, but does not ensure that the skb header is writable.
+> A received skb can reach this function through PPP channel bridging
+> without passing through ppp_start_xmit(), which calls skb_cow_head().
 > 
-> This decouples channel callbacks from the public channel representation
-> and prepares for making struct ppp_channel opaque, with allocation and
-> lifetime managed by the generic PPP layer.
+> For example, a PPPoE frame may share its buffer with a clone queued to
+> an AF_PACKET socket. If it is bridged to a synchronous tty channel, the
+> address/control bytes can overwrite data still visible to that socket.
+> 
+> [...]
 
-Not immediately obvious that this is a win. Having a callback op take
-untyped pointer can be error prone. Also, subjectively, making types
-opaque in C often leads to ugly and unnecessarily complex code.
+Here is the summary with links:
+  - [net] ppp_synctty: ensure a writeable skb header
+    https://git.kernel.org/netdev/net/c/8aaeb56aff2a
 
-This patch does not stand on its own, IMO, maybe you need to post the
-entire series, and maybe rethink.
+You are awesome, thank you!
 -- 
-pw-bot: cr
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
+
