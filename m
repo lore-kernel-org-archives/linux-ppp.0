@@ -1,208 +1,73 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mta0.migadu.com (out-130.mta0.migadu.com [91.218.175.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4F222F6931;
-	Thu, 10 Sep 2026 23:42:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 70A31342514
+	for <linux-ppp@vger.kernel.org>; Tue, 15 Sep 2026 01:27:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789083769; cv=none; b=U0rLZaLib+OY1f1GXmVzuTZZ0EvzGOZ1i2Ud6S9ujANzyY3n4zIUfcHvzIxGmORQ8WjTQK7F6h1bL3sY62c09A+JfuxAFZCIsG5W4tS7EKQP/ViyQtaIDH5jYIuv7HP4bDvk/Rrd23fUCxa63e9jIN+ofmSgLUpVgdmwDhrczg4=
+	t=1789435677; cv=none; b=hISfpCqvalj9rDlBZLwCF+5HPA0qp/+MYv7EjnSATCSeR/FbXmmwye1yYxtJxTSRcmN05tw6/e+/3lKK1HjZG1ljxFXfFRXOe1ydNLUZLvLaknuiSHyzprtpC1vRFqKVrf4HnRXxuEA6pLQPSC5r4MAcSD2FIEq//AIxaob4sjE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789083769; c=relaxed/simple;
-	bh=xcswte4ewv/xvWBl09UJfg7yTRZEMYJ3WY/F0d6IkWI=;
-	h=Subject:From:To:Cc:Date:Message-ID:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=iaPZGZ/wrimYOuClYBo25Pqn5E35P7Kzg78/X+uD+yDsofTVMkcvPNFKvOAlNRrGLSM2l/YLX0hMaWsmrHJ+Gl9QPzipJzniStfWyUoIm+R9EROZwuRZMntBvi6GluxjH6CyCFxK0e8U9sfUVtlErPPuHAFI6o23vdyZTqPp3AQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=EMnsaHEC; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1789435677; c=relaxed/simple;
+	bh=/UoPunvCEXG8tnFMxO/BnhHtSexaaG/QWzRat8cX3QI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=koQVg3Y+A1eaGY0Zw/tKAhSOsd390HRFazy1jMRBL7QAWWcXiO36mN8DA21D3qAQEIbJ90fNcECAzDBbPOI39toYhZfLLakHjFxuQBsgIyOzNGnyvBOhzZwR4T69u0soOoasUsO3yp5FZ2/eYbaNilZBuJhoPZ4yOjzfufjVyhI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=bwUXhoMl; arc=none smtp.client-ip=91.218.175.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="EMnsaHEC"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E26871F000FF;
-	Thu, 10 Sep 2026 23:42:46 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1789083767;
-	bh=gfTHYjCqIdmdQU52NDcKZyuUq0X1Av+KkiPZAMIQR60=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References;
-	b=EMnsaHECgBRHNpu9HOh+DE+dAvp+rDpXIzWqG83nhpyQyrv/P2Hy76ObAqPl+q9Zb
-	 4LOxD7pwU0PwmKZZowGfZmfgiHP4DQIHdaXq2ZdX5UubmQKjLRCgL9DEvAJk6bvBl8
-	 Pxj1fZ0T+crdkKo3yBeb8BysJaI98BFanA+xGbvstjdVjJFrWeHmQX68+KzjH/tQy3
-	 OeXyVnCywcElxdvgR8a9b545Rwa3wcfONXB+QZlRf1Sc9ozz3S0do5DPM1nox9lXfL
-	 31oPvih4ulmJzDsnecODYgjGzL9HbT/ZWGAXL3Wa3yQA2WXqlWfgEeFnW2vXsNFFSt
-	 n7qYSDU9qiJbw==
-Subject: Re: [PATCH net v2] ppp: enforce minimum MTU/MRU to fix Deflate buffer
- underflows
-From: netdev-bot+sashiko@kernel.org
-To: yilinzhang@moonshot.ai
-Cc: paulus@ozlabs.org, linux-ppp@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, bug-report@moonshot.ai, shiweiming@moonshot.ai,
- kuba@kernel.org
-Date: Thu, 10 Sep 2026 23:42:46 +0000
-Message-ID: <178908376638.219967.3762661642294542397@kernel.org>
-In-Reply-To: <20260908084116.634633-1-yilinzhang@moonshot.ai>
-References: <20260908084116.634633-1-yilinzhang@moonshot.ai>
-X-sashiko-severity: High
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="bwUXhoMl"
+X-Envelope-To: linux-ppp@vger.kernel.org
+DKIM-Signature: a=rsa-sha256; bh=/UoPunvCEXG8tnFMxO/BnhHtSexaaG/QWzRat8cX3QI=;
+ c=simple/simple; d=linux.dev;
+ h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
+ t=1789435672; v=1; x=1790040472;
+ b=bwUXhoMld7aFmIGH3LZIxizzWgF4NyhwuhCwS2QH+GHU7PsrxOVRjIJiDFXFP+lWIe02kGY5
+ nN2WiWUQ2z47BryPH1YGVdukhMgoWzheXuk7eTsHVuQ5edbDcl+tla/JbmnG07WxNlXcC5+z2d8
+ +kCWT5gKVcVHkRYICQLGX/bo=
+X-Envelope-To: linux-ppp@vger.kernel.org
+Received: by smtp.migadu.com with ESMTPS id 6f87dcdf948d143b;
+	Tue, 15 Sep 2026 01:27:42 +0000
+X-Mizu-Trace-ID: 6f87dcdf948d143b
+X-Migadu-Flow: FLOW_OUT
+Message-ID: <eb2c9089-3633-40f6-b836-b81bb6c10d64@linux.dev>
+Date: Tue, 15 Sep 2026 09:27:35 +0800
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH net-next] ppp: ppp_synctty: Use common error handling code
+ in ppp_sync_txmunge()
+To: Markus Elfring <Markus.Elfring@web.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, Kees Cook <kees@kernel.org>,
+ linux-ppp@vger.kernel.org, netdev@vger.kernel.org,
+ Andrew Lunn <andrew+netdev@lunn.ch>, "David S. Miller"
+ <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>,
+ Jakub Kicinski <kuba@kernel.org>, Jiri Slaby <jirislaby@kernel.org>,
+ Paolo Abeni <pabeni@redhat.com>, Tom Parkin <tparkin@katalix.com>
+References: <1d943bf2-d027-41aa-82db-b2f0807a5e7c@web.de>
+ <09743e95-cb1b-4750-89bf-6a4a4d96ede0@web.de>
+From: Qingfang Deng <qingfang.deng@linux.dev>
+In-Reply-To: <09743e95-cb1b-4750-89bf-6a4a4d96ede0@web.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Thank you for your contribution! Sashiko AI review found 2 potential
-issue(s) to consider:
+Hi,
 
-Critical: 0 · High: 1 · Medium: 0 · Low: 1
+On 2026/9/8 15:48, Markus Elfring wrote:
+>> Use an additional label so that a bit of exception handling can be better
+>> reused at the end of this function implementation.
+> How do you think about to repeat the proposed source code transformation pattern
+> after an other contribution would be integrated?
+> [PATCH net] ppp_synctty: ensure a writeable skb header
+> https://lore.kernel.org/linux-ppp/20260908072135.877364-1-qingfang.deng@linux.dev/
+>
+> Regards,
+> Markus
 
-- [High] The commit message asserts that setting dev->min_mtu = 128 and
-  rejecting MRU < 128 "ensures that the output buffer seen by…
-- [Low] The in-tree ABI description for PPPIOCSMRU was not updated for
-  the new validation.
+This change is merged. You can now rebase and repost your patch.
 
---
-
-ppp: enforce minimum MTU/MRU to fix Deflate buffer underflows
-
-The patch sets the PPP netdevice minimum MTU to 128, rejects PPPIOCSMRU
-values below 128 (or large enough to overflow the allocation-size
-calculation), and takes a single MTU snapshot in pad_compress_skb() so the
-skb and compressor sizes cannot diverge.  The stated goal is that the
-output buffer handed to z_compress() and z_decompress() always covers the
-six-byte PPP/Deflate header so zlib's avail_out cannot wrap.
-
-A couple of questions below.
-
-> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-> index 1a610a18893ba..402211768cf5f 100644
-> --- a/drivers/net/ppp/ppp_generic.c
-> +++ b/drivers/net/ppp/ppp_generic.c
-> @@ -72,6 +72,8 @@
->  
->  #define PPP_PROTO_LEN	2
->  #define PPP_LCP_HDRLEN	4
-> +#define PPP_MIN_MTU	128
-> +#define PPP_MIN_MRU	128
->  
->  /* The filter instructions generated by libpcap are constructed
->   * assuming a four-byte PPP header on each packet, where the last
-> @@ -808,6 +810,10 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
->  	case PPPIOCSMRU:
->  		if (get_user(val, p))
->  			break;
-> +		if (val < PPP_MIN_MRU || val > INT_MAX - PPP_HDRLEN - 1) {
-> +			err = -EINVAL;
-> +			break;
-> +		}
-
-[Severity: Low]
-
-Documentation/networking/ppp_generic.rst still describes PPPIOCSMRU as an
-unconditional set:
-
-  * PPPIOCSMRU sets the MRU (maximum receive unit) for the interface.
-    The argument should point to an int containing the new MRU value.
-
-No range and no failure mode are documented, while the ioctl now returns
--EINVAL for val < PPP_MIN_MRU or val > INT_MAX - PPP_HDRLEN - 1.
-
-Should the documentation be updated with the accepted range and the new
-error return?
-
-Both bounds are also private defines in ppp_generic.c, so userspace that
-includes include/uapi/linux/ppp-ioctl.h has no way to learn the minimum.
-Would exporting PPP_MIN_MRU in the uapi header be preferable?
-
->  		ppp_recv_lock(ppp);
->  		ppp->mru = val;
->  		ppp_recv_unlock(ppp);
-> @@ -1628,6 +1634,7 @@ static void ppp_setup(struct net_device *dev)
->  
->  	dev->hard_header_len = PPP_HDRLEN;
->  	dev->mtu = PPP_MRU;
-> +	dev->min_mtu = PPP_MIN_MTU;
-        ^^^^
-
-[Severity: High]
-
-The changelog says:
-
-  "This ensures that the output buffer seen by z_compress() and
-  z_decompress() always covers the PPP/Deflate header, so avail_out
-  cannot wrap."
-
-Does this hold on the transmit side?  z_compress() discards the
-caller-supplied output size before subtracting the header:
-
-drivers/net/ppp/ppp_deflate.c:z_compress() {
-	/* Don't generate compressed packets which are larger than
-	   the uncompressed packet. */
-	if (osize > isize)
-		osize = isize;
-	...
-	olen = PPP_HDRLEN + DEFLATE_OVHD;
-	state->strm.next_out = wptr;
-	state->strm.avail_out = oavail = osize - olen;
-}
-
-isize is pad_compress_skb()'s skb->len + 2, which does not depend on the
-MTU.  ppp_write() only enforces a two-byte minimum:
-
-drivers/net/ppp/ppp_generic.c:ppp_write() {
-	if (count < PPP_PROTO_LEN)
-		return -EINVAL;
-}
-
-and ppp_check_packet() applies the six-byte minimum only to PPP_LCP.  So a
-two-byte write of 0x00 0x21 on a unit fd with Deflate running reaches
-pad_compress_skb() with skb->len == 2, i.e. isize == 4:
-
-ppp_write() -> ppp_xmit_process() -> __ppp_xmit_process() ->
-ppp_prepare_tx_skb() -> pad_compress_skb() -> ppp->xcomp->compress()
-
-z_compress() then clamps osize to 4 and avail_out (a uInt) becomes
-4 - 6 == 0xfffffffe, which is the wrap the changelog says can no longer
-occur, and this happens at the default MTU as well as at the new minimum.
-zlib_deflate() only rejects avail_out == 0, so it proceeds with that bound.
-
-I could not turn this into an out-of-bounds write after the patch: the wrap
-is now only reachable when isize < 6, so avail_in is at most 3 and the few
-bytes deflate emits still land inside the >= 132-byte skb, and s->pending
-is drained by the discard iteration in z_compress() even with
-next_out == NULL.  So the corruption looks gone, but the invariant the fix
-is described as establishing does not exist.
-
-Would it be better to keep the callee-side check that v1 had, i.e. have
-z_compress() return 0 (or clamp) when osize < PPP_HDRLEN + DEFLATE_OVHD
-after the isize clamp, or have pad_compress_skb() enforce a minimum frame
-length?  Otherwise a compressor with a different comp_extra, an additional
-->compress caller, or a later lowering of min_mtu silently restores the
-unbounded avail_out.  Alternatively, could the changelog state that the
-wrap is only rendered harmless on transmit, and why?
-
-Note the receive side does look covered: z_decompress() uses the
-caller-supplied osize unclamped and rejects isize <= PPP_HDRLEN +
-DEFLATE_OVHD, so the new MRU floor does bound obuff_size there.
-
-Separately, nothing here records the new dependency between
-PPP_MIN_MTU/PPP_MIN_MRU and the six-byte PPP/Deflate header requirement
-that lives in ppp_deflate.c.  Could a comment or a BUILD_BUG_ON be added
-next to the new defines?
-
->  	dev->addr_len = 0;
->  	dev->tx_queue_len = 3;
->  	dev->type = ARPHRD_PPP;
-> @@ -1719,10 +1726,11 @@ pad_compress_skb(struct ppp *ppp, struct sk_buff *skb)
->  {
->  	struct net_device *dev = netdev_from_priv(ppp);
->  	struct sk_buff *new_skb;
-> +	int mtu = READ_ONCE(dev->mtu);
->  	int len;
-> -	int new_skb_size = dev->mtu +
-> +	int new_skb_size = mtu +
->  		ppp->xcomp->comp_extra + dev->hard_header_len;
-> -	int compressor_skb_size = dev->mtu +
-> +	int compressor_skb_size = mtu +
->  		ppp->xcomp->comp_extra + PPP_HDRLEN;
->  
->  	if (skb_linearize(skb))
-
--- 
-Sashiko AI review · https://netdev-ai.bots.linux.dev/sashiko/#/patchset/20260908084116.634633-1-yilinzhang%40moonshot.ai
+Best regards,
+Qingfang
