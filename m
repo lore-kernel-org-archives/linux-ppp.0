@@ -1,58 +1,63 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9298B379EF7;
-	Wed, 16 Sep 2026 12:49:13 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90E2643D51E;
+	Thu, 17 Sep 2026 08:31:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789562955; cv=none; b=O39BC03h61egim2IrqM4sZWwlwrmEc7byTkI9WFUAstRFSbII32EV3Aqpst56YppDJW9KZ+n5cF0KZr3NYLLaH1Q6MlqN0a7mqcf+PSDAPrRPIzG9y97t36cdXnahTtD1tgNciqAHAEIxmCpneDMJv/17MtCdgQ4xLsyJrUyvNQ=
+	t=1789633886; cv=none; b=UHdxhFZxv1+QVAhzWAeUPCYlO9wGCF7t0XLD60yMoQWMzEFfRqrYuyMIYI0xqR22sdBP8tFfW1nvr1dYWFsNQrWhOYtZv0QNiT2CZBa8TC/DiVIjmsVPNhsKgVz2er0ZiMx4S4NbT+3gVDgC+H4FN9d4bf9iWXZui3ltLaNJPSA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789562955; c=relaxed/simple;
-	bh=aXD+aDZjT4W62ZovS6WlHqNRB2tUZg07K2BOjth0IGw=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=qylwHo0rvx30LK9da5+OAYRn3A5J8UPfypg3uN8PGqw8QKXmIFm6iiErQ/vZ/nhoDaNrAfL/hEtbS/h9aCKCeVP/Vhti7DDdottiUtbIx5x15W2pkDI5XBfdsBGD7v1Suyl6KjBijfG3zqx8SyGZADhvW+PTEqifio55MVn/OW0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=BdVOKmpQ; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1789633886; c=relaxed/simple;
+	bh=sZgkRwiRrlqYyrfJRMGp3n0c5/aSEtnD8nXpMVOL6gU=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=T+caDJt7c1TnlOU4kTZfp/A0ndCqHcaMmQODLgIaJmUSimebjutnQ6tjxgOppG0tklhZWIpF4SkvOt3DPv7GR0/ZIgoimaoTFLGDgSrpLEFfAf06X0j+H6FV0VMJtoRqqsIyb2AIYP4JF6ACFhpOu7ZoQV7H1hJl5PzeeQPWF9w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fcTU/q7R; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="BdVOKmpQ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B8E3F1F000FF;
-	Wed, 16 Sep 2026 12:49:10 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fcTU/q7R"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A4B731F00898;
+	Thu, 17 Sep 2026 08:31:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1789562953;
-	bh=Akpf3sVV5hMKrXoprjFhWmMCl1UxJohB43ip4C/fV4c=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=BdVOKmpQMqrTMV6o4Q/J4t3nWmPfkRZQX/rBaZFfPDKBw52V9kbILFD2UPUC0w27o
-	 KJ7P22LQzrCF6Y8gWgsjLOPgAw6iU1QYaWNfcgiM0f2mWoynS1t0z25LYQ9o0br8vW
-	 quRyC6NXIg9wKzxbNoKl2P5RMA75y4YTTdc0+NvV1GOcSs0zY2p5p55LpgOyix/ZpS
-	 INsWmjq+rJBriwPASkCRiB+Fl+MfdVnZHfP8gA7E+GSnsaxNnB7prSEFqjgTnJKS+B
-	 xHhwz2ILc/SITxzezVvDvFS2BcMr7a+7msD7O+sZwUgC/KTyqgWue+5hsTvpYlFThu
-	 4DMLDOMtmo0ng==
-Date: Wed, 16 Sep 2026 13:49:08 +0100
-From: Simon Horman <horms@kernel.org>
-To: Markus Elfring <Markus.Elfring@web.de>
-Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org,
-	Andrew Lunn <andrew+netdev@lunn.ch>,
-	"David S. Miller" <davem@davemloft.net>,
-	Eric Dumazet <edumazet@google.com>,
-	Jakub Kicinski <kuba@kernel.org>, Jiri Slaby <jirislaby@kernel.org>,
-	Paolo Abeni <pabeni@redhat.com>,
-	Qingfang Deng <qingfang.deng@linux.dev>,
-	Tom Parkin <tparkin@katalix.com>,
-	LKML <linux-kernel@vger.kernel.org>, Kees Cook <kees@kernel.org>
-Subject: Re: [PATCH v2 net-next] ppp_synctty: Use common error handling code
- in ppp_sync_txmunge()
-Message-ID: <20260916124908.GG51261@horms.kernel.org>
-References: <15f151c7-58c8-4116-8a03-e985fd132b0f@web.de>
+	s=k20260515; t=1789633870;
+	bh=LO9eaufMm0duk8wGY4ihfDIzUgYxdIMkz6Fmb6I1oSE=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc;
+	b=fcTU/q7RIlFTHV3pFT2K65KSjMm5NJG3KeZ+tZCez/13nwMjXCT5gwW9wGtXwlvJd
+	 FqXBZBRtexw++vnpEEmmUeoSa/VUDaAdDxennNWOG9CKP/Et8dRC39Oac/L27kh9Op
+	 z0siz+kDI+bJHA3ViwI3aKCdtgOddfYAXZdDPEpdHdGWydW7lN1n8juimcSuRn9UWz
+	 r1e5noqygU2uv/97R16HBE4TZEvo63HosOvEYm+guGH2srl5Wiys8oAbSiCIkw2Zh9
+	 grRX8/SzsZOrjo4oIkK0UPxcm9M65rGyotFo+ucr+VSnViJ3bCms/NuaoE/N756cZs
+	 ZTEvFVLo1mOqA==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 93A60380CFEC;
+	Thu, 17 Sep 2026 08:30:05 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH v2 net-next] ppp_synctty: Use common error handling code
+ in
+ ppp_sync_txmunge()
+From: patchwork-bot+netdevbpf@kernel.org
+Message-Id: 
+ <178963380438.3497657.12392153187415676873.git-patchwork-notify@kernel.org>
+Date: Thu, 17 Sep 2026 08:30:04 +0000
+References: <15f151c7-58c8-4116-8a03-e985fd132b0f@web.de>
 In-Reply-To: <15f151c7-58c8-4116-8a03-e985fd132b0f@web.de>
+To: Markus Elfring <Markus.Elfring@web.de>
+Cc: linux-ppp@vger.kernel.org, netdev@vger.kernel.org, andrew+netdev@lunn.ch,
+ davem@davemloft.net, edumazet@google.com, kuba@kernel.org,
+ jirislaby@kernel.org, pabeni@redhat.com, qingfang.deng@linux.dev,
+ tparkin@katalix.com, linux-kernel@vger.kernel.org, kees@kernel.org
 
-On Tue, Sep 15, 2026 at 11:23:01AM +0200, Markus Elfring wrote:
+Hello:
+
+This patch was applied to netdev/net-next.git (main)
+by Paolo Abeni <pabeni@redhat.com>:
+
+On Tue, 15 Sep 2026 11:23:01 +0200 you wrote:
 > From: Markus Elfring <elfring@users.sourceforge.net>
 > Date: Tue, 15 Sep 2026 10:48:11 +0200
 > 
@@ -60,18 +65,16 @@ On Tue, Sep 15, 2026 at 11:23:01AM +0200, Markus Elfring wrote:
 > reused at the end of this function implementation.
 > 
 > Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
-> ---
 > 
-> v2:
-> The application of a known source code transformation pattern could be repeated
-> after the commit 8aaeb56aff2a557a88f83ae866da2c91ad247e59 ("ppp_synctty:
-> ensure a writeable skb header") was integrated.
+> [...]
 
-I have mixed feelings about this as it seems to be a cleanup
-outside of the context of other work [1].
+Here is the summary with links:
+  - [v2,net-next] ppp_synctty: Use common error handling code in ppp_sync_txmunge()
+    https://git.kernel.org/netdev/net-next/c/063510768490
 
-But I believe it is correct and does use the preferred goto label based
-cleanup mechanism.
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
 
-Reviewed-by: Simon Horman <horms@kernel.org>
 
