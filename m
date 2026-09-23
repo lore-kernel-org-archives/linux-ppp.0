@@ -1,88 +1,83 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFF4554EEA5;
-	Tue, 22 Sep 2026 14:25:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 565A13A71A8;
+	Wed, 23 Sep 2026 23:51:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790087110; cv=none; b=P6y6py8KoypK2f+vTj0ZH5rUgNITG/QWh0xcdoMdnRqNLYmsdlir3NalULONpQJebh6U3e8oVH+yycCzbAqwyEJ59xxh6sjHxO90QtbmMC3OIJBCrk+kRtpGTXD8DpBQnPN97OzTXj3EFL43kKMCzJ7D22wZ1prP5iVd6z2a+lA=
+	t=1790207481; cv=none; b=dyAIsw8HKdqgtLVLItxpcBO52I2tf7kScb554q0FJuTQ5XVbSLKVFcCO2WwBWnFY0PNmFRge3flF6QqJlnq8w0S9jxrQ7HteXZNJRlDQTyc60taSY2m9vyIBvgOWUu90cNEiP+88zbudBTMA4i9YYaTfd31nN99pKxvkVUwIwk0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790087110; c=relaxed/simple;
-	bh=OEPf1DHbYLRp+U95w3TDZGGq76TMsSYLp5J77gCMCF4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=i0RUfQ3M4jtgYlCPqx4V/fIovCUY9uf4NVdUIgP/oHouWYq/+aXtnALmFa/tG1uY5PGvyhhbtyq6fXM+0d5QUrCs1C8ADXnstUqb56Lz+7zX0Gn5rseU3YzuUrK0w6r8pFZ1/kEG63SIDL6rqqUCc9UMr1Xa7Zu+qgy3yVheAdQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jfDurrLc; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1790207481; c=relaxed/simple;
+	bh=1e9LQbt+X6yyOphfcnXgsEW45Y592U08huJX51Uzf3M=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=W3mgmelwnXFSQgzIR+P4mnlAZ6RUwhz3wJHmoQ7qunWHtBfbe4gT5e5yrPhFBPF0aJjElqKOEXlQEX1QlzV2v9OHP1S21eqmWoXqGddx+n9JkA0bYHNrDdU3oVwk0vljoYjYBilHdSvqL4W46R8Q6pMles+JdB2aC4nivYrvPA0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=E13OI+yG; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jfDurrLc"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 748C11F000FF;
-	Tue, 22 Sep 2026 14:25:06 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="E13OI+yG"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E706D1F00893;
+	Wed, 23 Sep 2026 23:51:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1790087108;
-	bh=EVZnlPkgPlP0JdUsO54GE+/u6fUDYx0uLnQOtCq0qek=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=jfDurrLcTaGuy2kSlTJdFaV8U9XmQfz3XVWupekrsh7VHO/6PCN9YT93BVYt9FRbm
-	 9mdHMODKadgSg9WHa2SXxQgW14OTge24xtWajx0rjzfHPrjuIlMka/Q0BfCrSfBd9/
-	 9ka9434fM/4WXKsUymAyAnQk/bQyY8SDA4ytOXOHjSv5sVjr7h0FR+VRwD4qtLZP8T
-	 SUpcIjj5tS34EcVLGEhqV15LnOPrlnvZ4AoyU4H+0YcRsh/rUTu5Xik1saY3DyUZv9
-	 Brj/wLjgvRcwLnv7jqQQr5QkAuodREr7MlvZ6xacSNKKMz1rFP+lqG+1UsR1sawfzt
-	 D7nNQvtde6KbA==
-Date: Tue, 22 Sep 2026 15:25:04 +0100
-From: Simon Horman <horms@kernel.org>
-To: netdev-bot+sashiko@kernel.org
-Cc: benquike@gmail.com, andrew+netdev@lunn.ch, davem@davemloft.net,
-	edumazet@google.com, kuba@kernel.org, pabeni@redhat.com,
-	linux-ppp@vger.kernel.org, netdev@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] ppp: fix bsd_decompress() OOB read and
- ppp_decompress_frame() headroom check
-Message-ID: <20260922142504.GF13925@horms.kernel.org>
-References: <20260919215233.3470411-1-benquike@gmail.com>
- <178994484954.2160803.7340548461955780287@kernel.org>
+	s=k20260515; t=1790207480;
+	bh=mbCwRTgn9fV8AwDIlQlyn3JYMSLiwU3wb3k1ZoQIaaA=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc;
+	b=E13OI+yGGfCKHoId8Otw2313St8xQBfbw6db25z0B1FvOLn7BUYOuTs7ubULB+oi3
+	 tc2A1pHHWdJKo3ATDSv7a8wuogmIZMMgRNPhPfIVFVws/nn2JjdTYt6ThrLylbqYUi
+	 Ndp8fJEdfbp7ui+8fYcpLBpalhYGVejMJCC8ZNnfN8gKa3gRLxcVzU4WCDXnbn3pzK
+	 u7MWDW2Xgczxxl9t73hk2gJoQrAGzryyLYc6Rzp1zc0u3ZAJMaVptxtiZWpvOMBhhP
+	 TtFzOD4uDC/dXwPcqUm7I7GTD4xwrjbKsN8qwmPEsiEPIgBIiGVkZMcucTkHL4ZJmO
+	 wIEtRXqQh1csA==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id D092E39E9602;
+	Wed, 23 Sep 2026 23:50:10 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <178994484954.2160803.7340548461955780287@kernel.org>
+Subject: Re: [PATCH net] ppp_synctty: remove redundant skb null check in
+ ppp_sync_txmunge()
+From: patchwork-bot+netdevbpf@kernel.org
+Message-Id: 
+ <179020740939.999807.4999315153340387066.git-patchwork-notify@kernel.org>
+Date: Wed, 23 Sep 2026 23:50:09 +0000
+References: <20260920114945.2517-1-qingfang.deng@linux.dev>
+In-Reply-To: <20260920114945.2517-1-qingfang.deng@linux.dev>
+To: Qingfang Deng <qingfang.deng@linux.dev>
+Cc: andrew+netdev@lunn.ch, davem@davemloft.net, edumazet@google.com,
+ kuba@kernel.org, pabeni@redhat.com, jirislaby@kernel.org,
+ elfring@users.sourceforge.net, kees@kernel.org, linux-ppp@vger.kernel.org,
+ netdev@vger.kernel.org, linux-kernel@vger.kernel.org, lkp@intel.com,
+ error27@gmail.com
 
-On Sun, Sep 20, 2026 at 10:54:09PM +0000, netdev-bot+sashiko@kernel.org wrote:
-> Thank you for your contribution! Sashiko AI review found 4 potential
-> issue(s) to consider.
+Hello:
+
+This patch was applied to netdev/net-next.git (main)
+by Jakub Kicinski <kuba@kernel.org>:
+
+On Sun, 20 Sep 2026 19:49:43 +0800 you wrote:
+> The skb is already dereferenced before the check. In addition, a TX skb
+> passed from the generic layer can never be null.
 > 
-> Critical: 0 · High: 1 · Medium: 3 · Low: 0
+> Remove the redundant null check.
 > 
-> If you believe none of the issues are legitimate, please reply to each
-> issue of Medium severity or higher and explain why the AI is wrong.
-> If any of them are legitimate and you plan to respin, please let patchwork
-> know by including "pw-bot: cr" as a separate line at the end of your reply
-> (one such reply per series is enough).
+> Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+> Reported-by: kernel test robot <lkp@intel.com>
+> Reported-by: Dan Carpenter <error27@gmail.com>
+> Closes: https://lore.kernel.org/r/202609132245.txZXoUxc-lkp@intel.com/
+> Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
 > 
-> - [High] ppp_decompress_frame() (drivers/net/ppp/ppp_generic.c:2555-2557)
->   now calls pskb_expand_head(skb, 2, 0, GFP_ATOMIC) unconditionally on…
-> - [Medium] The commit message states that the decompressed length 'is
->   only checked for len < 0 before indexing ns->data[2..3] and calling…
-> - [Medium] The patch hardens only one of the three in-tree implementers
->   of `struct compressor::decompress`.
-> - [Medium] The new pskb_expand_head(skb, 2, 0, GFP_ATOMIC) in
->   ppp_decompress_frame() (drivers/net/ppp/ppp_generic.c:2556) creates…
+> [...]
 
-Hi Hui,
+Here is the summary with links:
+  - [net] ppp_synctty: remove redundant skb null check in ppp_sync_txmunge()
+    https://git.kernel.org/netdev/net-next/c/1196e46f6d42
 
-There is an expectation that AI-generated reviews forwarded to
-the netdev ML are responded to. That can take a variety of forms
-including an email response that agrees with or refutes the review,
-or an updated version of the patch with an appropriate changelog.
-
-The expectation is the patch author or submitter handles this.  But in
-order to move things along, I did take a look over these and taken together
-it seems to me that these issues warrant a new revision of the patch.
-
-Please keep in mind that distinct problems should be in separate patches,
-and related patches should be bundled together in a patchset.
-
+You are awesome, thank you!
 -- 
-pw-bot: changes-requested
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
+
