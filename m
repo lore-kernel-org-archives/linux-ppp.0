@@ -1,83 +1,119 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.77
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1792550180;
+	b=T68j1vTFwM8C0ho0l7j3Nujdne1ugNv5/Gh7kq7hEQY6wSIlhi1xmPzMd+vQBzLkeA+p
+	 ynMX2beVEE+cUMxIDw+P+8GMeZIKtgxOddPLbgJbiCJ6708ExkcYEz1wtE81NLyDyyQqU
+	 xnvQa8EB7VgyEu+L/puewX7iCjJ4tThaAE6jDo9X8uXmmk/jeH/+LDUA5lSrYNh6R+Guy
+	 wgT7Giw9TZTUnatfqoFJEvm2YWg36cYR/I5D/xTWzIfkKzvGkA+BpUBURWRpuYk8Yv1Sm
+	 ZWWoaB0k7ooZcxKpgCFvtWaNDGR8U/azh6e2ynGUfIphzIwGn/uQ9eyMCL0WjP9tCNQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792550180;
+	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
+	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
+	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=GR124ABTP8hVFzVqn+1Ol538eubHOFABWIZhnPlfz1s=;
+	b=ZnT4lTr3EYtoQ/a3EU0I5kzFHksslJrgvXjJ8a0RWxz/LcXIuLFwN3luO3f2IIqw8FVd
+	 Ouv6liqinsMKP5CNfM9M+eU21NT44ecVMYT+Yu+xusBU2RFeAwaX72BdGYb37+kZg/wrt
+	 IJZNwGnUXH7vlDF/2xuBEXaeCaETKf6PdZr02HTI+8oVIlWHg/ajo0pYsFrayvuVnW0Dq
+	 0y1WcQkZVgadG6nm0hGJPUi438J8l4O7XkU03fPz25iXiE2HvaxUR9gwcfwAMxONuoaYw
+	 Kmp65PrODanngj1ZW4hMMhfTnZwr5tLO/rqvltZW6DqI06U2qt6TP2HHaJXwgTp835A==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=linux.dev;
+	spf=pass smtp.mailfrom=linux.dev;
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=K5HXAtfv;
+	arc=none smtp.remote-ip=95.215.58.77
+Received: from mta1.migadu.com (out-77.mta1.migadu.com [95.215.58.77])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 565A13A71A8;
-	Wed, 23 Sep 2026 23:51:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790207481; cv=none; b=dyAIsw8HKdqgtLVLItxpcBO52I2tf7kScb554q0FJuTQ5XVbSLKVFcCO2WwBWnFY0PNmFRge3flF6QqJlnq8w0S9jxrQ7HteXZNJRlDQTyc60taSY2m9vyIBvgOWUu90cNEiP+88zbudBTMA4i9YYaTfd31nN99pKxvkVUwIwk0=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790207481; c=relaxed/simple;
-	bh=1e9LQbt+X6yyOphfcnXgsEW45Y592U08huJX51Uzf3M=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=W3mgmelwnXFSQgzIR+P4mnlAZ6RUwhz3wJHmoQ7qunWHtBfbe4gT5e5yrPhFBPF0aJjElqKOEXlQEX1QlzV2v9OHP1S21eqmWoXqGddx+n9JkA0bYHNrDdU3oVwk0vljoYjYBilHdSvqL4W46R8Q6pMles+JdB2aC4nivYrvPA0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=E13OI+yG; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C915C606A31C
+	for <linux-ppp@vger.kernel.org>; Wed, 21 Oct 2026 02:36:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C915C606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="E13OI+yG"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E706D1F00893;
-	Wed, 23 Sep 2026 23:51:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1790207480;
-	bh=mbCwRTgn9fV8AwDIlQlyn3JYMSLiwU3wb3k1ZoQIaaA=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc;
-	b=E13OI+yGGfCKHoId8Otw2313St8xQBfbw6db25z0B1FvOLn7BUYOuTs7ubULB+oi3
-	 tc2A1pHHWdJKo3ATDSv7a8wuogmIZMMgRNPhPfIVFVws/nn2JjdTYt6ThrLylbqYUi
-	 Ndp8fJEdfbp7ui+8fYcpLBpalhYGVejMJCC8ZNnfN8gKa3gRLxcVzU4WCDXnbn3pzK
-	 u7MWDW2Xgczxxl9t73hk2gJoQrAGzryyLYc6Rzp1zc0u3ZAJMaVptxtiZWpvOMBhhP
-	 TtFzOD4uDC/dXwPcqUm7I7GTD4xwrjbKsN8qwmPEsiEPIgBIiGVkZMcucTkHL4ZJmO
-	 wIEtRXqQh1csA==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id D092E39E9602;
-	Wed, 23 Sep 2026 23:50:10 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
-Precedence: bulk
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=K5HXAtfv
+X-Envelope-To: linux-ppp@vger.kernel.org
+DKIM-Signature: a=rsa-sha256; bh=sSx8B/MoT7F+YR3WxVCNi4OfBeJXfUbzIEWDqSFIibo=;
+ c=simple/simple; d=linux.dev;
+ h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
+ t=1792550176; v=1; x=1793154976;
+ b=K5HXAtfvFriKmutRRMVtanU08/Z/OMNmgxf+kb1ufISeHSY8qPLy6q+8FKvsMFUJrPD4IYJw
+ F+jBEeMiDNjq2BbQ5oZixahqS/Kkf5KKpJAK4JDTPWGUU0XSTsOaOy8RO7k05tlDVByWKrxVkB+
+ bXwWqnP/wJKQ+hnV7bqxlWsA=
+X-Envelope-To: linux-ppp@vger.kernel.org
+Received: by smtp.migadu.com with ESMTPS id 65086cd44d755d15;
+	Wed, 21 Oct 2026 02:36:16 +0000
+X-Mizu-Trace-ID: 65086cd44d755d15
+X-Migadu-Flow: FLOW_OUT
+From: Qingfang Deng <qingfang.deng@linux.dev>
+To: Andrew Lunn <andrew+netdev@lunn.ch>,
+	"David S. Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@kernel.org>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Qingfang Deng <qingfang.deng@linux.dev>,
+	Breno Leitao <leitao@debian.org>,
+	Kees Cook <kees@kernel.org>,
+	Taegu Ha <hataegu0826@gmail.com>,
+	Tom Parkin <tparkin@katalix.com>,
+	linux-ppp@vger.kernel.org,
+	netdev@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Cc: James Chapman <jchapman@katalix.com>,
+	Sashiko <sashiko-bot@kernel.org>
+Subject: [PATCH net] ppp: linearize bridged packets when required
+Date: Wed, 21 Oct 2026 10:36:06 +0800
+Message-ID: <20261021023608.55867-1-qingfang.deng@linux.dev>
+X-Mailer: git-send-email 2.43.0
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
+List-Post: <mailto:linux-ppp@vger.kernel.org>
+List-Help: <mailto:linux-ppp+help@vger.kernel.org>
 List-Subscribe: <mailto:linux-ppp+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
+List-Owner: <mailto:linux-ppp+owner@vger.kernel.org>
+Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Subject: Re: [PATCH net] ppp_synctty: remove redundant skb null check in
- ppp_sync_txmunge()
-From: patchwork-bot+netdevbpf@kernel.org
-Message-Id: 
- <179020740939.999807.4999315153340387066.git-patchwork-notify@kernel.org>
-Date: Wed, 23 Sep 2026 23:50:09 +0000
-References: <20260920114945.2517-1-qingfang.deng@linux.dev>
-In-Reply-To: <20260920114945.2517-1-qingfang.deng@linux.dev>
-To: Qingfang Deng <qingfang.deng@linux.dev>
-Cc: andrew+netdev@lunn.ch, davem@davemloft.net, edumazet@google.com,
- kuba@kernel.org, pabeni@redhat.com, jirislaby@kernel.org,
- elfring@users.sourceforge.net, kees@kernel.org, linux-ppp@vger.kernel.org,
- netdev@vger.kernel.org, linux-kernel@vger.kernel.org, lkp@intel.com,
- error27@gmail.com
 
-Hello:
+PPP channel bridging is commonly used for PPPoE relaying or forwarding
+from PPPoE to PPPoL2TP. Both destination channel types handle non-linear
+packets, but other channels, such as PPP Async, require linear packets.
 
-This patch was applied to netdev/net-next.git (main)
-by Jakub Kicinski <kuba@kernel.org>:
+Ethernet drivers can pass non-linear packets to PPPoE. If one is bridged
+to PPP Async, ppp_async_encode() accesses the entire packet through
+skb->data, assuming that it is linear. This can read beyond the linear
+buffer and transmit unrelated memory over the serial interface.
 
-On Sun, 20 Sep 2026 19:49:43 +0800 you wrote:
-> The skb is already dereferenced before the check. In addition, a TX skb
-> passed from the generic layer can never be null.
-> 
-> Remove the redundant null check.
-> 
-> Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
-> Reported-by: kernel test robot <lkp@intel.com>
-> Reported-by: Dan Carpenter <error27@gmail.com>
-> Closes: https://lore.kernel.org/r/202609132245.txZXoUxc-lkp@intel.com/
-> Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
-> 
-> [...]
+The normal PPP transmit path in ppp_push() linearizes packets before
+passing them to channels without direct_xmit. Apply the same rule in
+ppp_channel_bridge_input(), and drop the packet if linearization fails.
 
-Here is the summary with links:
-  - [net] ppp_synctty: remove redundant skb null check in ppp_sync_txmunge()
-    https://git.kernel.org/netdev/net-next/c/1196e46f6d42
+Fixes: 4cf476ced45d ("ppp: add PPPIOCBRIDGECHAN and PPPIOCUNBRIDGECHAN ioctls")
+Reported-by: Sashiko <sashiko-bot@kernel.org>
+Closes: https://sashiko.dev/#/patchset/20260908072135.877364-1-qingfang.deng@linux.dev
+Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
+---
+ drivers/net/ppp/ppp_generic.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-You are awesome, thank you!
+diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+index 1a610a18893b..a84618e24d61 100644
+--- a/drivers/net/ppp/ppp_generic.c
++++ b/drivers/net/ppp/ppp_generic.c
+@@ -2299,6 +2299,11 @@ static bool ppp_channel_bridge_input(struct channel *pch, struct sk_buff *skb)
+ 		goto outl;
+ 	}
+ 
++	if (!pchb->chan->direct_xmit && skb_linearize(skb)) {
++		kfree_skb(skb);
++		goto outl;
++	}
++
+ 	skb_scrub_packet(skb, !net_eq(pch->chan_net, pchb->chan_net));
+ 	if (!pchb->chan->ops->start_xmit(pchb->chan, skb))
+ 		kfree_skb(skb);
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+2.43.0
 
