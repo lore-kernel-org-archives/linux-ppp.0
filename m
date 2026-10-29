@@ -1,58 +1,49 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793198653;
-	b=VvNkHu0gBK1lBjAgC418Q6H6/kVqfKGKNMx6+g7vamN2HSoDc/YTA+JUc3pAX884E9Z3
-	 yJz4M2bVzHDemXKaDjwO44YrHlqG+t9T0pOwe2nFJ2IrIpxv10sioCfQT8V82KyDPHcZR
-	 +e1rWB7qeAET0yBlpuKaKj4Z0WbE2BjTE0lUFr1uRlnzfpuuadP7A0HyfeNku/hXNcobr
-	 OlAO4UGFCqBonoUvJLT8+YWCOuZzw4z6RhYn07B0LIyyoySupuLJaNkY8JP3BezL8ae5z
-	 INvWrXsVuFCYuNsm7tRYmYPkeGM0WQedCkUZ3wVL9Vm/+6w7A3jKtSRqQjMnTdpm8cQ==
+	t=1793234411;
+	b=uE1e9EJe5tC8OvDm2ns+L0dPQYFKZAtLQnF0qNegZeLNNVr1WibmQF1RGGQOL8puCOvw
+	 aB6g8cdWP5KISPzi2w7S+QZxiBzSkFzsQhR55gCEml8UtGF7Pq3X1P5Pu0wF+5DOsC18Q
+	 yuC6aeWL/1CwETXMerBeyoRYn6gis0rTxYotyONCwEi1EbeOtsZinksJ+0Y/r8Cd/0v4g
+	 Sq3xPPkm6LYCFY5ayx+I9yvncJObqu8a7D+RDCnbXsAEEjg+gadxLqtJaD/vRd8B1dm2n
+	 dMgwzX7dbCZZtQsf9CdfQEqrf5RYcRkmt0NlX/wqgO10rDNn99lOSLJxuQquPpGXD7w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793198653;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=1Q63vKXI7sX2+wwKEnsnoKjs6AlzUnkR62wP2YbR8PI=;
-	b=3FQfvlYE0sKSoLCkQFx+SsW3VpsmJirUJvb4f7SKHrmPHmInxnAL7iDKSKvH0DeuwBl1
-	 vax4SKono0hJ42Llm+jx+8Sh362fIoNd4w2GJJ/I3EC916LVxrawwgoAFiAlkOhOJ1jy5
-	 BWh6t6wms26VyUFfp/jTA/1NNvm/MuRpAgucxZRHuYCwLkuED6NL1yFlWf5w3yVbUcpSv
-	 43kfm+kt9221uXp5bfqO3cn1XriA1oVIplEKBdlaB1iwepkL4KbkuJ8W8Rd3u+wkZ7/X/
-	 8UdqkPN7a0DCuwGOvDHei4A6FnPjKAfozH9y7/gSqEeDF2gzJysts14Dq9kqI5iLWsQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793234411;
+	h=Received:DKIM-Signature:Received:Content-Type:MIME-Version:
+	 Content-Transfer-Encoding:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc;
+	bh=BxYehSGB4nYEl0EpZxvRehODttHkM705AEXj14ilP+8=;
+	b=g9MBfzGTfeXvDr6b34xI6bzvYIqaxJn9kOEr3I2bofz0CSwMCun8UehvG+2Pkwz7aNP8
+	 augq9dWowIH6WT2qF9ZFsHGfCjQRajmvu7hmKQ3ztjvn8r/grvpRG0joxAH0AKtKJUie4
+	 9EQRF3SLDm6N+MoKgAccbFmBRmLAikybvHDHDQIsPTegJ/KQe4o2vgHGKufj1RrhxWora
+	 Scj8bL/u4XXl90+gZWGu+nNhyedBasWqfaOOnrJiYB/Ch6iLnXRka94OKEnEwErmG+HLJ
+	 VCwrGDZNbkCen9WIsUaLeePdxEtFwmz3WsPRUqwIiLPEiPV2w/G6D22GS7Vo9yGdJ9w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=NGb5aMol;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RZzAch5n;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B705606A31E;
-	Wed, 28 Oct 2026 14:44:12 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85BF6606A33E;
+	Thu, 29 Oct 2026 00:40:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=NGb5aMol
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9F50F1F01825;
-	Wed, 28 Oct 2026 14:44:10 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RZzAch5n
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 110CF1F01825;
+	Thu, 29 Oct 2026 00:40:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793198652;
-	bh=1Q63vKXI7sX2+wwKEnsnoKjs6AlzUnkR62wP2YbR8PI=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=NGb5aMoljz5/21SSjR4odbTS26vwx/CGKuiRCOIeiUV4PASm6HyPxqlwerkkE1MH3
-	 Y5YRwMYHUWqExx45xZAZYQZcxpfUDr0IHHIWhUE1yEHd5wfl0yao4lvoXpJZt0SV9s
-	 xUewWoh/TQAG/AgtMd4kkX5J7jOi4DkmW9KM4t0PLUzuHOCK47gYnep3+m7uLTxU0B
-	 rM+zptalztzrW4Tqxbc6LOXQ2zW2JusZZu657UZtlWQzUW+0Gh3KEz5FNrlxq3w2a3
-	 zDlLs7AT1D5WC+kYIjdjEFKRwHtmzHXbAAybbva4ZoS+8P1mb5L6YFDJmBnuCggSsY
-	 mj/zlUAgUgJdQ==
-Date: Wed, 28 Oct 2026 14:44:08 +0000
-From: Simon Horman <horms@kernel.org>
-To: Eric Dumazet <edumazet@kernel.org>
-Cc: "David S. Miller" <davem@davemloft.net>,
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
-	netdev@vger.kernel.org, Willem de Bruijn <willemb@google.com>,
-	linux-ppp@vger.kernel.org, Sashiko <sashiko-bot@kernel.org>,
-	Qingfang Deng <qingfang.deng@linux.dev>,
-	Felix Fietkau <nbd@nbd.name>,
-	Pablo Neira Ayuso <pablo@netfilter.org>
-Subject: Re: [PATCH v2 net] ppp: linearize and segment bridged packets when
- required
-Message-ID: <20261028144408.GX257209@horms.kernel.org>
-References: <20261026155927.707655-1-edumazet@kernel.org>
+	s=k20260515; t=1793234411;
+	bh=BxYehSGB4nYEl0EpZxvRehODttHkM705AEXj14ilP+8=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc;
+	b=RZzAch5n308zjdI4AHqz3Xw5Shk47z8WVwNXptmOgyuwCOGRugSDuOl+1WnI0NMN1
+	 2wg5/EtVw+WGRlxtgHsC27FX9H65bn9gSYizuAZgTBapAjwQg4M1Afdw9EmNiaCHM0
+	 CFrwUnRy8+47F+JkEoZqUYuTmpa+t1lWa4WOIkJi7xstPJwT7ghTCcdMTgV75WJKQZ
+	 ZseFp4coX+DcIsXn8+kWQLwsEeuEuF/KMest9teibpR2Tir7wxlJKJuqlSM3qskTHk
+	 oDsLYNgjSjGUEUD8U2xBBx2cPmvYxrDaunoLUOo//Zb7Ib+vu4WeyhLVoX6lKuZNnC
+	 u0G0J1FL+vG/w==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 073B13AAFC4C;
+	Thu, 29 Oct 2026 00:40:11 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Post: <mailto:linux-ppp@vger.kernel.org>
@@ -62,11 +53,27 @@ List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-ppp+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH v2 net] ppp: linearize and segment bridged packets when
+ required
+From: patchwork-bot+netdevbpf@kernel.org
+Message-Id: 
+ <179323440956.1500896.15333637748858681372.git-patchwork-notify@kernel.org>
+Date: Thu, 29 Oct 2026 00:40:09 +0000
+References: <20261026155927.707655-1-edumazet@kernel.org>
 In-Reply-To: <20261026155927.707655-1-edumazet@kernel.org>
+To: Eric Dumazet <edumazet@kernel.org>
+Cc: davem@davemloft.net, kuba@kernel.org, pabeni@redhat.com, horms@kernel.org,
+ netdev@vger.kernel.org, willemb@google.com, linux-ppp@vger.kernel.org,
+ sashiko-bot@kernel.org, qingfang.deng@linux.dev, nbd@nbd.name,
+ pablo@netfilter.org
 
-On Mon, Oct 26, 2026 at 04:59:27PM +0100, Eric Dumazet wrote:
+Hello:
+
+This patch was applied to netdev/net.git (main)
+by Jakub Kicinski <kuba@kernel.org>:
+
+On Mon, 26 Oct 2026 16:59:27 +0100 you wrote:
 > PPP channel bridging hands packets received on one channel directly to
 > the start_xmit() of another. Packets received by PPPoE can be
 > non-linear, GSO since commit 55a5d8fca836 ("net: pppoe: implement
@@ -74,53 +81,15 @@ On Mon, Oct 26, 2026 at 04:59:27PM +0100, Eric Dumazet wrote:
 > virtio_net_hdr. The regular transmit path never sees such packets, and
 > only PPPoE, which uses dev_queue_xmit(), handles them:
 > 
-> - PPP Async reads the whole packet through skb->data, transmitting
->   unrelated memory for non-linear packets.
-> - PPP Async and Sync send GSO packets as single frames of up to 64KB,
->   and CHECKSUM_PARTIAL packets with a bad L4 checksum.
-> - PPTP and L2TP cannot segment a TCP GSO packet once their GRE or UDP
->   header is pushed, and do not finish pending checksums.
-> 
-> Add a xmit_offload flag to struct ppp_channel, set for PPPoE. For other
-> channels, segment GSO packets in software, using the PPP protocol field
-> as the L2 header, finish CHECKSUM_PARTIAL checksums (including SCTP
-> CRC32c), and linearize packets for channels without direct_xmit, as
-> ppp_push() does. Packets are dropped if any step fails, or if the
-> channel is busy, as before.
-> 
-> skb->dev is NULL at this point for PPPoE (cleared by __sk_receive_skb()),
-> and tunnel and IPv6 UFO GSO handlers dereference it: only TCP, UDP L4
-> and fraglist GSO packets without encapsulation are segmented, others
-> are dropped.
-> 
-> Receive paths like L2TP pull headers without updating the checksum
-> state, possibly leaving a CHECKSUM_PARTIAL state with csum_start before
-> skb->data. Reset it to CHECKSUM_NONE, as skb_postpull_rcsum() does, so
-> that skb_checksum_help() does not warn, and so that PPPoE does not
-> offload a checksum at a wrong offset.
-> 
-> Tested in a VM by bridging PPPoE (on a TAP with IFF_NAPI_FRAGS, or on
-> veth) to PPP Async on a PTY, PPPoL2TP and PPPoE: non-linear packets no
-> longer leak garbage, GSO packets (including fraglist GRO) are sent as
-> valid segments for IPv4 and IPv6, CHECKSUM_PARTIAL packets get a valid
-> checksum, and PPPoE still receives GSO packets unchanged.
-> 
-> Fixes: 4cf476ced45d ("ppp: add PPPIOCBRIDGECHAN and PPPIOCUNBRIDGECHAN ioctls")
-> Fixes: 55a5d8fca836 ("net: pppoe: implement GRO/GSO support")
-> Reported-by: Sashiko <sashiko-bot@kernel.org>
-> Closes: https://sashiko.dev/#/patchset/20260908072135.877364-1-qingfang.deng@linux.dev
-> Co-developed-by: Qingfang Deng <qingfang.deng@linux.dev>
-> Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
-> Signed-off-by: Eric Dumazet <edumazet@kernel.org>
-> Cc: Felix Fietkau <nbd@nbd.name>
-> Cc: Pablo Neira Ayuso <pablo@netfilter.org>
-> ---
-> v2: addressed Sashiko feedback
->  - Only segment TCP, UDP_L4 and fraglist GSO skbs without encapsulation,
->    skb->dev is NULL here.
->  - Reset stale CHECKSUM_PARTIAL state with csum_start before skb->data.
->  - Use skb_csum_hwoffload_help(skb, 0) to handle SCTP CRC32c.
-> v1: https://lore.kernel.org/netdev/20261022111039.85112-1-edumazet@kernel.org/
+> [...]
 
-Reviewed-by: Simon Horman <horms@kernel.org>
+Here is the summary with links:
+  - [v2,net] ppp: linearize and segment bridged packets when required
+    https://git.kernel.org/netdev/net/c/0de4e69cd021
+
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
