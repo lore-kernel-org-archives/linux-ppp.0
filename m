@@ -1,72 +1,60 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.40
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793260189;
-	b=nnT3QqxkqqR35QG3ClSyW6c1y3vKZSujAydRRMyWgZm/njrhG3IsAhvTON+AlWvDB4oY
-	 z9D6hwarzu5Wj6w4NKQc1/xd9sJKSG8lS4SHlC7QrrzUiFloBdm+zW++1SPnRxPlFzzap
-	 kU1d5Fsu8BBuFREipLoYfCDgnbXnPeFlBZlJostTE6VAB5p+ebxovSQtNMaOyOiR1ovcA
-	 sSt+VgegNwiY0NwXDA9p68OnZ/Jkk4E9kFOFtv7l9jI6R/6Pjns6aR/+PVcv8qzkkpoY0
-	 k3IfseQz9N5whOAMdwhvYcdruOhKsRfc2NwDVYS3M3fpCU9XJpISpI6Dnm9R5LW17tg==
+	t=1793395968;
+	b=tzS9rt19V4YBOfHDTImy+WdZLKKknPhW02/4IrBpkSQekj7NdDzFGhCt5xeYffjT1iUc
+	 8HysZpG4xI7dDLXPGPHZOIZkomXCvSZqy5ZAVlhe7qqfAzfowavCd9A8RyzWfnobWrDWk
+	 b/X9YjGwI1zSMVF9Q68GUxUsyJtSMTtFOYoTFw6LP5fyHxgRFm9it0igNgryTSxDvrclh
+	 D4O7Dj2TjkTssffvnaEgf4a5BdNcGDLx/cbQAq/v+z0b2D3FDmFs3ZeSdNHW8VflxPD4y
+	 PbRMnSSYgcNY6cLztoG4mkGlIm4zBPvFjm2ieZIaJBGGh33Cje4cH2VJRptmU9w3FSw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793260189;
-	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
-	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Subject:Date:Message-ID:
-	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=wKcwn6Rk5lPeD1ZYuSyC9nozBY4N1b3MpNfJc6pFicQ=;
-	b=ENYULlEdT766UsdKYYCBywNiOAuS2Faqvm5PCdm+F0NLn/a8QvmBq9bgb3DPiVUQKq/Q
-	 Ht1EuGmbAM5bKRFHdv38IgbehT5awrrA+xSy10qls6Gk/HXXAmXKimVmfAoLS5NIbGGjV
-	 37L0cljpDTcq/KMv1TTtobEChZle6tpBTlnQDF8TxebrBVhlA1+/4U/Big9opred47plA
-	 Q5TvPg6CbNg6LSff9hDgDUtHurnUqGZlaGOvR3ZYKH+jBkHkq+UQmJd7hhp1WJHvENhsD
-	 /ls4r1COHbxvb12mqiPNK7nA32/N5FS3CJnB5LdglRVLlYcujSoBvGX1tVNTdLtc95w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793395968;
+	h=Received:DKIM-Signature:Subject:From:To:Cc:Date:Message-ID:
+	 In-Reply-To:References:X-sashiko-severity:Content-Type:
+	 Content-Transfer-Encoding:MIME-Version;
+	bh=b8ezmLcQFCSyrEAPrvhRD05fblaMPYsKIhBxCdtaPEA=;
+	b=l2n7V6uw5fsV5RzT0VXEr1Ey+CLEE1QdQWVsRm0eEizs0Y4WoPJmFuSlQu76kcLAnsAj
+	 WyP3KxJrKORhLG95xx/BGffweByLNxtYgN68Ow4Jj0Dq0Pk8EZFP02VivhnCVUbWT4qwK
+	 obVeDTS+PXpzAWay9j9Fkcs6R7tHVZFO7xDqLAjWXtV/DbMks2kMYopfkgDUly5g9PDk3
+	 0lB7aXvcOz+RbiZhfXIbo0Xyc6dYrENwvAHLK+LwgSe5n3bp7oOGl2Eq22DCUGy0jRzTY
+	 4Yh0KpNUhgwUXlQUz0p+JSz5iLNQJepT8IT97nMUEsS+CP3gn0vFaHRRw52D4EpmLjA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.dev;
-	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=RhRW6ieF;
-	arc=none smtp.remote-ip=91.218.175.40
-Received: from mta0.migadu.com (out-40.mta0.migadu.com [91.218.175.40])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=gIi9higG;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F1AB5606A31E
-	for <linux-ppp@vger.kernel.org>; Thu, 29 Oct 2026 07:49:48 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org F1AB5606A31E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B020F606A31A;
+	Fri, 30 Oct 2026 21:32:47 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=RhRW6ieF
-X-Envelope-To: linux-ppp@vger.kernel.org
-DKIM-Signature: a=rsa-sha256; bh=ofXpdaB/7nB74dbgxFWLaiAeMu+4yAIU416lNX3BA6g=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1793260187; v=1; x=1793864987;
- b=RhRW6ieFUhwanXiIwNzvNSvdlHLq86/Pe3hIR26dkWUsnwB1e1mPrfCUsTkOBGPdYQhB0YwK
- /Y4t4pdH24c0pze0wlVGDAfIinoFqUajKCelW6FHmqc8T3rHGaVFSv+ScnJSBb5c0ZrSq7MjHAK
- utQaD2gZeCJL3ZOzzuPPltjY=
-X-Envelope-To: linux-ppp@vger.kernel.org
-Received: by smtp.migadu.com with ESMTPS id f7790a20ed431206;
-	Thu, 29 Oct 2026 07:49:46 +0000
-X-Mizu-Trace-ID: f7790a20ed431206
-X-Migadu-Flow: FLOW_OUT
-From: Qingfang Deng <qingfang.deng@linux.dev>
-To: Andrew Lunn <andrew+netdev@lunn.ch>,
-	"David S. Miller" <davem@davemloft.net>,
-	Eric Dumazet <edumazet@kernel.org>,
-	Jakub Kicinski <kuba@kernel.org>,
-	Paolo Abeni <pabeni@redhat.com>,
-	Qingfang Deng <qingfang.deng@linux.dev>,
-	Breno Leitao <leitao@debian.org>,
-	Norbert Szetei <norbert@doyensec.com>,
-	Taegu Ha <hataegu0826@gmail.com>,
-	Paul Mackerras <paulus@ozlabs.org>,
-	Brice Goglin <Brice.Goglin@ens-lyon.org>,
-	Andrew Morton <akpm@osdl.org>,
-	Matt Domsch <Matt_Domsch@dell.com>,
-	linux-ppp@vger.kernel.org,
-	netdev@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH net] ppp: remove SC_MUST_COMP
-Date: Thu, 29 Oct 2026 15:49:32 +0800
-Message-ID: <20261029074935.40509-1-qingfang.deng@linux.dev>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=gIi9higG
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8347C1F0093A;
+	Fri, 30 Oct 2026 21:32:46 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793395967;
+	bh=b8ezmLcQFCSyrEAPrvhRD05fblaMPYsKIhBxCdtaPEA=;
+	h=Subject:From:To:Cc:Date:In-Reply-To:References;
+	b=gIi9higGn7Obc28FcZBnNZllRcPWZ+aWoeXoecHBWMHeNesFWG8DjcD6F3z0THdEO
+	 FigLKJa6E5h8i+o3Kta+Z/AnVCywyKMavwGo5MKakjsPvh3zS60fMbIoZYj4d24v3j
+	 N6A9ejPLB6H88HQmRmMEOq2fxVC2a0HlDHEDCzHCqCLF2LgfVv+V2fHbqPkOhXZsoi
+	 zetQ28J3Jy82IUs6wuBjI7xjHbgzGUxTmevqQJmSE8p3vzs4FN3ODCeCIubSPqlGEY
+	 40dAt+W/P2gcmvr0A3naekMFmiVIclr7MEMCp6cvO5jvswSuuo34gQ5cqBJnYZrFoL
+	 Is29O03SDxj9A==
+Subject: Re: [PATCH net] ppp: remove SC_MUST_COMP
+From: netdev-bot+sashiko@kernel.org
+To: qingfang.deng@linux.dev
+Cc: andrew+netdev@lunn.ch, davem@davemloft.net, edumazet@kernel.org,
+ kuba@kernel.org, pabeni@redhat.com, leitao@debian.org, norbert@doyensec.com,
+ hataegu0826@gmail.com, paulus@ozlabs.org, Brice.Goglin@ens-lyon.org,
+ akpm@osdl.org, Matt_Domsch@dell.com, linux-ppp@vger.kernel.org,
+ netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Date: Fri, 30 Oct 2026 21:32:46 +0000
+Message-ID: <179339596607.3131.10030375792154782283@kernel.org>
+In-Reply-To: <20261029074935.40509-1-qingfang.deng@linux.dev>
+References: <20261029074935.40509-1-qingfang.deng@linux.dev>
+X-sashiko-severity: Medium
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 X-Mailing-List: linux-ppp@vger.kernel.org
 List-Id: <linux-ppp.vger.kernel.org>
 List-Post: <mailto:linux-ppp@vger.kernel.org>
@@ -76,116 +64,161 @@ List-Unsubscribe: <mailto:linux-ppp+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-ppp+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-SC_MUST_COMP accidentally shares the same value with SC_DC_ERROR.
-PPPIOCGFLAGS combines configuration flags with transmit and receive
-state, so a userspace cannot distinguish them, and a read-modify-write
-sequence can promote a decompression error into SC_MUST_COMP.
+Thank you for your contribution! Sashiko AI review found 1 potential
+issue(s) to consider.
 
-The flag entered Linux in 2005 with commit b3f9b92a6ec1 ("[PPP]: add PPP
-MPPE encryption module"). The original patch submission [1] said pppd
-would set it when CCP came up with MPPE enabled. That intended
-integration [2] appears never to have landed upstream.
+Critical: 0 · High: 0 · Medium: 1 (1) · Low: 0
 
-Remove the broken and unused SC_MUST_COMP from the UAPI, SC_MASK and
-SC_FLAG_BITS, and remove its transmit and receive drop checks.
-PPPIOCSFLAGS will discard this bit while PPPIOCGFLAGS can still report
-it as SC_DC_ERROR.
+If you believe none of the issues are legitimate, please reply to each
+issue of Medium severity or higher and explain why the AI is wrong.
+If any of them are legitimate and you plan to respin, please let patchwork
+know by including "pw-bot: cr" as a separate line at the end of your reply
+(one such reply per series is enough).
 
-Fixes: b3f9b92a6ec1 ("[PPP]: add PPP MPPE encryption module")
-[1] https://lore.kernel.org/netdev/20050814141046.GB20944@lists.us.dell.com/
-[2] https://lore.kernel.org/netdev/20050814190529.GA26802@lists.us.dell.com/
-Signed-off-by: Qingfang Deng <qingfang.deng@linux.dev>
----
-Found and reproduced with LLM. Combined with the broken BSD-Compress on
-64-bit, it results in a broken link:
+- [Medium] The patch deletes the exported `#define SC_MUST_COMP
+  0x00400000` from include/uapi/linux/ppp-ioctl.h.
 
-1. First BSD failure: the kernel sets both SC_DC_FERROR and SC_DC_ERROR,
-   then passes the failed packet to userspace. pppd closes CCP. Traffic
-   falls back to uncompressed, but SC_MUST_COMP becomes accidentally
-   latched.
+Pre-existing issues:
+- [Medium] With SC_COMP_RUN set and SC_CCP_UP clear, a successfully
+  compressed DEFLATE/BSD packet (len > 0) falls into the error branch of…
 
-2. Re-enable compression: send SIGUSR2 to pppd, to let BSD compression
-   renegotiate. This is a documented pppd operation (man 8 pppd). The
-   stale flag survives.
+--
 
-3. Second BSD failure: the kernel sets both error flags again. Now the
-   receive check fires:
+ppp: remove SC_MUST_COMP
 
-	if (ppp->flags & SC_MUST_COMP && ppp->rstate & SC_DC_FERROR)
-	    goto err;
+This patch removes SC_MUST_COMP from the UAPI header, SC_MASK and
+SC_FLAG_BITS. SC_MUST_COMP has the same value as SC_DC_ERROR, so a
+read-modify-write through PPPIOCGFLAGS/PPPIOCSFLAGS can latch it by
+accident. The transmit and receive drop checks for the flag in
+ppp_generic.c are removed as well.
 
-   The kernel drops the failed packet before delivering it to pppd.
-   Consequently, pppd does not perform its normal CCP shutdown and
-   cleanup.
+> diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+> index 29847dc4bb454..f7b59060450fe 100644
+> --- a/drivers/net/ppp/ppp_generic.c
+> +++ b/drivers/net/ppp/ppp_generic.c
 
-4. Subsequent incoming IP and CCP packets hit the same drop check,
-   preventing normal recovery.
----
- drivers/net/ppp/ppp_generic.c  | 15 ++-------------
- include/uapi/linux/ppp-ioctl.h |  3 +--
- 2 files changed, 3 insertions(+), 15 deletions(-)
+[ ... ]
 
-diff --git a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
-index 1a610a18893b..84ca4e93ad9a 100644
---- a/drivers/net/ppp/ppp_generic.c
-+++ b/drivers/net/ppp/ppp_generic.c
-@@ -157,14 +157,13 @@ struct ppp {
- 
- /*
-  * Bits in flags: SC_NO_TCP_CCID, SC_CCP_OPEN, SC_CCP_UP, SC_LOOP_TRAFFIC,
-- * SC_MULTILINK, SC_MP_SHORTSEQ, SC_MP_XSHORTSEQ, SC_COMP_TCP, SC_REJ_COMP_TCP,
-- * SC_MUST_COMP
-+ * SC_MULTILINK, SC_MP_SHORTSEQ, SC_MP_XSHORTSEQ, SC_COMP_TCP, SC_REJ_COMP_TCP.
-  * Bits in rstate: SC_DECOMP_RUN, SC_DC_ERROR, SC_DC_FERROR.
-  * Bits in xstate: SC_COMP_RUN
-  */
- #define SC_FLAG_BITS	(SC_NO_TCP_CCID|SC_CCP_OPEN|SC_CCP_UP|SC_LOOP_TRAFFIC \
- 			 |SC_MULTILINK|SC_MP_SHORTSEQ|SC_MP_XSHORTSEQ \
--			 |SC_COMP_TCP|SC_REJ_COMP_TCP|SC_MUST_COMP)
-+			 |SC_COMP_TCP|SC_REJ_COMP_TCP)
- 
- /*
-  * Private data structure for each channel.
-@@ -1862,13 +1861,6 @@ ppp_prepare_tx_skb(struct ppp *ppp, struct sk_buff **pskb)
- 	/* try to do packet compression */
- 	if ((ppp->xstate & SC_COMP_RUN) && ppp->xc_state &&
- 	    proto != PPP_LCP && proto != PPP_CCP) {
--		if (!(ppp->flags & SC_CCP_UP) && (ppp->flags & SC_MUST_COMP)) {
--			if (net_ratelimit())
--				netdev_err(dev,
--					   "ppp: compression required but "
--					   "down - pkt dropped.\n");
--			goto drop;
--		}
- 		new_skb = pad_compress_skb(ppp, skb);
- 		if (!new_skb)
- 			goto drop;
-@@ -2416,9 +2408,6 @@ ppp_receive_nonmp_frame(struct ppp *ppp, struct sk_buff *skb)
- 	    (ppp->rstate & (SC_DC_FERROR | SC_DC_ERROR)) == 0)
- 		skb = ppp_decompress_frame(ppp, skb);
- 
--	if (ppp->flags & SC_MUST_COMP && ppp->rstate & SC_DC_FERROR)
--		goto err;
--
- 	/* At this point the "Protocol" field MUST be decompressed, either in
- 	 * ppp_input(), ppp_decompress_frame() or in ppp_receive_mp_frame().
- 	 */
-diff --git a/include/uapi/linux/ppp-ioctl.h b/include/uapi/linux/ppp-ioctl.h
-index 1cc5ce0ae062..672f7ac11a0b 100644
---- a/include/uapi/linux/ppp-ioctl.h
-+++ b/include/uapi/linux/ppp-ioctl.h
-@@ -39,8 +39,7 @@
- #define SC_LOG_RAWIN	0x00080000	/* log all chars received */
- #define SC_LOG_FLUSH	0x00100000	/* log all chars flushed */
- #define	SC_SYNC		0x00200000	/* synchronous serial mode */
--#define	SC_MUST_COMP    0x00400000	/* no uncompressed packets may be sent or received */
--#define	SC_MASK		0x0f600fff	/* bits that user can change */
-+#define	SC_MASK		0x0f200fff	/* bits that user can change */
- 
- /* state bits */
- #define SC_XMIT_BUSY	0x10000000	/* (used by isdn_ppp?) */
+> @@ -1863,13 +1862,6 @@ ppp_prepare_tx_skb(struct ppp *ppp, struct sk_buff **pskb)
+>  	/* try to do packet compression */
+>  	if ((ppp->xstate & SC_COMP_RUN) && ppp->xc_state &&
+>  	    proto != PPP_LCP && proto != PPP_CCP) {
+> -		if (!(ppp->flags & SC_CCP_UP) && (ppp->flags & SC_MUST_COMP)) {
+> -			if (net_ratelimit())
+> -				netdev_err(dev,
+> -					   "ppp: compression required but "
+> -					   "down - pkt dropped.\n");
+> -			goto drop;
+> -		}
+>  		new_skb = pad_compress_skb(ppp, skb);
+>  		if (!new_skb)
+>  			goto drop;
+
+[Severity: Medium]
+This is a pre-existing issue and wasn't introduced by this patch. While
+looking at this path: can pad_compress_skb() drop packets that were
+compressed successfully?
+
+drivers/net/ppp/ppp_generic.c:pad_compress_skb() {
+    ...
+	if (len > 0 && (ppp->flags & SC_CCP_UP)) {
+		...
+	} else if (len == 0) {
+		...
+	} else {
+		...
+		consume_skb(new_skb);
+		new_skb = NULL;
+	}
+    ...
+}
+
+Say SC_COMP_RUN is set but SC_CCP_UP is still clear. A DEFLATE or BSD
+compressor that returns len > 0 then lands in the else branch. The
+packet is dropped just as if the compressor had rejected it.
+
+That state looks reachable. ppp_ccp_peek() handles an outbound
+CCP_CONFACK only while SC_CCP_OPEN is set and SC_CCP_UP is clear, and
+that is where it sets SC_COMP_RUN:
+
+	case CCP_CONFACK:
+		if ((ppp->flags & (SC_CCP_OPEN | SC_CCP_UP)) != SC_CCP_OPEN)
+			break;
+		...
+			if (ppp->xcomp->comp_init(ppp->xc_state, dp, len,
+						  ppp->file.index, 0,
+						  READ_ONCE(ppp->debug)))
+				ppp->xstate |= SC_COMP_RUN;
+
+pppd sets SC_CCP_UP only once CCP reaches Opened.
+
+When the drop happens, z_compress() has already updated its history and
+advanced its sequence number:
+
+	put_unaligned_be16(state->seqno, wptr);
+	...
+	++state->seqno;
+
+After SC_CCP_UP is set, would the next compressed frame carry a sequence
+number ahead of what the peer's z_decompress() expects?
+
+	if (seq != (state->seqno & 0xffff)) {
+		...
+		return DECOMP_ERROR;
+	}
+
+If so, data sent in that window is lost, and recovery needs a CCP
+Reset-Request/Reset-Ack cycle. The else branch dates from b3f9b92a6ec1,
+and this patch leaves it unchanged.
+
+[ ... ]
+
+> diff --git a/include/uapi/linux/ppp-ioctl.h b/include/uapi/linux/ppp-ioctl.h
+> index 1cc5ce0ae062e..672f7ac11a0b8 100644
+> --- a/include/uapi/linux/ppp-ioctl.h
+> +++ b/include/uapi/linux/ppp-ioctl.h
+> @@ -39,8 +39,7 @@
+>  #define SC_LOG_RAWIN	0x00080000	/* log all chars received */
+>  #define SC_LOG_FLUSH	0x00100000	/* log all chars flushed */
+>  #define	SC_SYNC		0x00200000	/* synchronous serial mode */
+> -#define	SC_MUST_COMP    0x00400000	/* no uncompressed packets may be sent or received */
+
+[Severity: Medium]
+Does the fix need the define to be removed from the UAPI header?
+
+PPPIOCSFLAGS already masks the user value with the kernel-internal
+SC_FLAG_BITS:
+
+drivers/net/ppp/ppp_generic.c:ppp_ioctl() {
+    ...
+		ppp->flags = val & SC_FLAG_BITS;
+    ...
+}
+
+Removing the bit from SC_FLAG_BITS (and SC_MASK), together with the two
+checks, looks like enough to stop SC_DC_ERROR from being stored as a
+config flag.
+
+Deleting the define is a separate change at the source level. Userspace
+that includes <linux/ppp-ioctl.h>, directly or through <linux/if_ppp.h>,
+and refers to SC_MUST_COMP would no longer build.
+
+The commit message calls the flag unused, but the evidence is that one
+pppd integration from 2005 never landed upstream. That does not rule out
+out-of-tree pppd MPPE forks or other daemons that use the name.
+
+With the Fixes: tag pointing at a 2005 commit, this header change will
+likely be backported to the stable kernel-headers as well.
+
+Would it work to keep the define, with a comment that the kernel ignores
+it and that it aliases SC_DC_ERROR, while still dropping it from
+SC_FLAG_BITS and SC_MASK and removing the checks?
+
+> -#define	SC_MASK		0x0f600fff	/* bits that user can change */
+> +#define	SC_MASK		0x0f200fff	/* bits that user can change */
+
+[ ... ]
+
 -- 
-2.43.0
-
+Sashiko AI review · https://netdev-ai.bots.linux.dev/sashiko/#/patchset/20261029074935.40509-1-qingfang.deng%40linux.dev
